@@ -1,3 +1,13 @@
+# Add any directories, files, or patterns you don't want to be tracked by version control
+# custom folders
+data/
+Data/
+Styles/
+importdata/
+
+#custom files
+*.xlsx
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -72,6 +82,10 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# IPython
+profile_default/
+ipython_config.py
+
 # pyenv
 .python-version
 
@@ -97,8 +111,24 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
+# vs code
+.vscode
+
 # mkdocs documentation
 /site
 
 # mypy
 .mypy_cache/
+.dmypy.json
+dmypy.json
+
+# sublime
+*.*project
+*.*workspace
+
+# pycharm
+.idea/
+
+# linux
+.directory
+*.kate-swp
