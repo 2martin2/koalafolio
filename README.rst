@@ -1,4 +1,5 @@
-# pycryptoportfolio
+pycryptoportfolio
+****************
 portfolio for cryptocoins with profit export for tax
 
 Installation
