@@ -1,0 +1,123 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Oct  4 15:15:19 2018
+
+@author: VOL4ABT
+"""
+
+# todo: check why default section is written to file ?!
+# todo: implement conversion from Settings Dict as get and set methods
+# todo: reinit view and data when displaycurrencies are changed during runtime
+
+import os, ast, re
+import configparser
+import PcpCore.logger as logger
+
+
+dictRegex = re.compile(r'^\{ *(\'.+\' *\: *\'.+\' *\, *)* *\'.+\' *\: *\'.+\'\ *}$')
+
+
+class Settings(configparser.ConfigParser):
+    def __init__(self, *args, **kwargs):
+        super(Settings, self).__init__(*args, **kwargs)
+            
+    def setPath(self, path):
+        self.filePath = os.path.join(path, 'settings.txt')
+        # init settings
+        self.initSettings()
+        if not os.path.isfile(self.filePath):
+            self.saveSettings()
+        else:
+            self.readSettings()
+            self.saveSettings()
+        return self
+
+    def initSettings(self):
+        # set default settings
+        # general settings
+        self['general'] = {}
+        self['general']['version'] = 'alpha'
+        self['general']['timeModeDaywise'] = 'True'
+        self['general']['priceUpdateInterval(s)'] = '100'
+        # proxy settings
+        self['proxies'] = {}
+        self['proxies']['http'] = ''
+        self['proxies']['https'] = ''
+        # import settings
+        self['import'] = {}
+        self['import']['ignoreTradeIDs'] = 'False'
+        self['import']['importFileTypes'] = '(csv|txt|xlsx|xlsm|xls)'
+        # coin settings
+        self['currency'] = {}
+        self['currency']['defaultReportCurrency'] = 'EUR'
+        self['currency']['defaultDisplayCurrencies'] = 'EUR,USD,BTC'
+        self['currency']['isFiat'] = 'EUR,USD,GBP,JPY,CNY,RUB,AUD,CAD,SGD,PLN,HKD,CHF,INR,BRL,KRW,NZD,ZAR'
+        self['currency']['coinswapdict'] = "{'HOT':'HOT*','XBT':'BTC','IOTA':'IOT'}"
+
+    def saveSettings(self):
+        try:
+            with open(self.filePath, 'w') as configfile:
+                self.write(configfile)
+            logger.globalLogger.info('settings saved')
+            return True
+        except Exception as ex:
+            logger.globalLogger.error('error in saveSettings: ' + str(ex))
+            return False
+
+    def readSettings(self):
+        try:
+            self.read(self.filePath)
+            logger.globalLogger.info('settings loaded')
+        except Exception as ex:
+            logger.globalLogger.error('settings can not be loaded: ' + str(ex))
+            self.initSettings()
+            self.resetDefault()
+
+    def resetDefault(self):
+        try:
+            os.remove(self.filePath)
+            self.initSettings()
+            self.saveSettings()
+            logger.globalLogger.info('settings resetted to default')
+        except Exception as ex:
+            print('error resetting settings: ' + str(ex))
+
+# get/set methods
+    def timeModeDaywise(self):
+        return self.getboolean('general', 'timeModeDaywise')
+
+    def priceUpdateInterval(self):
+        priceUpdateInterval = self.getfloat('general', 'priceUpdateInterval(s)')
+        return 2 if priceUpdateInterval <= 2 else priceUpdateInterval
+
+    def proxies(self):
+        if self['proxies']['http'] and self['proxies']['https']:
+            return {'http': self['proxies']['http'], 'https': self['proxies']['https']}
+        return {}
+
+    def ignoreTradeIds(self):
+        return self.getboolean('import', 'ignoreTradeIDs')
+
+    def displayCurrencies(self):
+        return self['currency']['defaultDisplayCurrencies'].split(',')
+    
+    def setDisplayCurrencies(self, currencies):
+        self['currency']['defaultDisplayCurrencies'] = ','.join(currencies)
+
+    def fiatList(self):
+        return self['currency']['isFiat'].split(',')
+
+    def setFiatList(self, fiatList):
+        self['currency']['isFiat'] = ','.join(fiatList)
+
+    def coinSwapDict(self):
+        try:
+            if dictRegex.match(self['currency']['coinswapdict']):
+                return ast.literal_eval(self['currency']['coinswapdict'])
+            else:
+                raise SyntaxError('coinSwapList in settings.txt has invalid Syntax')
+        except Exception as ex:
+            return dict()
+            logger.globalLogger.warning('error while parsing coinswapdict from settings: ' + str(ex))
+
+mySettings = Settings()

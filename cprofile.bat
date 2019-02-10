@@ -1,0 +1,1 @@
+python -m cProfile gui_root.py

@@ -1,0 +1,3 @@
+D:
+cd D:\workspace\python\PyCryptoPortfolio 
+pyinstaller --onefile --windowed gui_root.py
