@@ -109,7 +109,7 @@ class PortfolioApp(qtwidgets.QWidget):
 
     def initStyle(self):
         self.logger.info('initializing style ...')
-        self.setWindowTitle(self.settings['window']['windowTitle'])
+        self.setWindowTitle(self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version'])
         try:
             self.setStyle(qtwidgets.QStyleFactory.create(self.settings['window']['windowstyle']))
         except Exception as ex:

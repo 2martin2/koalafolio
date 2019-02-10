@@ -36,7 +36,7 @@ class Settings(configparser.ConfigParser):
         # set default settings
         # general settings
         self['general'] = {}
-        self['general']['version'] = 'alpha'
+        self['general']['version'] = '0.1'
         self['general']['timeModeDaywise'] = 'True'
         self['general']['priceUpdateInterval(s)'] = '100'
         # proxy settings
@@ -67,10 +67,10 @@ class Settings(configparser.ConfigParser):
     def readSettings(self):
         try:
             self.read(self.filePath)
+            self['general']['version'] = '0.1'
             logger.globalLogger.info('settings loaded')
         except Exception as ex:
             logger.globalLogger.error('settings can not be loaded: ' + str(ex))
-            self.initSettings()
             self.resetDefault()
 
     def resetDefault(self):
@@ -78,7 +78,7 @@ class Settings(configparser.ConfigParser):
             os.remove(self.filePath)
             self.initSettings()
             self.saveSettings()
-            logger.globalLogger.info('settings resetted to default')
+            logger.globalLogger.info('settings reset to default')
         except Exception as ex:
             print('error resetting settings: ' + str(ex))
 
