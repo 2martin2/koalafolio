@@ -1,0 +1,3 @@
+[submodule "cryptocompare"]
+	path = cryptocompare
+	url = https://github.com/2martin2/cryptocompare.git
