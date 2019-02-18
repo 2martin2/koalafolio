@@ -7,6 +7,7 @@ Created on Fri Aug 24 09:44:38 2018
 import os, pandas, re
 import PcpCore.core as core
 import PcpCore.settings as settings
+import json
 
 
 def loadTrades(mypath):
@@ -28,15 +29,18 @@ def loadTradesFromFiles(allfilespath):
 
 
 def loadTradesFromFile(filepath):
-    # try reading as csv\txt
-    try:
-        testread = pandas.read_csv(filepath)  # try reading with , seperation
-        if len(testread.columns) < 2:  # if less than 2 columns something went wrong
-            testread = pandas.read_csv(filepath, sep=';')  # try reading with ; seperation
-        if len(testread.columns) < 2:  # if less than 2 columns semething went wrong
-            return pandas.DataFrame()  # return empty DataFrame
-        return testread
-    except:
+    if filepath.endswith('.txt') or filepath.endswith('.csv'):
+        # try reading as csv\txt
+        try:
+            testread = pandas.read_csv(filepath)  # try reading with , seperation
+            if len(testread.columns) < 2:  # if less than 2 columns something went wrong
+                testread = pandas.read_csv(filepath, sep=';')  # try reading with ; seperation
+            if len(testread.columns) < 2:  # if less than 2 columns semething went wrong
+                return pandas.DataFrame()  # return empty DataFrame
+            return testread
+        except:
+            return pandas.DataFrame()
+    elif filepath.endswith('.xls') or filepath.endswith('xlsx'):
         # try reading as excelsheet
         try:
             testread = pandas.read_excel(filepath)
@@ -45,6 +49,15 @@ def loadTradesFromFile(filepath):
             return testread
         except:
             return pandas.DataFrame()
+    elif filepath.endswith('.json'):
+        # try reading as excelsheet
+        try:
+            with open(filepath, "r") as read_file:
+                return json.load(read_file)
+        except:
+            return pandas.DataFrame()
+    else:
+        return pandas.DataFrame()
 
 
 def convertTrades(modelList, data, files):  # convert all read csv data to tradelist
