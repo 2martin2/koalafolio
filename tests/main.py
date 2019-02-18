@@ -32,8 +32,9 @@ else:
 settings = settings.mySettings.setPath(os.path.join(application_path, 'Data'))
 
 # %% import data
-importPath = os.path.join(application_path, 'importdata')
-exportPath = os.path.join(application_path, 'exportdata')
+basePath = os.path.dirname(application_path)
+importPath = os.path.join(basePath, 'importdata')
+exportPath = os.path.join(basePath, 'exportdata')
 
 files, content = importer.loadTrades(importPath)
 
@@ -59,10 +60,3 @@ coinList.updateCurrentValues()
 
 coinFrame = coinList.toDataFrameComplete()
 coinDict = coinFrame.to_dict('index')
-
-currentYear = datetime.datetime.now().year()
-startofyear = datetime.date(currentYear, 1, 1)
-endofyear = datetime.date(currentYear, 12, 31)
-export.createProfitExcel(coinList, os.path.join(exportPath, 'profit'), startofyear, endofyear, currency='EUR', taxyearlimit=1)
-
-
