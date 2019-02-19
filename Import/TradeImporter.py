@@ -39,8 +39,8 @@ def loadTradesFromFile(filepath):
                 return pandas.DataFrame()  # return empty DataFrame
             return testread
         except:
-            return pandas.DataFrame()
-    elif filepath.endswith('.xls') or filepath.endswith('xlsx'):
+            pass
+    if filepath.endswith('.xls') or filepath.endswith('xlsx'):
         # try reading as excelsheet
         try:
             testread = pandas.read_excel(filepath)
@@ -48,23 +48,23 @@ def loadTradesFromFile(filepath):
                 return pandas.DataFrame()
             return testread
         except:
-            return pandas.DataFrame()
-    elif filepath.endswith('.json'):
+            pass
+    if filepath.endswith('.json') or filepath.endswidth('.txt'):
         # try reading as excelsheet
         try:
             with open(filepath, "r") as read_file:
                 return json.load(read_file)
         except:
-            return pandas.DataFrame()
-    else:
-        return pandas.DataFrame()
+            pass
+
+    return pandas.DataFrame()
 
 
 def convertTrades(modelList, data, files):  # convert all read csv data to tradelist
     tradeList = core.TradeList()
     feeList = core.TradeList()
     matches = []
-    i = 0;
+    i = 0
     for frame in data:  # convert every DataFrame
         print('convert ' + files[i])
         heading = frame.columns.tolist()
