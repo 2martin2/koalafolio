@@ -6,6 +6,39 @@ import re, numbers, pandas
 import Import.RegexPatterns as pat
 import datetime, tzlocal, pytz
 
+def exodusJsonToDataFrame(data):
+    # txId, error, date, confirmations, meta, token, coinAmount, coinName, feeAmount, to, toCoin
+    # toCoin: coin, coinAmount, fiatAmount,
+
+    # DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID
+
+    # convert dict
+    newDictList = []
+    for row in range(len(data)):
+        dict = data[row]
+        newDict = {}
+        newDict['txId'] = dict['txId']
+        newDict['error'] = dict['error']
+        newDict['date'] = dict['date']
+        newDict['confirmations'] = dict['confirmations']
+        newDict['token'] = dict['token']
+        newDict['coinAmount'] = dict['coinAmount']
+        newDict['coinName'] = dict['coinName']
+
+        if 'toCoin' in dict:  # trade
+            newDict['to'] = dict['to']
+            newDict['toCoinName'] = dict['toCoin']['coin']
+            newDict['toCoinAmount'] = dict['toCoin']['coinAmount']
+            newDict['toCoinFiat'] = dict['toCoin']['fiatAmount']
+            newDict['shapeshiftDeposit'] = dict['meta']['shapeshiftDeposit']
+            newDict['shapeshiftOrderId'] = dict['meta']['shapeshiftOrderId']
+
+        if 'feeAmount' in dict:  # fee
+            newDict['feeAmount'] = dict['feeAmount']
+
+        newDictList.append(newDict)
+
+    return pandas.DataFrame(newDictList)
 
 # %% exodus [DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID]
 #             0     1       2         3         4           5         6        7        8       9         10      11     12

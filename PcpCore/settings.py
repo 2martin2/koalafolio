@@ -46,7 +46,7 @@ class Settings(configparser.ConfigParser):
         # import settings
         self['import'] = {}
         self['import']['ignoreTradeIDs'] = 'False'
-        self['import']['importFileTypes'] = '(csv|txt|xlsx|xlsm|xls)'
+        self['import']['importFileTypes'] = '(csv|txt|xlsx|xlsm|xls|json)'
         # coin settings
         self['currency'] = {}
         self['currency']['defaultReportCurrency'] = 'EUR'

@@ -7,6 +7,7 @@ Created on Fri Aug 24 09:44:38 2018
 import os, pandas, re
 import PcpCore.core as core
 import PcpCore.settings as settings
+import Import.Converter as converter
 import json
 
 
@@ -35,8 +36,8 @@ def loadTradesFromFile(filepath):
             testread = pandas.read_csv(filepath)  # try reading with , seperation
             if len(testread.columns) < 2:  # if less than 2 columns something went wrong
                 testread = pandas.read_csv(filepath, sep=';')  # try reading with ; seperation
-            if len(testread.columns) < 2:  # if less than 2 columns semething went wrong
-                return pandas.DataFrame()  # return empty DataFrame
+            if len(testread.columns) < 2:  # if less than 2 columns something went wrong
+                raise SyntaxError('file cannot be imported as csv')
             return testread
         except:
             pass
@@ -45,17 +46,21 @@ def loadTradesFromFile(filepath):
         try:
             testread = pandas.read_excel(filepath)
             if len(testread.columns) < 2:
-                return pandas.DataFrame()
+                raise SyntaxError('file cannot be imported as excelsheet')
             return testread
         except:
             pass
-    # if filepath.endswith('.json') or filepath.endswidth('.txt'):
-    #     # try reading as excelsheet
-    #     try:
-    #         with open(filepath, "r") as read_file:
-    #             return json.load(read_file)
-    #     except:
-    #         pass
+    if filepath.endswith('.json') or filepath.endswidth('.txt'):
+        # try reading as excelsheet
+        try:
+            with open(filepath, "r") as read_file:
+                jsonData = json.load(read_file)
+            try:
+                return converter.exodusJsonToDataFrame(jsonData)
+            except:  # try other converters
+                pass
+        except:
+            pass
 
     return pandas.DataFrame()
 

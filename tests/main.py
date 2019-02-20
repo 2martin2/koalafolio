@@ -38,6 +38,7 @@ settings = settings.mySettings.setPath(os.path.join(basePath, 'Data'))
 # %% import data
 
 importPath = os.path.join(basePath, 'importdata')
+importPath = os.path.join(importPath, 'exodus_txs')
 exportPath = os.path.join(basePath, 'exportdata')
 
 files, content = importer.loadTrades(importPath)
@@ -49,10 +50,10 @@ headings = [frame.columns.tolist() for frame in content]
 
 
 # %% convert data
-fileindex = 12
+fileindex = 1
 content2 = [content[fileindex]]
 file = [files[fileindex]]
-tradeList, feeList, matches = importer.convertTrades(models.IMPORT_MODEL_LIST, content2, file)
+tradeList, feeList, matches = importer.convertTrades(models.IMPORT_MODEL_LIST, content, files)
 # tradeList.updateValues()
 tradeFrame = tradeList.toDataFrameComplete()
 feeFrame = feeList.toDataFrameComplete()
