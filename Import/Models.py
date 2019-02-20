@@ -53,6 +53,21 @@ class Importmodel:
 IMPORT_MODEL_LIST = []
 index = -1
 
+# %% exodus [DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID]
+index = index + 1
+IMPORT_MODEL_LIST.append(Importmodel())
+IMPORT_MODEL_LIST[index].modelHeaders = ['DATE', 'TYPE', 'OUTAMOUNT', 'OUTCURRENCY', 'FEEAMOUNT', 'FEECURRENCY', 'OUTTXID', 'OUTTXURL',
+                                         'INAMOUNT', 'INCURRENCY', 'INTXID', 'INTXURL', 'ORDERID']
+IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.EXODUS_DATE_REGEX, pat.EXODUS_TYPE_REGEX,
+                                              pat.EXODUS_OUTAMOUNT_REGEX, pat.EXODUS_OUTCURRENCY_REGEX,
+                                              pat.EXODUS_FEEAMOUNT_REGEX, pat.EXODUS_FEECURRENCY_REGEX,
+                                              pat.EXODUS_OUTTXID_REGEX, pat.EXODUS_OUTTXURL_REGEX,
+                                              pat.EXODUS_INAMOUNT_REGEX, pat.EXODUS_INCURRENCY_REGEX,
+                                              pat.EXODUS_INTXID_REGEX, pat.EXODUS_INTXURL_REGEX,
+                                              pat.EXODUS_ORDERID_REGEX]
+IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
+IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_exodus
+
 # %% kraken ["txid","ordertxid","pair","time","type","ordertype","price","cost","fee","vol","margin","misc","ledgers"]
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())

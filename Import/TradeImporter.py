@@ -49,13 +49,13 @@ def loadTradesFromFile(filepath):
             return testread
         except:
             pass
-    if filepath.endswith('.json') or filepath.endswidth('.txt'):
-        # try reading as excelsheet
-        try:
-            with open(filepath, "r") as read_file:
-                return json.load(read_file)
-        except:
-            pass
+    # if filepath.endswith('.json') or filepath.endswidth('.txt'):
+    #     # try reading as excelsheet
+    #     try:
+    #         with open(filepath, "r") as read_file:
+    #             return json.load(read_file)
+    #     except:
+    #         pass
 
     return pandas.DataFrame()
 

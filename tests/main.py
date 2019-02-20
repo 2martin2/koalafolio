@@ -9,6 +9,7 @@ Created on Thu Aug 23 21:45:16 2018
 # get_ipython().magic('reset -sf')
 
 import Import.TradeImporter as importer
+import Import.Converter as converter
 import PcpCore.settings as settings
 import sys
 import os
@@ -29,10 +30,13 @@ else:
         application_path = os.getcwd()
         running_mode = 'Interactive'
 
-settings = settings.mySettings.setPath(os.path.join(application_path, 'Data'))
+basePath = os.path.dirname(application_path)
+settings = settings.mySettings.setPath(os.path.join(basePath, 'Data'))
+
+# date = converter.convertDate('Fri May 19 2017 12:11:49 GMT+0200 (Mitteleuropäische Sommerzeit)')
 
 # %% import data
-basePath = os.path.dirname(application_path)
+
 importPath = os.path.join(basePath, 'importdata')
 exportPath = os.path.join(basePath, 'exportdata')
 
@@ -45,10 +49,10 @@ headings = [frame.columns.tolist() for frame in content]
 
 
 # %% convert data
-fileindex = 17
+fileindex = 12
 content2 = [content[fileindex]]
-file = files[fileindex]
-tradeList, feeList, matches = importer.convertTrades(models.IMPORT_MODEL_LIST, content2, [file])
+file = [files[fileindex]]
+tradeList, feeList, matches = importer.convertTrades(models.IMPORT_MODEL_LIST, content2, file)
 # tradeList.updateValues()
 tradeFrame = tradeList.toDataFrameComplete()
 feeFrame = feeList.toDataFrameComplete()
