@@ -50,7 +50,7 @@ headings = [frame.columns.tolist() for frame in content]
 
 
 # %% convert data
-fileindex = 1
+fileindex = 0
 content2 = [content[fileindex]]
 file = [files[fileindex]]
 tradeList, feeList, matches = importer.convertTrades(models.IMPORT_MODEL_LIST, content, files)

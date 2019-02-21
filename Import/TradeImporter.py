@@ -50,13 +50,16 @@ def loadTradesFromFile(filepath):
             return testread
         except:
             pass
-    if filepath.endswith('.json') or filepath.endswidth('.txt'):
+    if filepath.endswith('.json') or filepath.endswith('.txt'):
         # try reading as excelsheet
         try:
             with open(filepath, "r") as read_file:
                 jsonData = json.load(read_file)
             try:
-                return converter.exodusJsonToDataFrame(jsonData)
+                dataFrame = converter.exodusJsonToDataFrame(jsonData)
+                if dataFrame.shape[0] == 0:
+                    raise SyntaxError('file cannot be converted as exodus json')
+                return dataFrame
             except:  # try other converters
                 pass
         except:

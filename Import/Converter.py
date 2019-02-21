@@ -12,30 +12,62 @@ def exodusJsonToDataFrame(data):
 
     # DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID
 
+    amountRegex = re.compile('^((-|\+|)(\d+)((\.\d+)|)((e(-|\+|)\d+)|)) (\w+)$')
     # convert dict
     newDictList = []
     for row in range(len(data)):
         dict = data[row]
         newDict = {}
-        newDict['txId'] = dict['txId']
-        newDict['error'] = dict['error']
-        newDict['date'] = dict['date']
-        newDict['confirmations'] = dict['confirmations']
-        newDict['token'] = dict['token']
-        newDict['coinAmount'] = dict['coinAmount']
-        newDict['coinName'] = dict['coinName']
+
+        amountMatch = amountRegex.match(dict['coinAmount'])
+        if amountMatch:
+            amount = float(amountMatch.group(1))
+            newDict['DATE'] = dict['date']
+            if amount >= 0:  # input
+                newDict['TYPE'] = 'deposit'
+                newDict['INAMOUNT'] = amount
+                newDict['INCURRENCY'] = amountMatch.group(9)
+                newDict['INTXID'] = dict['txId']
+            else:  # output
+                newDict['TYPE'] = 'withdrawal'
+                newDict['OUTAMOUNT'] = amount
+                newDict['OUTCURRENCY'] = amountMatch.group(9)
+                newDict['OUTTXID'] = dict['txId']
 
         if 'toCoin' in dict:  # trade
-            newDict['to'] = dict['to']
-            newDict['toCoinName'] = dict['toCoin']['coin']
-            newDict['toCoinAmount'] = dict['toCoin']['coinAmount']
-            newDict['toCoinFiat'] = dict['toCoin']['fiatAmount']
-            newDict['shapeshiftDeposit'] = dict['meta']['shapeshiftDeposit']
-            newDict['shapeshiftOrderId'] = dict['meta']['shapeshiftOrderId']
+            amountMatch = amountRegex.match(dict['toCoin']['coinAmount'])
+            if amountMatch:
+                amount = float(amountMatch.group(1))
+                newDict['TYPE'] = 'exchange'
+                newDict['INAMOUNT'] = amount
+                newDict['INCURRENCY'] = amountMatch.group(9)
+                newDict['INTXID'] = dict['meta']['shapeshiftOrderId']
+                newDict['ORDERID'] = dict['meta']['shapeshiftOrderId']
+
+        # do not use fromCoin since these trades are already included in toCoin
+        # if 'fromCoin' in dict:
+        #     amountMatch = amountRegex.match(dict['fromCoin']['coinAmount'])
+        #     if amountMatch:
+        #         amount = float(amountMatch.group(1))
+        #         newDict['TYPE'] = 'exchange'
+        #         newDict['OUTAMOUNT'] = - amount
+        #         newDict['OUTCURRENCY'] = amountMatch.group(9)
+        #         newDict['OUTTXID'] = dict['meta']['shapeshiftOrderId']
+        #         newDict['ORDERID'] = dict['meta']['shapeshiftOrderId']
 
         if 'feeAmount' in dict:  # fee
-            newDict['feeAmount'] = dict['feeAmount']
+            amountMatch = amountRegex.match(dict['feeAmount'])
+            if amountMatch:
+                amount = float(amountMatch.group(1))
+                newDict['FEEAMOUNT'] = amount
+                newDict['FEECURRENCY'] = amountMatch.group(9)
+                # newDict['feeAmount'] = dict['feeAmount']
 
+        keys = ['DATE','TYPE','OUTAMOUNT','OUTCURRENCY','FEEAMOUNT','FEECURRENCY','OUTTXID',
+                'OUTTXURL','INAMOUNT','INCURRENCY','INTXID','INTXURL','ORDERID']
+        for key in keys:
+            if key not in newDict:
+                newDict[key] = 'nan'
         newDictList.append(newDict)
 
     return pandas.DataFrame(newDictList)
@@ -46,13 +78,14 @@ def modelCallback_exodus(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
+    exchangeRegex = re.compile(r'^(exchange)$')
     for row in range(dataFrame.shape[0]):
-        exchangeMatch = re.match(r'^(exchange)$', dataFrame[headernames[1]][row], re.IGNORECASE)  # check type
+        exchangeMatch = exchangeRegex.match(dataFrame[headernames[1]][row])  # check type
         isFee = str(dataFrame[headernames[4]][row]) != 'nan'
         if not exchangeMatch and not isFee:  # no trade and no fee
             skippedRows += 1
             continue  # skip row
-        if re.match(r'^(exchange)$', dataFrame[headernames[1]][row], re.IGNORECASE):  # if exchange
+        if exchangeMatch:  # if exchange
             tempTrade_out = core.Trade()  # out
             tempTrade_in = core.Trade()  # in
             # get id
@@ -86,7 +119,7 @@ def modelCallback_exodus(headernames, dataFrame):
             if not tradeList.addTradePair(tempTrade_out, tempTrade_in):
                 skippedRows += 1
         else:
-            exchange = 'exodus'
+            exchange = ''
 
         # fees
         if isFee:  # if fee
@@ -738,6 +771,9 @@ def convertDate(dateString, useLocalTime=True):
             elif i == pat.TIME_SPECIAL_PATTERN_INDEX[4]:
                 groups = tempMatch.group
                 dateString = groups(1) + groups(3) + groups(2) + ' ' + groups(5)
+            elif i == pat.TIME_SPECIAL_PATTERN_INDEX[5]:
+                groups = tempMatch.group
+                dateString = groups(1) + ' ' + groups(2) + ' +0000'
             # convert to datetime
             timestamp = datetime.datetime.strptime(dateString, pat.TIME_FORMAT[i])
             break

@@ -163,6 +163,7 @@ TIME_PATTERN.append(r'^\w{3} \w{3} \d{2} \d\d:\d\d:\d\d \d{4}$')  # Wed Jun 27 1
 TIME_PATTERN.append(r'^(\w{3} \w{3} \d{2} \d\d:\d\d:\d\d)( \w{3})( \d{4})$')  # Wed Jun 27 17:16:39 CST 2018
 TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)(\.\d+)$')  # 2017-05-22 06:30:17 .200
 TIME_PATTERN.append(r'^(\w{3} \w{3} \d{2})( \d{4})( \d\d:\d\d:\d\d)( \w{3})([-|\+]\d{4})( .*)$')  # Fri May 19 2017 12:11:49 GMT+0200 (Mitteleuropäische Sommerzeit)
+TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d).(\d\d:\d\d:\d\d).*Z$')  # 2017-07-28T20:23:16.000Z
 
 PANDAS_TIME_PATTERN = r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d[-|\+]\d\d:\d\d$'
 
@@ -173,6 +174,7 @@ TIME_SPECIAL_PATTERN_INDEX.append(3)
 TIME_SPECIAL_PATTERN_INDEX.append(5)
 TIME_SPECIAL_PATTERN_INDEX.append(6)
 TIME_SPECIAL_PATTERN_INDEX.append(7)
+TIME_SPECIAL_PATTERN_INDEX.append(8)
 
 TIME_FORMAT = []
 TIME_FORMAT.append('%Y-%m-%d %H:%M:%S')
@@ -183,6 +185,7 @@ TIME_FORMAT.append('%c')
 TIME_FORMAT.append('%c')
 TIME_FORMAT.append('%Y-%m-%d %H:%M:%S')
 TIME_FORMAT.append('%c %z')
+TIME_FORMAT.append('%Y-%m-%d %H:%M:%S %z')
 # TIME_FORMAT.append('$b $d $Y $H:$M:$S %z')
 
 # 2018-08-26 04:22:33
