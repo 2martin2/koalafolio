@@ -704,7 +704,7 @@ class CoinList:
 
     def addCoin(self, coinname):
         self.coins.append(CoinBalance())
-        self.coins[-1].coinname = coinname
+        self.coins[-1].coinname = str(coinname)
         return self.coins[-1]
 
     def addTrade(self, trade):

@@ -503,7 +503,8 @@ def modelCallback_3(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% model 4 (bitcoin.de): Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees, (ID), (ZuAbgang), (amount_main_w_fees_fidor)
+# %% model 4 (bitcoin.de): Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees,
+# (ID), (ZuAbgang), (amount_main_w_fees_fidor), (einheit_amount_main_w_fee), (einheit_amount_main_wo_fee), (einheit kurs)
 def modelCallback_4(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
@@ -515,8 +516,8 @@ def modelCallback_4(headernames, dataFrame):
             if headernames[7]:
                 externId = str(dataFrame[headernames[7]][row])
             fees = dataFrame[headernames[8]][row]
-            coin = dataFrame[headernames[2]][row]
-            fee = createFee(date=date, amountStr=fees, coin=coin, exchange='', externId=externId)
+            coin = str(dataFrame[headernames[2]][row])
+            fee = createFee(date=date, amountStr=fees, coin=coin, exchange='bitcoinde', externId=externId)
             fee.generateID()
             feeList.addTrade(fee)
         else:
@@ -542,8 +543,12 @@ def modelCallback_4(headernames, dataFrame):
                 skippedRows += 1
                 continue
             # get coin
-            tempTrade_sub.coin = re.match(r'^(.*) / .*$', dataFrame[headernames[2]][row]).group(1).upper()
-            tempTrade_main.coin = re.match(r'^.* / (.*)$', dataFrame[headernames[2]][row]).group(1).upper()
+            if headernames[12]:
+                coinPairIndex = 12
+            else:
+                coinPairIndex = 2
+            tempTrade_sub.coin = re.match(r'^(.*) / .*$', dataFrame[headernames[coinPairIndex]][row]).group(1).upper()
+            tempTrade_main.coin = re.match(r'^.* / (.*)$', dataFrame[headernames[coinPairIndex]][row]).group(1).upper()
             # swap Coin Name
             swapCoinName(tempTrade_sub)
             swapCoinName(tempTrade_main)
