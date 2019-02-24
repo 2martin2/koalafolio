@@ -31,7 +31,7 @@ class QSettings(settings.Settings):
         self['window']['windowsize'] = '1200x600'
         self['window']['windowpos'] = '200,200'
         self['window']['windowstate'] = '0'
-        self['window']['windowTitle'] = 'portfolio'
+        self['window']['windowTitle'] = 'KoalaFolio'
         self['window']['windowstyle'] = 'Fusion'
         self['window']['stylesheetname'] = 'defaultStyle'
         # color settings
