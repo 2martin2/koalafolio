@@ -9,6 +9,9 @@ import PcpCore.core as core
 import PcpCore.settings as settings
 import Import.Converter as converter
 import json
+import PcpCore.logger as logger
+
+localLogger = logger.globalLogger
 
 
 def loadTrades(mypath):
@@ -32,15 +35,27 @@ def loadTradesFromFiles(allfilespath):
 def loadTradesFromFile(filepath):
     if filepath.endswith('.txt') or filepath.endswith('.csv'):
         # try reading as csv\txt
-        try:
-            testread = pandas.read_csv(filepath)  # try reading with , seperation
-            if len(testread.columns) < 2:  # if less than 2 columns something went wrong
-                testread = pandas.read_csv(filepath, sep=';')  # try reading with ; seperation
-            if len(testread.columns) < 2:  # if less than 2 columns something went wrong
-                raise SyntaxError('file cannot be imported as csv')
-            return testread
-        except:
-            pass
+        # get encoding
+        encodings = ['utf_8', 'utf_7', 'utf_16', 'utf_16_le', 'utf_16_be', 'utf_32', 'utf_32_le', 'utf_32_be']
+        encodingError = True
+        for encoding in encodings:
+            try:
+                testread = pandas.read_csv(filepath, encoding=encoding)  # try reading with , seperation
+                if len(testread.columns) < 2:  # if less than 2 columns something went wrong
+                    testread = pandas.read_csv(filepath, sep=';',
+                                               encoding=encoding)  # try reading with ; seperation
+                if len(testread.columns) < 2:  # if less than 2 columns something went wrong
+                    raise SyntaxError('columns of csv could not be detected')
+                return testread
+            except UnicodeDecodeError as ex:
+                pass
+            except Exception as ex:
+                encodingError = False
+                localLogger.warning('error reading ' + filepath + ' as csv: ' + str(ex))
+        if encodingError:
+            localLogger.warning('encoding of ' + str(filepath) + ' is not supported')
+            localLogger.info('supported encodings: ' + str(encodings))
+
     if filepath.endswith('.xls') or filepath.endswith('xlsx'):
         # try reading as excelsheet
         try:
