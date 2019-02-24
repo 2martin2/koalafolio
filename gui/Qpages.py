@@ -449,6 +449,8 @@ class ImportPreviewPage(SubPage):
         self.controller.showFrame(self.controller.IMPORTSELECTPAGEINDEX)
 
     def skipImport(self):
+        self.tradeListTemp.clearTrades()
+        self.feeListTemp.clearTrades()
         if (self.filePathIndex < len(self.controller.getFilesPath()) - 1):
             self.exchangeInput.setText("")
             self.filePathIndex += 1
