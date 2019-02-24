@@ -596,7 +596,7 @@ def modelCallback_4(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% model 0: Date, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)
+# %% model 5: Date, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)
 def modelCallback_5(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
@@ -646,15 +646,15 @@ def modelCallback_5(headernames, dataFrame):
 
         # fees
         try:
-            if headernames[7]:  # if fee
-                if headernames[8]:  # if fee coin
+            if headernames[6]:  # if fee
+                if headernames[7]:  # if fee coin
                     # use fee coin
-                    feecoin = dataFrame[headernames[8]][row]
+                    feecoin = dataFrame[headernames[7]][row]
                 else:  # no fee coin
                     # use main coin
                     feecoin = tempTrade_main.coin
                 # set coin amount
-                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[7]][row], coin=feecoin,
+                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[6]][row], coin=feecoin,
                                 exchange=tempTrade_main.exchange, externId=tempTrade_main.externId)
                 fee.generateID()
                 feeList.addTrade(fee)
