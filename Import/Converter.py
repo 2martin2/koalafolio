@@ -139,8 +139,10 @@ def modelCallback_kraken(headernames, dataFrame):
     # "txid"	"ordertxid"	"pair"		"time"	"type"	"ordertype"	"price"		"cost"		"fee"	"vol"		"margin"	"misc"	"ledgers"
     # "x"	"x"			"XETHZEUR"	"x"		"buy"	"limit"		170.25000	851.25000	1.36200	5.00000000	0.00000		""		"x"
     # "x"	"x"			"XXBTZEUR"	"x"		"buy"	"limit"		5220.00000	3839.00171	6.14240	0.73544094	0.00000		""		"x"
+    # "x"	"x"			"ADAEUR"	"x"		"buy"	"limit"		0.0400000	1000.00171	1.14240	0.73544094	0.00000		""		"x"
 
     COIN_PAIR_REGEX = re.compile('^X([a-z|A-Z]*)Z([a-z|A-Z]*)$')
+    COIN_PAIR_REGEX_2 = re.compile('^([a-z|A-Z]{3})([a-z|A-Z]{3})$')
 
     for row in range(dataFrame.shape[0]):
 
@@ -150,7 +152,13 @@ def modelCallback_kraken(headernames, dataFrame):
             maincoin = coinPairMatch.group(2)
             dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
         else:
-            raise ValueError('kraken market pair does not fit the expected pattern')
+            coinPairMatch = COIN_PAIR_REGEX_2.match(dataFrame[headernames[2]][row])
+            if coinPairMatch:
+                subcoin = coinPairMatch.group(1)
+                maincoin = coinPairMatch.group(2)
+                dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
+            else:
+                raise ValueError('kraken market pair does not fit the expected pattern')
 
     headernames_m0 = []
     headernames_m0.append(headernames[3])  # date
