@@ -111,6 +111,12 @@ class PortfolioApp(qtwidgets.QWidget):
         self.logger.info('initializing style ...')
         self.setWindowTitle(self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version'])
         try:
+            app_icon = qtgui.QIcon()
+            app_icon.addFile('KoalaIcon.png', qtcore.QSize(256, 256))
+            self.setWindowIcon(app_icon)
+        except Exception as ex:
+            print(str(ex))
+        try:
             self.setStyle(qtwidgets.QStyleFactory.create(self.settings['window']['windowstyle']))
         except Exception as ex:
             self.logger.error('window style is invalid: ' + str(ex))
