@@ -495,7 +495,7 @@ def modelCallback_3(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% model 4: Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees, (ID), (ZuAbgang)
+# %% model 4 (bitcoin.de): Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees, (ID), (ZuAbgang), (amount_main_w_fees_fidor)
 def modelCallback_4(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
@@ -554,11 +554,15 @@ def modelCallback_4(headernames, dataFrame):
                 amount_w_fees = abs(dataFrame[headernames[6]][row])
             else:  # now number so use regex to extract the number
                 amount_w_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[6]][row]).group(1)))
-            # get price wo fees
-            if isinstance(dataFrame[headernames[5]][row], numbers.Number):  # if price is number
-                price_w_fees = abs(dataFrame[headernames[5]][row])
+            # get price w fees
+            if headernames[9]:  # if fidor fee included
+                mainFeeIndex = 9
+            else:
+                mainFeeIndex = 5
+            if isinstance(dataFrame[headernames[mainFeeIndex]][row], numbers.Number):  # if price is number
+                price_w_fees = abs(dataFrame[headernames[mainFeeIndex]][row])
             else:  # no number so use regex
-                price_w_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[5]][row]).group(1)))
+                price_w_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[mainFeeIndex]][row]).group(1)))
             # get sign
             if isBuy == True:
                 tempTrade_sub.amount = amount_wo_fees
@@ -570,6 +574,9 @@ def modelCallback_4(headernames, dataFrame):
                 tempTrade_main.amount = -price_wo_fees
                 fees_sub = -(amount_wo_fees - amount_w_fees)
                 fees_main = -(price_wo_fees - price_w_fees)
+            # set exchange
+            tempTrade_main.exchange = 'bitcoinde'
+            tempTrade_sub.exchange = 'bitcoinde'
             # set id
             if not tempTrade_sub.tradeID:
                 tempTrade_sub.generateID()
@@ -583,9 +590,9 @@ def modelCallback_4(headernames, dataFrame):
             try:
                 # get fee
                 feeMain = createFee(date=tempTrade_main.date, amountStr=fees_main, coin=tempTrade_main.coin,
-                                    exchange=tempTrade_main.exchange, externId=tempTrade_main.externId)
+                                    exchange='bitcoinde', externId=tempTrade_main.externId)
                 feeSub = createFee(date=tempTrade_sub.date, amountStr=fees_sub, coin=tempTrade_sub.coin,
-                                   exchange=tempTrade_sub.exchange, externId=tempTrade_sub.externId)
+                                   exchange='bitcoinde', externId=tempTrade_sub.externId)
                 feeMain.generateID()
                 feeSub.generateID()
                 feeList.addTrade(feeMain)
