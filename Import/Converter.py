@@ -6,6 +6,132 @@ import re, numbers, pandas
 import Import.RegexPatterns as pat
 import datetime, tzlocal, pytz
 
+def exodusJsonToDataFrame(data):
+    # txId, error, date, confirmations, meta, token, coinAmount, coinName, feeAmount, to, toCoin
+    # toCoin: coin, coinAmount, fiatAmount,
+
+    # DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID
+
+    amountRegex = re.compile('^((-|\+|)(\d+)((\.\d+)|)((e(-|\+|)\d+)|)) (\w+)$')
+    # convert dict
+    newDictList = []
+    for row in range(len(data)):
+        dict = data[row]
+        newDict = {}
+
+        amountMatch = amountRegex.match(dict['coinAmount'])
+        if amountMatch:
+            amount = float(amountMatch.group(1))
+            newDict['DATE'] = dict['date']
+            if amount >= 0:  # input
+                newDict['TYPE'] = 'deposit'
+                newDict['INAMOUNT'] = amount
+                newDict['INCURRENCY'] = amountMatch.group(9)
+                newDict['INTXID'] = dict['txId']
+            else:  # output
+                newDict['TYPE'] = 'withdrawal'
+                newDict['OUTAMOUNT'] = amount
+                newDict['OUTCURRENCY'] = amountMatch.group(9)
+                newDict['OUTTXID'] = dict['txId']
+
+        if 'toCoin' in dict:  # trade
+            amountMatch = amountRegex.match(dict['toCoin']['coinAmount'])
+            if amountMatch:
+                amount = float(amountMatch.group(1))
+                newDict['TYPE'] = 'exchange'
+                newDict['INAMOUNT'] = amount
+                newDict['INCURRENCY'] = amountMatch.group(9)
+                newDict['INTXID'] = dict['meta']['shapeshiftOrderId']
+                newDict['ORDERID'] = dict['meta']['shapeshiftOrderId']
+
+        # do not use fromCoin since these trades are already included in toCoin
+        # if 'fromCoin' in dict:
+        #     amountMatch = amountRegex.match(dict['fromCoin']['coinAmount'])
+        #     if amountMatch:
+        #         amount = float(amountMatch.group(1))
+        #         newDict['TYPE'] = 'exchange'
+        #         newDict['OUTAMOUNT'] = - amount
+        #         newDict['OUTCURRENCY'] = amountMatch.group(9)
+        #         newDict['OUTTXID'] = dict['meta']['shapeshiftOrderId']
+        #         newDict['ORDERID'] = dict['meta']['shapeshiftOrderId']
+
+        if 'feeAmount' in dict:  # fee
+            amountMatch = amountRegex.match(dict['feeAmount'])
+            if amountMatch:
+                amount = float(amountMatch.group(1))
+                newDict['FEEAMOUNT'] = amount
+                newDict['FEECURRENCY'] = amountMatch.group(9)
+                # newDict['feeAmount'] = dict['feeAmount']
+
+        keys = ['DATE','TYPE','OUTAMOUNT','OUTCURRENCY','FEEAMOUNT','FEECURRENCY','OUTTXID',
+                'OUTTXURL','INAMOUNT','INCURRENCY','INTXID','INTXURL','ORDERID']
+        for key in keys:
+            if key not in newDict:
+                newDict[key] = 'nan'
+        newDictList.append(newDict)
+
+    return pandas.DataFrame(newDictList)
+
+# %% exodus [DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID]
+#             0     1       2         3         4           5         6        7        8       9         10      11     12
+def modelCallback_exodus(headernames, dataFrame):
+    tradeList = core.TradeList()
+    feeList = core.TradeList()
+    skippedRows = 0
+    exchangeRegex = re.compile(r'^(exchange)$')
+    for row in range(dataFrame.shape[0]):
+        exchangeMatch = exchangeRegex.match(dataFrame[headernames[1]][row])  # check type
+        isFee = str(dataFrame[headernames[4]][row]) != 'nan'
+        if not exchangeMatch and not isFee:  # no trade and no fee
+            skippedRows += 1
+            continue  # skip row
+        if exchangeMatch:  # if exchange
+            tempTrade_out = core.Trade()  # out
+            tempTrade_in = core.Trade()  # in
+            # get id
+            tempTrade_out.externId = str(dataFrame[headernames[6]][row])
+            tempTrade_in.externId = str(dataFrame[headernames[10]][row])
+            # get date
+            tempTrade_out.date = convertDate(dataFrame[headernames[0]][row])
+            tempTrade_in.date = convertDate(dataFrame[headernames[0]][row])
+            # get type
+            tempTrade_out.tradeType = 'trade'
+            tempTrade_in.tradeType = 'trade'
+            # get coin
+            tempTrade_out.coin = str(dataFrame[headernames[3]][row])
+            tempTrade_in.coin = str(dataFrame[headernames[9]][row])
+            # swap Coin Name
+            swapCoinName(tempTrade_out)
+            swapCoinName(tempTrade_in)
+            # get amount
+            tempTrade_out.amount = dataFrame[headernames[2]][row]
+            tempTrade_in.amount = dataFrame[headernames[8]][row]
+            # set exchange and wallet
+            exchange = 'shapeshift'
+            tempTrade_out.exchange = tempTrade_in.exchange = 'shapeshift'
+            tempTrade_out.wallet = tempTrade_in.wallet = 'exodus'
+            # set id
+            if not tempTrade_out.tradeID:
+                tempTrade_out.generateID()
+            if not tempTrade_in.tradeID:
+                tempTrade_in.generateID()
+            # add trades to tradeList
+            if not tradeList.addTradePair(tempTrade_out, tempTrade_in):
+                skippedRows += 1
+        else:
+            exchange = ''
+
+        # fees
+        if isFee:  # if fee
+            fee = createFee(date=convertDate(dataFrame[headernames[0]][row]),
+                            amountStr=dataFrame[headernames[4]][row],
+                            coin=dataFrame[headernames[5]][row],
+                            exchange=exchange,
+                            wallet='exodus')
+            fee.generateID()
+            feeList.addTrade(fee)
+
+    return tradeList, feeList, skippedRows
 
 # %% kraken model: ["txid","ordertxid","pair","time","type","ordertype","price","cost","fee","vol","margin","misc","ledgers"]
 def modelCallback_kraken(headernames, dataFrame):
@@ -162,7 +288,7 @@ def modelCallback_poloniex(headernames, dataFrame):
 def modelCallback_0(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
-    skippedRows = 0;
+    skippedRows = 0
     for row in range(dataFrame.shape[0]):
         if headernames[9]:  # if state included
             if re.match(r'^.*?(CANCELED).*?$', dataFrame[headernames[9]][row], re.IGNORECASE):  # check state
@@ -252,7 +378,7 @@ def modelCallback_1(headernames, dataFrame):
 def modelCallback_2(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
-    skippedRows = 0;
+    skippedRows = 0
     for row in range(dataFrame.shape[0]):
         tempTrade_sub = core.Trade()  # sub
         tempTrade_main = core.Trade()  # main
@@ -325,7 +451,7 @@ def modelCallback_2(headernames, dataFrame):
 def modelCallback_3(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
-    skippedRows = 0;
+    skippedRows = 0
     for row in range(dataFrame.shape[0]):
         tempTrade_sub = core.Trade()
         # get id
@@ -369,11 +495,11 @@ def modelCallback_3(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% model 4: Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees, (ID), (ZuAbgang)
+# %% model 4 (bitcoin.de): Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees, (ID), (ZuAbgang), (amount_main_w_fees_fidor)
 def modelCallback_4(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
-    skippedRows = 0;
+    skippedRows = 0
     for row in range(dataFrame.shape[0]):
         if 'Gebühr' in dataFrame[headernames[1]][row]:
             # fees
@@ -428,11 +554,15 @@ def modelCallback_4(headernames, dataFrame):
                 amount_w_fees = abs(dataFrame[headernames[6]][row])
             else:  # now number so use regex to extract the number
                 amount_w_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[6]][row]).group(1)))
-            # get price wo fees
-            if isinstance(dataFrame[headernames[5]][row], numbers.Number):  # if price is number
-                price_w_fees = abs(dataFrame[headernames[5]][row])
+            # get price w fees
+            if headernames[9]:  # if fidor fee included
+                mainFeeIndex = 9
+            else:
+                mainFeeIndex = 5
+            if isinstance(dataFrame[headernames[mainFeeIndex]][row], numbers.Number):  # if price is number
+                price_w_fees = abs(dataFrame[headernames[mainFeeIndex]][row])
             else:  # no number so use regex
-                price_w_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[5]][row]).group(1)))
+                price_w_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[mainFeeIndex]][row]).group(1)))
             # get sign
             if isBuy == True:
                 tempTrade_sub.amount = amount_wo_fees
@@ -444,6 +574,9 @@ def modelCallback_4(headernames, dataFrame):
                 tempTrade_main.amount = -price_wo_fees
                 fees_sub = -(amount_wo_fees - amount_w_fees)
                 fees_main = -(price_wo_fees - price_w_fees)
+            # set exchange
+            tempTrade_main.exchange = 'bitcoinde'
+            tempTrade_sub.exchange = 'bitcoinde'
             # set id
             if not tempTrade_sub.tradeID:
                 tempTrade_sub.generateID()
@@ -457,9 +590,9 @@ def modelCallback_4(headernames, dataFrame):
             try:
                 # get fee
                 feeMain = createFee(date=tempTrade_main.date, amountStr=fees_main, coin=tempTrade_main.coin,
-                                    exchange=tempTrade_main.exchange, externId=tempTrade_main.externId)
+                                    exchange='bitcoinde', externId=tempTrade_main.externId)
                 feeSub = createFee(date=tempTrade_sub.date, amountStr=fees_sub, coin=tempTrade_sub.coin,
-                                   exchange=tempTrade_sub.exchange, externId=tempTrade_sub.externId)
+                                   exchange='bitcoinde', externId=tempTrade_sub.externId)
                 feeMain.generateID()
                 feeSub.generateID()
                 feeList.addTrade(feeMain)
@@ -470,11 +603,11 @@ def modelCallback_4(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% model 0: Date, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)
+# %% model 5: Date, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)
 def modelCallback_5(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
-    skippedRows = 0;
+    skippedRows = 0
     for row in range(dataFrame.shape[0]):
         if headernames[8]:  # if state included
             if re.match(r'^.*?(CANCELED).*?$', dataFrame[headernames[8]][row], re.IGNORECASE):  # check state
@@ -520,15 +653,15 @@ def modelCallback_5(headernames, dataFrame):
 
         # fees
         try:
-            if headernames[7]:  # if fee
-                if headernames[8]:  # if fee coin
+            if headernames[6]:  # if fee
+                if headernames[7]:  # if fee coin
                     # use fee coin
-                    feecoin = dataFrame[headernames[8]][row]
+                    feecoin = dataFrame[headernames[7]][row]
                 else:  # no fee coin
                     # use main coin
                     feecoin = tempTrade_main.coin
                 # set coin amount
-                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[7]][row], coin=feecoin,
+                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[6]][row], coin=feecoin,
                                 exchange=tempTrade_main.exchange, externId=tempTrade_main.externId)
                 fee.generateID()
                 feeList.addTrade(fee)
@@ -642,6 +775,12 @@ def convertDate(dateString, useLocalTime=True):
             elif i == pat.TIME_SPECIAL_PATTERN_INDEX[3]:
                 groups = tempMatch.group
                 dateString = groups(1)
+            elif i == pat.TIME_SPECIAL_PATTERN_INDEX[4]:
+                groups = tempMatch.group
+                dateString = groups(1) + groups(3) + groups(2) + ' ' + groups(5)
+            elif i == pat.TIME_SPECIAL_PATTERN_INDEX[5]:
+                groups = tempMatch.group
+                dateString = groups(1) + ' ' + groups(2) + ' +0000'
             # convert to datetime
             timestamp = datetime.datetime.strptime(dateString, pat.TIME_FORMAT[i])
             break
@@ -681,7 +820,7 @@ def createTrades(tradeId='', externId=''):
     pass
 
 
-def createFee(date, amountStr, coin, exchange, feeId='', externId=''):
+def createFee(date, amountStr, coin, exchange, wallet='', feeId='', externId=''):
     fee = core.Trade()
     fee.tradeID = feeId
     fee.externId = externId
@@ -690,7 +829,7 @@ def createFee(date, amountStr, coin, exchange, feeId='', externId=''):
     fee.coin = coin
     if isinstance(amountStr, numbers.Number):  # if amount is number
         amount = - abs(amountStr)
-    else:  # now number so use regex to extract the number
+    else:  # no number so use regex to extract the number
         feeMatch = pat.NUMBER_REGEX.match(amountStr)
         # check standard coins in fee value
         stdcoins = ['BTC', 'BNB', 'ETH']
@@ -700,5 +839,6 @@ def createFee(date, amountStr, coin, exchange, feeId='', externId=''):
         amount = - abs(float(pat.NUMBER_REGEX.match(amountStr).group(1)))
     fee.amount = amount
     fee.exchange = exchange
+    fee.wallet = wallet
     swapCoinName(fee)
     return fee

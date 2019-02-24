@@ -36,7 +36,7 @@ class Settings(configparser.ConfigParser):
         # set default settings
         # general settings
         self['general'] = {}
-        self['general']['version'] = '0.1'
+        self['general']['version'] = '0.2'
         self['general']['timeModeDaywise'] = 'True'
         self['general']['priceUpdateInterval(s)'] = '100'
         # proxy settings
@@ -46,7 +46,7 @@ class Settings(configparser.ConfigParser):
         # import settings
         self['import'] = {}
         self['import']['ignoreTradeIDs'] = 'False'
-        self['import']['importFileTypes'] = '(csv|txt|xlsx|xlsm|xls)'
+        self['import']['importFileTypes'] = '(csv|txt|xlsx|xlsm|xls|json)'
         # coin settings
         self['currency'] = {}
         self['currency']['defaultReportCurrency'] = 'EUR'
@@ -67,7 +67,7 @@ class Settings(configparser.ConfigParser):
     def readSettings(self):
         try:
             self.read(self.filePath)
-            self['general']['version'] = '0.1'
+            self['general']['version'] = '0.2'
             logger.globalLogger.info('settings loaded')
         except Exception as ex:
             logger.globalLogger.error('settings can not be loaded: ' + str(ex))

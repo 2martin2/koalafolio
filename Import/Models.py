@@ -53,6 +53,21 @@ class Importmodel:
 IMPORT_MODEL_LIST = []
 index = -1
 
+# %% exodus [DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID]
+index = index + 1
+IMPORT_MODEL_LIST.append(Importmodel())
+IMPORT_MODEL_LIST[index].modelHeaders = ['DATE', 'TYPE', 'OUTAMOUNT', 'OUTCURRENCY', 'FEEAMOUNT', 'FEECURRENCY', 'OUTTXID', 'OUTTXURL',
+                                         'INAMOUNT', 'INCURRENCY', 'INTXID', 'INTXURL', 'ORDERID']
+IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.EXODUS_DATE_REGEX, pat.EXODUS_TYPE_REGEX,
+                                              pat.EXODUS_OUTAMOUNT_REGEX, pat.EXODUS_OUTCURRENCY_REGEX,
+                                              pat.EXODUS_FEEAMOUNT_REGEX, pat.EXODUS_FEECURRENCY_REGEX,
+                                              pat.EXODUS_OUTTXID_REGEX, pat.EXODUS_OUTTXURL_REGEX,
+                                              pat.EXODUS_INAMOUNT_REGEX, pat.EXODUS_INCURRENCY_REGEX,
+                                              pat.EXODUS_INTXID_REGEX, pat.EXODUS_INTXURL_REGEX,
+                                              pat.EXODUS_ORDERID_REGEX]
+IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
+IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_exodus
+
 # %% kraken ["txid","ordertxid","pair","time","type","ordertype","price","cost","fee","vol","margin","misc","ledgers"]
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
@@ -137,16 +152,17 @@ IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.DATE_REGEX, pat.TYPE_REGEX, pa
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded + [pat.ID_REGEX, pat.FEE_REGEX]
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_3
 
-# %% model 4: Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees, (ID), (ZuAbgang)
+# %% model 4 (bitcoin.de): Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees, (ID), (ZuAbgang)
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
 IMPORT_MODEL_LIST[index].modelHeaders = ['date', 'type', 'pair', 'amount_main_wo_fee', 'amount_sub_wo_fee',
-                                         'amount_main_w_fee', 'amount_sub_w_fee', 'id']
+                                         'amount_main_w_fee', 'amount_main_w_fee_fidor', 'amount_sub_w_fee', 'id']
 IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.DATE_REGEX, pat.TYPE_REGEX, pat.PAIR_REGEX_4,
                                               pat.AMOUNT_MAIN_WO_FEE_REGEX_4, pat.AMOUNT_SUB_WO_FEE_REGEX_4,
                                               pat.AMOUNT_MAIN_W_FEE_REGEX_4, pat.AMOUNT_SUB_W_FEE_REGEX_4]
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded + [pat.ID_REGEX,
-                                                                                        pat.AMOUNT_ZUABGANG_REGEX_4]
+                                                                                        pat.AMOUNT_ZUABGANG_REGEX_4,
+                                                                                        pat.AMOUNT_MAIN_W_FEE_FIDOR_REGEX_4]
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_4
 
 # %% model 5: Date, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)

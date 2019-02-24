@@ -7,6 +7,11 @@ Created on Fri Aug 24 09:44:38 2018
 import os, pandas, re
 import PcpCore.core as core
 import PcpCore.settings as settings
+import Import.Converter as converter
+import json
+import PcpCore.logger as logger
+
+localLogger = logger.globalLogger
 
 
 def loadTrades(mypath):
@@ -28,30 +33,61 @@ def loadTradesFromFiles(allfilespath):
 
 
 def loadTradesFromFile(filepath):
-    # try reading as csv\txt
-    try:
-        testread = pandas.read_csv(filepath)  # try reading with , seperation
-        if len(testread.columns) < 2:  # if less than 2 columns something went wrong
-            testread = pandas.read_csv(filepath, sep=';')  # try reading with ; seperation
-        if len(testread.columns) < 2:  # if less than 2 columns semething went wrong
-            return pandas.DataFrame()  # return empty DataFrame
-        return testread
-    except:
+    if filepath.endswith('.txt') or filepath.endswith('.csv'):
+        # try reading as csv\txt
+        # get encoding
+        encodings = ['utf_8', 'utf_7', 'utf_16', 'utf_16_le', 'utf_16_be', 'utf_32', 'utf_32_le', 'utf_32_be']
+        encodingError = True
+        for encoding in encodings:
+            try:
+                testread = pandas.read_csv(filepath, encoding=encoding)  # try reading with , seperation
+                if len(testread.columns) < 2:  # if less than 2 columns something went wrong
+                    testread = pandas.read_csv(filepath, sep=';',
+                                               encoding=encoding)  # try reading with ; seperation
+                if len(testread.columns) < 2:  # if less than 2 columns something went wrong
+                    raise SyntaxError('columns of csv could not be detected')
+                return testread
+            except UnicodeDecodeError as ex:
+                pass
+            except Exception as ex:
+                encodingError = False
+                localLogger.warning('error reading ' + filepath + ' as csv: ' + str(ex))
+        if encodingError:
+            localLogger.warning('encoding of ' + str(filepath) + ' is not supported')
+            localLogger.info('supported encodings: ' + str(encodings))
+
+    if filepath.endswith('.xls') or filepath.endswith('xlsx'):
         # try reading as excelsheet
         try:
             testread = pandas.read_excel(filepath)
             if len(testread.columns) < 2:
-                return pandas.DataFrame()
+                raise SyntaxError('file cannot be imported as excelsheet')
             return testread
         except:
-            return pandas.DataFrame()
+            pass
+    if filepath.endswith('.json') or filepath.endswith('.txt'):
+        # try reading as excelsheet
+        try:
+            with open(filepath, "r") as read_file:
+                jsonData = json.load(read_file)
+            try:
+                dataFrame = converter.exodusJsonToDataFrame(jsonData)
+                if dataFrame.shape[0] == 0:
+                    raise SyntaxError('file cannot be converted as exodus json')
+                return dataFrame
+            except:  # try other converters
+                pass
+        except:
+            pass
+
+    return pandas.DataFrame()
 
 
 def convertTrades(modelList, data, files):  # convert all read csv data to tradelist
     tradeList = core.TradeList()
     feeList = core.TradeList()
     matches = []
-    i = 0;
+    i = 0
     for frame in data:  # convert every DataFrame
         print('convert ' + files[i])
         heading = frame.columns.tolist()

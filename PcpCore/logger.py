@@ -12,7 +12,7 @@ import os.path
 class Logger():
     def __init__(self):
         self.filePath = None
-        self.logFile = None
+        # self.logFile = None
 
     def warning(self, message):
         warning = "## Warning: " + message + " !"
@@ -39,14 +39,14 @@ class Logger():
         return self
 
     def printToFile(self, message):
-        # if self.logFile:
-        try:
-            with open(self.filePath, 'a') as logFile:
-                logFile.write(message)
-                logFile.write('\n')
-                # logFile.close()
-        except Exception as ex:
-            print('error in logger: ' + str(ex))
+        if self.filePath:
+            try:
+                with open(self.filePath, 'a') as logFile:
+                    logFile.write(message)
+                    logFile.write('\n')
+                    # logFile.close()
+            except Exception as ex:
+                print('error in Logger.printToFile: ' + str(ex))
 
     def backupLogFile(self):
         if os.path.isfile(self.filePath):

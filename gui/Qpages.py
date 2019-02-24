@@ -209,7 +209,7 @@ class ImportSelectPage(SubPage):
     def __init__(self, parent, controller):
         super(ImportSelectPage, self).__init__(parent=parent, controller=controller)
 
-        # empty file buffer
+        # file types
         filetypes = settings.mySettings['import']['importFileTypes']
         self.filePattern = re.compile("^.*\." + filetypes + "$", re.IGNORECASE)
 
@@ -264,6 +264,10 @@ class ImportSelectPage(SubPage):
         self.pathEntry.setPath(qtcore.QDir.currentPath())
 
     def refresh(self):
+        # file types
+        filetypes = settings.mySettings['import']['importFileTypes']
+        self.filePattern = re.compile("^.*\." + filetypes + "$", re.IGNORECASE)
+
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
         self.controller.filesNotImported = 0
@@ -445,6 +449,8 @@ class ImportPreviewPage(SubPage):
         self.controller.showFrame(self.controller.IMPORTSELECTPAGEINDEX)
 
     def skipImport(self):
+        self.tradeListTemp.clearTrades()
+        self.feeListTemp.clearTrades()
         if (self.filePathIndex < len(self.controller.getFilesPath()) - 1):
             self.exchangeInput.setText("")
             self.filePathIndex += 1
