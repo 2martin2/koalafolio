@@ -139,8 +139,10 @@ def modelCallback_kraken(headernames, dataFrame):
     # "txid"	"ordertxid"	"pair"		"time"	"type"	"ordertype"	"price"		"cost"		"fee"	"vol"		"margin"	"misc"	"ledgers"
     # "x"	"x"			"XETHZEUR"	"x"		"buy"	"limit"		170.25000	851.25000	1.36200	5.00000000	0.00000		""		"x"
     # "x"	"x"			"XXBTZEUR"	"x"		"buy"	"limit"		5220.00000	3839.00171	6.14240	0.73544094	0.00000		""		"x"
+    # "x"	"x"			"ADAEUR"	"x"		"buy"	"limit"		0.0400000	1000.00171	1.14240	0.73544094	0.00000		""		"x"
 
     COIN_PAIR_REGEX = re.compile('^X([a-z|A-Z]*)Z([a-z|A-Z]*)$')
+    COIN_PAIR_REGEX_2 = re.compile('^([a-z|A-Z]{3})([a-z|A-Z]{3})$')
 
     for row in range(dataFrame.shape[0]):
 
@@ -150,7 +152,13 @@ def modelCallback_kraken(headernames, dataFrame):
             maincoin = coinPairMatch.group(2)
             dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
         else:
-            raise ValueError('kraken market pair does not fit the expected pattern')
+            coinPairMatch = COIN_PAIR_REGEX_2.match(dataFrame[headernames[2]][row])
+            if coinPairMatch:
+                subcoin = coinPairMatch.group(1)
+                maincoin = coinPairMatch.group(2)
+                dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
+            else:
+                raise ValueError('kraken market pair does not fit the expected pattern')
 
     headernames_m0 = []
     headernames_m0.append(headernames[3])  # date
@@ -495,7 +503,8 @@ def modelCallback_3(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% model 4 (bitcoin.de): Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees, (ID), (ZuAbgang), (amount_main_w_fees_fidor)
+# %% model 4 (bitcoin.de): Date, Type, Pair, amount_main_wo, amount_sub_wo, amount_main_w_fees, amount_sub_w_fees,
+# (ID), (ZuAbgang), (amount_main_w_fees_fidor), (einheit_amount_main_w_fee), (einheit_amount_main_wo_fee), (einheit kurs)
 def modelCallback_4(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
@@ -507,8 +516,8 @@ def modelCallback_4(headernames, dataFrame):
             if headernames[7]:
                 externId = str(dataFrame[headernames[7]][row])
             fees = dataFrame[headernames[8]][row]
-            coin = dataFrame[headernames[2]][row]
-            fee = createFee(date=date, amountStr=fees, coin=coin, exchange='', externId=externId)
+            coin = str(dataFrame[headernames[2]][row])
+            fee = createFee(date=date, amountStr=fees, coin=coin, exchange='bitcoinde', externId=externId)
             fee.generateID()
             feeList.addTrade(fee)
         else:
@@ -534,8 +543,12 @@ def modelCallback_4(headernames, dataFrame):
                 skippedRows += 1
                 continue
             # get coin
-            tempTrade_sub.coin = re.match(r'^(.*) / .*$', dataFrame[headernames[2]][row]).group(1).upper()
-            tempTrade_main.coin = re.match(r'^.* / (.*)$', dataFrame[headernames[2]][row]).group(1).upper()
+            if headernames[12]:
+                coinPairIndex = 12
+            else:
+                coinPairIndex = 2
+            tempTrade_sub.coin = re.match(r'^(.*) / .*$', dataFrame[headernames[coinPairIndex]][row]).group(1).upper()
+            tempTrade_main.coin = re.match(r'^.* / (.*)$', dataFrame[headernames[coinPairIndex]][row]).group(1).upper()
             # swap Coin Name
             swapCoinName(tempTrade_sub)
             swapCoinName(tempTrade_main)

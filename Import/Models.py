@@ -157,12 +157,15 @@ index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
 IMPORT_MODEL_LIST[index].modelHeaders = ['date', 'type', 'pair', 'amount_main_wo_fee', 'amount_sub_wo_fee',
                                          'amount_main_w_fee', 'amount_main_w_fee_fidor', 'amount_sub_w_fee', 'id']
-IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.DATE_REGEX, pat.TYPE_REGEX, pat.PAIR_REGEX_4,
+IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.DATE_REGEX, pat.TYPE_REGEX, pat.BITCOIN_PAIR_REGEX_4,
                                               pat.AMOUNT_MAIN_WO_FEE_REGEX_4, pat.AMOUNT_SUB_WO_FEE_REGEX_4,
                                               pat.AMOUNT_MAIN_W_FEE_REGEX_4, pat.AMOUNT_SUB_W_FEE_REGEX_4]
-IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded + [pat.ID_REGEX,
-                                                                                        pat.AMOUNT_ZUABGANG_REGEX_4,
-                                                                                        pat.AMOUNT_MAIN_W_FEE_FIDOR_REGEX_4]
+IMPORT_MODEL_LIST[index].headerRegexAll = \
+    IMPORT_MODEL_LIST[index].headerRegexNeeded + [pat.ID_REGEX, pat.AMOUNT_ZUABGANG_REGEX_4,
+                                                  pat.AMOUNT_MAIN_W_FEE_FIDOR_REGEX_4,
+                                                  pat.BITCOINDE_EINHEIT_AMOUNT_MAIN_WO_FEE_REGEX,
+                                                  pat.BITCOINDE_EINHEIT_AMOUNT_MAIN_W_FEE_REGEX,
+                                                  pat.BITCOINDE_EINHEIT_KURS_REGEX]
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_4
 
 # %% model 5: Date, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)

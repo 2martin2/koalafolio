@@ -29,12 +29,15 @@ AMOUNT_SUB_REGEX_PATTERN_2 = r'^(T|t)oken(A|a)mount$'
 COIN_REGEX_PATTERN_3 = r'^((C|c)urrency)$'  # Coin
 AMOUNT_REGEX_PATTERN_3 = r'^((A|a)mount)|((S|s)ize)$'
 # model 4
-PAIR_REGEX_PATTERN_4 = r'^Währungen$'  # coinpair
-AMOUNT_MAIN_WO_FEE_REGEX_PATTERN_4 = r'^EUR vor Gebühr$'
-AMOUNT_SUB_WO_FEE_REGEX_PATTERN_4 = r'^(?!EUR).* vor Gebühr$'
-AMOUNT_MAIN_W_FEE_REGEX_PATTERN_4 = r'^EUR nach .*Gebühr$'
-AMOUNT_MAIN_W_FEE_FIDOR_REGEX_PATTERN_4 = r'^EUR nach .*Fidor.*Gebühr$'
-AMOUNT_SUB_W_FEE_REGEX_PATTERN_4 = r'^(?!EUR).* nach .*Gebühr$'
+BITCOIN_PAIR_REGEX_PATTERN_4 = r'^Währung(en|)$'  # coinpair
+BITCOINDE_EINHEIT_KURS = r'^Einheit \(Kurs\)$'
+AMOUNT_MAIN_WO_FEE_REGEX_PATTERN_4 = r'^(Menge|EUR) vor Gebühr$'
+EINHEIT_AMOUNT_MAIN_WO_FEE_REGEX_PATTERN_4 = r'^Einheit \(Menge vor Gebühr\)$'
+AMOUNT_SUB_WO_FEE_REGEX_PATTERN_4 = r'^(?!(EUR|Menge)).* vor Gebühr$'
+AMOUNT_MAIN_W_FEE_REGEX_PATTERN_4 = r'^(Menge|EUR) nach Bitcoin\.de-Gebühr$'
+EINHEIT_AMOUNT_MAIN_W_FEE_REGEX_PATTERN_4 = r'^Einheit \(Menge nach .*Gebühr\)$'
+AMOUNT_MAIN_W_FEE_FIDOR_REGEX_PATTERN_4 = r'^EUR nach Bitcoin\.de- und Fidor-Gebühr$'
+AMOUNT_SUB_W_FEE_REGEX_PATTERN_4 = r'^(?!(EUR|Menge)).* nach .*Gebühr$'
 AMOUNT_ZUABGANG_REGEX_PATTERN_4 = r'^Zu.*Abgang$'
 # model 5
 PAIR_REGEX_PATTERN_5 = PAIR_REGEX_PATTERN_0
@@ -110,6 +113,7 @@ POLONIEX_ORDERNUMBER_REGEX = re.compile(r'^Order Number$')
 POLONIEX_BASETOTALLESSFEE_REGEX = re.compile(r'^Base Total Less Fee$')
 POLONIEX_QUOTETOTALLESSFEE_REGEX = re.compile(r'^Quote Total Less Fee$')
 
+
 # general
 ID_REGEX = re.compile(ID_REGEX_PATTERN)
 DATE_REGEX = re.compile(DATE_REGEX_PATTERN)
@@ -136,13 +140,41 @@ AMOUNT_SUB_REGEX_2 = re.compile(AMOUNT_SUB_REGEX_PATTERN_2)
 COIN_REGEX_3 = re.compile(COIN_REGEX_PATTERN_3)
 AMOUNT_REGEX_3 = re.compile(AMOUNT_REGEX_PATTERN_3)
 # model 4
-PAIR_REGEX_4 = re.compile(PAIR_REGEX_PATTERN_4)
+BITCOIN_PAIR_REGEX_4 = re.compile(BITCOIN_PAIR_REGEX_PATTERN_4)
+BITCOINDE_EINHEIT_KURS_REGEX = re.compile(BITCOINDE_EINHEIT_KURS)
 AMOUNT_MAIN_WO_FEE_REGEX_4 = re.compile(AMOUNT_MAIN_WO_FEE_REGEX_PATTERN_4)
+BITCOINDE_EINHEIT_AMOUNT_MAIN_WO_FEE_REGEX = re.compile(EINHEIT_AMOUNT_MAIN_WO_FEE_REGEX_PATTERN_4)
 AMOUNT_SUB_WO_FEE_REGEX_4 = re.compile(AMOUNT_SUB_WO_FEE_REGEX_PATTERN_4)
 AMOUNT_MAIN_W_FEE_REGEX_4 = re.compile(AMOUNT_MAIN_W_FEE_REGEX_PATTERN_4)
+BITCOINDE_EINHEIT_AMOUNT_MAIN_W_FEE_REGEX = re.compile(EINHEIT_AMOUNT_MAIN_W_FEE_REGEX_PATTERN_4)
 AMOUNT_MAIN_W_FEE_FIDOR_REGEX_4 = re.compile(AMOUNT_MAIN_W_FEE_FIDOR_REGEX_PATTERN_4)
 AMOUNT_SUB_W_FEE_REGEX_4 = re.compile(AMOUNT_SUB_W_FEE_REGEX_PATTERN_4)
 AMOUNT_ZUABGANG_REGEX_4 = re.compile(AMOUNT_ZUABGANG_REGEX_PATTERN_4)
+
+# # bitcoinde 1
+# # Datum,Typ,Währung,Referenz,BTC-Adresse,Kurs,Einheit (Kurs),BTC vor Gebühr,Menge vor Gebühr,Einheit (Menge vor Gebühr),BTC nach Bitcoin.de-Gebühr,Menge nach Bitcoin.de-Gebühr,Einheit (Menge nach Bitcoin.de-Gebühr),EUR nach Bitcoin.de- und Fidor-Gebühr,Zu- / Abgang,Kontostand
+# BITCOINDE_DATUM_REGEX = re.compile(r'^Datum$')
+# BITCOINDE_TYP_REGEX = re.compile(r'^Typ$')
+# BITCOINDE_WAERUNG_REGEX = re.compile(r'^Währung(en|)$')
+# BITCOINDE_REFERENZ_REGEX = re.compile(r'^Referenz$')
+# BITCOINDE_ADRESSE_REGEX = re.compile(r'^Adresse$')
+# BITCOINDE_KURS_REGEX = re.compile(r'^Kurs$')
+# BITCOINDE_EINEHIT_KURS_REGEX = re.compile(r'^Einheit (Kurs)$')
+# BITCOINDE_BTC_VOR_FEE_REGEX = re.compile(r'^BTC vor Gebühr$')
+# BITCOINDE_MENGE_FOR_FEE_REGEX = re.compile(r'^Menge vor Gebühr$')
+# BITCOINDE_EINHEIT_MENGE_FOR_FEE_REGEX = re.compile(r'^Einheit (Menge vor Gebühr)$')
+# BITCOINDE_BTC_NACH_BT_FEE_REGEX = re.compile(r'^BTC nach Bitcoin.de-Gebühr$')
+# BITCOINDE_MENGE_NACH_BT_FEE_REGEX = re.compile(r'^Menge nach Bitcoin.de-Gebühr$')
+# BITCOINDE_EEINHEIT_MENGE_NACH_BT_FEE_REGEX = re.compile(r'^Einheit (Menge nach Bitcoin.de-Gebühr)$')
+# BITCOINDE_EUR_NACH_BTFD_FEE_REGEX = re.compile(r'^EUR nach Bitcoin.*und Fidor.*$')
+# BITCOINDE_ZU_ABGANG_REGEX = re.compile(r'^Zu- / Abgang$')
+# BITCOINDE_KONTOSTAND_REGEX = re.compile(r'^Kontostand$')
+#
+# # bitcoinde 2
+# # Datum;Typ;Währungen;Referenz;Kurs;"BTC vor Gebühr";"EUR vor Gebühr";"BTC nach Bitcoin.de-Gebühr";"EUR nach Bitcoin.de-Gebühr";"EUR nach Bitcoin.de- und Fidor-Gebühr";"Zu- / Abgang";Kontostand
+# BITCOINDE_EUR_VOR_FEE_REGEX = re.compile(r'^"EUR vor Gebühr"$')
+# BITCOINDE_EUR_NACH_BTFD_FEE_REGEX = re.compile(r'^EUR nach Bitcoin\.de-Gebühr$')
+
 # model 5
 PAIR_REGEX_5 = re.compile(PAIR_REGEX_PATTERN_5)
 PRICE_AVERAGE_REGEX_5 = re.compile(PRICE_AVERAGE_REGEX_PATTERN_5)

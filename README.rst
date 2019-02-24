@@ -14,20 +14,21 @@ Installation
    
 trade import
 ---------
- import trades from exchanges using csv files
+ import trades from exchanges using their export files
   supported exchanges (so far):
-   - binance
-   - bitcoinde
-   - bitfinex
-   - bitstamp
-   - bittrex
-   - coinbase
-   - hitbtc
-   - idex
-   - kraken
-   - kuCoin
-   - okex
-   - poloniex
+   - binance (xls)
+   - bitcoinde (csv)
+   - bitfinex (csv)
+   - bitstamp (csv)
+   - bittrex (csv)
+   - coinbase (csv)
+   - hitbtc (csv)
+   - idex (csv)
+   - kraken (csv)
+   - kuCoin (csv)
+   - okex (csv)
+   - poloniex (csv)
+   - exodus (json)
    - others could work as well but not tested
 
 portfolio
