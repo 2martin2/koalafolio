@@ -59,7 +59,7 @@ def updateCurrentCoinValues(coinList):
                 try:
                     price = core.CoinValue().fromDict(prices[coin.coinname])
                 except Exception as ex:
-                    print('error in updateCurrentCoinValues: ' + str(ex))
+                    print('error in updateCurrentCoinValues: ' + str(ex) + '; ' + str(prices))
                 else:
                     coin.currentValue.value = price.mult(coin.balance)
             return True
