@@ -85,6 +85,36 @@ class CoinValue():
     def __setitem__(self, key, value):
         self.value[key] = value
 
+    def __lt__(self, other):
+        val = 1
+        for key in self.value:
+            if key in other.value and self.value[key] != 0 and other.value[key] != 0:
+                val *= self.value[key]/other.value[key]
+        return val < 1
+
+    def __le__(self, other):
+        val = 1
+        for key in self.value:
+            if key in other.value:
+                val *= self.value[key] / other.value[key]
+        return val <= 1
+
+    def __eq__(self, other):
+        val = 1
+        for key in self.value:
+            if key in other.value:
+                val *= self.value[key] / other.value[key]
+        return val == 1
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __ge__(self, other):
+        return not self.__lt__(other)
+
+    def __gt__(self, other):
+        return not self.__le__(other)
+
     # add another CoinValue to the existing one
     def add(self, other):
         for key in self.value:
@@ -190,6 +220,10 @@ class Trade:
     def setAmount(self, amount):
         self.value = self.value.div(self.amount).mult(amount)
         self.amount = amount
+
+    def mergeTrade(self, trade):
+        self.value.add(trade.value)
+        self.amount = self.amount + trade.amount
 
     def toList(self):
         return [self.tradeID, self.date, self.tradeType, self.coin, self.amount] + [self.value.value[key] for key in
@@ -362,6 +396,13 @@ class TradeList:
                     if (not trade.valueLoaded) or partner.isFiat():
                         trade.value = partner.value.mult(-1)
                         trade.valueLoaded = True
+                    # if both values loaded and both trades are crypto use the same value
+                    elif not trade.isFiat():
+                        if trade.value < partner.value:  # use smaller value (tax will be paid later)
+                            partner.value = trade.value.mult(-1)
+                        else:
+                            trade.value = partner.value.mult(-1)
+
 
     def getTradeById(self, tradeId):
         for trade in self.trades:
@@ -426,7 +467,7 @@ class TradeMatcher:
             sellsTemp = [self.sellsBuffer[0]]
             for sell in self.sellsBuffer[1:]:
                 if sellsTemp[-1].date == sell.date:
-                    sellsTemp[-1].setAmount(sellsTemp[-1].amount + sell.amount)
+                    sellsTemp[-1].mergeTrade(sell)
                 else:
                     sellsTemp.append(sell)
             self.sellsBuffer = sellsTemp
@@ -434,7 +475,7 @@ class TradeMatcher:
             buysTemp = [self.buysBuffer[0]]
             for buy in self.buysBuffer[1:]:
                 if buysTemp[-1].date == buy.date:
-                    buysTemp[-1].setAmount(buysTemp[-1].amount + buy.amount)
+                    buysTemp[-1].mergeTrade(buy)
                 else:
                     buysTemp.append(buy)
             self.buysBuffer = buysTemp
