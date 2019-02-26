@@ -4,30 +4,30 @@ import re
 
 # %% header patterns
 # general
-ID_REGEX_PATTERN = r'^(((T|t)ransaction)|((T|t)rade)|((O|o)rder)|())( *|_)(((I|i)(D|d))|(Uu(I|i)(D|d))|((N|n)umber)|((N|n)ummer)|(Referenz))|#$'  # id
-DATE_REGEX_PATTERN = r'^(((D|d)ate.*)|Datum|((T|t)ime(|stamp))|((C|c)losed)|((U|u)pdated))$'  # date
-TYPE_REGEX_PATTERN = r'^((((T|t)ransaction)|((T|t)rade)|((O|o)rder)|())( *|_)(((T|t)yp(|e))|((S|s)ide))|((S|s)ell/(B|b)uy))$'  # type
-FEE_REGEX_PATTERN = r'^(((F|f)ee(|s))|((C|c)ommission)(|(P|p)aid))$'  # fee
-FEECOIN_REGEX_PATTERN = r'^((((F|f)ee)|((C|c)ommission))(| *)(((C|c)oin)|((C|c)urrency)))|((C|c)oin\.3)$'  # feecoin
-STATUS_REGEX_PATTERN = r'^((S|s)tatus)$'
+ID_REGEX_PATTERN = r'^((transaction)|(trade)|(order)|())( *|_)((id)|(uuid)|(number)|(nummer)|(referenz))|#$'  # id
+DATE_REGEX_PATTERN = r'^((date.*)|datum|(time(|stamp))|(closed)|(updated))$'  # date
+TYPE_REGEX_PATTERN = r'^(((transaction)|(trade)|(order)|())( *|_)((typ(|e))|(side))|(sell/buy))$'  # type
+FEE_REGEX_PATTERN = r'^((fee(|s))|(commission)(|paid))$'  # fee
+FEECOIN_REGEX_PATTERN = r'^(((fee)|(commission))(| *)((coin)|(currency)))|(coin\.3)$'  # feecoin
+STATUS_REGEX_PATTERN = r'^(status)$'
 
 # model 0
-PAIR_REGEX_PATTERN_0 = r'^((((T|t)rading)|)(| *)((P|p)air)|((C|c)urrency(|s))|((M|m)arket)|((C|c)oins)|((I|i)nstrument))$'  # coinpair
-PRICE_AVERAGE_REGEX_PATTERN_0 = r'^(((F|f)illed)|)(| *)(((P|p)rice))(|(| *)(P|p)er(| *)(C|c)oin)$'
-AMOUNT_MAIN_REGEX_PATTERN_0 = r'^(((S|s)ub)|)(((T|t)otal)|((V|v)alue)|((V|v)olume))$'
-AMOUNT_SUB_REGEX_PATTERN_0 = r'^((E|e)xecuted|)(| *)(((A|a)m+ount)|((Q|q)uantity)|((F|f)illed))$'
+PAIR_REGEX_PATTERN_0 = r'^(((trading)|)(| *)(pair)|(currency(|s))|(market)|(coins)|(instrument))$'  # coinpair
+PRICE_AVERAGE_REGEX_PATTERN_0 = r'^((filled)|)(| *)((price))(|(| *)per(| *)coin)$'
+AMOUNT_MAIN_REGEX_PATTERN_0 = r'^((sub)|)((total)|(value)|(volume))$'
+AMOUNT_SUB_REGEX_PATTERN_0 = r'^(executed|)(| *)((am+ount)|(quantity)|(filled))$'
 # model 1
-PAIR_REGEX_PATTERN_1 = r'^(E|e)xchange$'
-PRICE_AVERAGE_REGEX_PATTERN_1 = r'^(L|l)imit$'
-AMOUNT_MAIN_REGEX_PATTERN_1 = r'^((P|p)rice)$'
+PAIR_REGEX_PATTERN_1 = r'^exchange$'
+PRICE_AVERAGE_REGEX_PATTERN_1 = r'^limit$'
+AMOUNT_MAIN_REGEX_PATTERN_1 = r'^(price)$'
 AMOUNT_SUB_REGEX_PATTERN_1 = AMOUNT_SUB_REGEX_PATTERN_0
 # model 2
 PAIR_REGEX_PATTERN_2 = PAIR_REGEX_PATTERN_0
-AMOUNT_MAIN_REGEX_PATTERN_2 = r'^((E|e)ther(A|a)mount)$'
-AMOUNT_SUB_REGEX_PATTERN_2 = r'^(T|t)oken(A|a)mount$'
+AMOUNT_MAIN_REGEX_PATTERN_2 = r'^(etheramount)$'
+AMOUNT_SUB_REGEX_PATTERN_2 = r'^tokenamount$'
 # model 3
-COIN_REGEX_PATTERN_3 = r'^((C|c)urrency)$'  # Coin
-AMOUNT_REGEX_PATTERN_3 = r'^((A|a)mount)|((S|s)ize)$'
+COIN_REGEX_PATTERN_3 = r'^(currency)$'  # Coin
+AMOUNT_REGEX_PATTERN_3 = r'^(amount)|(size)$'
 # model 4
 BITCOIN_PAIR_REGEX_PATTERN_4 = r'^Währung(en|)$'  # coinpair
 BITCOINDE_EINHEIT_KURS = r'^Einheit \(Kurs\)$'
@@ -46,110 +46,110 @@ AMOUNT_MAIN_REGEX_PATTERN_5 = AMOUNT_MAIN_REGEX_PATTERN_0
 AMOUNT_SUB_REGEX_PATTERN_5 = AMOUNT_SUB_REGEX_PATTERN_0
 
 # %% model tradeList: no,id,date,type,coin,amount,value,valueLoaded,tradePartnerId,exchange,externId,wallet
-TRADELIST_ID_REGEX = re.compile(r'^id$')
-TRADELIST_DATE_REGEX = re.compile(r'^date$')
-TRADELIST_TYPE_REGEX = re.compile(r'^type$')
-TRADELIST_COIN_REGEX = re.compile(r'^coin$')
-TRADELIST_AMOUNT_REGEX = re.compile(r'^amount$')
-TRADELIST_VALUE_REGEX = re.compile(r'^value(.{1,5})$')
-TRADELIST_VALUELOADED_REGEX = re.compile(r'^valueLoaded$')
-TRADELIST_TRADEPARTNERID_REGEX = re.compile(r'^tradePartnerId$')
-TRADELIST_EXCHANGE_REGEX = re.compile(r'^exchange$')
-TRADELIST_EXTERNID_REGEX = re.compile(r'^externId$')
-TRADELIST_WALLET_REGEX = re.compile(r'^wallet$')
+TRADELIST_ID_REGEX = re.compile(r'^id$', re.IGNORECASE)
+TRADELIST_DATE_REGEX = re.compile(r'^date$', re.IGNORECASE)
+TRADELIST_TYPE_REGEX = re.compile(r'^type$', re.IGNORECASE)
+TRADELIST_COIN_REGEX = re.compile(r'^coin$', re.IGNORECASE)
+TRADELIST_AMOUNT_REGEX = re.compile(r'^amount$', re.IGNORECASE)
+TRADELIST_VALUE_REGEX = re.compile(r'^value(.{1,5})$', re.IGNORECASE)
+TRADELIST_VALUELOADED_REGEX = re.compile(r'^valueLoaded$', re.IGNORECASE)
+TRADELIST_TRADEPARTNERID_REGEX = re.compile(r'^tradePartnerId$', re.IGNORECASE)
+TRADELIST_EXCHANGE_REGEX = re.compile(r'^exchange$', re.IGNORECASE)
+TRADELIST_EXTERNID_REGEX = re.compile(r'^externId$', re.IGNORECASE)
+TRADELIST_WALLET_REGEX = re.compile(r'^wallet$', re.IGNORECASE)
 
 # %% regex # XXX_$1_REGEX = re.compile\(r\'\^$1\$\'\)
 
 # model exodus DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID
-EXODUS_DATE_REGEX = re.compile(r'^DATE$')
-EXODUS_TYPE_REGEX = re.compile(r'^TYPE$')
-EXODUS_OUTAMOUNT_REGEX = re.compile(r'^OUTAMOUNT$')
-EXODUS_OUTCURRENCY_REGEX = re.compile(r'^OUTCURRENCY$')
-EXODUS_FEEAMOUNT_REGEX = re.compile(r'^FEEAMOUNT$')
-EXODUS_FEECURRENCY_REGEX = re.compile(r'^FEECURRENCY$')
-EXODUS_OUTTXID_REGEX = re.compile(r'^OUTTXID$')
-EXODUS_OUTTXURL_REGEX = re.compile(r'^OUTTXURL$')
-EXODUS_INAMOUNT_REGEX = re.compile(r'^INAMOUNT$')
-EXODUS_INCURRENCY_REGEX = re.compile(r'^INCURRENCY$')
-EXODUS_INTXID_REGEX = re.compile(r'^INTXID$')
-EXODUS_INTXURL_REGEX = re.compile(r'^INTXURL$')
-EXODUS_ORDERID_REGEX = re.compile(r'^ORDERID$')
+EXODUS_DATE_REGEX = re.compile(r'^DATE$', re.IGNORECASE)
+EXODUS_TYPE_REGEX = re.compile(r'^TYPE$', re.IGNORECASE)
+EXODUS_OUTAMOUNT_REGEX = re.compile(r'^OUTAMOUNT$', re.IGNORECASE)
+EXODUS_OUTCURRENCY_REGEX = re.compile(r'^OUTCURRENCY$', re.IGNORECASE)
+EXODUS_FEEAMOUNT_REGEX = re.compile(r'^FEEAMOUNT$', re.IGNORECASE)
+EXODUS_FEECURRENCY_REGEX = re.compile(r'^FEECURRENCY$', re.IGNORECASE)
+EXODUS_OUTTXID_REGEX = re.compile(r'^OUTTXID$', re.IGNORECASE)
+EXODUS_OUTTXURL_REGEX = re.compile(r'^OUTTXURL$', re.IGNORECASE)
+EXODUS_INAMOUNT_REGEX = re.compile(r'^INAMOUNT$', re.IGNORECASE)
+EXODUS_INCURRENCY_REGEX = re.compile(r'^INCURRENCY$', re.IGNORECASE)
+EXODUS_INTXID_REGEX = re.compile(r'^INTXID$', re.IGNORECASE)
+EXODUS_INTXURL_REGEX = re.compile(r'^INTXURL$', re.IGNORECASE)
+EXODUS_ORDERID_REGEX = re.compile(r'^ORDERID$', re.IGNORECASE)
 
 # model kraken ["txid","ordertxid","pair","time","type","ordertype","price","cost","fee","vol","margin","misc","ledgers"]
-KRAKEN_TXID_REGEX = re.compile(r'^txid$')
-KRAKEN_ORDERTXID_REGEX = re.compile(r'^ordertxid$')
-KRAKEN_PAIR_REGEX = re.compile(r'^pair$')
-KRAKEN_TIME_REGEX = re.compile(r'^time$')
-KRAKEN_TYPE_REGEX = re.compile(r'^type$')
-KRAKEN_ORDERTYPE_REGEX = re.compile(r'^ordertype$')
-KRAKEN_PRICE_REGEX = re.compile(r'^price$')
-KRAKEN_COST_REGEX = re.compile(r'^cost$')
-KRAKEN_FEE_REGEX = re.compile(r'^fee$')
-KRAKEN_VOL_REGEX = re.compile(r'^vol$')
-KRAKEN_MARGIN_REGEX = re.compile(r'^margin$')
-KRAKEN_MISC_REGEX = re.compile(r'^misc$')
-KRAKEN_LEDGERS_REGEX = re.compile(r'^ledgers$')
+KRAKEN_TXID_REGEX = re.compile(r'^txid$', re.IGNORECASE)
+KRAKEN_ORDERTXID_REGEX = re.compile(r'^ordertxid$', re.IGNORECASE)
+KRAKEN_PAIR_REGEX = re.compile(r'^pair$', re.IGNORECASE)
+KRAKEN_TIME_REGEX = re.compile(r'^time$', re.IGNORECASE)
+KRAKEN_TYPE_REGEX = re.compile(r'^type$', re.IGNORECASE)
+KRAKEN_ORDERTYPE_REGEX = re.compile(r'^ordertype$', re.IGNORECASE)
+KRAKEN_PRICE_REGEX = re.compile(r'^price$', re.IGNORECASE)
+KRAKEN_COST_REGEX = re.compile(r'^cost$', re.IGNORECASE)
+KRAKEN_FEE_REGEX = re.compile(r'^fee$', re.IGNORECASE)
+KRAKEN_VOL_REGEX = re.compile(r'^vol$', re.IGNORECASE)
+KRAKEN_MARGIN_REGEX = re.compile(r'^margin$', re.IGNORECASE)
+KRAKEN_MISC_REGEX = re.compile(r'^misc$', re.IGNORECASE)
+KRAKEN_LEDGERS_REGEX = re.compile(r'^ledgers$', re.IGNORECASE)
 
 # model binance ['Date(UTC)', 'Market', 'Type', 'Price', 'Amount', 'Total', 'Fee', 'Fee Coin']
-BINANCE_DATE_REGEX = re.compile(r'^Date\(\w*\)$')
-BINANCE_MARKET_REGEX = re.compile(r'^Market$')
-BINANCE_TYPE_REGEX = re.compile(r'^Type$')
-BINANCE_PRICE_REGEX = re.compile(r'^Price$')
-BINANCE_AMOUNT_REGEX = re.compile(r'^Amount$')
-BINANCE_TOTAL_REGEX = re.compile(r'^Total$')
-BINANCE_FEE_REGEX = re.compile(r'^Fee$')
-BINANCE_FEECOIN_REGEX = re.compile(r'^Fee Coin$')
+BINANCE_DATE_REGEX = re.compile(r'^Date\(\w*\)$', re.IGNORECASE)
+BINANCE_MARKET_REGEX = re.compile(r'^Market$', re.IGNORECASE)
+BINANCE_TYPE_REGEX = re.compile(r'^Type$', re.IGNORECASE)
+BINANCE_PRICE_REGEX = re.compile(r'^Price$', re.IGNORECASE)
+BINANCE_AMOUNT_REGEX = re.compile(r'^Amount$', re.IGNORECASE)
+BINANCE_TOTAL_REGEX = re.compile(r'^Total$', re.IGNORECASE)
+BINANCE_FEE_REGEX = re.compile(r'^Fee$', re.IGNORECASE)
+BINANCE_FEECOIN_REGEX = re.compile(r'^Fee Coin$', re.IGNORECASE)
 
 # model poloniex ['Date', 'Market', 'Category', 'Type', 'Price', 'Amount', 'Total', 'Fee', 'Order Number', 'Base Total Less Fee', 'Quote Total Less Fee']
-POLONIEX_DATE_REGEX = re.compile(r'^Date$')
-POLONIEX_MARKET_REGEX = re.compile(r'^Market$')
-POLONIEX_CATEGORY_REGEX = re.compile(r'^Category$')
-POLONIEX_TYPE_REGEX = re.compile(r'^Type$')
-POLONIEX_PRICE_REGEX = re.compile(r'^Price$')
-POLONIEX_AMOUNT_REGEX = re.compile(r'^Amount$')
-POLONIEX_TOTAL_REGEX = re.compile(r'^Total$')
-POLONIEX_FEE_REGEX = re.compile(r'^Fee$')
-POLONIEX_ORDERNUMBER_REGEX = re.compile(r'^Order Number$')
-POLONIEX_BASETOTALLESSFEE_REGEX = re.compile(r'^Base Total Less Fee$')
-POLONIEX_QUOTETOTALLESSFEE_REGEX = re.compile(r'^Quote Total Less Fee$')
+POLONIEX_DATE_REGEX = re.compile(r'^Date$', re.IGNORECASE)
+POLONIEX_MARKET_REGEX = re.compile(r'^Market$', re.IGNORECASE)
+POLONIEX_CATEGORY_REGEX = re.compile(r'^Category$', re.IGNORECASE)
+POLONIEX_TYPE_REGEX = re.compile(r'^Type$', re.IGNORECASE)
+POLONIEX_PRICE_REGEX = re.compile(r'^Price$', re.IGNORECASE)
+POLONIEX_AMOUNT_REGEX = re.compile(r'^Amount$', re.IGNORECASE)
+POLONIEX_TOTAL_REGEX = re.compile(r'^Total$', re.IGNORECASE)
+POLONIEX_FEE_REGEX = re.compile(r'^Fee$', re.IGNORECASE)
+POLONIEX_ORDERNUMBER_REGEX = re.compile(r'^Order Number$', re.IGNORECASE)
+POLONIEX_BASETOTALLESSFEE_REGEX = re.compile(r'^Base Total Less Fee$', re.IGNORECASE)
+POLONIEX_QUOTETOTALLESSFEE_REGEX = re.compile(r'^Quote Total Less Fee$', re.IGNORECASE)
 
 
 # general
-ID_REGEX = re.compile(ID_REGEX_PATTERN)
-DATE_REGEX = re.compile(DATE_REGEX_PATTERN)
-TYPE_REGEX = re.compile(TYPE_REGEX_PATTERN)
-FEE_REGEX = re.compile(FEE_REGEX_PATTERN)
-FEECOIN_REGEX = re.compile(FEECOIN_REGEX_PATTERN)
-STATUS_REGEX = re.compile(STATUS_REGEX_PATTERN)
+ID_REGEX = re.compile(ID_REGEX_PATTERN, re.IGNORECASE)
+DATE_REGEX = re.compile(DATE_REGEX_PATTERN, re.IGNORECASE)
+TYPE_REGEX = re.compile(TYPE_REGEX_PATTERN, re.IGNORECASE)
+FEE_REGEX = re.compile(FEE_REGEX_PATTERN, re.IGNORECASE)
+FEECOIN_REGEX = re.compile(FEECOIN_REGEX_PATTERN, re.IGNORECASE)
+STATUS_REGEX = re.compile(STATUS_REGEX_PATTERN, re.IGNORECASE)
 
 # model 0
-PAIR_REGEX_0 = re.compile(PAIR_REGEX_PATTERN_0)
-PRICE_AVERAGE_REGEX_0 = re.compile(PRICE_AVERAGE_REGEX_PATTERN_0)
-AMOUNT_MAIN_REGEX_0 = re.compile(AMOUNT_MAIN_REGEX_PATTERN_0)
-AMOUNT_SUB_REGEX_0 = re.compile(AMOUNT_SUB_REGEX_PATTERN_0)
+PAIR_REGEX_0 = re.compile(PAIR_REGEX_PATTERN_0, re.IGNORECASE)
+PRICE_AVERAGE_REGEX_0 = re.compile(PRICE_AVERAGE_REGEX_PATTERN_0, re.IGNORECASE)
+AMOUNT_MAIN_REGEX_0 = re.compile(AMOUNT_MAIN_REGEX_PATTERN_0, re.IGNORECASE)
+AMOUNT_SUB_REGEX_0 = re.compile(AMOUNT_SUB_REGEX_PATTERN_0, re.IGNORECASE)
 # model 1
-PAIR_REGEX_1 = re.compile(PAIR_REGEX_PATTERN_1)
-PRICE_AVERAGE_REGEX_1 = re.compile(PRICE_AVERAGE_REGEX_PATTERN_1)
-AMOUNT_MAIN_REGEX_1 = re.compile(AMOUNT_MAIN_REGEX_PATTERN_1)
-AMOUNT_SUB_REGEX_1 = re.compile(AMOUNT_SUB_REGEX_PATTERN_1)
+PAIR_REGEX_1 = re.compile(PAIR_REGEX_PATTERN_1, re.IGNORECASE)
+PRICE_AVERAGE_REGEX_1 = re.compile(PRICE_AVERAGE_REGEX_PATTERN_1, re.IGNORECASE)
+AMOUNT_MAIN_REGEX_1 = re.compile(AMOUNT_MAIN_REGEX_PATTERN_1, re.IGNORECASE)
+AMOUNT_SUB_REGEX_1 = re.compile(AMOUNT_SUB_REGEX_PATTERN_1, re.IGNORECASE)
 # model 2
-PAIR_REGEX_2 = re.compile(PAIR_REGEX_PATTERN_2)
-AMOUNT_MAIN_REGEX_2 = re.compile(AMOUNT_MAIN_REGEX_PATTERN_2)
-AMOUNT_SUB_REGEX_2 = re.compile(AMOUNT_SUB_REGEX_PATTERN_2)
+PAIR_REGEX_2 = re.compile(PAIR_REGEX_PATTERN_2, re.IGNORECASE)
+AMOUNT_MAIN_REGEX_2 = re.compile(AMOUNT_MAIN_REGEX_PATTERN_2, re.IGNORECASE)
+AMOUNT_SUB_REGEX_2 = re.compile(AMOUNT_SUB_REGEX_PATTERN_2, re.IGNORECASE)
 # model 3
-COIN_REGEX_3 = re.compile(COIN_REGEX_PATTERN_3)
-AMOUNT_REGEX_3 = re.compile(AMOUNT_REGEX_PATTERN_3)
+COIN_REGEX_3 = re.compile(COIN_REGEX_PATTERN_3, re.IGNORECASE)
+AMOUNT_REGEX_3 = re.compile(AMOUNT_REGEX_PATTERN_3, re.IGNORECASE)
 # model 4
-BITCOIN_PAIR_REGEX_4 = re.compile(BITCOIN_PAIR_REGEX_PATTERN_4)
+BITCOIN_PAIR_REGEX_4 = re.compile(BITCOIN_PAIR_REGEX_PATTERN_4, re.IGNORECASE)
 BITCOINDE_EINHEIT_KURS_REGEX = re.compile(BITCOINDE_EINHEIT_KURS)
-AMOUNT_MAIN_WO_FEE_REGEX_4 = re.compile(AMOUNT_MAIN_WO_FEE_REGEX_PATTERN_4)
-BITCOINDE_EINHEIT_AMOUNT_MAIN_WO_FEE_REGEX = re.compile(EINHEIT_AMOUNT_MAIN_WO_FEE_REGEX_PATTERN_4)
-AMOUNT_SUB_WO_FEE_REGEX_4 = re.compile(AMOUNT_SUB_WO_FEE_REGEX_PATTERN_4)
-AMOUNT_MAIN_W_FEE_REGEX_4 = re.compile(AMOUNT_MAIN_W_FEE_REGEX_PATTERN_4)
-BITCOINDE_EINHEIT_AMOUNT_MAIN_W_FEE_REGEX = re.compile(EINHEIT_AMOUNT_MAIN_W_FEE_REGEX_PATTERN_4)
-AMOUNT_MAIN_W_FEE_FIDOR_REGEX_4 = re.compile(AMOUNT_MAIN_W_FEE_FIDOR_REGEX_PATTERN_4)
-AMOUNT_SUB_W_FEE_REGEX_4 = re.compile(AMOUNT_SUB_W_FEE_REGEX_PATTERN_4)
-AMOUNT_ZUABGANG_REGEX_4 = re.compile(AMOUNT_ZUABGANG_REGEX_PATTERN_4)
+AMOUNT_MAIN_WO_FEE_REGEX_4 = re.compile(AMOUNT_MAIN_WO_FEE_REGEX_PATTERN_4, re.IGNORECASE)
+BITCOINDE_EINHEIT_AMOUNT_MAIN_WO_FEE_REGEX = re.compile(EINHEIT_AMOUNT_MAIN_WO_FEE_REGEX_PATTERN_4, re.IGNORECASE)
+AMOUNT_SUB_WO_FEE_REGEX_4 = re.compile(AMOUNT_SUB_WO_FEE_REGEX_PATTERN_4, re.IGNORECASE)
+AMOUNT_MAIN_W_FEE_REGEX_4 = re.compile(AMOUNT_MAIN_W_FEE_REGEX_PATTERN_4, re.IGNORECASE)
+BITCOINDE_EINHEIT_AMOUNT_MAIN_W_FEE_REGEX = re.compile(EINHEIT_AMOUNT_MAIN_W_FEE_REGEX_PATTERN_4, re.IGNORECASE)
+AMOUNT_MAIN_W_FEE_FIDOR_REGEX_4 = re.compile(AMOUNT_MAIN_W_FEE_FIDOR_REGEX_PATTERN_4, re.IGNORECASE)
+AMOUNT_SUB_W_FEE_REGEX_4 = re.compile(AMOUNT_SUB_W_FEE_REGEX_PATTERN_4, re.IGNORECASE)
+AMOUNT_ZUABGANG_REGEX_4 = re.compile(AMOUNT_ZUABGANG_REGEX_PATTERN_4, re.IGNORECASE)
 
 # # bitcoinde 1
 # # Datum,Typ,Währung,Referenz,BTC-Adresse,Kurs,Einheit (Kurs),BTC vor Gebühr,Menge vor Gebühr,Einheit (Menge vor Gebühr),BTC nach Bitcoin.de-Gebühr,Menge nach Bitcoin.de-Gebühr,Einheit (Menge nach Bitcoin.de-Gebühr),EUR nach Bitcoin.de- und Fidor-Gebühr,Zu- / Abgang,Kontostand
@@ -176,10 +176,10 @@ AMOUNT_ZUABGANG_REGEX_4 = re.compile(AMOUNT_ZUABGANG_REGEX_PATTERN_4)
 # BITCOINDE_EUR_NACH_BTFD_FEE_REGEX = re.compile(r'^EUR nach Bitcoin\.de-Gebühr$')
 
 # model 5
-PAIR_REGEX_5 = re.compile(PAIR_REGEX_PATTERN_5)
-PRICE_AVERAGE_REGEX_5 = re.compile(PRICE_AVERAGE_REGEX_PATTERN_5)
-AMOUNT_MAIN_REGEX_5 = re.compile(AMOUNT_MAIN_REGEX_PATTERN_5)
-AMOUNT_SUB_REGEX_5 = re.compile(AMOUNT_SUB_REGEX_PATTERN_5)
+PAIR_REGEX_5 = re.compile(PAIR_REGEX_PATTERN_5, re.IGNORECASE)
+PRICE_AVERAGE_REGEX_5 = re.compile(PRICE_AVERAGE_REGEX_PATTERN_5, re.IGNORECASE)
+AMOUNT_MAIN_REGEX_5 = re.compile(AMOUNT_MAIN_REGEX_PATTERN_5, re.IGNORECASE)
+AMOUNT_SUB_REGEX_5 = re.compile(AMOUNT_SUB_REGEX_PATTERN_5, re.IGNORECASE)
 
 # %% content patterns
 NUMBER_REGEX_PATTERN = r'^((|-)\d*(\.|,|)\d*)(\D*)$'
@@ -198,6 +198,7 @@ TIME_PATTERN.append(r'^(\w{3} \w{3} \d{2} \d\d:\d\d:\d\d)( \w{3})( \d{4})$')  # 
 TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)(\.\d+)$')  # 2017-05-22 06:30:17 .200
 TIME_PATTERN.append(r'^(\w{3} \w{3} \d{2})( \d{4})( \d\d:\d\d:\d\d)( \w{3})([-|\+]\d{4})( .*)$')  # Fri May 19 2017 12:11:49 GMT+0200 (Mitteleuropäische Sommerzeit)
 TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d).(\d\d:\d\d:\d\d).*Z$')  # 2017-07-28T20:23:16.000Z
+TIME_PATTERN.append(r'^(\d\d-\d\d-\d\d).(\d\d:\d\d:\d\d)$')  # 27-09-17 17:01:01
 
 PANDAS_TIME_PATTERN = r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d[-|\+]\d\d:\d\d$'
 
@@ -220,7 +221,7 @@ TIME_FORMAT.append('%c')
 TIME_FORMAT.append('%Y-%m-%d %H:%M:%S')
 TIME_FORMAT.append('%c %z')
 TIME_FORMAT.append('%Y-%m-%d %H:%M:%S %z')
-# TIME_FORMAT.append('$b $d $Y $H:$M:$S %z')
+TIME_FORMAT.append('%d-%m-%y %H:%M:%S')
 
 # 2018-08-26 04:22:33
 # 8/8/2018 4:50:42 PM
