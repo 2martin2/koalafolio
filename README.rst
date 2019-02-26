@@ -21,14 +21,14 @@ trade import
    - bitfinex (csv)
    - bitstamp (csv)
    - bittrex (csv)
-   - coinbase (csv)
+   - coinbase (buys, sells and merchant payouts)
    - hitbtc (csv)
    - idex (csv)
    - kraken (csv)
    - kuCoin (csv)
    - okex (csv)
    - poloniex (csv)
-   - exodus (json)
+   - exodus (v1/txs/*.json)
    - others could work as well but not tested
 
 portfolio
