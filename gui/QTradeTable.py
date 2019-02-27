@@ -184,6 +184,10 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
     def __init__(self, dataPath=None, *args, **kwargs):
         super(QTradeContainer, self).__init__(*args, **kwargs)
 
+        # buffer for restoring deleted trades
+        self.deletedTradesStack = []
+        self.deletedIndexesStack = []
+        self.deletedNumberStack = []
         self.dataPath = dataPath
 
     def restoreTrades(self):
@@ -225,6 +229,33 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
             self.updatePrices()
             # emit trades added
             self.tradesAdded.emit()
+
+
+    def insertTrades(self, rows, trades):
+        for row, trade in zip(rows, trades):
+            self.beginInsertRows(row, 1)
+            self.trades.insert(row, trade)
+            self.endInsertRows()
+        return True
+
+    def removeTrades(self, rows):
+        self.deletedNumberStack.append(len(rows))
+        for row in rows:
+            self.deletedTrades.append(self.trades[row])
+            self.deletedIndexes.append(row)
+            self.beginRemoveRows(row, 1)
+            del self.trades[row]
+            self.endRemoveRows()
+        return True
+
+    def undoRemoveTrades(self):
+        for num in range(self.deletedNumberStack.pop()):
+            ind = self.deletedIndexesStack.pop[-1]
+            trade = self.deletedTradesStack.pop[-1]
+            self.beginInsertRows(ind, 1)
+            self.trades.insert(ind, trade)
+            self.endInsertRows()
+        return True
 
     # update historical prices every time new trades are added
     def updatePrices(self):
@@ -388,6 +419,17 @@ class QTradeTableModel(QTradeContainer):
         super(QTradeTableModel, self).mergeTradeList(tradeList)
         self.tradesLen = len(self.trades)
         self.endResetModel()
+
+
+    def insertRows(self, position, rows, parent):
+        for row in rows:
+            self.insertTrades(position + row, core.Trade())
+        return True
+
+    def removeRows(self, position, rows, parent):
+        for row in range(position+rows):
+            self.removeTrades(self, row)
+        return True
 
     def pricesUpdatedCallback(self):
         if self.pricesShowen:
