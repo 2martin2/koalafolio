@@ -180,6 +180,31 @@ class DataFrameTable(qtwidgets.QTableWidget):
             for rowIndex in range(len(column)):
                 self.setItem(rowIndex, columnIndex, qtwidgets.QTableWidgetItem(str(column[rowIndex])))
 
+# && Filterable Trade Table Widget
+class QFilterTableView(qtwidgets.QWidget):
+    def __init__(self, parent, tableView, *args, **kwargs):
+        super(QFilterTableView, self).__init__(parent=parent, *args, **kwargs)
+
+        self.tableView = tableView
+        self.tableView.setParent(self)
+
+        self.filterBoxes = []
+        self.gridLayout = qtwidgets.QGridLayout()
+        self.resetFilterButton = qtwidgets.QPushButton('X', self)
+        self.resetFilterButton.setFixedWidth(28)
+        self.resetFilterButton.clicked.connect(self.clearFilter)
+        self.gridLayout.addWidget(self.resetFilterButton, 0, 0)
+        col = 1
+        for index in range(self.tableView.model().columnCount()):
+            self.filterBoxes.append(qtwidgets.QLineEdit(self))
+            self.filterBoxes[index].textChanged.connect(lambda t, x=index: self.filterColumns(t, x))
+            self.gridLayout.addWidget(self.filterBoxes[index], 0, col)
+            col += 1
+        self.gridLayout.addItem(qtwidgets.QSpacerItem(12, 10), 0, col)
+
+        self.vertLayout = qtwidgets.QVBoxLayout(self)
+        self.vertLayout.addLayout(self.gridLayout)
+        self.vertLayout.addWidget(self.tableView)
 
 # %% functions
 def changeColorBrightness(rgb, change):

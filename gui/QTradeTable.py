@@ -169,6 +169,14 @@ class QTradeTableView(qtwidgets.QTableView):
         self.setSortingEnabled(True)
 
 
+    def filterColumns(self, text, col):
+        print('filter trades: ' + str(col) + '; ' + text)
+
+    def clearFilter(self):
+        for filterBox in self.filterBoxes:
+            filterBox.clear()
+
+
 # #%% Trade table model
 # class QTradeItemModel(qtcore.QAbstractItemModel):
 #     def __init__(self, *args, **kwargs):
@@ -419,7 +427,6 @@ class QTradeTableModel(QTradeContainer):
         super(QTradeTableModel, self).mergeTradeList(tradeList)
         self.tradesLen = len(self.trades)
         self.endResetModel()
-
 
     def insertRows(self, position, rows, parent):
         for row in rows:

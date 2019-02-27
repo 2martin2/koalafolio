@@ -106,11 +106,12 @@ class TradesPage(Page):
         self.tradeProxyModel = qtcore.QSortFilterProxyModel()
         self.tradeProxyModel.setSourceModel(self.controller.tradeList)
         self.tradeTableView.setModel(self.tradeProxyModel)
+        self.tradeTableWidget = controls.QFilterTableView(self, self.tradeTableView)
         self.tradeTableView.show()
 
         # layout
         self.verticalLayout = qtwidgets.QVBoxLayout()
-        self.verticalLayout.addWidget(self.tradeTableView)
+        self.verticalLayout.addWidget(self.tradeTableWidget)
 
         self.horizontalLayout.addLayout(self.verticalLayout)
 
