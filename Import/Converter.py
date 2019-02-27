@@ -683,6 +683,8 @@ def modelCallback_5(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
+# 'date', 'type', 'coin', 'amount', 'id', 'tradePartnerId', 'exchange', 'externId', 'wallet'
+#   0       1       2       3         4          5               6          7           8
 def modelCallback_TradeList(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
@@ -691,15 +693,14 @@ def modelCallback_TradeList(headernames, dataFrame):
     for row in range(dataFrame.shape[0]):
         try:
             trade = core.Trade()
-            trade.tradeID = dataFrame[headernames[0]][row]
 
-            trade.date = convertDate(dataFrame[headernames[1]][row])
-            trade.tradeType = dataFrame[headernames[2]][row]
-            trade.coin = dataFrame[headernames[3]][row]
-            trade.amount = float(dataFrame[headernames[4]][row])
-            tradePartnerId = str(dataFrame[headernames[5]][row])
-            if tradePartnerId != 'nan':
-                trade.tradePartnerId = tradePartnerId
+            # date
+            trade.date = convertDate(dataFrame[headernames[0]][row])
+            # type
+            trade.tradeType = dataFrame[headernames[1]][row]
+            trade.coin = dataFrame[headernames[2]][row]
+            trade.amount = float(dataFrame[headernames[3]][row])
+
 
             trade.valueLoaded = False
             if headernames[6]:
@@ -722,18 +723,34 @@ def modelCallback_TradeList(headernames, dataFrame):
                     for valueInd in range(len(valueHeaders)):  # load all included historical values
                         trade.value[keysImport[valueInd]] = float(dataFrame[valueHeaders[valueInd]][row])
 
+            # exchange
             if headernames[7]:
                 exchange = str(dataFrame[headernames[7]][row])
                 if exchange != 'nan':
                     trade.exchange = exchange
+            # extern id
             if headernames[8]:
                 externId = str(dataFrame[headernames[8]][row])
                 if externId != 'nan':
                     trade.externId = externId
+            # wallet
             if headernames[9]:
                 wallet = str(dataFrame[headernames[9]][row])
                 if wallet != 'nan':
                     trade.wallet = wallet
+
+            # id
+            if headernames[4]:
+                trade.tradeID = str(dataFrame[headernames[4]][row])
+            else:
+                trade.generateID()
+            # partner id
+            if headernames[5]:
+                tradePartnerId = str(dataFrame[headernames[5]][row])
+                if tradePartnerId != 'nan':
+                    trade.tradePartnerId = tradePartnerId
+
+            swapCoinName(trade)
 
             if trade.tradeType == 'fee':
                 feeList.addTrade(trade)
