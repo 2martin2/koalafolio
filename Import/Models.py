@@ -182,11 +182,11 @@ IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNe
                                                                                         pat.STATUS_REGEX]
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_5
 
-# %% model tradeList: 'date', 'type', 'coin', 'amount', 'id', 'tradePartnerId', 'exchange', 'externId', 'wallet'
+# %% model tradeList: 'date', 'type', 'coin', 'amount', 'id', 'tradePartnerId', 'valueLoaded', 'exchange', 'externId', 'wallet'
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
 IMPORT_MODEL_LIST[index].modelHeaders = ['date', 'type', 'coin', 'amount', 'id', 'tradePartnerId',
-                                         'exchange', 'externId', 'wallet']
+                                         'valueLaoded', 'exchange', 'externId', 'wallet']
 IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.TRADELIST_DATE_REGEX, pat.TRADELIST_TYPE_REGEX,
                                               pat.TRADELIST_COIN_REGEX, pat.TRADELIST_AMOUNT_REGEX]
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded \
