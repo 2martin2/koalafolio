@@ -103,15 +103,35 @@ class TradesPage(Page):
 
         # table for tradeList        
         self.tradeTableView = ttable.QTradeTableView(self)
-        self.tradeProxyModel = qtcore.QSortFilterProxyModel()
+        self.tradeProxyModel = controls.SortFilterProxyModel()
         self.tradeProxyModel.setSourceModel(self.controller.tradeList)
         self.tradeTableView.setModel(self.tradeProxyModel)
         self.tradeTableWidget = controls.QFilterTableView(self, self.tradeTableView)
         self.tradeTableView.show()
 
+        # controls
+        self.deleteSelectedTradesButton = qtwidgets.QPushButton('delete selected', self)
+        self.deleteSelectedTradesButton.clicked.connect(self.deleteSelectedTrades)
+        self.deleteTradesButton = qtwidgets.QPushButton('delete all', self)
+        self.deleteTradesButton.clicked.connect(self.deleteAllTrades)
+        self.undoButton = qtwidgets.QPushButton('undo', self)
+        self.undoButton.clicked.connect(self.undoRemoveTrades)
+        self.reloadPricesButton = qtwidgets.QPushButton('reload prices', self)
+        self.reloadPricesButton.clicked.connect(self.reloadPrices)
+
+        self.hButtonLayout = qtwidgets.QHBoxLayout()
+        self.hButtonLayout.addStretch()
+        self.hButtonLayout.addWidget(self.deleteSelectedTradesButton)
+        self.hButtonLayout.addWidget(self.deleteTradesButton)
+        self.hButtonLayout.addWidget(self.undoButton)
+        self.hButtonLayout.addStretch()
+        self.hButtonLayout.addWidget(self.reloadPricesButton)
+        self.hButtonLayout.addStretch()
+
         # layout
         self.verticalLayout = qtwidgets.QVBoxLayout()
         self.verticalLayout.addWidget(self.tradeTableWidget)
+        self.verticalLayout.addLayout(self.hButtonLayout)
 
         self.horizontalLayout.addLayout(self.verticalLayout)
 
@@ -119,6 +139,25 @@ class TradesPage(Page):
 
     def refresh(self):
         pass
+
+    def undoRemoveTrades(self):
+        self.undoButton.clicked.disconnect(self.undoRemoveTrades)
+        self.controller.tradeList.undoRemoveTrades()
+        self.undoButton.clicked.connect(self.undoRemoveTrades)
+
+    def deleteAllTrades(self):
+        self.deleteTradesButton.clicked.disconnect(self.deleteAllTrades)
+        self.controller.tradeList.deleteAllTrades()
+        self.deleteTradesButton.clicked.connect(self.deleteAllTrades)
+
+    def deleteSelectedTrades(self):
+        self.deleteSelectedTradesButton.clicked.disconnect(self.deleteSelectedTrades)
+        self.tradeTableView.deleteSelectedTrades()
+        self.deleteSelectedTradesButton.clicked.connect(self.deleteSelectedTrades)
+
+    def reloadPrices(self):
+        self.controller.tradeList.clearPriceFlag()
+        self.controller.tradeList.updatePrices()
 
 
 #    def tradesChanged(self):
@@ -198,8 +237,7 @@ class ImportPage(Page):
         self.newFeesBuffer.clearTrades()
 
     def finishImport(self):
-        newTrades = self.getNewTrades()
-        self.controller.tradeList.addTrades(newTrades)
+        self.controller.tradeList.addTrades(self.getNewTrades())
         self.controller.tradeList.addTrades(self.getNewFees())
         # jump to TradesPage
         self.controller.showFrame(self.controller.TRADESPAGEINDEX)

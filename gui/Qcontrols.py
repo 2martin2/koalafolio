@@ -206,6 +206,38 @@ class QFilterTableView(qtwidgets.QWidget):
         self.vertLayout.addLayout(self.gridLayout)
         self.vertLayout.addWidget(self.tableView)
 
+    def filterColumns(self, text, col):
+        print('filter trades: ' + str(col) + '; ' + text)
+        self.tableView.model().setFilterByColumn(text, col)
+
+
+    def clearFilter(self):
+        for filterBox in self.filterBoxes:
+            filterBox.clear()
+
+
+# %% Trade table model
+# class QTradeTableModel(qtcore.QAbstractTableModel):
+class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(SortFilterProxyModel, self).__init__(*args, **kwargs)
+        self.filters = {}
+        self.setFilterCaseSensitivity(qt.CaseInsensitive)
+
+    def setFilterByColumn(self, regex, column):
+        self.filters[column] = regex
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        for key, regex in self.filters.items():
+            ix = self.sourceModel().index(source_row, key, source_parent)
+            if ix.isValid():
+                text = str(self.sourceModel().data(ix))
+                if not re.match('.*' + regex + '.*', text, re.IGNORECASE):
+                    return False
+        return True
+
+
 # %% functions
 def changeColorBrightness(rgb, change):
     r = int(rgb[1:3], 16)
