@@ -683,9 +683,75 @@ def modelCallback_5(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
+# %% model template1:
+# "date","type","buy amount","buy cur","sell amount","sell cur",("exchange"),("fee amount"),("fee currency")
+#   0       1       2           3         4             5            6              7               8
+def modelCallback_Template1(headernames, dataFrame):
+    tradeList = core.TradeList()
+    feeList = core.TradeList()
+    skippedRows = 0
+
+    for row in range(dataFrame.shape[0]):
+        try:
+            date = convertDate(dataFrame[headernames[0]][row])
+            tradeType = dataFrame[headernames[1]][row].lower()
+            if headernames[6]:
+                exchange = str(dataFrame[headernames[6]][row]).lower()
+                if exchange == 'nan':
+                    exchange = ''
+            if dataFrame[headernames[1]][row].lower() == 'trade':
+                tempTrade_sell = core.Trade()  # sell
+                tempTrade_buy = core.Trade()  # buy
+                # get date
+                tempTrade_sell.date = date
+                tempTrade_buy.date = date
+                # get type
+                tempTrade_sell.tradeType = 'trade'
+                tempTrade_buy.tradeType = 'trade'
+                # get coin
+                tempTrade_sell.coin = (dataFrame[headernames[5]][row]).upper()
+                tempTrade_buy.coin = (dataFrame[headernames[3]][row]).upper()
+                # swap Coin Name
+                swapCoinName(tempTrade_sell)
+                swapCoinName(tempTrade_buy)
+                # get amount
+                tempTrade_sell.amount = - abs(dataFrame[headernames[4]][row])
+                tempTrade_buy.amount = abs(dataFrame[headernames[2]][row])
+                # set exchange
+                tempTrade_sell.exchange = exchange
+                tempTrade_buy.exchange = exchange
+                # set id
+                if not tempTrade_sell.tradeID:
+                    tempTrade_sell.generateID()
+                if not tempTrade_buy.tradeID:
+                    tempTrade_buy.generateID()
+                # add trades to tradeList
+                if not tradeList.addTradePair(tempTrade_sell, tempTrade_buy):
+                    skippedRows += 1
+        except Exception as ex:
+            print('error in Converter Template1: ' + str(ex))
+            skippedRows += 1
+
+        # fees
+        try:
+            if headernames[7] and str(dataFrame[headernames[7]][row]) != 'nan':  # if fee
+                if headernames[8] and str(dataFrame[headernames[8]][row]) != 'nan':  # if fee coin
+                    # use fee coin
+                    feecoin = dataFrame[headernames[8]][row]
+                else:  # no fee coin
+                    # use buy coin
+                    feecoin = tempTrade_buy.coin
+                # set coin amount
+                fee = createFee(date=date, amountStr=dataFrame[headernames[7]][row], coin=feecoin,
+                                exchange=exchange)
+                fee.generateID()
+                feeList.addTrade(fee)
+        except Exception as ex:  # do not skip line if error, just ignore fee
+            print('error in Converter Template1: ' + str(ex))
+
+    return tradeList, feeList, skippedRows
+
 # %% model tradeList:
-
-
 # 'date', 'type', 'coin', 'amount', 'id', 'tradePartnerId', 'valueLoaded', 'exchange', 'externId', 'wallet'
 #   0       1       2       3         4          5               6          7           8              9
 def modelCallback_TradeList(headernames, dataFrame):

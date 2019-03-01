@@ -11,6 +11,7 @@ import PyQt5.QtCore as qtcore
 import gui.Qcontrols as controls
 import gui.QPortfolioTable as ptable
 import Import.TradeImporter as importer
+import Import.Models as importModels
 import PcpCore.core as core
 import gui.QTradeTable as ttable
 import gui.QThreads as threads
@@ -235,14 +236,19 @@ class ImportSelectPage(SubPage):
         self.fileTextBox = qtwidgets.QTextEdit(self.feedBackFrame)
         self.fileTextBox.setReadOnly(True)
 
-        self.previewButton = qtwidgets.QPushButton("Preview", self)
-        self.previewButton.clicked.connect(lambda: self.showPreviewFrame())
+        self.templateFileDialog = qtwidgets.QFileDialog(self)
+        self.templateButton = qtwidgets.QPushButton("create template", self)
+        self.templateButton.clicked.connect(self.createTemplate)
 
-        self.fastImportButton = qtwidgets.QPushButton("Fast import", self)
-        self.fastImportButton.clicked.connect(lambda: self.showImportFinishedFrame())
+        self.previewButton = qtwidgets.QPushButton("preview", self)
+        self.previewButton.clicked.connect(self.showPreviewFrame)
+
+        self.fastImportButton = qtwidgets.QPushButton("fast import", self)
+        self.fastImportButton.clicked.connect(self.showImportFinishedFrame)
 
         self.horzButtonLayout = qtwidgets.QHBoxLayout()
         self.horzButtonLayout.addStretch()
+        self.horzButtonLayout.addWidget(self.templateButton)
         self.horzButtonLayout.addWidget(self.previewButton)
         self.horzButtonLayout.addWidget(self.fastImportButton)
         self.horzButtonLayout.addStretch()
@@ -356,6 +362,28 @@ class ImportSelectPage(SubPage):
 
     def getPath(self):
         return self.pathEntry.getPath()
+
+    def createTemplate(self):
+        self.templateFileDialog.setDefaultSuffix("txt")
+        filename = 'template.txt'
+        pathReturn = self.templateFileDialog.getSaveFileName(self, "save file", filename, "CSV (*.csv *.txt)")
+        if pathReturn[0]:
+            with open(pathReturn[0], 'w') as file:
+                for model in importModels.IMPORT_MODEL_LIST:
+                    if model.modelName == 'Template1':
+                        file.write(','.join([x for x in model.modelHeaders]) + '\n')
+                        break
+                #"date", "type", "buy amount", "buy cur", "sell amount", "sell cur", ("exchange"),
+                # ("fee amount"), ("fee currency")
+                rows = []
+                rows.append([datetime.datetime.now(), 'trade', 10, 'ETH', 0.5, 'BTC', 'binance', 0.01, 'ETH'])
+                rows.append([datetime.datetime.now(), 'trade', 5, 'ETH', 0.25, 'BTC', '', '', ''])
+                rows.append([datetime.datetime.now(), 'trade', 20, 'ETH', 1, 'BTC', '', 0.0001, 'BTC'])
+                rows.append([datetime.datetime.now(), 'fee', '', '', '', '', '', 0.0015, 'ETH'])
+                for row in rows:
+                    file.write(','.join([str(x) for x in row]) + '\n')
+                file.close()
+
 
 
 class ImportPreviewPage(SubPage):
