@@ -136,8 +136,10 @@ class PortfolioApp(qtwidgets.QWidget):
 
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))
         # todo pass new trades with signal
-        self.tradeList.tradesAdded.connect(lambda tradeList=self.tradeList: self.coinList.addTrades(tradeList))
-        self.tradeList.pricesUpdated.connect(lambda tradeList=self.tradeList: self.coinList.addTrades(tradeList))
+        self.tradeList.tradesAdded.connect(lambda tradeList: self.coinList.addTrades(tradeList))
+        self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.removeTrades(tradeList))
+        self.tradeList.pricesUpdated.connect(self.coinList.histPricesChanged)
+        self.tradeList.histPriceUpdateFinished.connect(self.coinList.histPriceUpdateFinished)
         self.logger.info('data initialized')
 
     # setup layout
@@ -207,9 +209,11 @@ class PortfolioApp(qtwidgets.QWidget):
 
     def startThreads(self):
         self.logger.info('starting threads ...')
-        self.updateCoinPriceThread = threads.UpdateCoinPriceThread(self.coinList)
-        self.updateCoinPriceThread.updateFinished.connect(self.coinList.pricesUpdated)
-        self.updateCoinPriceThread.start()
+        self.priceThread = threads.UpdatePriceThread(self.coinList, self.tradeList)
+        self.priceThread.coinPricesLoaded.connect(lambda prices: self.coinList.setPrices(prices))
+        self.priceThread.historicalPricesLoaded.connect(lambda prices, tradesLeft:
+                                                        self.tradeList.setHistPrices(prices, tradesLeft))
+        self.priceThread.start()
         self.logger.info('threads started')
 
     def showFrame(self, pageIndex):

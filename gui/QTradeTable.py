@@ -168,6 +168,15 @@ class QTradeTableView(qtwidgets.QTableView):
 
         self.setSortingEnabled(True)
 
+    def deleteSelectedTrades(self):
+        if self.selectionModel().hasSelection():
+            inds = self.selectionModel().selectedIndexes()
+            rows = []
+            for ind in inds:
+                if not ind.row() in rows:
+                    rows.append(ind.row())
+            self.model().sourceModel().removeTrades(rows)
+
 
 # #%% Trade table model
 # class QTradeItemModel(qtcore.QAbstractItemModel):
@@ -177,14 +186,23 @@ class QTradeTableView(qtwidgets.QTableView):
 
 # trade list
 class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
-    tradesAdded = qtcore.pyqtSignal()
+    tradesAdded = qtcore.pyqtSignal('PyQt_PyObject')
+    tradesRemoved = qtcore.pyqtSignal('PyQt_PyObject')
+    triggerHistPriceUpdate = qtcore.pyqtSignal('PyQt_PyObject')
     #    tradeChanged = qtcore.pyqtSignal('PyQt_PyObject')
     pricesUpdated = qtcore.pyqtSignal()
+    histPriceUpdateFinished = qtcore.pyqtSignal()
 
     def __init__(self, dataPath=None, *args, **kwargs):
         super(QTradeContainer, self).__init__(*args, **kwargs)
 
+        # buffer for restoring deleted trades
+        self.deletedTradesStack = []
+        self.deletedIndexesStack = []
+        self.deletedNumberStack = []
         self.dataPath = dataPath
+
+        self.tradesAdded.connect(lambda tradeList: self.updatePrices(tradeList))
 
     def restoreTrades(self):
         if self.dataPath:
@@ -206,14 +224,14 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                                          + '; skipped trades: ' + str(skippedRows))
             except Exception as ex:
                 localLogger.warning('error parsing trades: ' + str(ex))
-        self.updatePrices()
+        self.tradesAdded.emit(self)
 
     def saveTrades(self):
         if self.dataPath:
             try:
                 self.toCsv(os.path.join(self.dataPath, 'Trades.csv'))
             except Exception as ex:
-                print('error in QTradeContainer: ' + str(ex))
+                localLogger.error('error saving trades in QTradeContainer: ' + str(ex))
 
     def addTrades(self, newTrades):
         if not (newTrades.isEmpty()):
@@ -221,22 +239,80 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
             self.mergeTradeList(newTrades)
             # save the trades as csv
             self.saveTrades()
-            # trigger price update
-            self.updatePrices()
             # emit trades added
-            self.tradesAdded.emit()
+            self.tradesAdded.emit(newTrades)
 
-    # update historical prices every time new trades are added
-    def updatePrices(self):
-        localLogger.info('loading historical prices, can take some time (depending on api limitations)')
-        self.updateTradePriceThread = threads.UpdateTradePriceThread(self)
-        self.updateTradePriceThread.tradePricesUpdated.connect(self.pricesUpdatedCallback)
-        self.updateTradePriceThread.start()
 
-    def pricesUpdatedCallback(self):
-        localLogger.info('historical prices loaded')
+    def insertTrades(self, rows, trades):
+        try:
+            for index in sorted(range(len(rows)), key=rows.__getitem__):
+                row = rows[index]
+                trade = trades[index]
+                self.beginInsertRows(qtcore.QModelIndex(), row, row)
+                self.trades.insert(row, trade)
+                self.endInsertRows()
+        except TypeError:
+            row = rows
+            trade = trades
+            self.beginInsertRows(qtcore.QModelIndex(), row, row)
+            self.trades.insert(row, trade)
+            self.endInsertRows()
+            trades = core.TradeList()
+            trades.addTrade(trade)
+        # save new trades
+        self.saveTrades()
+        # emit trades added
+        self.tradesAdded.emit(trades)
+        return True
+
+    def removeTrades(self, rows):
+        rows.sort(reverse=True)
+        self.deletedNumberStack.append(len(rows))
+        tradeList = core.TradeList()
+        for row in rows:
+            tradeList.addTrade(self.trades[row])
+            self.deletedTradesStack.append(self.trades[row])
+            self.deletedIndexesStack.append(row)
+        for row in rows:
+            self.beginRemoveRows(qtcore.QModelIndex(), row, row)
+            self.trades.pop(row)
+            self.endRemoveRows()
+        # save new trades
+        self.saveTrades()
+        # emit trades added
+        self.tradesRemoved.emit(tradeList)
+        return True
+
+    def undoRemoveTrades(self):
+        if self.deletedNumberStack:
+            num = self.deletedNumberStack.pop()
+            tradeList = core.TradeList()
+            tradeList.trades = self.deletedTradesStack[-num:]
+            self.deletedTradesStack = self.deletedTradesStack[0:-num]
+            rows = self.deletedIndexesStack[-num:]
+            self.deletedIndexesStack = self.deletedIndexesStack[0:-num]
+            self.insertTrades(rows, tradeList)
+            return True
+
+    def deleteAllTrades(self):
+        return self.removeTrades(list(range(len(self.trades))))
+
+    def updatePrices(self, tradeList):
+        localLogger.info('loading historical prices. Can take some time (depending on api limitations)')
+        self.triggerHistPriceUpdate.emit(tradeList)
+
+    def pricesUpdatedCallback(self, tradesLeft):
         self.saveTrades()
         self.pricesUpdated.emit()
+        if tradesLeft == 0:
+            localLogger.info('historical prices loaded')
+            self.histPriceUpdateFinished.emit()
+        else:
+            localLogger.info('loading prices: ' + str(tradesLeft) + ' trades left')
+
+    def setHistPrices(self, prices, tradesLeft):
+        super(QTradeContainer, self).setHistPrices(prices)
+        self.pricesUpdatedCallback(tradesLeft)
 
 
 # %% Trade table model
@@ -261,7 +337,7 @@ class QTradeTableModel(QTradeContainer):
     def columnCount(self, parent):
         return self.headerLen
 
-    def data(self, index, role):
+    def data(self, index, role=qt.DisplayRole):
         if role == qt.DisplayRole:
             # ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange'] + ['value' + key for key in self.keys]
             if index.column() == 0:  # return id
@@ -389,12 +465,22 @@ class QTradeTableModel(QTradeContainer):
         self.tradesLen = len(self.trades)
         self.endResetModel()
 
-    def pricesUpdatedCallback(self):
+    def insertRows(self, position, rows, parent):
+        for row in rows:
+            self.insertTrades(position + row, core.Trade())
+        return True
+
+    def removeRows(self, position, rows, parent):
+        for row in range(position+rows):
+            self.removeTrades(self, row)
+        return True
+
+    def pricesUpdatedCallback(self, tradesLeft):
+        super(QTradeTableModel, self).pricesUpdatedCallback(tradesLeft)
         if self.pricesShowen:
             RowStartIndex = self.index(0, self.firstValueColumn)
             RowEndIndex = self.index(len(self.trades), len(self.header) - 1)
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
-            super(QTradeTableModel, self).pricesUpdatedCallback()
 
 
 # %% Trade table delegates

@@ -6,6 +6,7 @@ import cryptocompare.cryptocompare as cryptcomp
 import PcpCore.core as core
 import PcpCore.settings as settings
 import time
+import PcpCore.logger as logger
 
 
 # coinList = cryptcomp.get_coin_list(format=True)
@@ -24,8 +25,8 @@ def updateTradeValue(trade):
         price = None
         while (failedCounter <= 10):
             price = cryptcomp.get_historical_price(trade.coin, [key for key in trade.value.value], trade.date,
-                                                   calculationType='Close', proxies=proxies)
-            if price:
+                                                   calculationType='Close', proxies=proxies, errorCheck=False)
+            if trade.coin in price:
                 coinPrice = core.CoinValue()
                 coinPrice.fromDict(price[trade.coin])
                 if 0 in coinPrice.value.values():
@@ -35,12 +36,37 @@ def updateTradeValue(trade):
                 trade.valueLoaded = True
                 return True
             else:
-                # if there is an error try again
-                failedCounter += 1
-                # wait some time until next try
-                time.sleep(10)
+                # check if wrong symbol
+                if 'Message' in price and 'no data for the symbol' in price['Message']:
+                    logger.globalLogger.warning('invalid coinName: ' + str(trade.coin))
+                    break
+                else:
+                    # if there is an error try again
+                    failedCounter += 1
+                    # wait some time until next try
+                    time.sleep(10)
         print('price update failed for ' + str(trade.toList()))
         return False
+
+def getHistoricalPrice(trade):
+    if settings.mySettings.proxies():
+        proxies = settings.mySettings.proxies()
+    else:
+        proxies = {}
+    if trade.date:
+        failedCounter = 0
+        response = cryptcomp.get_historical_price(trade.coin, [key for key in trade.value.value], trade.date,
+                                               calculationType='Close', proxies=proxies, errorCheck=False)
+        if response:
+            # check if wrong symbol
+            if 'Message' in response and 'no data for the symbol' in response['Message']:
+                logger.globalLogger.warning('invalid coinName: ' + str(trade.coin))
+                return {}
+            try:
+                return response[trade.coin]
+            except KeyError:
+                logger.globalLogger.warning('error loading historical price for ' + str(trade.coin))
+    return {}
 
 
 def updateCurrentCoinValues(coinList):
@@ -71,7 +97,23 @@ def updateCurrentCoinValues(coinList):
     print('price update failed')
     return False
 
-def get24hChange(coinList):
+def getCoinPrices(coins):
+    if settings.mySettings.proxies():
+        proxies = settings.mySettings.proxies()
+    else:
+        proxies = {}
+    # try to load price from cryptocompare
+    try:
+        response = cryptcomp.get_price(coins, [key for key in core.CoinValue()], full=True, proxies=proxies)
+    except Exception as ex:
+        logger.globalLogger.warning('error loading prices: ' + str(ex))
+        return {}
+    if response and 'RAW' in response:
+        return response['RAW']
+    else:
+        logger.globalLogger.warning('error loading prices: ' + str(response))
+        return {}
+def update24hChange(coinList):
     if settings.mySettings.proxies():
         proxies = settings.mySettings.proxies()
     else:
