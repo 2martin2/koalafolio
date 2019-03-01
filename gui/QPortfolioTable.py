@@ -56,7 +56,7 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
     def columnCount(self, parent):
         return len(self.header)
 
-    def data(self, index, role):
+    def data(self, index, role=qt.DisplayRole):
         if role == qt.DisplayRole:
             if index.column() == 0:  # coin row
                 return self.coins[index.row()].coinname  # return coinname
@@ -126,6 +126,10 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         updateCoinPriceThreadSingle.start()
         self.endResetModel()
 
+    def removeTrades(self, trades):
+        self.beginResetModel()
+        super(QPortfolioTableModel, self).removeTrades(trades)
+        self.endResetModel()
 
 class QTableSortingModel(qtcore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):

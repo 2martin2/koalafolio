@@ -229,6 +229,11 @@ class Trade:
         return [self.tradeID, self.date, self.tradeType, self.coin, self.amount] + [self.value.value[key] for key in
                                                                                     self.value.value]
 
+    def getHeaderComplete(self):
+        myCoinValue = CoinValue()
+        return ['id', 'date', 'type', 'coin', 'amount'] + ['value' + key for key in myCoinValue.value] + \
+               ['valueLoaded', 'tradePartnerId', 'exchange', 'externId', 'wallet']
+
     def toListComplete(self):
         return self.toList() + [self.valueLoaded, self.tradePartnerId, self.exchange, self.externId, self.wallet]
 
@@ -416,10 +421,18 @@ class TradeList:
         return t
 
     def toCsv(self, path):
-        self.toDataFrameComplete().to_csv(path)
+        # self.toDataFrameComplete().to_csv(path)
+        with open(path, 'w') as file:
+            file.write(','.join(Trade().getHeaderComplete()) + '\n')
+            for trade in self:
+                file.write(','.join(str(e) for e in trade.toListComplete()) + '\n')
 
     def fromCsv(self, path):
         self.fromDataFrame(pandas.read_csv(path))
+
+    def clearPriceFlag(self):
+        for trade in self.trades:
+            trade.valueLoaded = False
 
 
 # %% TradeMatcher
@@ -656,6 +669,20 @@ class CoinBalance:
         else:
             return None
 
+    def removeTrade(self, trade):
+        if self.coinname == trade.coin:
+            # check if trade exists
+            if trade in self.trades:
+                self.trades.remove(trade)
+            # update current value (use current price)
+            newAmount = self.balance - trade.amount
+            self.currentValue = self.currentValue.mult(newAmount).div(self.balance)
+            # update balance
+            self.balance = newAmount
+            return self
+        else:
+            return None
+
     def updateBalance(self):
         newAmount = 0
         for trade in self.trades:
@@ -757,11 +784,27 @@ class CoinList:
         self.coins[-1].addTrade(trade)
         return self.coins[-1]
 
-    def addTrades(self, tradeList):
-        for trade in tradeList.trades:
+    def removeTrade(self, trade):
+        for coin in self.coins:
+            if coin.coinname == trade.coin:
+                coin.removeTrade(trade)
+                return coin
+
+    def addTrades(self, trades):
+        for trade in trades:
             self.addTrade(trade)
         self.matchTrades()
         return self
+
+    def removeTrades(self, trades):
+        for trade in trades:
+            self.removeTrade(trade)
+        self.matchTrades()
+        return self
+
+    def reloadTrades(self, trades):
+        self.coins.clear()
+        self.addTrades(trades)
 
     def tradeChanged(self, trade):
         try:

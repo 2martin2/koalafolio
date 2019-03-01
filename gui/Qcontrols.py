@@ -180,6 +180,63 @@ class DataFrameTable(qtwidgets.QTableWidget):
             for rowIndex in range(len(column)):
                 self.setItem(rowIndex, columnIndex, qtwidgets.QTableWidgetItem(str(column[rowIndex])))
 
+# && Filterable Trade Table Widget
+class QFilterTableView(qtwidgets.QWidget):
+    def __init__(self, parent, tableView, *args, **kwargs):
+        super(QFilterTableView, self).__init__(parent=parent, *args, **kwargs)
+
+        self.tableView = tableView
+        self.tableView.setParent(self)
+
+        self.filterBoxes = []
+        self.gridLayout = qtwidgets.QGridLayout()
+        self.resetFilterButton = qtwidgets.QPushButton('X', self)
+        self.resetFilterButton.setFixedWidth(28)
+        self.resetFilterButton.clicked.connect(self.clearFilter)
+        self.gridLayout.addWidget(self.resetFilterButton, 0, 0)
+        col = 1
+        for index in range(self.tableView.model().columnCount()):
+            self.filterBoxes.append(qtwidgets.QLineEdit(self))
+            self.filterBoxes[index].textChanged.connect(lambda t, x=index: self.filterColumns(t, x))
+            self.gridLayout.addWidget(self.filterBoxes[index], 0, col)
+            col += 1
+        self.gridLayout.addItem(qtwidgets.QSpacerItem(12, 10), 0, col)
+
+        self.vertLayout = qtwidgets.QVBoxLayout(self)
+        self.vertLayout.addLayout(self.gridLayout)
+        self.vertLayout.addWidget(self.tableView)
+
+    def filterColumns(self, text, col):
+        print('filter trades: ' + str(col) + '; ' + text)
+        self.tableView.model().setFilterByColumn(text, col)
+
+
+    def clearFilter(self):
+        for filterBox in self.filterBoxes:
+            filterBox.clear()
+
+
+# %% Trade table model
+# class QTradeTableModel(qtcore.QAbstractTableModel):
+class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(SortFilterProxyModel, self).__init__(*args, **kwargs)
+        self.filters = {}
+        self.setFilterCaseSensitivity(qt.CaseInsensitive)
+
+    def setFilterByColumn(self, regex, column):
+        self.filters[column] = regex
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        for key, regex in self.filters.items():
+            ix = self.sourceModel().index(source_row, key, source_parent)
+            if ix.isValid():
+                text = str(self.sourceModel().data(ix))
+                if not re.match('.*' + regex + '.*', text, re.IGNORECASE):
+                    return False
+        return True
+
 
 # %% functions
 def changeColorBrightness(rgb, change):

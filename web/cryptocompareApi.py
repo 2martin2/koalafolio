@@ -6,6 +6,7 @@ import cryptocompare.cryptocompare as cryptcomp
 import PcpCore.core as core
 import PcpCore.settings as settings
 import time
+import PcpCore.logger as logger
 
 
 # coinList = cryptcomp.get_coin_list(format=True)
@@ -24,8 +25,8 @@ def updateTradeValue(trade):
         price = None
         while (failedCounter <= 10):
             price = cryptcomp.get_historical_price(trade.coin, [key for key in trade.value.value], trade.date,
-                                                   calculationType='Close', proxies=proxies)
-            if price:
+                                                   calculationType='Close', proxies=proxies, errorCheck=False)
+            if trade.coin in price:
                 coinPrice = core.CoinValue()
                 coinPrice.fromDict(price[trade.coin])
                 if 0 in coinPrice.value.values():
@@ -35,10 +36,15 @@ def updateTradeValue(trade):
                 trade.valueLoaded = True
                 return True
             else:
-                # if there is an error try again
-                failedCounter += 1
-                # wait some time until next try
-                time.sleep(10)
+                # check if wrong symbol
+                if 'Message' in price and 'no data for the symbol' in price['Message']:
+                    logger.globalLogger.warning('invalid coinName: ' + str(trade.coin))
+                    break
+                else:
+                    # if there is an error try again
+                    failedCounter += 1
+                    # wait some time until next try
+                    time.sleep(10)
         print('price update failed for ' + str(trade.toList()))
         return False
 
