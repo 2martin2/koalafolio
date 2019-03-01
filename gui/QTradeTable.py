@@ -276,7 +276,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
             self.deletedIndexesStack.append(row)
         for row in rows:
             self.beginRemoveRows(qtcore.QModelIndex(), row, row)
-            del self.trades[row]
+            self.trades.pop(row)
             self.endRemoveRows()
         # save new trades
         self.saveTrades()
@@ -289,7 +289,9 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
             num = self.deletedNumberStack.pop()
             tradeList = core.TradeList()
             tradeList.trades = self.deletedTradesStack[-num:]
+            self.deletedTradesStack = self.deletedTradesStack[0:-num]
             rows = self.deletedIndexesStack[-num:]
+            self.deletedIndexesStack = self.deletedIndexesStack[0:-num]
             self.insertTrades(rows, tradeList)
             # for num in range(self.deletedNumberStack.pop()):
             #     ind = self.deletedIndexesStack.pop(-1)
