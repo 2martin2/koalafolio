@@ -158,7 +158,7 @@ class TradesPage(Page):
 
     def reloadPrices(self):
         self.controller.tradeList.clearPriceFlag()
-        self.controller.tradeList.updatePrices()
+        self.controller.tradeList.updatePrices(self.controller.tradeList)
 
 
 #    def tradesChanged(self):

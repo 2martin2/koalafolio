@@ -48,6 +48,26 @@ def updateTradeValue(trade):
         print('price update failed for ' + str(trade.toList()))
         return False
 
+def getHistoricalPrice(trade):
+    if settings.mySettings.proxies():
+        proxies = settings.mySettings.proxies()
+    else:
+        proxies = {}
+    if trade.date:
+        failedCounter = 0
+        response = cryptcomp.get_historical_price(trade.coin, [key for key in trade.value.value], trade.date,
+                                               calculationType='Close', proxies=proxies, errorCheck=False)
+        if response:
+            # check if wrong symbol
+            if 'Message' in response and 'no data for the symbol' in response['Message']:
+                logger.globalLogger.warning('invalid coinName: ' + str(trade.coin))
+                return {}
+            try:
+                return response[trade.coin]
+            except KeyError:
+                logger.globalLogger.warning('error loading historical price for ' + str(trade.coin))
+    return {}
+
 
 def updateCurrentCoinValues(coinList):
     if settings.mySettings.proxies():
@@ -77,7 +97,23 @@ def updateCurrentCoinValues(coinList):
     print('price update failed')
     return False
 
-def get24hChange(coinList):
+def getCoinPrices(coins):
+    if settings.mySettings.proxies():
+        proxies = settings.mySettings.proxies()
+    else:
+        proxies = {}
+    # try to load price from cryptocompare
+    try:
+        response = cryptcomp.get_price(coins, [key for key in core.CoinValue()], full=True, proxies=proxies)
+    except Exception as ex:
+        logger.globalLogger.warning('error loading prices: ' + str(ex))
+        return {}
+    if response and 'RAW' in response:
+        return response['RAW']
+    else:
+        logger.globalLogger.warning('error loading prices: ' + str(response))
+        return {}
+def update24hChange(coinList):
     if settings.mySettings.proxies():
         proxies = settings.mySettings.proxies()
     else:

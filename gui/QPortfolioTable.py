@@ -15,9 +15,10 @@ import gui.QSettings as settings
 import colorsys
 import gui.QThreads as threads
 import datetime
+import gui.QLogger as logger
 
 qt = qtcore.Qt
-
+localLogger = logger.globalLogger
 
 # %% portfolio table view
 class QPortfolioTableView(qtwidgets.QTableView):
@@ -42,6 +43,8 @@ class QPortfolioTableView(qtwidgets.QTableView):
 
 # %% portfolio table model
 class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
+    coinAdded = qtcore.pyqtSignal([list])
+
     def __init__(self, *args, **kwargs):
         super(QPortfolioTableModel, self).__init__(*args, **kwargs)
 
@@ -85,11 +88,22 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
     def flags(self, index):
         return qt.ItemIsSelectable | qt.ItemIsEditable | qt.ItemIsEnabled
 
-    # reimplement coinList methods
+    def histPricesChanged(self):
+        super(QPortfolioTableModel, self).histPricesChanged()
+        self.pricesUpdated()
+
+    def histPriceUpdateFinished(self):
+        super(QPortfolioTableModel, self).histPriceUpdateFinished()
+        self.pricesUpdated()
+
     def pricesUpdated(self):
         RowStartIndex = self.index(0, 2)
         RowEndIndex = self.index(len(self.coins), len(self.header) - 1)
         self.dataChanged.emit(RowStartIndex, RowEndIndex)
+
+    def setPrices(self, prices):
+        super(QPortfolioTableModel, self).setPrices(prices)
+        self.pricesUpdated()
 
     # emit dataChanged when trade is updated
     def tradeChanged(self, trade):
@@ -112,24 +126,22 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
             print('trade with unknowen coin: ' + trade.coin)
 
     # emit layout changed when coin is added
-    #    def addCoin(self, coinname):
-    #        self.layoutAboutToBeChanged.emit()
-    #        super(QPortfolioTableModel, self).addCoin(coinname)
-    #        self.layoutChanged.emit()
-
-    # emit layout changed when coin is added
     def addTrades(self, trades):
         self.beginResetModel()
         super(QPortfolioTableModel, self).addTrades(trades)
-        updateCoinPriceThreadSingle = threads.UpdateCoinPriceThreadSingle(self)
-        updateCoinPriceThreadSingle.updateFinished.connect(self.pricesUpdated)
-        updateCoinPriceThreadSingle.start()
         self.endResetModel()
+        self.coinAdded.emit(self.getCoinNames())
+
+    def addCoin(self, coinname):
+        retval = super(QPortfolioTableModel, self).addCoin(coinname)
+        # self.coinAdded.emit([coinname])
+        return retval
 
     def removeTrades(self, trades):
         self.beginResetModel()
         super(QPortfolioTableModel, self).removeTrades(trades)
         self.endResetModel()
+
 
 class QTableSortingModel(qtcore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):

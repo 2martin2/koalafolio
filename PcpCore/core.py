@@ -136,7 +136,11 @@ class CoinValue():
         return self.copy().sub(other)
 
     def fromDict(self, dictionary):
-        self.value = dictionary
+        for key in self.value:
+            try:
+                self.value[key] = dictionary[key]
+            except KeyError:
+                pass
         return self
 
     # set value of all CoinValues
@@ -383,6 +387,34 @@ class TradeList:
     def reloadValues(self):
         for trade in self.trades:
             trade.updateValue()
+
+    def setHistPrices(self, prices):
+        for trade in self.trades:
+            try:
+                coinPrice = CoinValue()
+                coinPrice.fromDict(prices[trade.tradeID])
+                trade.value = coinPrice.mult(trade.amount)
+                trade.valueLoaded = True
+            except KeyError:
+                pass
+
+        for trade in self.trades:
+            # get partner trade
+            partner = self.getTradeById(trade.tradePartnerId)
+            # check valid partner
+            if partner:
+                # check value of partner
+                if partner.valueLoaded:
+                    # use partner value if value update was not possible or if trade has a fiat partner
+                    if (not trade.valueLoaded) or partner.isFiat():
+                        trade.value = partner.value.mult(-1)
+                        trade.valueLoaded = True
+                    # if both values loaded and both trades are crypto use the same value
+                    elif not trade.isFiat():
+                        if trade.value < partner.value:  # use smaller value (tax will be paid later)
+                            partner.value = trade.value.mult(-1)
+                        else:
+                            trade.value = partner.value.mult(-1)
 
     def updateValues(self):
         # load values of all trades
@@ -799,6 +831,11 @@ class CoinList:
     def removeTrades(self, trades):
         for trade in trades:
             self.removeTrade(trade)
+        # remove all empty coins
+        indexes = [index for index in range(len(self.coins)) if not self.coins[index].trades]
+        indexes.sort(reverse=True)
+        for index in indexes:
+            self.coins.pop(index)
         self.matchTrades()
         return self
 
@@ -847,6 +884,22 @@ class CoinList:
     # get List of coinnames
     def getCoinNames(self):
         return [coin.coinname for coin in self.coins]
+
+    # set prices from dict
+    def setPrices(self, prices):
+        for coin in self.coins:
+                for key in coin.currentValue:
+                    try:
+                        coin.currentValue[key] = prices[coin.coinname][key]['PRICE'] * coin.balance
+                        coin.change24h[key] = prices[coin.coinname][key]['CHANGEPCT24HOUR']
+                    except KeyError:
+                        pass
+
+    def histPricesChanged(self):
+        pass
+
+    def histPriceUpdateFinished(self):
+        self.matchTrades()
 
     # update current value of all coins
     def updateCurrentValues(self):
