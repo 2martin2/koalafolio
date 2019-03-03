@@ -98,7 +98,7 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
 
     def pricesUpdated(self):
         RowStartIndex = self.index(0, 2)
-        RowEndIndex = self.index(len(self.coins), len(self.header) - 1)
+        RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1)
         self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def setPrices(self, prices):
@@ -107,23 +107,12 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
 
     # emit dataChanged when trade is updated
     def tradeChanged(self, trade):
-        #        coin = super(QPortfolioTableModel, self).tradeChanged(trade)
-        row = 0
-        coinFound = False
-        for coin in self.coins:
-            if coin.coinname == trade.coin:
-                coinFound = True
-                coin.updateBalance()
-                coin.matchTrades()
-                break
-            row += 1
-
-        if coinFound:
+        coin = super(QPortfolioTableModel, self).tradeChanged(trade)
+        if coin:
+            row = self.coins.index(coin)
             RowStartIndex = self.index(row, 0)
             RowEndIndex = self.index(row, len(self.header) - 1)
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
-        else:  # coin not found
-            print('trade with unknowen coin: ' + trade.coin)
 
     # emit layout changed when coin is added
     def addTrades(self, trades):
