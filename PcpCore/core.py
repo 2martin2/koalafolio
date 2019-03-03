@@ -526,10 +526,7 @@ class TradeMatcher:
             self.buysBuffer = buysTemp
 
     def matchTrades(self, timemode=DAYWISE):
-        #        print('match coin: ' + self.trades[0].coin + ', number of trades: ' + str(len(self.trades)))
         self.prepareTrades(timemode)
-
-        #        print('number of sells: ' + str(len(self.sells)) + ', number of buys: ' + str(len(self.buysBuffer)))
         self.sellsMatched = []
         self.buysMatched = []
         self.profitMatched = []
@@ -538,8 +535,6 @@ class TradeMatcher:
         sellIndex = 0
         maxIter = 10 * len(self.sellsBuffer)
         while (sellIndex < len(self.sellsBuffer) and buyIndex < len(self.buysBuffer)):
-            #            sell = self.sellsBuffer[sellIndex]
-            #            buy = self.buysBuffer[buyIndex]
             if self.sellsBuffer[sellIndex].date < self.buysBuffer[buyIndex].date:  # sell is bevore buy
                 # no buy trade can be matched -> ignore sellTrade
                 logger.globalLogger.warning('no earlier buyTrade available for sellTrade: ' + self.sellsBuffer[
@@ -746,9 +741,6 @@ class CoinBalance:
             #            pass
             # todo: create logging entry
             self.initialValue = self.tradeMatcher.getInitialPrice().mult(self.balance)
-
-    #    def calculateBoughtValue(self, initialTradeValue):
-    #        self.initialValue.add(initialTradeValue)
 
     def getInitialPrice(self):
         return self.initialValue.div(self.balance)

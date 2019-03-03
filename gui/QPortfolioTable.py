@@ -147,6 +147,14 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
         super(QTableSortingModel, self).__init__(*args, **kwargs)
 
+        self.sortedRow = 0
+        self.sortedDir = 0
+
+    def sort(self, row, order):
+        super(QTableSortingModel, self).sort(row, order)
+        self.sortedRow = row
+        self.sortedDir = order
+
     def lessThan(self, index1, index2):
         column = index1.column()
         if column == 2:
@@ -184,7 +192,6 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             super(QCoinTableDelegate, self).paint(painter, option, index)
         elif index.column() == 1:  # balance
             coinBalance = index.data(qt.DisplayRole)
-            #            print('BalancePainter is called with ' + str(coinBalance) + '; ' + str(index.column()))
             balance = controls.floatToString(coinBalance.balance, 5)
             buyAmount = controls.floatToString(coinBalance.tradeMatcher.getBuyAmount(), 4)
             sellAmount = controls.floatToString(coinBalance.tradeMatcher.getSellAmount(), 4)
@@ -245,7 +252,6 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
         elif index.column() >= index.model().sourceModel().firstValueColumn:
             coinBalance, key = index.data(qt.DisplayRole)
-            #            print('PricePainter is called with ' + str(coinBalance) + '; ' + str(index.column()))
             boughtValue = coinBalance.initialValue[key]
             boughtPrice = coinBalance.getInitialPrice()[key]
             currentValue = coinBalance.currentValue[key]

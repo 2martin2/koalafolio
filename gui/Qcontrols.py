@@ -11,6 +11,7 @@ import PyQt5.QtCore as qtcore
 import re
 from pathlib import Path
 import gui.QLogger as logger
+import gui.QSettings as settings
 
 qt = qtcore.Qt
 # %% constants
@@ -185,8 +186,11 @@ class QFilterTableView(qtwidgets.QWidget):
     def __init__(self, parent, tableView, *args, **kwargs):
         super(QFilterTableView, self).__init__(parent=parent, *args, **kwargs)
 
+        self.proxyModel = SortFilterProxyModel()
         self.tableView = tableView
         self.tableView.setParent(self)
+        self.tableView.setModel(self.proxyModel)
+        self.tableView.show()
 
         self.filterBoxes = []
         self.gridLayout = qtwidgets.QGridLayout()
@@ -194,26 +198,44 @@ class QFilterTableView(qtwidgets.QWidget):
         self.resetFilterButton.setFixedWidth(28)
         self.resetFilterButton.clicked.connect(self.clearFilter)
         self.gridLayout.addWidget(self.resetFilterButton, 0, 0)
-        col = 1
-        for index in range(self.tableView.model().columnCount()):
-            self.filterBoxes.append(qtwidgets.QLineEdit(self))
-            self.filterBoxes[index].textChanged.connect(lambda t, x=index: self.filterColumns(t, x))
-            self.gridLayout.addWidget(self.filterBoxes[index], 0, col)
-            col += 1
-        self.gridLayout.addItem(qtwidgets.QSpacerItem(12, 10), 0, col)
+
+        self.layoutFilterBoxes()
 
         self.vertLayout = qtwidgets.QVBoxLayout(self)
         self.vertLayout.addLayout(self.gridLayout)
         self.vertLayout.addWidget(self.tableView)
 
-    def filterColumns(self, text, col):
-        print('filter trades: ' + str(col) + '; ' + text)
-        self.tableView.model().setFilterByColumn(text, col)
+    def layoutFilterBoxes(self):
+        col = 1
+        for index in range(self.tableView.model().columnCount()):
+            self.filterBoxes.append(qtwidgets.QLineEdit(self))
+            self.filterBoxes[index].textChanged.connect(lambda t, x=index: self.filterColumns(t, x))
+            self.filterBoxes[index].setPlaceholderText('no filter')
+            self.gridLayout.addWidget(self.filterBoxes[index], 0, col)
+            col += 1
+        self.gridLayout.addItem(qtwidgets.QSpacerItem(12, 10), 0, col)
 
+        # self.useRegexCheckBox = qtwidgets.QCheckBox('re', self)
+        # self.useRegexCheckBox.stateChanged.connect(lambda state: self.switchRegexFilter(state))
+        # self.gridLayout.addWidget(self.useRegexCheckBox, 0, col)
+
+    def setModel(self, model):
+        self.proxyModel.setSourceModel(model)
+        self.layoutFilterBoxes()
+
+    def filterColumns(self, text, col):
+        self.tableView.model().setFilterByColumn(text, col)
 
     def clearFilter(self):
         for filterBox in self.filterBoxes:
             filterBox.clear()
+
+    def switchRegexFilter(self, state):
+        if state == qt.Checked:
+            self.proxyModel.useRegex = True
+        else:  # not checked
+            self.proxyModel.useRegex = False
+
 
 
 # %% Trade table model
@@ -224,6 +246,14 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
         self.filters = {}
         self.setFilterCaseSensitivity(qt.CaseInsensitive)
 
+        self.sortedRow = 0
+        self.sortedDir = 0
+
+    def sort(self, row, order):
+        super(SortFilterProxyModel, self).sort(row, order)
+        self.sortedRow = row
+        self.sortedDir = order
+
     def setFilterByColumn(self, regex, column):
         self.filters[column] = regex
         self.invalidateFilter()
@@ -233,8 +263,15 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
             ix = self.sourceModel().index(source_row, key, source_parent)
             if ix.isValid():
                 text = str(self.sourceModel().data(ix))
-                if not re.match('.*' + regex + '.*', text, re.IGNORECASE):
-                    return False
+                try:
+                    if settings.mySettings.getGuiSettings()['filterUseRegex']:
+                        if not re.match('.*' + regex + '.*', text, re.IGNORECASE):
+                            return False
+                    else:  # no regex
+                        if not regex.lower() in text.lower():
+                            return False
+                except Exception as ex:  # skip column if regex error
+                    pass
         return True
 
 

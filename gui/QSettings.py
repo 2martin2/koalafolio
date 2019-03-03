@@ -42,6 +42,13 @@ class QSettings(settings.Settings):
         self['color']['PRIMARY'] = '75,185,255'
         self['color']['SECONDARY'] = '0,255,0'
         self['color']['TERTIARY'] = '255,0,0'
+        # gui settings
+        self['gui'] = {}
+        self['gui']['filterUseRegex'] = 'True'
+        self['gui']['portfolioFilterRow'] = '3'
+        self['gui']['tradeFilterRow'] = '2'
+        self['gui']['portfolioFilterDir'] = (str(qt.AscendingOrder))
+        self['gui']['tradeFilterDir'] = str(qt.AscendingOrder)
 
         super(QSettings, self).initSettings()
 
@@ -109,6 +116,37 @@ class QSettings(settings.Settings):
         for key in self['colors']:
             if key.lower() == name.lower():
                 self['colors'][key] = str(value).replace('(', '').replace(')', '')
+
+    def getGuiSettings(self):
+        gui = {}
+        try:
+            gui['filterUseRegex'] = self.getboolean('gui', 'filterUseRegex')
+        except ValueError:
+            gui['filterUseRegex'] = True
+        try:
+            gui['portfolioFilterRow'] = self.getint('gui', 'portfolioFilterRow')
+        except ValueError:
+            gui['portfolioFilterRow'] = 3
+        try:
+            gui['tradeFilterRow'] = self.getint('gui', 'tradeFilterRow')
+        except ValueError:
+            gui['tradeFilterRow'] = 2
+        try:
+            gui['portfolioFilterDir'] = self.getint('gui', 'portfolioFilterDir')
+        except ValueError:
+            gui['portfolioFilterDir'] = qt.AscendingOrder
+        try:
+            gui['tradeFilterDir'] = self.getint('gui', 'tradeFilterDir')
+        except ValueError:
+            gui['tradeFilterDir'] = qt.AscendingOrder
+        return gui
+
+    def setGuiSettings(self, gui):
+        for key in gui:
+            if key in self['gui']:
+                self['gui'][key] = str(gui[key])
+            else:
+                raise KeyError('invalid key ' + key + ' for gui settings')
 
 
 mySettings = QSettings()

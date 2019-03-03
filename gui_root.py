@@ -234,9 +234,13 @@ class PortfolioApp(qtwidgets.QWidget):
                 pass
 
     def closeEvent(self, event):
+        # save window props
         geometry = self.geometry()
         state = self.windowState()
         self.settings.setWindowProperties(geometry, state)
+        # save gui props
+        self.settings.setGuiSettings(self.tradesPage.getGuiProps())
+        self.settings.setGuiSettings(self.portfolioPage.getGuiProps())
         self.settings.saveSettings()
         event.accept()
 

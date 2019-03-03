@@ -53,7 +53,6 @@ class TradeTableWidget(qtwidgets.QTableWidget):
     #        self.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
 
     def setTradeList(self, tradeList):
-        #        print('4 set trade list of table widget')
         self.cellChanged.disconnect(self.cellChangedCallback)
         self.setSortingEnabled(False)
         self.tradeList = tradeList
@@ -67,15 +66,8 @@ class TradeTableWidget(qtwidgets.QTableWidget):
             columnNotEditable = [0, 1, 3, 4]
             for column in columnNotEditable:
                 self.item(rowIndex, column).setFlags(self.item(rowIndex, column).flags() & ~qt.ItemIsEditable)
-
-        # set Columns not editable
-        #        columnNotEditable = [0,1,3,4]
-        #        for column in columnNotEditable:
-        #            self.setColumnFlag(column, qt.ItemIsEditable, False)
         self.setSortingEnabled(True)
         self.cellChanged.connect(self.cellChangedCallback)
-
-    #        print('5 table widget refreshed')
 
     def setColumnFlag(self, column, flag, enable):
         if enable:  # enable flag
@@ -376,7 +368,6 @@ class QTradeTableModel(QTradeContainer):
 
         if role == qt.EditRole:
             try:
-                #                seperatePrint(['setData', str(index.row()), str(index.column()), str(value), self.trades[index.row()].toString()], '; ')
                 # ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange'] + ['value' + key for key in self.keys]
                 if index.column() == 0:  # return id
                     self.trades[index.row()].tradeID = value
