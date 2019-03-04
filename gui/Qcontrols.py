@@ -154,25 +154,30 @@ class StyledLabel(qtwidgets.QWidget):
         super(StyledLabel, self).__init__(parent=parent, *args, **kwargs)
 
         self.setObjectName('StyledLabel')
-        self.setTitle(header)
-        self.setCheckable(True)
-        # self.setAlignment(qt.AlignCenter)
-        bodyFont = qtgui.QFont("Arial", 12)
-        self.body = qtwidgets.QLabel(text)
+        self.title = qtwidgets.QLabel(header, self)
+        self.title.setObjectName('StyledLabelTitle')
+        self.title.setAlignment(qt.AlignCenter)
+        titleFont = qtgui.QFont("Arial", 11)
+        self.title.setFont(titleFont)
+
+
+        self.body = qtwidgets.QLabel(text, self)
         self.body.setAlignment(qt.AlignCenter)
         self.body.setObjectName('StyledLabelBody')
+        bodyFont = qtgui.QFont("Arial", 12)
         self.body.setFont(bodyFont)
         self.body.sizePolicy().setRetainSizeWhenHidden(False)
 
         self.vertLayout = qtwidgets.QVBoxLayout()
+        self.vertLayout.addWidget(self.title)
         self.vertLayout.addWidget(self.body)
         self.setLayout(self.vertLayout)
 
-        self.toggled.connect(lambda state: self.isToggled(state))
-        self.setChecked(True)
+        # self.toggled.connect(lambda state: self.isToggled(state))
+        # self.setChecked(True)
 
     def setHeader(self, header):
-        self.setTitle(header)
+        self.title.setText(header)
 
     def setText(self, text):
         self.body.setText(text)
@@ -183,60 +188,54 @@ class StyledLabel(qtwidgets.QWidget):
     def isToggled(self, checked):
         self.body.setVisible(checked)
         print(self.minimumSizeHint())
-        # if checked:
-        #     self.setFixedHeight(100)
-        # else:
-        #     self.setFixedHeight(20)
 
 
 class DragWidget(qtwidgets.QWidget):
     def __init__(self, parent, *args, **kwargs):
         super(DragWidget, self).__init__(parent=parent, *args, **kwargs)
         self.setAcceptDrops(True)
+        self.setObjectName('DragWidget')
+        self.setStyleSheet('QFrame#DragWidget{background-color: black}')
+        self.dragObject = None
+        self.dragPixmap = qtgui.QPixmap()
+        self.dragDelta = qtcore.QPoint(0, 0)
 
-    def dragEnterEvent(self, event):
-        if self.children().contains(event.source()):
-            event.setDropAction(qt.MoveAction)
-            event.accept()
-        else:
-            event.ignore()
+    def setMoveArea(self, ml=10, mu=10, mr=10, mb=10):
+        g = self.geometry()
+        self.moveArea = qtcore.QRect(ml, mu, g.width() - 2 * mr, g.height() - 2 * mb)
 
-    def dragMoveEvent(self, event):
-        if self.children().contains(event.source()):
-            event.setDropAction(qt.MoveAction)
-            event.accept()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event):
-        # get object
-        object = event.source()
-        object.move(event.pos())
-        object.show()
-
-        if (event.source() == self):
-            event.setDropAction(qt.MoveAction)
-            event.accept()
-        else:
-            event.acceptProposedAction()
-
+    def move(self, *args, **kwargs):
+        super(DragWidget, self).move(*args, **kwargs)
+        self.setMoveArea(10)
 
     def mousePressEvent(self, event):
-        object = self.childAt(event.pos())
-        if not object:
+        self.setMoveArea(0, 0, 50, 30)
+        print(str(self.moveArea))
+        self.dragObject = self.childAt(event.pos())
+        if not self.dragObject:
             return
+        if self.dragObject.parent() != self:
+            self.dragObject = self.dragObject.parent()
+            if not self.dragObject:
+                return
+        self.dragDelta = self.dragObject.pos() - event.pos()
+        self.dragObject.render(self.dragPixmap)
 
-        hotSpot = event.pos() - object.pos()
+    def mouseMoveEvent(self, event):
+        if self.dragObject:
+            objPos = event.pos() + self.dragDelta
+            if self.moveArea.contains(objPos):
+                self.dragObject.move(objPos)
+            # elif not self.geometry().contains(event.pos()):
+            else:
+                self.dragObject = None
 
-        drag = qtgui.QDrag(self)
-        drag.setPixmap(object.body.pixmap())
-        drag.setHotspot(hotSpot)
-
-        object.hide()
-
-        if drag.exec(qt.MoveAction, qt.MoveAction) != qt.MoveAction:
-            object.show()
-
+    def mouseReleaseEvent(self, event):
+        if self.dragObject:
+            objPos = event.pos() + self.dragDelta
+            if self.moveArea.contains(objPos):
+                self.dragObject.move(objPos)
+        self.dragObject = None
 
 # %% tables
 class DataFrameTable(qtwidgets.QTableWidget):

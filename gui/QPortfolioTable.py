@@ -384,16 +384,17 @@ class PortfolioOverview(qtwidgets.QWidget):
         labels = [fiatLabels, portfolioLabels, profitLabels]
 
         self.dragWidget = controls.DragWidget(self)
-        self.dragWidget.setFixedHeight(100)
-        self.dragWidget.setFixedWidth(300)
+        self.dragWidget.setFixedHeight(self.height)
+        self.dragWidget.setFixedWidth(500)
 
-        self.labelGridLayout = qtwidgets.QGridLayout()
+        # self.labelGridLayout = qtwidgets.QGridLayout()
         row = 0
         column = 0
         for columnLabels in labels:
             for rowLabel in columnLabels:
                 # self.labelGridLayout.addWidget(rowLabel, row, column)
                 rowLabel.setParent(self.dragWidget)
+                rowLabel.move(qtcore.QPoint(column*100, row*50))
                 row += 1
             row = 0
             column += 1
@@ -413,6 +414,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.chartView = qtchart.QChartView(self.chart)
         self.chartView.setRenderHint(qtgui.QPainter.Antialiasing)
 
+        # self.horzLayout.addLayout(self.labelGridLayout)
         self.horzLayout.addWidget(self.dragWidget)
         self.horzLayout.addStretch()
         self.horzLayout.addWidget(self.chartView)
