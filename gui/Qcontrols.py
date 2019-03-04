@@ -32,6 +32,7 @@ class StyledFrame(qtwidgets.QFrame):
         self.setFrameShadow(qtwidgets.QFrame.Raised)
 
 
+# status bar for printing logging entries
 class StatusBar(StyledFrame):
     def __init__(self, parent, height=80, *args, **kwargs):
         super(StatusBar, self).__init__(parent=parent, *args, **kwargs)
@@ -53,6 +54,7 @@ class StatusBar(StyledFrame):
         self.statusView.setModel(model)
 
 
+# lineEdit where files can be dropped
 class LineEditDropable(qtwidgets.QLineEdit):
     def __init__(self, parent, *args, **kwargs):
         super(LineEditDropable, self).__init__(parent=parent, *args, **kwargs)
@@ -79,6 +81,7 @@ class LineEditDropable(qtwidgets.QLineEdit):
         event.acceptProposedAction()
 
 
+# path input with line edit and qfiledialo
 class PathInput(qtwidgets.QWidget):
     textChanged = qtcore.pyqtSignal()
 
@@ -145,8 +148,94 @@ class PathInput(qtwidgets.QWidget):
         return False
 
 
-#    def _pathChangedHandler(self, *args):    
-#        self.event_generate('<<pathChanged>>')
+# styled label for showing single values in gui
+class StyledLabel(qtwidgets.QWidget):
+    def __init__(self, parent, header='', text='', *args, **kwargs):
+        super(StyledLabel, self).__init__(parent=parent, *args, **kwargs)
+
+        self.setObjectName('StyledLabel')
+        self.setTitle(header)
+        self.setCheckable(True)
+        # self.setAlignment(qt.AlignCenter)
+        bodyFont = qtgui.QFont("Arial", 12)
+        self.body = qtwidgets.QLabel(text)
+        self.body.setAlignment(qt.AlignCenter)
+        self.body.setObjectName('StyledLabelBody')
+        self.body.setFont(bodyFont)
+        self.body.sizePolicy().setRetainSizeWhenHidden(False)
+
+        self.vertLayout = qtwidgets.QVBoxLayout()
+        self.vertLayout.addWidget(self.body)
+        self.setLayout(self.vertLayout)
+
+        self.toggled.connect(lambda state: self.isToggled(state))
+        self.setChecked(True)
+
+    def setHeader(self, header):
+        self.setTitle(header)
+
+    def setText(self, text):
+        self.body.setText(text)
+
+    def setBodyColor(self, color):
+        self.body.setStyleSheet("color: " + str(color))
+
+    def isToggled(self, checked):
+        self.body.setVisible(checked)
+        print(self.minimumSizeHint())
+        # if checked:
+        #     self.setFixedHeight(100)
+        # else:
+        #     self.setFixedHeight(20)
+
+
+class DragWidget(qtwidgets.QWidget):
+    def __init__(self, parent, *args, **kwargs):
+        super(DragWidget, self).__init__(parent=parent, *args, **kwargs)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        if self.children().contains(event.source()):
+            event.setDropAction(qt.MoveAction)
+            event.accept()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if self.children().contains(event.source()):
+            event.setDropAction(qt.MoveAction)
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        # get object
+        object = event.source()
+        object.move(event.pos())
+        object.show()
+
+        if (event.source() == self):
+            event.setDropAction(qt.MoveAction)
+            event.accept()
+        else:
+            event.acceptProposedAction()
+
+
+    def mousePressEvent(self, event):
+        object = self.childAt(event.pos())
+        if not object:
+            return
+
+        hotSpot = event.pos() - object.pos()
+
+        drag = qtgui.QDrag(self)
+        drag.setPixmap(object.body.pixmap())
+        drag.setHotspot(hotSpot)
+
+        object.hide()
+
+        if drag.exec(qt.MoveAction, qt.MoveAction) != qt.MoveAction:
+            object.show()
 
 
 # %% tables
