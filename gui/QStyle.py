@@ -339,6 +339,22 @@ QLineEdit{
     border-radius: 2px;
 }
 
+/* portfolio labels */
+QWidget#StyledLabel{
+    color: TEXT;
+    border: 2px solid PRIMARY;
+    border-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT stop:1 PRIMARY);
+    border-radius: 5px;
+}
+QWidget#StyledLabelTitle{
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT stop:1 PRIMARY);
+    color: TEXT_HIGHLIGHTED;
+    border: 0px solid PRIMARY_DARK;
+    border-radius: 2px;
+}
+
 /* buttons*/
 QPushButton {
     border: 1px solid PRIMARY_DARK;
@@ -474,4 +490,5 @@ selection-background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT, stop:1 PRIMARY);
 selection-color: TEXT_NORMAL;
 }
+
 """

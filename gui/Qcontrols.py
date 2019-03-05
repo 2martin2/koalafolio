@@ -149,7 +149,7 @@ class PathInput(qtwidgets.QWidget):
 
 
 # styled label for showing single values in gui
-class StyledLabel(qtwidgets.QWidget):
+class StyledLabel(qtwidgets.QFrame):
     def __init__(self, parent, header='', text='', *args, **kwargs):
         super(StyledLabel, self).__init__(parent=parent, *args, **kwargs)
 
@@ -171,10 +171,20 @@ class StyledLabel(qtwidgets.QWidget):
         self.vertLayout = qtwidgets.QVBoxLayout()
         self.vertLayout.addWidget(self.title)
         self.vertLayout.addWidget(self.body)
+        self.vertLayout.setContentsMargins(0, 0, 0, 2)
         self.setLayout(self.vertLayout)
 
         # self.toggled.connect(lambda state: self.isToggled(state))
         # self.setChecked(True)
+
+    def minimumSizeHint(self):
+        s = qtcore.QSize()
+        s.setWidth(max([self.title.width(), self.body.width()])+15)
+        s.setHeight((self.title.height() + self.body.height())*3)
+        return s
+
+    def sizeHint(self):
+        return self.minimumSizeHint()
 
     def setHeader(self, header):
         self.title.setText(header)
@@ -191,11 +201,11 @@ class StyledLabel(qtwidgets.QWidget):
 
 
 class DragWidget(qtwidgets.QWidget):
-    def __init__(self, parent, *args, **kwargs):
-        super(DragWidget, self).__init__(parent=parent, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(DragWidget, self).__init__(*args, **kwargs)
         self.setAcceptDrops(True)
         self.setObjectName('DragWidget')
-        self.setStyleSheet('QFrame#DragWidget{background-color: black}')
+        # self.setStyleSheet('QFrame#DragWidget{background-color: black}')
         self.dragObject = None
         self.dragPixmap = qtgui.QPixmap()
         self.dragDelta = qtcore.QPoint(0, 0)
@@ -208,9 +218,17 @@ class DragWidget(qtwidgets.QWidget):
         super(DragWidget, self).move(*args, **kwargs)
         self.setMoveArea(10)
 
+    def minimumSizeHint(self):
+        s = qtcore.QSize()
+        s.setWidth(max(child.pos().x() + child.width() for child in self.children()))
+        s.setHeight(max(child.pos().y() + child.height() for child in self.children()))
+        return s
+
+    def sizeHint(self):
+        return self.parent().size()*2
+
     def mousePressEvent(self, event):
         self.setMoveArea(0, 0, 50, 30)
-        print(str(self.moveArea))
         self.dragObject = self.childAt(event.pos())
         if not self.dragObject:
             return
@@ -235,6 +253,7 @@ class DragWidget(qtwidgets.QWidget):
             objPos = event.pos() + self.dragDelta
             if self.moveArea.contains(objPos):
                 self.dragObject.move(objPos)
+                self.updateGeometry()
         self.dragObject = None
 
 # %% tables

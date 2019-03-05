@@ -384,8 +384,6 @@ class PortfolioOverview(qtwidgets.QWidget):
         labels = [fiatLabels, portfolioLabels, profitLabels]
 
         self.dragWidget = controls.DragWidget(self)
-        self.dragWidget.setFixedHeight(self.height)
-        self.dragWidget.setFixedWidth(500)
 
         # self.labelGridLayout = qtwidgets.QGridLayout()
         row = 0
@@ -394,7 +392,7 @@ class PortfolioOverview(qtwidgets.QWidget):
             for rowLabel in columnLabels:
                 # self.labelGridLayout.addWidget(rowLabel, row, column)
                 rowLabel.setParent(self.dragWidget)
-                rowLabel.move(qtcore.QPoint(column*100, row*50))
+                rowLabel.move(qtcore.QPoint((column+0.5)*125, (row+0.2)*60))
                 row += 1
             row = 0
             column += 1
@@ -409,7 +407,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         # self.chart.setTitle("portfolio")
         self.chart.legend().hide()
         self.chart.setMargins(qtcore.QMargins(0, 0, 0, 0))
-        self.chart.resize(self.height, self.height)
+        self.chart.setMinimumWidth(self.height+30)
 
         self.chartView = qtchart.QChartView(self.chart)
         self.chartView.setRenderHint(qtgui.QPainter.Antialiasing)
@@ -418,6 +416,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.horzLayout.addWidget(self.dragWidget)
         self.horzLayout.addStretch()
         self.horzLayout.addWidget(self.chartView)
+        self.horzLayout.setContentsMargins(0, 0, 0, 0)
 
     def setModel(self, model):
         self.model = model
