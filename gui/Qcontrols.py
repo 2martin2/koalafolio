@@ -149,55 +149,70 @@ class PathInput(qtwidgets.QWidget):
 
 
 # styled label for showing single values in gui
-class StyledLabel(qtwidgets.QFrame):
+class StyledLabelCont(qtwidgets.QFrame):
     def __init__(self, parent, header='', text='', *args, **kwargs):
-        super(StyledLabel, self).__init__(parent=parent, *args, **kwargs)
+        super(StyledLabelCont, self).__init__(parent=parent, *args, **kwargs)
 
-        self.setObjectName('StyledLabel')
-        self.title = qtwidgets.QLabel(header, self)
+        self.setObjectName('StyledLabelCont')
+        self.title = qtwidgets.QPushButton(header, self)
+        self.title.setCheckable(True)
         self.title.setObjectName('StyledLabelTitle')
-        self.title.setAlignment(qt.AlignCenter)
+        self.title.setMinimumHeight(25)
+        # self.title.setAlignment(qt.AlignCenterS)
         titleFont = qtgui.QFont("Arial", 11)
         self.title.setFont(titleFont)
 
-
-        self.body = qtwidgets.QLabel(text, self)
-        self.body.setAlignment(qt.AlignCenter)
+        self.body = qtwidgets.QWidget()
+        # self.body.setAlignment(qt.AlignCenter)
         self.body.setObjectName('StyledLabelBody')
-        bodyFont = qtgui.QFont("Arial", 12)
-        self.body.setFont(bodyFont)
         self.body.sizePolicy().setRetainSizeWhenHidden(False)
+
+        self.bodyLayout = qtwidgets.QGridLayout(self.body)
+        self.bodyLayout.setContentsMargins(6, 4, 6, 4)
+        self.bodyLayout.setOriginCorner(qt.TopRightCorner)
 
         self.vertLayout = qtwidgets.QVBoxLayout()
         self.vertLayout.addWidget(self.title)
         self.vertLayout.addWidget(self.body)
-        self.vertLayout.setContentsMargins(0, 0, 0, 2)
+        self.vertLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.vertLayout)
 
-        # self.toggled.connect(lambda state: self.isToggled(state))
-        # self.setChecked(True)
+        self.title.toggled.connect(lambda state: self.isToggled(state))
+        self.title.setChecked(True)
 
     def minimumSizeHint(self):
-        s = qtcore.QSize()
-        s.setWidth(max([self.title.width(), self.body.width()])+15)
-        s.setHeight((self.title.height() + self.body.height())*3)
-        return s
+        return self.sizeHint()
 
     def sizeHint(self):
-        return self.minimumSizeHint()
+        s = qtcore.QSize()
+        st = self.title.sizeHint()
+        sb = self.body.sizeHint()
+        if self.title.isChecked():
+            s.setHeight((st.height() + sb.height()) + 10)
+            s.setWidth(120)
+        else:
+            s.setHeight(st.height())
+            s.setWidth(120)
+        return s
+
+    def minimumSize(self):
+        self.minimumSizeHint()
 
     def setHeader(self, header):
         self.title.setText(header)
+        # self.resize(self.sizeHint())
 
-    def setText(self, text):
-        self.body.setText(text)
+    def addWidget(self, widget):
+        widget.setParent(self.body)
+        self.bodyLayout.addWidget(widget, len(self.body.children())-2, 0, qt.AlignRight)
+        self.resize(self.sizeHint())
 
     def setBodyColor(self, color):
         self.body.setStyleSheet("color: " + str(color))
 
     def isToggled(self, checked):
         self.body.setVisible(checked)
-        print(self.minimumSizeHint())
+        self.resize(self.sizeHint())
 
 
 class DragWidget(qtwidgets.QWidget):
@@ -220,8 +235,8 @@ class DragWidget(qtwidgets.QWidget):
 
     def minimumSizeHint(self):
         s = qtcore.QSize()
-        s.setWidth(max(child.pos().x() + child.width() for child in self.children()))
-        s.setHeight(max(child.pos().y() + child.height() for child in self.children()))
+        s.setWidth(max(child.pos().x() + child.width() + 10 for child in self.children()))
+        s.setHeight(max(child.pos().y() + child.height() + 10 for child in self.children()))
         return s
 
     def sizeHint(self):
@@ -232,12 +247,13 @@ class DragWidget(qtwidgets.QWidget):
         self.dragObject = self.childAt(event.pos())
         if not self.dragObject:
             return
-        if self.dragObject.parent() != self:
+        while(self.dragObject.parent() != self):
             self.dragObject = self.dragObject.parent()
             if not self.dragObject:
                 return
         self.dragDelta = self.dragObject.pos() - event.pos()
         self.dragObject.render(self.dragPixmap)
+        event.ignore()
 
     def mouseMoveEvent(self, event):
         if self.dragObject:
