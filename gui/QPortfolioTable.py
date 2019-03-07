@@ -410,7 +410,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         # otherLabels = [None, self.paidFeesLabel]
         labels = [fiatLabels, portfolioLabels, profitLabels]
 
-        self.dragWidget = controls.DragWidget(self)
+        # self.dragWidget = controls.DragWidget(self)
 
         # self.labelGridLayout = qtwidgets.QGridLayout()
         # self.labelGridLayout.setContentsMargins(0, 0, 0, 0)
