@@ -111,7 +111,10 @@ def getCoinPrices(coins):
     if response and 'RAW' in response:
         return response['RAW']
     else:
-        logger.globalLogger.warning('error loading prices: ' + str(response))
+        if response:
+            logger.globalLogger.warning('error loading prices: ' + str(response))
+        else:
+            logger.globalLogger.warning('error loading prices')
         return {}
 def update24hChange(coinList):
     if settings.mySettings.proxies():
