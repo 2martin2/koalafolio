@@ -148,12 +148,13 @@ class TradeTableWidget(qtwidgets.QTableWidget):
 
 # %% Trade table view
 class QTradeTableView(qtwidgets.QTableView):
+    viewResized = qtcore.pyqtSignal()
+
     def __init__(self, parent, *args, **kwargs):
         super(QTradeTableView, self).__init__(parent=parent, *args, **kwargs)
 
         self.setModel(QTradeTableModel())
         self.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Stretch)
-        # self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
         self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Fixed)
         self.verticalHeader().setDefaultSectionSize(25)
         self.setItemDelegate(QTradeTableDelegate())
@@ -168,6 +169,12 @@ class QTradeTableView(qtwidgets.QTableView):
                 if not ind.row() in rows:
                     rows.append(ind.row())
             self.model().sourceModel().removeTrades(rows)
+
+    def resizeEvent(self, event):
+        super(QTradeTableView, self).resizeEvent(event)
+        self.viewResized.emit()
+
+
 
 
 # #%% Trade table model
@@ -470,7 +477,7 @@ class QTradeTableModel(QTradeContainer):
         super(QTradeTableModel, self).pricesUpdatedCallback(tradesLeft)
         if self.pricesShowen:
             RowStartIndex = self.index(0, self.firstValueColumn)
-            RowEndIndex = self.index(len(self.trades), len(self.header) - 1)
+            RowEndIndex = self.index(len(self.trades) - 1, len(self.header) - 1)
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
 

@@ -181,6 +181,7 @@ class DataFrameTable(qtwidgets.QTableWidget):
             for rowIndex in range(len(column)):
                 self.setItem(rowIndex, columnIndex, qtwidgets.QTableWidgetItem(str(column[rowIndex])))
 
+
 # && Filterable Trade Table Widget
 class QFilterTableView(qtwidgets.QWidget):
     def __init__(self, parent, tableView, *args, **kwargs):
@@ -192,36 +193,71 @@ class QFilterTableView(qtwidgets.QWidget):
         self.tableView.setModel(self.proxyModel)
         self.tableView.show()
 
-        self.filterBoxes = []
-        self.gridLayout = qtwidgets.QGridLayout()
+        self.filterLine = qtwidgets.QWidget(self)
+        self.filterLine.setFixedHeight(20)
+        self.filterMargin = 4
         self.resetFilterButton = qtwidgets.QPushButton('X', self)
-        self.resetFilterButton.setFixedWidth(28)
+        self.resetFilterButton.setFixedWidth(25)
+        self.resetFilterButton.setFixedHeight(20)
         self.resetFilterButton.clicked.connect(self.clearFilter)
-        self.gridLayout.addWidget(self.resetFilterButton, 0, 0)
+        self.resetFilterButton.move(0, 0)
 
-        self.layoutFilterBoxes()
+        self.initFilterBoxes()
 
         self.vertLayout = qtwidgets.QVBoxLayout(self)
-        self.vertLayout.addLayout(self.gridLayout)
+        self.vertLayout.addWidget(self.filterLine)
         self.vertLayout.addWidget(self.tableView)
+        self.vertLayout.setContentsMargins(5, 2, 5, 5)
 
-    def layoutFilterBoxes(self):
-        col = 1
+        self.tableView.viewResized.connect(self.layoutFilterRow)
+        self.tableView.horizontalHeader().sectionResized.connect(self.sectionChanged)
+
+    def initFilterBoxes(self):
+        self.filterBoxes = []
         for index in range(self.tableView.model().columnCount()):
             self.filterBoxes.append(qtwidgets.QLineEdit(self))
             self.filterBoxes[index].textChanged.connect(lambda t, x=index: self.filterColumns(t, x))
             self.filterBoxes[index].setPlaceholderText('no filter')
-            self.gridLayout.addWidget(self.filterBoxes[index], 0, col)
-            col += 1
-        self.gridLayout.addItem(qtwidgets.QSpacerItem(12, 10), 0, col)
+            self.filterBoxes[index].setFixedHeight(20)
+        self.layoutFilterRow()
 
-        # self.useRegexCheckBox = qtwidgets.QCheckBox('re', self)
-        # self.useRegexCheckBox.stateChanged.connect(lambda state: self.switchRegexFilter(state))
-        # self.gridLayout.addWidget(self.useRegexCheckBox, 0, col)
+    def sectionChanged(self, index, oldSize, newSize):
+        if index < len(self.filterBoxes):
+            self.setFilterBoxSize(index, newSize)
+
+    def layoutFilterRow(self):
+        tableStart = 5
+        self.resetFilterButton.move(tableStart, 0)
+        vertHeaderWidth = self.tableView.verticalHeader().width()
+        buttonWidth = 25 if vertHeaderWidth < 25 else vertHeaderWidth
+        self.resetFilterButton.setFixedWidth(buttonWidth)
+        # layout boxes
+        if self.filterBoxes:
+            self.filterBoxes[0].move(tableStart + buttonWidth + self.filterMargin, 0)
+            self.setFilterBoxSize(0, self.tableView.columnWidth(0))
+
+
+    def setFilterBoxSize(self, index, size):
+        size -= self.filterMargin
+        if index == 0:
+            # check if button needs space of first column
+            vertHeaderWidth = self.tableView.verticalHeader().width()
+            buttonWidth = self.resetFilterButton.width()
+            filterSize = size - buttonWidth + vertHeaderWidth
+            # filterSize = filterSize if filterSize > 20 else 20
+            self.filterBoxes[index].setFixedWidth(filterSize)
+        else:
+            self.filterBoxes[index].setFixedWidth(size)
+        # move filterboxes after changed box
+        for col in range(index+1, len(self.filterBoxes)):
+            pos = self.filterBoxes[col - 1].pos()
+            pos.setX(pos.x() + self.filterBoxes[col - 1].width() + self.filterMargin)
+            self.filterBoxes[col].move(pos)
 
     def setModel(self, model):
         self.proxyModel.setSourceModel(model)
-        self.layoutFilterBoxes()
+        self.initFilterBoxes()
+
 
     def filterColumns(self, text, col):
         self.tableView.model().setFilterByColumn(text, col)
