@@ -122,7 +122,7 @@ class TradesPage(Page):
         self.deleteTradesButton = qtwidgets.QPushButton('delete all', self)
         self.deleteTradesButton.clicked.connect(self.deleteAllTrades)
         self.undoButton = qtwidgets.QPushButton('undo', self)
-        self.undoButton.clicked.connect(self.undoRemoveTrades)
+        self.undoButton.clicked.connect(self.undoRemoveAddTrades)
         self.reloadPricesButton = qtwidgets.QPushButton('reload prices', self)
         self.reloadPricesButton.clicked.connect(self.reloadPrices)
 
@@ -147,10 +147,10 @@ class TradesPage(Page):
     def refresh(self):
         pass
 
-    def undoRemoveTrades(self):
-        self.undoButton.clicked.disconnect(self.undoRemoveTrades)
-        self.controller.tradeList.undoRemoveTrades()
-        self.undoButton.clicked.connect(self.undoRemoveTrades)
+    def undoRemoveAddTrades(self):
+        self.undoButton.clicked.disconnect(self.undoRemoveAddTrades)
+        self.controller.tradeList.undoRemoveAddTrades()
+        self.undoButton.clicked.connect(self.undoRemoveAddTrades)
 
     def deleteAllTrades(self):
         self.deleteTradesButton.clicked.disconnect(self.deleteAllTrades)

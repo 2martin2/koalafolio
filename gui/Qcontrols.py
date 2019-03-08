@@ -210,6 +210,8 @@ class QFilterTableView(qtwidgets.QWidget):
         self.vertLayout.setContentsMargins(5, 2, 5, 5)
 
         self.tableView.viewResized.connect(self.layoutFilterRow)
+        self.tableView.viewUpdated.connect(self.layoutFilterRow)
+        self.tableView.horizontalHeader().geometriesChanged.connect(self.layoutFilterRow)
         self.tableView.horizontalHeader().sectionResized.connect(self.sectionChanged)
 
     def initFilterBoxes(self):

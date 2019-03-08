@@ -350,8 +350,11 @@ class TradeList:
         return True
 
     def mergeTradeList(self, tradeList):
-        self.trades = list(set().union(self.trades, tradeList.trades))
-        return self
+        addedTrades = TradeList()
+        for trade in tradeList:
+            if self.addTrade(trade):
+                addedTrades.addTrade(trade)
+        return addedTrades
 
     def reduceTradeList(self):
         self.trades = list(set(self.trades))
@@ -820,7 +823,7 @@ class CoinList:
         self.matchTrades()
         return self
 
-    def removeTrades(self, trades):
+    def deleteTrades(self, trades):
         for trade in trades:
             self.removeTrade(trade)
         # remove all empty coins

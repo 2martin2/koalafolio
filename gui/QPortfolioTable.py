@@ -126,9 +126,9 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         # self.coinAdded.emit([coinname])
         return retval
 
-    def removeTrades(self, trades):
+    def deleteTrades(self, trades):
         self.beginResetModel()
-        super(QPortfolioTableModel, self).removeTrades(trades)
+        super(QPortfolioTableModel, self).deleteTrades(trades)
         self.endResetModel()
 
 

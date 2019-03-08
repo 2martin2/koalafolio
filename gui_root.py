@@ -137,7 +137,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))
         # todo pass new trades with signal
         self.tradeList.tradesAdded.connect(lambda tradeList: self.coinList.addTrades(tradeList))
-        self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.removeTrades(tradeList))
+        self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.deleteTrades(tradeList))
         self.tradeList.pricesUpdated.connect(self.coinList.histPricesChanged)
         self.tradeList.histPriceUpdateFinished.connect(self.coinList.histPriceUpdateFinished)
         self.logger.info('data initialized')
