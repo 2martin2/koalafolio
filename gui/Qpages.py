@@ -82,6 +82,7 @@ class PortfolioPage(Page):
         self.verticalLayout = qtwidgets.QVBoxLayout()
         self.verticalLayout.addWidget(self.coinDataFrame)
         self.verticalLayout.addWidget(self.coinTableView)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
 
         self.mainLayout.addLayout(self.verticalLayout)
 

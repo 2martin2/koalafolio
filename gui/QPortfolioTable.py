@@ -356,62 +356,86 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.horzLayout = qtwidgets.QHBoxLayout(self)
 
         # total invested fiat
-        self.investedFiatLabel = qtwidgets.QLabel('fiat invest: ', self)
-        self.investedFiatValue = qtwidgets.QLabel('xxx', self)
+        self.investedFiatLabel = controls.StyledLabelCont(self, 'fiat invest')
+        self.investedFiatValue = qtwidgets.QLabel('xxx')
+        self.investedFiatValue.setFont(qtgui.QFont('Arial', 12))
+        self.investedFiatLabel.addWidget(self.investedFiatValue)
         # total returned fiat
-        self.returnedFiatLabel = qtwidgets.QLabel('fiat return: ', self)
-        self.returnedFiatValue = qtwidgets.QLabel('xxx', self)
+        self.returnedFiatLabel = controls.StyledLabelCont(self, 'fiat return')
+        self.returnedFiatValue = qtwidgets.QLabel('xxx')
+        self.returnedFiatValue.setFont(qtgui.QFont('Arial', 12))
+        self.returnedFiatLabel.addWidget(self.returnedFiatValue)
         # fiat performance
-        self.fiatPerformanceLabel = qtwidgets.QLabel('fiat perf: ', self)
-        self.fiatPerformanceValue = qtwidgets.QLabel('xxx', self)
+        # self.fiatPerformanceLabel = controls.StyledLabelCont(self, 'fiat perf')
+        self.fiatPerformanceValue = qtwidgets.QLabel('xxx')
+        self.fiatPerformanceValue.setFont(qtgui.QFont('Arial', 10))
+        self.returnedFiatLabel.addWidget(self.fiatPerformanceValue)
 
         # invested value of current holdings
-        self.currentInvestLabel = qtwidgets.QLabel('current invest: ', self)
-        self.currentInvestValue = qtwidgets.QLabel('xxx', self)
+        self.currentInvestLabel = controls.StyledLabelCont(self, 'current invest')
+        self.currentInvestValue = qtwidgets.QLabel('xxx')
+        self.currentInvestValue.setFont(qtgui.QFont('Arial', 12))
+        self.currentInvestLabel.addWidget(self.currentInvestValue)
         # current value of current holdings (hypothetical)
-        self.hypotheticalCoinValueLabel = qtwidgets.QLabel('current value:', self)
-        self.hypotheticalCoinValueValue = qtwidgets.QLabel('xxx', self)
+        self.hypotheticalCoinValueLabel = controls.StyledLabelCont(self, 'current value')
+        self.hypotheticalCoinValue = qtwidgets.QLabel('xxx')
+        self.hypotheticalCoinValue.setFont(qtgui.QFont('Arial', 12))
+        self.hypotheticalCoinValueLabel.addWidget(self.hypotheticalCoinValue)
         # current performance of current holdings (hypothetical)
-        self.hypotheticalPerformanceLabel = qtwidgets.QLabel('coin perf: ', self)
-        self.hypotheticalPerformanceValue = qtwidgets.QLabel('xxx', self)
+        # self.hypotheticalPerformanceLabel = controls.StyledLabelCont(self, 'coin perf')
+        self.hypotheticalPerformanceValue = qtwidgets.QLabel('xxx')
+        self.hypotheticalPerformanceValue.setFont(qtgui.QFont('Arial', 10))
+        self.hypotheticalCoinValueLabel.addWidget(self.hypotheticalPerformanceValue)
 
         # realized profit (relevant for tax)
-        self.realizedProfitLabel = qtwidgets.QLabel('realized profit: ', self)
-        self.realizedProfitValue = qtwidgets.QLabel('xxx', self)
+        self.realizedProfitLabel = controls.StyledLabelCont(self, 'realized profit')
+        self.realizedProfitValue = qtwidgets.QLabel('xxx')
+        self.realizedProfitValue.setFont(qtgui.QFont('Arial', 12))
+        self.realizedProfitLabel.addWidget(self.realizedProfitValue)
         # unrealized profit (would be relevant for tax if realized)
-        self.unrealizedProfitLabel = qtwidgets.QLabel('unrealized profit: ', self)
-        self.unrealizedProfitValue = qtwidgets.QLabel('xxx', self)
-        # paid fees
-        self.paidFeesLabel = qtwidgets.QLabel('fees paid: ', self)
-        self.paidFeesValue = qtwidgets.QLabel('xxx', self)
+        self.unrealizedProfitLabel = controls.StyledLabelCont(self, 'unrealized profit')
+        self.unrealizedProfitValue = qtwidgets.QLabel('xxx')
+        self.unrealizedProfitValue.setFont(qtgui.QFont('Arial', 12))
+        self.unrealizedProfitLabel.addWidget(self.unrealizedProfitValue)
 
-        fiatLabels = [self.investedFiatLabel, self.investedFiatValue, self.returnedFiatLabel,
-                      self.returnedFiatValue, self.fiatPerformanceLabel, self.fiatPerformanceValue]
-        portfolioLabels = [self.currentInvestLabel, self.currentInvestValue, self.hypotheticalCoinValueLabel,
-                           self.hypotheticalCoinValueValue, self.hypotheticalPerformanceLabel, self.hypotheticalPerformanceValue]
-        profitLabels = [self.realizedProfitLabel, self.realizedProfitValue, self.unrealizedProfitLabel,
-                        self.unrealizedProfitValue, self.paidFeesLabel, self.paidFeesValue]
+        # paid fees
+        self.paidFeesLabel = controls.StyledLabelCont(self, 'fees paid')
+        self.paidFeesValue = qtwidgets.QLabel('xxx')
+        self.paidFeesValue.setFont(qtgui.QFont('Arial', 12))
+        self.paidFeesLabel.addWidget(self.paidFeesValue)
+
+        fiatLabels = [self.investedFiatLabel, self.returnedFiatLabel]
+        portfolioLabels = [self.currentInvestLabel, self.hypotheticalCoinValueLabel]
+        profitLabels = [self.realizedProfitLabel, self.unrealizedProfitLabel, self.paidFeesLabel]
+        # otherLabels = [None, self.paidFeesLabel]
         labels = [fiatLabels, portfolioLabels, profitLabels]
 
-        self.labelGridLayout = qtwidgets.QGridLayout()
+        # self.dragWidget = controls.DragWidget(self)
+
+        # self.labelGridLayout = qtwidgets.QGridLayout()
+        # self.labelGridLayout.setContentsMargins(0, 0, 0, 0)
+        self.labelHorzLayout = qtwidgets.QHBoxLayout()
+        self.labelHorzLayout.setContentsMargins(0, 0, 0, 0)
+        self.labelVertLayouts = []
         row = 0
         column = 0
-        headingFont = qtgui.QFont("Arial", 11)
-        numberFont = qtgui.QFont("Arial", 12)
-
         for columnLabels in labels:
+            self.labelVertLayouts.append(qtwidgets.QVBoxLayout())
+            self.labelVertLayouts[-1].setContentsMargins(0, 0, 0, 0)
             for rowLabel in columnLabels:
-                rowLabel.setFont(headingFont)
-                self.labelGridLayout.addWidget(rowLabel, row, column)
+                if rowLabel:
+                    # self.labelGridLayout.addWidget(rowLabel, row, column)
+                    self.labelVertLayouts[-1].addWidget(rowLabel)
+                # rowLabel.setParent(self.dragWidget)
+                # rowLabel.move(qtcore.QPoint((column+0.5)*125, (row+0.2)*60))
                 row += 1
-            for rowLabel in columnLabels[1::2]:
-                rowLabel.setFont(numberFont)
+            self.labelVertLayouts[-1].addStretch()
+            self.labelHorzLayout.addLayout(self.labelVertLayouts[-1])
             row = 0
             column += 1
 
 
         # pie chart
-
         self.pieSeries = qtchart.QPieSeries()
 
         self.chart = qtchart.QChart()
@@ -420,14 +444,16 @@ class PortfolioOverview(qtwidgets.QWidget):
         # self.chart.setTitle("portfolio")
         self.chart.legend().hide()
         self.chart.setMargins(qtcore.QMargins(0, 0, 0, 0))
-        self.chart.resize(self.height, self.height)
+        self.chart.setMinimumWidth(self.height+30)
 
         self.chartView = qtchart.QChartView(self.chart)
         self.chartView.setRenderHint(qtgui.QPainter.Antialiasing)
 
-        self.horzLayout.addLayout(self.labelGridLayout)
+        self.horzLayout.addLayout(self.labelHorzLayout)
+        # self.horzLayout.addWidget(self.dragWidget)
         self.horzLayout.addStretch()
         self.horzLayout.addWidget(self.chartView)
+        self.horzLayout.setContentsMargins(0, 0, 0, 0)
 
     def setModel(self, model):
         self.model = model
@@ -497,9 +523,9 @@ class PortfolioOverview(qtwidgets.QWidget):
 
         def setLabelColor(label, isGreen):
             if isGreen:
-                label.setStyleSheet("color: green")
+                label.setBodyColor("green")
             else:
-                label.setStyleSheet("color: red")
+                label.setBodyColor("red")
 
         # total invested fiat
         self.investedFiatValue.setText(controls.floatToString(totalInvestFiat[taxCoinName],
@@ -507,34 +533,31 @@ class PortfolioOverview(qtwidgets.QWidget):
         # total returned fiat
         self.returnedFiatValue.setText(controls.floatToString(totalReturnFiat[taxCoinName],
                                                               numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.returnedFiatValue, totalReturnFiat[taxCoinName] >= totalInvestFiat[taxCoinName])
+        setLabelColor(self.returnedFiatLabel, totalReturnFiat[taxCoinName] >= totalInvestFiat[taxCoinName])
         # fiat performance
         self.fiatPerformanceValue.setText("%.2f%%" % fiatPerformance[taxCoinName])
-        setLabelColor(self.fiatPerformanceValue, fiatPerformance[taxCoinName] >= 0)
 
-        # invested value of current holdings
+        # invested Label of current holdings
         self.currentInvestValue.setText(controls.floatToString(currentInvestNoFiat[taxCoinName],
                                                                numberOfDecimals) + ' ' + taxCoinName)
-        # current value of current holdings (hypothetical)
-        self.hypotheticalCoinValueValue.setText(controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName],
+        # current Label of current holdings (hypothetical)
+        self.hypotheticalCoinValue.setText(controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName],
                                                                        numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.hypotheticalCoinValueValue, hypotheticalCoinValueNoFiat[taxCoinName] >= currentInvestNoFiat[taxCoinName])
+        setLabelColor(self.hypotheticalCoinValueLabel, hypotheticalCoinValueNoFiat[taxCoinName] >= currentInvestNoFiat[taxCoinName])
         # current performance of current holdings (hypothetical)
         self.hypotheticalPerformanceValue.setText("%.2f%%" % hypotheticalPerformanceNoFiat[taxCoinName])
-        setLabelColor(self.hypotheticalPerformanceValue, hypotheticalPerformanceNoFiat[taxCoinName] >= 0)
-
         # realized profit (relevant for tax)
         self.realizedProfitValue.setText(controls.floatToString(realizedProfit[taxCoinName],
                                                                 numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.realizedProfitValue, realizedProfit[taxCoinName] >= 0)
+        setLabelColor(self.realizedProfitLabel, realizedProfit[taxCoinName] >= 0)
         # unrealized profit (would be relevant for tax if realized)
         self.unrealizedProfitValue.setText(controls.floatToString(unrealizedProfit[taxCoinName],
                                                                   numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.unrealizedProfitValue, unrealizedProfit[taxCoinName] >= 0)
+        setLabelColor(self.unrealizedProfitLabel, unrealizedProfit[taxCoinName] >= 0)
         # paid fees
         self.paidFeesValue.setText(controls.floatToString(paidFees[taxCoinName],
                                                                   numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.paidFeesValue, paidFees[taxCoinName] <= 0)
+        setLabelColor(self.paidFeesLabel, paidFees[taxCoinName] <= 0)
 
 
         # pie chart
