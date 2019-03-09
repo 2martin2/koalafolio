@@ -344,6 +344,59 @@ class QArrowPainterPath(qtgui.QPainterPath):
         self.closeSubpath()
 
 
+class ArcValueChart(qtchart.QChartView):
+    def __init__(self, width, height, *args, **kwargs):
+        super(ArcValueChart, self).__init__(*args, **kwargs)
+
+        self.setMinimumHeight(height)
+        self.setMinimumWidth(width)
+
+        self.heading = qtwidgets.QLabel('', self)
+        self.currentValueLabel = qtwidgets.QLabel('', self)
+        self.currentValueLabel.setFont(qtgui.QFont("Arial", 13))
+        self.currentPerfLabel = qtwidgets.QLabel('', self)
+        self.currentPerfLabel.setFont(qtgui.QFont("Arial", 12))
+        for label in [self.currentValueLabel, self.currentPerfLabel]:
+            label.setVisible(False)
+        self.currentValueLabel.setMargin(0)
+        self.currentPerfLabel.setMargin(0)
+        # self.updateLabelPos()
+
+    def updateLabelPos(self):
+        center = self.geometry().center()
+        pos1 = qtcore.QPoint()
+        pos2 = qtcore.QPoint()
+        pos1.setX(center.x() - self.currentValueLabel.width() / 2)
+        pos2.setX(pos1.x() + self.currentValueLabel.width() - self.currentPerfLabel.width())
+        pos1.setY(center.y() - self.currentValueLabel.height() / 2)
+        pos2.setY(center.y() + self.currentPerfLabel.height() / 2)
+        self.currentValueLabel.move(pos1)
+        self.currentPerfLabel.move(pos2)
+
+    def moveEvent(self, event):
+        super(ArcValueChart, self).moveEvent(event)
+        self.updateLabelPos()
+
+    def resizeEvent(self, event):
+        super(ArcValueChart, self).resizeEvent(event)
+        self.updateLabelPos()
+
+    def setText(self, text1, text2):
+        self.currentValueLabel.setText(text1)
+        self.currentPerfLabel.setText(text2)
+        self.currentValueLabel.adjustSize()
+        self.currentPerfLabel.adjustSize()
+        self.updateLabelPos()
+        self.currentValueLabel.setVisible(True)
+        self.currentPerfLabel.setVisible(True)
+
+    def setColor(self, col):
+        self.currentValueLabel.setStyleSheet('color: ' + col.name())
+        self.currentPerfLabel.setStyleSheet('color: ' + col.name())
+
+
+
+
 # %% portfolio overview
 class PortfolioOverview(qtwidgets.QWidget):
     def __init__(self, controller, height=200, *args, **kwargs):
@@ -354,6 +407,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.setFixedHeight(self.height)
         self.setContentsMargins(0, 0, 0, 0)
         self.horzLayout = qtwidgets.QHBoxLayout(self)
+        self.horzLayout.setContentsMargins(0, 0, 0, 0)
 
         # total invested fiat
         self.investedFiatLabel = controls.StyledLabelCont(self, 'fiat invest')
@@ -404,33 +458,69 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.paidFeesValue.setFont(qtgui.QFont('Arial', 12))
         self.paidFeesLabel.addWidget(self.paidFeesValue)
 
+        # donut chart
+        self.donutSeries = qtchart.QPieSeries()
+        self.donutSeries.setHoleSize(0.6)
+
+        self.donutSliceInvested = self.donutSeries.append('invested', 1)
+        self.donutSlicePerformance = self.donutSeries.append('performance', 0.5)
+        for slice in [self.donutSliceInvested, self.donutSlicePerformance]:
+            slice.setBorderWidth(-1)
+            slice.setLabelVisible(False)
+
+
+        self.donatChart = qtchart.QChart()
+        self.donatChart.setBackgroundVisible(False)
+        self.donatChart.addSeries(self.donutSeries)
+        self.donatChart.legend().hide()
+        self.donatChart.setMargins(qtcore.QMargins(0, 0, 0, 0))
+        self.donatChart.setMinimumWidth(self.height)
+        self.donatChart.setMinimumHeight(self.height)
+
+        self.donatChartView = ArcValueChart(self.height, self.height, self.donatChart, self)
+        # self.donatChartView = qtchart.QChartView(self.donatChart, self)
+        self.donatChartView.setRenderHint(qtgui.QPainter.Antialiasing)
+
+        # self.horzLayout.addWidget(self.donatChartView)
+
+
+        self.horzLayout.addWidget(self.donatChartView)
+        # self.currentValueLabel = qtwidgets.QLabel('xxxx EUR', self)
+        # self.currentPerfLabel = qtwidgets.QLabel('xx.xx %', self)
+        # dcg = self.donatChartView.geometry()
+        # x = dcg.x() + dcg.width()/2 - self.currentValueLabel.width()/2
+        # y = dcg.y() + dcg.height()/2 - self.currentValueLabel.height()/2
+        # self.currentValueLabel.move(x, y)
+        # self.currentPerfLabel.move(x, y + self.currentValueLabel.height() + 5)
+
+        # labels
         fiatLabels = [self.investedFiatLabel, self.returnedFiatLabel]
         portfolioLabels = [self.currentInvestLabel, self.hypotheticalCoinValueLabel]
         profitLabels = [self.realizedProfitLabel, self.unrealizedProfitLabel, self.paidFeesLabel]
         # otherLabels = [None, self.paidFeesLabel]
-        labels = [fiatLabels, portfolioLabels, profitLabels]
-
-        # self.dragWidget = controls.DragWidget(self)
+        labels = [None, fiatLabels, portfolioLabels, profitLabels, None]
 
         # self.labelGridLayout = qtwidgets.QGridLayout()
         # self.labelGridLayout.setContentsMargins(0, 0, 0, 0)
-        self.labelHorzLayout = qtwidgets.QHBoxLayout()
-        self.labelHorzLayout.setContentsMargins(0, 0, 0, 0)
+        self.horzLayout.setContentsMargins(0, 0, 0, 0)
         self.labelVertLayouts = []
         row = 0
         column = 0
         for columnLabels in labels:
-            self.labelVertLayouts.append(qtwidgets.QVBoxLayout())
-            self.labelVertLayouts[-1].setContentsMargins(0, 0, 0, 0)
-            for rowLabel in columnLabels:
-                if rowLabel:
-                    # self.labelGridLayout.addWidget(rowLabel, row, column)
-                    self.labelVertLayouts[-1].addWidget(rowLabel)
-                # rowLabel.setParent(self.dragWidget)
-                # rowLabel.move(qtcore.QPoint((column+0.5)*125, (row+0.2)*60))
-                row += 1
-            self.labelVertLayouts[-1].addStretch()
-            self.labelHorzLayout.addLayout(self.labelVertLayouts[-1])
+            if columnLabels:
+                self.labelVertLayouts.append(qtwidgets.QVBoxLayout())
+                self.labelVertLayouts[-1].setContentsMargins(0, 0, 0, 0)
+                for rowLabel in columnLabels:
+                    if rowLabel:
+                        # self.labelGridLayout.addWidget(rowLabel, row, column)
+                        self.labelVertLayouts[-1].addWidget(rowLabel)
+                    # rowLabel.setParent(self.dragWidget)
+                    # rowLabel.move(qtcore.QPoint((column+0.5)*125, (row+0.2)*60))
+                    row += 1
+                self.labelVertLayouts[-1].addStretch()
+                self.horzLayout.addLayout(self.labelVertLayouts[-1])
+            else:
+                self.horzLayout.addStretch()
             row = 0
             column += 1
 
@@ -449,11 +539,13 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.chartView = qtchart.QChartView(self.chart)
         self.chartView.setRenderHint(qtgui.QPainter.Antialiasing)
 
-        self.horzLayout.addLayout(self.labelHorzLayout)
-        # self.horzLayout.addWidget(self.dragWidget)
-        self.horzLayout.addStretch()
         self.horzLayout.addWidget(self.chartView)
-        self.horzLayout.setContentsMargins(0, 0, 0, 0)
+        self.refresh()
+
+    def refresh(self):
+        self.negColor = qtgui.QColor(191, 75, 64)
+        self.posColor = qtgui.QColor(95, 191, 64)
+        self.neutrColor = qtgui.QColor(200, 200, 200)
 
     def setModel(self, model):
         self.model = model
@@ -496,7 +588,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         # realizedProfitAll = core.CoinValue()
 
 
-        # calculate all need values
+        # calculate all needed values
         for coin in self.model:
             if coin.isFiat():  # calculate invested and returned fiat
                 for trade in coin.trades:
@@ -521,11 +613,11 @@ class PortfolioOverview(qtwidgets.QWidget):
                                          - core.CoinValue().setValue(1)).mult(100)
         unrealizedProfit = hypotheticalCoinValueNoFiat - currentInvestNoFiat
 
-        def setLabelColor(label, isGreen):
-            if isGreen:
-                label.setBodyColor("green")
+        def setLabelColor(label, isPositiv):
+            if isPositiv:
+                label.setBodyColor(self.posColor.name())
             else:
-                label.setBodyColor("red")
+                label.setBodyColor(self.negColor.name())
 
         # total invested fiat
         self.investedFiatValue.setText(controls.floatToString(totalInvestFiat[taxCoinName],
@@ -559,6 +651,25 @@ class PortfolioOverview(qtwidgets.QWidget):
                                                                   numberOfDecimals) + ' ' + taxCoinName)
         setLabelColor(self.paidFeesLabel, paidFees[taxCoinName] <= 0)
 
+        # donat chart
+        self.donatChartView.setText(
+            controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
+            "%.2f%%" % hypotheticalPerformanceNoFiat[taxCoinName])
+
+        if unrealizedProfit[taxCoinName] < 0:
+            self.donutSliceInvested.setValue(currentInvestNoFiat[taxCoinName]+unrealizedProfit[taxCoinName])
+            self.donutSliceInvested.setColor(self.neutrColor)
+            self.donutSlicePerformance.setValue(-unrealizedProfit[taxCoinName])
+            self.donutSlicePerformance.setColor(self.negColor)
+            self.donatChartView.setColor(self.negColor)
+        else:
+            self.donutSliceInvested.setValue(currentInvestNoFiat[taxCoinName])
+            self.donutSliceInvested.setColor(self.neutrColor)
+            self.donutSlicePerformance.setValue(unrealizedProfit[taxCoinName])
+            self.donutSlicePerformance.setColor(self.posColor)
+            self.donatChartView.setColor(self.posColor)
+
+
 
         # pie chart
         self.pieSeries = qtchart.QPieSeries()
@@ -575,10 +686,12 @@ class PortfolioOverview(qtwidgets.QWidget):
                 self.pieSeries.append(coin.coinname, coin.currentValue[taxCoinName])
             elif coin.currentValue[taxCoinName] > 0:
                 otherssum.add(coin.currentValue)
-        self.pieSeries.append("others", otherssum[taxCoinName])
+        if otherssum[taxCoinName] > 0:
+            slice = self.pieSeries.append("others", otherssum[taxCoinName])
+            slice.setLabelVisible()
 
         if len(self.pieSeries.slices()) > 5:
-            for slice in self.pieSeries.slices()[0:5] + [self.pieSeries.slices()[-1]]:
+            for slice in self.pieSeries.slices()[0:5]:
                 slice.setLabelVisible()
         else:
             for slice in self.pieSeries.slices():
@@ -593,7 +706,6 @@ class PortfolioOverview(qtwidgets.QWidget):
         color = [191, 64, 159]
         for slice in self.pieSeries.slices():
             color = nextColor(color, 50)
-            # slice.setPen(qtgui.QPen(qt.darkGreen, 2))
             slice.setBrush(qtgui.QColor(*tuple(color)))
             slice.setLabelColor(qtgui.QColor(*tuple(color)))
             slice.setLabelPosition(qtchart.QPieSlice.LabelOutside)

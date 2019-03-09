@@ -156,6 +156,8 @@ class CoinValue():
             for key in self.value:
                 if divider.value[key] != 0:
                     coinValue.value[key] = self.value[key] / divider.value[key]
+                elif self.value[key] == 0:  # if both values are zero return 1
+                    coinValue.value[key] = 1
         else:
             if not divider == 0:
                 for key in self.value:
