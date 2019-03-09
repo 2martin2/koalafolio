@@ -203,7 +203,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             painter.setFont(defaultFont)
 
             # paint buy
-            buyColor = qtgui.QColor(0, 180, 0, 255)
+            buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
             buyBrush = qtgui.QBrush(buyColor)
             buyPen = painter.pen()
             buyPen.setBrush(buyBrush)
@@ -213,7 +213,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
 
             # paint sell
-            sellColor = qtgui.QColor(180, 0, 0, 255)
+            sellColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
             sellBrush = qtgui.QBrush(sellColor)
             sellPen = painter.pen()
             sellPen.setBrush(sellBrush)
@@ -226,9 +226,9 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             # for key in profit:
             # draw profit
             if profit[key] >= 0:
-                drawColor = qtgui.QColor(0, 180, 0, 255)
+                drawColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
             else:
-                drawColor = qtgui.QColor(180, 0, 0, 255)
+                drawColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
             pen = painter.pen()
             pen.setBrush(qtgui.QBrush(drawColor))
             painter.setPen(pen)
@@ -268,9 +268,9 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
             # draw current value and gain
             if gain >= 0:
-                drawColor = qtgui.QColor(0, 180, 0, 255)
+                drawColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
             else:
-                drawColor = qtgui.QColor(180, 0, 0, 255)
+                drawColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
             pen = painter.pen()
             pen.setBrush(qtgui.QBrush(drawColor))
             painter.setPen(pen)
@@ -285,9 +285,9 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
             # draw day gain
             if gainDay >= 0:
-                drawColor = qtgui.QColor(0, 180, 0, 255)
+                drawColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
             else:
-                drawColor = qtgui.QColor(180, 0, 0, 255)
+                drawColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
             pen = painter.pen()
             pen.setBrush(qtgui.QBrush(drawColor))
             painter.setPen(pen)
@@ -543,9 +543,12 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.refresh()
 
     def refresh(self):
-        self.negColor = qtgui.QColor(191, 75, 64)
-        self.posColor = qtgui.QColor(95, 191, 64)
-        self.neutrColor = qtgui.QColor(200, 200, 200)
+        self.negColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
+        self.posColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
+        self.neutrColor = qtgui.QColor(*settings.mySettings.getColor('NEUTRAL'))
+        # self.negColor = qtgui.QColor(191, 75, 64)
+        # self.posColor = qtgui.QColor(95, 191, 64)
+        # self.neutrColor = qtgui.QColor(200, 200, 200)
 
     def setModel(self, model):
         self.model = model

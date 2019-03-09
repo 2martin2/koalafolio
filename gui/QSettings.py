@@ -42,6 +42,9 @@ class QSettings(settings.Settings):
         self['color']['PRIMARY'] = '75,185,255'
         self['color']['SECONDARY'] = '0,255,0'
         self['color']['TERTIARY'] = '255,0,0'
+        self['color']['NEGATIV'] = '191,75,64'
+        self['color']['POSITIV'] = '95,191,64'
+        self['color']['NEUTRAL'] = '200,200,200'
         # gui settings
         self['gui'] = {}
         self['gui']['filterUseRegex'] = 'True'
@@ -99,10 +102,6 @@ class QSettings(settings.Settings):
                 colorDict[key.upper()] = convertColor(self['color'][key], 0, 0, 0)
                 continue
             colorDict[key.upper()] = convertColor(self['color'][key], 255, 255, 255)
-        # BACKGROUND = convertColor(self['color']['BACKGROUND'], 255, 255, 255)
-        # PRIMARY = convertColor(self['color']['PRIMARY'], 100, 200, 255)
-        # SECONDARY = convertColor(self['color']['SECONDARY'], 255, 150, 50)
-        # TERTIARY = convertColor(self['color']['TERTIARY'], 0, 255, 150)
         return colorDict
 
     def getColor(self, name):
