@@ -121,6 +121,7 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         self.endResetModel()
         self.coinAdded.emit(self.getCoinNames())
 
+
     def addCoin(self, coinname):
         retval = super(QPortfolioTableModel, self).addCoin(coinname)
         # self.coinAdded.emit([coinname])
