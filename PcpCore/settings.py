@@ -134,6 +134,11 @@ class Settings(configparser.ConfigParser):
             tax['taxfreelimityears'] = self.getint('tax', 'taxfreelimityears')
         except ValueError:
             tax['taxfreelimityears'] = 1
+        return tax
+
+    def getTaxSetting(self, key):
+        tax = self.taxSettings()
+        return tax[key]
 
     def setTaxSettings(self, tax):
         for key in tax:
