@@ -5,6 +5,7 @@ import web.cryptocompareApi as ccapi
 import PcpCore.settings as settings
 import Import.Converter as converter
 import PcpCore.logger as logger
+from dateutil.relativedelta import relativedelta
 
 # constants
 EXACT = 0
@@ -482,6 +483,8 @@ class TradeMatcher:
         self.sellsMatched = []
         self.buysMatched = []
         self.profitMatched = []
+        self.profitMatchedTime = []
+        self.profitMatchedBuyTime = []
         self.buysLeft = []
 
     def setTrades(self, trades):
@@ -535,6 +538,8 @@ class TradeMatcher:
         self.sellsMatched = []
         self.buysMatched = []
         self.profitMatched = []
+        self.profitMatchedTime = []
+        self.profitMatchedBuyTime = []
         self.buysLeft = []
         buyIndex = 0
         sellIndex = 0
@@ -585,6 +590,8 @@ class TradeMatcher:
 
                 # calculate profit of last matched trades
                 self.profitMatched.append(self.calculateProfit(self.buysMatched[-1], self.sellsMatched[-1]))
+                self.profitMatchedTime.append(self.sellsMatched[-1].date)
+                self.profitMatchedBuyTime.append(self.buysMatched[-1].date)
             maxIter -= 1
             if maxIter <= 0:
                 logger.globalLogger.warning('maximum of matching iterations reached for coin ' + str(self.trades[0].coin))
@@ -599,6 +606,19 @@ class TradeMatcher:
 
     def getTotalProfit(self):
         return sum(self.profitMatched, CoinValue())
+
+    # def getTimeInvest(self, date):
+
+
+    def getTimeDeltaProfit(self, fromDate, toDate, taxFreeTimeDelta=-1):
+        if taxFreeTimeDelta == -1:
+            return sum([profit for profit, date in zip(self.profitMatched, self.profitMatchedTime)
+                        if (date >= fromDate and date <=toDate)], CoinValue())
+        else:
+            return sum([profit for profit, date, buydate in zip(self.profitMatched, self.profitMatchedTime,
+                                                                  self.profitMatchedBuyTime)
+                        if (date >= fromDate and date <= toDate and (date - relativedelta(years=taxFreeTimeDelta) <= buydate))],
+                       CoinValue())
 
     def getInitialPrice(self):
         initialValue = CoinValue()
