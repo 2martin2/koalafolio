@@ -88,7 +88,7 @@ class PortfolioPage(Page):
 
     # refresh page every time it is activated
     def refresh(self):
-        pass
+        self.controller.coinList.triggerPriceUpdate()
 
     def getGuiProps(self):
         gui = {}
