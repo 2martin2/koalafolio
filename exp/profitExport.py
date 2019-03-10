@@ -28,7 +28,7 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
             # check if there are sells in the given timeframe
             validSellFound = False
             for sell in coin.tradeMatcher.sellsMatched:
-                if sell.date > minDate and sell.date < maxDate:
+                if sell.date >= minDate and sell.date <= maxDate:
                     validSellFound = True
                     break
             if validSellFound:
@@ -74,7 +74,7 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                 for irow in range(len(coin.tradeMatcher.profitMatched)):
                     sell = coin.tradeMatcher.sellsMatched[irow]
                     # check date of sell
-                    if sell.date > minDate and sell.date < maxDate:
+                    if sell.date >= minDate and sell.date <= maxDate:
                         buy = coin.tradeMatcher.buysMatched[irow]
                         profit = coin.tradeMatcher.profitMatched[irow]
                         # if taxyearlimit is given # if limit is relevant
@@ -124,7 +124,7 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
         fees = coin.getFees()
         feeSum = core.CoinValue()
         for fee in fees:
-            if fee.date.date() > minDate and fee.date.date() < maxDate:
+            if fee.date.date() >= minDate and fee.date.date() <= maxDate:
                 feeSum.add(fee.value)
         if feeSum[currency] != 0:  # if fees have been paid
             wsname = re.sub('[^A-Za-z0-9]+', '', coin.coinname)
@@ -165,7 +165,7 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
             # write data
             for fee in coin.getFees():
                 # check date of sell
-                if fee.date.date() > minDate and fee.date.date() < maxDate:
+                if fee.date.date() >= minDate and fee.date.date() <= maxDate:
                     ws.append(['', '', '', fee.date, fee.amount, '', fee.value[currency], ''])
 
             profitSumRows.append(ws.max_row + 2)
@@ -273,8 +273,9 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
 
     for ws in wb:
         for column_cells in ws.columns:
-            length = max(textLen(cell.value) for cell in column_cells)
-            ws.column_dimensions[column_cells[0].column].width = length
+                length = max(textLen(cell.value) for cell in column_cells[1:])
+                ws.column_dimensions[str(column_cells[1].column_letter)].width = length
+
 
     # save file
     # wb.save(path + '-' + str(datetime.datetime.now()).replace(' ', '_').replace(':', '_').replace('-', '_').replace('.',
