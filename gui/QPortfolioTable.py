@@ -469,7 +469,7 @@ class PortfolioOverview(qtwidgets.QWidget):
 
         # tax value chart
         self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
-                                                          'crypto performace', parent=self)
+                                                          'crypto performance', parent=self)
         self.donutSliceInvested = self.currentValueChart.addSlice('invested', 1, -1, False)
         self.donutSlicePerformance = self.currentValueChart.addSlice('performance', 0.5, -1, False)
         self.horzLayout.addWidget(self.currentValueChart)
