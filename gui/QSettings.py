@@ -39,11 +39,11 @@ class QSettings(settings.Settings):
         self['color']['BACKGROUND'] = '42,46,51'
         self['color']['TEXT_NORMAL'] = '255,255,255'
         self['color']['TEXT_HIGHLIGHTED'] = '42,46,51'
-        self['color']['PRIMARY'] = '75,185,255'
-        self['color']['SECONDARY'] = '0,255,0'
-        self['color']['TERTIARY'] = '255,0,0'
-        self['color']['NEGATIV'] = '191,75,64'
-        self['color']['POSITIV'] = '95,191,64'
+        self['color']['PRIMARY'] = '75,180,255'
+        self['color']['SECONDARY'] = '255,105,75'
+        self['color']['TERTIARY'] = '75,255,240'
+        self['color']['NEGATIV'] = '255,90,75'
+        self['color']['POSITIV'] = '90,255,75'
         self['color']['NEUTRAL'] = '200,200,200'
         # gui settings
         self['gui'] = {}
