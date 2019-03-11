@@ -13,6 +13,7 @@ import PyQt5.QtChart as qtchart
 import gui.Qcontrols as controls
 import PcpCore.core as core
 import gui.QSettings as settings
+import gui.QStyle as style
 import datetime
 import gui.QLogger as logger
 
@@ -150,3 +151,119 @@ class LabeledChartView(qtchart.QChartView):
                 for label in self.labels:
                     label.setStyleSheet('*{border-radius: 5px ; color:  ' + col.name() + ';}')
 
+
+class HorizontalStackedBarChart(qtwidgets.QWidget):
+    def __init__(self, width, height, *args, **kwargs):
+        super(HorizontalStackedBarChart, self).__init__(*args, **kwargs)
+
+        self.chartColor = qtgui.QColor(*settings.mySettings.getColor('NEUTRAL'))
+
+        self.chart = qtchart.QChart()
+        self.chart.setBackgroundVisible(False)
+        self.chart.legend().setVisible(True)
+        self.chart.legend().setAlignment(qt.AlignRight)
+        self.chart.legend().setLabelColor(self.chartColor)
+        # self.chart.setTheme(qtchart.QChart.ChartThemeDark)
+
+        categories = []
+        self.barAxisCat = qtchart.QBarCategoryAxis()
+        self.barAxisCat.append(categories)
+        self.barAxisCat.setLabelsColor(self.chartColor)
+        self.barAxisCat.setLabelsFont(qtgui.QFont('Arial', 8))
+        # self.barAxisCat.setLabelsAngle(-90)
+        self.barAxisCat.setGridLinePen(qtgui.QPen(qtgui.QBrush(), 0))
+        self.chart.addAxis(self.barAxisCat, qt.AlignLeft)
+        # self.barAxisVal = qtchart.QValueAxis()
+        # self.barAxisVal.setGridLinePen(qtgui.QPen(qtgui.QBrush(), 0))
+        # self.barAxisVal.setLabelsColor(self.chartColor)
+        # self.barAxisVal.setLabelsFont(qtgui.QFont('Arial', 8))
+        # self.barAxisVal.setLabelsAngle(-45)
+        # self.chart.addAxis(self.barAxisVal, qt.AlignLeft)
+
+        self.chartView = qtchart.QChartView(self.chart)
+        self.chartView.setRenderHint(qtgui.QPainter.Antialiasing)
+        self.chartView.setFixedHeight(height)
+        self.chartView.setFixedWidth(width)
+
+        self.layout = qtwidgets.QHBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.addWidget(self.chartView)
+
+    def updateChart(self, dicts, labels):
+        self.sets = []
+        for dict, label in zip(dicts, labels):
+            self.sets.append(qtchart.QBarSet(label))
+            for key in dict:
+                self.sets[-1].append(dict[key])
+        barSeries = qtchart.QHorizontalStackedBarSeries()
+        barSeries.setLabelsVisible(False)
+        barSeries.setBarWidth(0.2)
+        for set in self.sets:
+            barSeries.append(set)
+        self.chart.removeAllSeries()
+        self.chart.addSeries(barSeries)
+
+        categories = list(dicts[0])
+        self.barAxisCat.setCategories(categories)
+        barSeries.attachAxis(self.barAxisCat)
+        # barSeries.attachAxis(self.barAxisVal)
+
+    def setColor(self, colors):
+        for color, set in zip(colors, self.sets):
+            set.setColor(color)
+            set.setLabelColor(color)
+
+
+class ProfitPerYearWidget(qtwidgets.QFrame):
+    def __init__(self, width, height, *args, **kwargs):
+        super(ProfitPerYearWidget, self).__init__(*args, **kwargs)
+
+        self.chartColor = qtgui.QColor(*settings.mySettings.getColor('NEUTRAL'))
+
+        self.layout = qtwidgets.QGridLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.setContentsMargins(0, 0, 0, 0)
+
+        self.setFixedHeight(height)
+        self.setFixedWidth(width)
+
+        self.yLabels = []
+        self.headings = []
+        self.labels = {}
+
+
+    def updateChart(self, dict):
+        self.yLabels = []
+        self.headings = []
+        self.labels = {}
+        for y in dict:
+            self.yLabels.append(qtwidgets.QLabel(str(y), self))
+            self.labels[y] = {}
+            for key in dict[y]:
+                self.labels[y][key] = qtwidgets.QLabel(controls.floatToString(dict[y][key], 4), self)
+        for label in dict[list(dict)[0]]:
+            self.headings.append(qtwidgets.QLabel(label, self))
+
+        for label, row in zip(self.yLabels, range(1, len(self.yLabels)+1)):
+            label.setFont(qtgui.QFont('Arial', 9))
+            label.adjustSize()
+            self.layout.addWidget(label, row, 0, qt.AlignRight | qt.AlignVCenter)
+        for label, col in zip(self.headings, range(1, len(self.headings)+1)):
+            label.setFont(qtgui.QFont('Arial', 9))
+            label.adjustSize()
+            self.layout.addWidget(label, 0, col, qt.AlignBottom | qt.AlignHCenter)
+        for y, row in zip(self.labels, range(1, len(self.yLabels)+1)):
+            for key, col in zip(self.labels[y], range(1, len(self.headings)+1)):
+                self.labels[y][key].setFont(qtgui.QFont('Arial', 11))
+                self.labels[y][key].adjustSize()
+                if dict[y][key] >= 0:
+                    color = style.myStyle.getQColor('POSITIV')
+                else:
+                    color = style.myStyle.getQColor('NEGATIV')
+                self.labels[y][key].setStyleSheet('*{color: ' + color.name() + '}')
+                self.layout.addWidget(self.labels[y][key], row, col, qt.AlignCenter)
+
+    def setColor(self, colors):
+        for color, set in zip(colors, self.sets):
+            set.setColor(color)
+            set.setLabelColor(color)
