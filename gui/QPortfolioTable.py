@@ -468,13 +468,15 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.paidFeesLabel.addWidget(self.paidFeesValue)
 
         # tax value chart
-        self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3, parent=self)
+        self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
+                                                          'crypto performace', parent=self)
         self.donutSliceInvested = self.currentValueChart.addSlice('invested', 1, -1, False)
         self.donutSlicePerformance = self.currentValueChart.addSlice('performance', 0.5, -1, False)
         self.horzLayout.addWidget(self.currentValueChart)
 
         # fiat value chart
-        self.currentFiatValueChart = charts.LabeledDonatChart(self.height, self.height, 3, parent=self)
+        self.currentFiatValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
+                                                              'fiat performance', parent=self)
         self.sliceFiatInvested = self.currentFiatValueChart.addSlice('fiat invest', 1, -1, False)
         self.sliceCoinValue = self.currentFiatValueChart.addSlice('coin value', 0.5, -1, False)
         self.sliceFiatReturn = self.currentFiatValueChart.addSlice('fiat return', 0.5, -1, False)
@@ -719,6 +721,8 @@ class PortfolioOverview(qtwidgets.QWidget):
             controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
             "%.2f%%" % hypotheticalPerformanceNoFiat[taxCoinName]])
 
+        # self.currentValueChart.setLabelToolTip(['current invest', 'current value', 'performance'])
+
         if unrealizedProfit[taxCoinName] < 0:
             self.donutSliceInvested.setValue(currentInvestNoFiat[taxCoinName]+unrealizedProfit[taxCoinName])
             self.donutSliceInvested.setColor(self.neutrColor)
@@ -737,6 +741,8 @@ class PortfolioOverview(qtwidgets.QWidget):
             [controls.floatToString(totalInvestFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
              controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
              controls.floatToString(totalReturnFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName])
+
+        # self.currentFiatValueChart.setLabelToolTip(['fiat invest', 'current value', 'fiat return'])
 
         self.sliceFiatInvested.setValue(totalInvestFiat[taxCoinName])
         self.sliceFiatInvested.setColor(self.neutrColor)
