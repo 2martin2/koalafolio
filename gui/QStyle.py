@@ -119,11 +119,11 @@ class StyleSheetHandler():
             colorNameMidLight = colorName + '_MIDLIGHT'
             colorMidLight = self.getQColor(colorNameMidLight)
             colorNameMidDark = colorName + '_MIDDARK'
-            colorMidDark = self.getQColor(colorNameMidLight)
+            colorMidDark = self.getQColor(colorNameMidDark)
             colorNameLight = colorName + '_LIGHT'
-            colorLight = self.getQColor(colorNameMidLight)
+            colorLight = self.getQColor(colorNameLight)
             colorNameDark = colorName + '_DARK'
-            colorDark = self.getQColor(colorNameMidLight)
+            colorDark = self.getQColor(colorNameDark)
 
             # replace color (dark and light first, otherwise they will be replaced partly)
             hexColorMidLight = colorMidLight.name()
