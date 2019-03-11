@@ -95,6 +95,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.settings = settings.mySettings.setPath(self.dataPath)
         self.styleSheetHandler = style.StyleSheetHandler(self)
         self.styleSheetHandler.setPath(self.appPath)
+        style.myStyle = self.styleSheetHandler
 
 
     # setup window style
