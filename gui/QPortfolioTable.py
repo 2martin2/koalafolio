@@ -13,6 +13,7 @@ import gui.Qcontrols as controls
 import gui.QCharts as charts
 import PcpCore.core as core
 import gui.QSettings as settings
+import gui.QStyle as style
 import colorsys
 import gui.QThreads as threads
 import datetime
@@ -410,6 +411,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         super(PortfolioOverview, self).__init__(*args, **kwargs)
 
         self.controller = controller
+        self.styleHandler = self.controller.styleSheetHandler
         self.height = height
         self.setFixedHeight(self.height)
         self.setContentsMargins(0, 0, 0, 0)
@@ -465,90 +467,107 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.paidFeesValue.setFont(qtgui.QFont('Arial', 12))
         self.paidFeesLabel.addWidget(self.paidFeesValue)
 
-        # donut chart
+        # tax value chart
         self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3, parent=self)
         self.donutSliceInvested = self.currentValueChart.addSlice('invested', 1, -1, False)
         self.donutSlicePerformance = self.currentValueChart.addSlice('performance', 0.5, -1, False)
         self.horzLayout.addWidget(self.currentValueChart)
 
-        # bar chart
-        self.fiatSet = qtchart.QBarSet("fiat")
-        self.profitSet = qtchart.QBarSet("profit")
-        self.investedSet = qtchart.QBarSet("invested")
-        self.feeSet = qtchart.QBarSet("fees")
-        sets = [self.fiatSet, self.profitSet, self.investedSet, self.feeSet]
-        for set, label in zip(sets, ['fiat', 'profit', 'invested', 'fees']):
-            set.setLabel(label)
-        # fiat, profit, invest, fees  (fiat, current)
-        fiatvalues = [2000, 10000]
-        profitvalues = [0, 5000]
-        investedvalues = [12000, 0]
-        feevalues = [1000, 0]
-        values = [fiatvalues, profitvalues, investedvalues, feevalues]
+        # fiat value chart
+        self.currentFiatValueChart = charts.LabeledDonatChart(self.height, self.height, 3, parent=self)
+        self.sliceFiatInvested = self.currentFiatValueChart.addSlice('fiat invest', 1, -1, False)
+        self.sliceCoinValue = self.currentFiatValueChart.addSlice('coin value', 0.5, -1, False)
+        self.sliceFiatReturn = self.currentFiatValueChart.addSlice('fiat return', 0.5, -1, False)
+        self.horzLayout.addWidget(self.currentFiatValueChart)
 
-        for set, valueRow in zip(sets, values):
-            for value in valueRow:
-                set.append(value)
+        self.horzLayout.addStretch()
 
-        self.barSeries = qtchart.QHorizontalStackedBarSeries()
-        for set in sets:
-            self.barSeries.append(set)
-        self.barSeries.setLabelsVisible(True)
+        # # profit table
+        # self.profitPerYearTable = charts.ProfitPerYearWidget(self.height*0.8, self.height, parent=self)
+        # self.horzLayout.addWidget(self.profitPerYearTable)
 
-        self.barChart = qtchart.QChart()
-        self.barChart.setBackgroundVisible(False)
-        self.barChart.addSeries(self.barSeries)
-        self.barChart.setAnimationOptions(qtchart.QChart.SeriesAnimations)
+        # # bar chart
+        # self.profitChart = charts.HorizontalStackedBarChart(self.height*1.5, self.height, parent=self)
+        # self.horzLayout.addWidget(self.profitChart)
 
-        categories = ['return', 'invest']
-        barAxisY = qtchart.QBarCategoryAxis()
-        barAxisY.append(categories)
-        self.barChart.addAxis(barAxisY, qt.AlignLeft)
-        self.barSeries.attachAxis(barAxisY)
-        barAxisX = qtchart.QValueAxis()
-        self.barChart.addAxis(barAxisX, qt.AlignBottom)
-        self.barSeries.attachAxis(barAxisX)
+        # # bar chart
+        # self.fiatSet = qtchart.QBarSet("fiat")
+        # self.profitSet = qtchart.QBarSet("profit")
+        # self.investedSet = qtchart.QBarSet("invested")
+        # self.feeSet = qtchart.QBarSet("fees")
+        # sets = [self.fiatSet, self.profitSet, self.investedSet, self.feeSet]
+        # for set, label in zip(sets, ['fiat', 'profit', 'invested', 'fees']):
+        #     set.setLabel(label)
+        # # fiat, profit, invest, fees  (fiat, current)
+        # fiatvalues = [2000, 10000]
+        # profitvalues = [0, 5000]
+        # investedvalues = [12000, 0]
+        # feevalues = [1000, 0]
+        # values = [fiatvalues, profitvalues, investedvalues, feevalues]
+        #
+        # for set, valueRow in zip(sets, values):
+        #     for value in valueRow:
+        #         set.append(value)
+        #
+        # self.barSeries = qtchart.QHorizontalStackedBarSeries()
+        # for set in sets:
+        #     self.barSeries.append(set)
+        # self.barSeries.setLabelsVisible(True)
+        #
+        # self.barChart = qtchart.QChart()
+        # self.barChart.setBackgroundVisible(False)
+        # self.barChart.addSeries(self.barSeries)
+        # self.barChart.setAnimationOptions(qtchart.QChart.SeriesAnimations)
+        #
+        # categories = ['return', 'invest']
+        # barAxisY = qtchart.QBarCategoryAxis()
+        # barAxisY.append(categories)
+        # self.barChart.addAxis(barAxisY, qt.AlignLeft)
+        # self.barSeries.attachAxis(barAxisY)
+        # barAxisX = qtchart.QValueAxis()
+        # self.barChart.addAxis(barAxisX, qt.AlignBottom)
+        # self.barSeries.attachAxis(barAxisX)
+        #
+        # # self.barChart.legend().setVisible(False)
+        # self.barChart.setMinimumWidth(self.height*2)
+        # self.barChart.setMinimumHeight(self.height)
+        #
+        # self.barChartView = qtchart.QChartView(self.barChart)
+        # self.barChartView.setRenderHint(qtgui.QPainter.Antialiasing)
+        #
+        # self.horzLayout.addWidget(self.barChartView)
 
-        # self.barChart.legend().setVisible(False)
-        self.barChart.setMinimumWidth(self.height*2)
-        self.barChart.setMinimumHeight(self.height)
 
-        self.barChartView = qtchart.QChartView(self.barChart)
-        self.barChartView.setRenderHint(qtgui.QPainter.Antialiasing)
-
-        self.horzLayout.addWidget(self.barChartView)
-
-
-        # labels
-        fiatLabels = [self.investedFiatLabel, self.returnedFiatLabel]
-        portfolioLabels = [self.currentInvestLabel, self.hypotheticalCoinValueLabel]
-        profitLabels = [self.realizedProfitLabel, self.unrealizedProfitLabel, self.paidFeesLabel]
-        # otherLabels = [None, self.paidFeesLabel]
-        labels = [None, fiatLabels, portfolioLabels, profitLabels, None]
-
-        # self.labelGridLayout = qtwidgets.QGridLayout()
-        # self.labelGridLayout.setContentsMargins(0, 0, 0, 0)
-        self.horzLayout.setContentsMargins(0, 0, 0, 0)
-        self.labelVertLayouts = []
-        row = 0
-        column = 0
-        for columnLabels in labels:
-            if columnLabels:
-                self.labelVertLayouts.append(qtwidgets.QVBoxLayout())
-                self.labelVertLayouts[-1].setContentsMargins(0, 0, 0, 0)
-                for rowLabel in columnLabels:
-                    if rowLabel:
-                        # self.labelGridLayout.addWidget(rowLabel, row, column)
-                        self.labelVertLayouts[-1].addWidget(rowLabel)
-                    # rowLabel.setParent(self.dragWidget)
-                    # rowLabel.move(qtcore.QPoint((column+0.5)*125, (row+0.2)*60))
-                    row += 1
-                self.labelVertLayouts[-1].addStretch()
-                # self.horzLayout.addLayout(self.labelVertLayouts[-1])
-            # else:
-                # self.horzLayout.addStretch()
-            row = 0
-            column += 1
+        # # labels
+        # fiatLabels = [self.investedFiatLabel, self.returnedFiatLabel]
+        # portfolioLabels = [self.currentInvestLabel, self.hypotheticalCoinValueLabel]
+        # profitLabels = [self.realizedProfitLabel, self.unrealizedProfitLabel, self.paidFeesLabel]
+        # # otherLabels = [None, self.paidFeesLabel]
+        # labels = [None, fiatLabels, portfolioLabels, profitLabels, None]
+        #
+        # # self.labelGridLayout = qtwidgets.QGridLayout()
+        # # self.labelGridLayout.setContentsMargins(0, 0, 0, 0)
+        # self.horzLayout.setContentsMargins(0, 0, 0, 0)
+        # self.labelVertLayouts = []
+        # row = 0
+        # column = 0
+        # for columnLabels in labels:
+        #     if columnLabels:
+        #         self.labelVertLayouts.append(qtwidgets.QVBoxLayout())
+        #         self.labelVertLayouts[-1].setContentsMargins(0, 0, 0, 0)
+        #         for rowLabel in columnLabels:
+        #             if rowLabel:
+        #                 # self.labelGridLayout.addWidget(rowLabel, row, column)
+        #                 self.labelVertLayouts[-1].addWidget(rowLabel)
+        #             # rowLabel.setParent(self.dragWidget)
+        #             # rowLabel.move(qtcore.QPoint((column+0.5)*125, (row+0.2)*60))
+        #             row += 1
+        #         self.labelVertLayouts[-1].addStretch()
+        #         # self.horzLayout.addLayout(self.labelVertLayouts[-1])
+        #     # else:
+        #         # self.horzLayout.addStretch()
+        #     row = 0
+        #     column += 1
 
 
         # pie chart
@@ -608,6 +627,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         stopYear = datetime.datetime.now().year
         realizedProfitPerYear = {}
         paidFeesPerYear = {}
+        realizedProfitPerYearCoinList = {}
 
         for year in range(startYear, stopYear+1):
             realizedProfitPerYear[str(year)] = core.CoinValue()
@@ -624,13 +644,19 @@ class PortfolioOverview(qtwidgets.QWidget):
             else:  # calculate value of portfolio
                 currentInvestNoFiat.add(coin.initialValue)
                 hypotheticalCoinValueNoFiat.add(coin.currentValue)
-                # realizedProfit.add(coin.tradeMatcher.getTotalProfit())
+                realizedProfit.add(coin.tradeMatcher.getTotalProfit())
             for trade in coin.trades:
                 if trade.tradeType == "fee":
-                    paidFees.add(trade.value.mult(-1))
-            # realizedProfitPerYearCoinList[coin.coinname] = (coin.tradeMatcher.getTimeDeltaProfit(
-            #         datetime.date(year=2017, month=1, day=1), datetime.date(year=2019, month=12, day=31),
-            #         taxFreeTimeDelta=settings.mySettings.getTaxSetting('taxfreelimityears'))[taxCoinName])
+                    paidFees.add(trade.value)
+                    for year in range(startYear, stopYear + 1):
+                        startDate = datetime.date(year=year, month=1, day=1)
+                        endDate = datetime.date(year=year, month=12, day=31)
+                        if trade.date.date() >= startDate and trade.date.date() <= endDate:
+                            paidFeesPerYear[str(year)].add(trade.value)
+
+            realizedProfitPerYearCoinList[coin.coinname] = (coin.tradeMatcher.getTimeDeltaProfit(
+                    datetime.date(year=2017, month=1, day=1), datetime.date(year=2019, month=12, day=31),
+                    taxFreeTimeDelta=settings.mySettings.getTaxSetting('taxfreelimityears'))[taxCoinName])
             for year in range(startYear, stopYear + 1):
                 startDate = datetime.date(year=year, month=1, day=1)
                 endDate = datetime.date(year=year, month=12, day=31)
@@ -643,7 +669,7 @@ class PortfolioOverview(qtwidgets.QWidget):
             # hypotheticalValueAll.add(coin.currentValue)
             # realizedProfitAll.add(coin.tradeMatcher.getTotalProfit())
 
-        # realizedProfitPerYearCoinListSum = sum([realizedProfitPerYearCoinList[key] for key in realizedProfitPerYearCoinList])
+        realizedProfitPerYearCoinListSum = sum([realizedProfitPerYearCoinList[key] for key in realizedProfitPerYearCoinList])
         fiatPerformance = (totalReturnFiat-totalInvestFiat).div(totalInvestFiat).mult(100)
         hypotheticalPerformanceNoFiat = (hypotheticalCoinValueNoFiat.div(currentInvestNoFiat)
                                          - core.CoinValue().setValue(1)).mult(100)
@@ -655,39 +681,39 @@ class PortfolioOverview(qtwidgets.QWidget):
             else:
                 label.setBodyColor(self.negColor.name())
 
-        # total invested fiat
-        self.investedFiatValue.setText(controls.floatToString(totalInvestFiat[taxCoinName],
-                                                              numberOfDecimals) + ' ' + taxCoinName)
-        # total returned fiat
-        self.returnedFiatValue.setText(controls.floatToString(totalReturnFiat[taxCoinName],
-                                                              numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.returnedFiatLabel, totalReturnFiat[taxCoinName] >= totalInvestFiat[taxCoinName])
-        # fiat performance
-        self.fiatPerformanceValue.setText("%.2f%%" % fiatPerformance[taxCoinName])
+        # # total invested fiat
+        # self.investedFiatValue.setText(controls.floatToString(totalInvestFiat[taxCoinName],
+        #                                                       numberOfDecimals) + ' ' + taxCoinName)
+        # # total returned fiat
+        # self.returnedFiatValue.setText(controls.floatToString(totalReturnFiat[taxCoinName],
+        #                                                       numberOfDecimals) + ' ' + taxCoinName)
+        # setLabelColor(self.returnedFiatLabel, totalReturnFiat[taxCoinName] >= totalInvestFiat[taxCoinName])
+        # # fiat performance
+        # self.fiatPerformanceValue.setText("%.2f%%" % fiatPerformance[taxCoinName])
+        #
+        # # invested Label of current holdings
+        # self.currentInvestValue.setText(controls.floatToString(currentInvestNoFiat[taxCoinName],
+        #                                                        numberOfDecimals) + ' ' + taxCoinName)
+        # # current Label of current holdings (hypothetical)
+        # self.hypotheticalCoinValue.setText(controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName],
+        #                                                                numberOfDecimals) + ' ' + taxCoinName)
+        # setLabelColor(self.hypotheticalCoinValueLabel, hypotheticalCoinValueNoFiat[taxCoinName] >= currentInvestNoFiat[taxCoinName])
+        # # current performance of current holdings (hypothetical)
+        # self.hypotheticalPerformanceValue.setText("%.2f%%" % hypotheticalPerformanceNoFiat[taxCoinName])
+        # # realized profit (relevant for tax)
+        # self.realizedProfitValue.setText(controls.floatToString(realizedProfit[taxCoinName],
+        #                                                         numberOfDecimals) + ' ' + taxCoinName)
+        # setLabelColor(self.realizedProfitLabel, realizedProfit[taxCoinName] >= 0)
+        # # unrealized profit (would be relevant for tax if realized)
+        # self.unrealizedProfitValue.setText(controls.floatToString(unrealizedProfit[taxCoinName],
+        #                                                           numberOfDecimals) + ' ' + taxCoinName)
+        # setLabelColor(self.unrealizedProfitLabel, unrealizedProfit[taxCoinName] >= 0)
+        # # paid fees
+        # self.paidFeesValue.setText(controls.floatToString(paidFees[taxCoinName],
+        #                                                           numberOfDecimals) + ' ' + taxCoinName)
+        # setLabelColor(self.paidFeesLabel, paidFees[taxCoinName] <= 0)
 
-        # invested Label of current holdings
-        self.currentInvestValue.setText(controls.floatToString(currentInvestNoFiat[taxCoinName],
-                                                               numberOfDecimals) + ' ' + taxCoinName)
-        # current Label of current holdings (hypothetical)
-        self.hypotheticalCoinValue.setText(controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName],
-                                                                       numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.hypotheticalCoinValueLabel, hypotheticalCoinValueNoFiat[taxCoinName] >= currentInvestNoFiat[taxCoinName])
-        # current performance of current holdings (hypothetical)
-        self.hypotheticalPerformanceValue.setText("%.2f%%" % hypotheticalPerformanceNoFiat[taxCoinName])
-        # realized profit (relevant for tax)
-        self.realizedProfitValue.setText(controls.floatToString(realizedProfit[taxCoinName],
-                                                                numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.realizedProfitLabel, realizedProfit[taxCoinName] >= 0)
-        # unrealized profit (would be relevant for tax if realized)
-        self.unrealizedProfitValue.setText(controls.floatToString(unrealizedProfit[taxCoinName],
-                                                                  numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.unrealizedProfitLabel, unrealizedProfit[taxCoinName] >= 0)
-        # paid fees
-        self.paidFeesValue.setText(controls.floatToString(paidFees[taxCoinName],
-                                                                  numberOfDecimals) + ' ' + taxCoinName)
-        setLabelColor(self.paidFeesLabel, paidFees[taxCoinName] <= 0)
-
-        # donat chart
+        # tax value chart
         self.currentValueChart.chartView.setText(
             [controls.floatToString(currentInvestNoFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
             controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
@@ -706,10 +732,49 @@ class PortfolioOverview(qtwidgets.QWidget):
             self.donutSlicePerformance.setColor(self.posColor)
             self.currentValueChart.chartView.setColor([self.neutrColor, self.posColor, self.posColor])
 
+        # fiat value chart
+        self.currentFiatValueChart.chartView.setText(
+            [controls.floatToString(totalInvestFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
+             controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
+             controls.floatToString(totalReturnFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName])
+
+        self.sliceFiatInvested.setValue(totalInvestFiat[taxCoinName])
+        self.sliceFiatInvested.setColor(self.neutrColor)
+        self.sliceFiatReturn.setValue(totalReturnFiat[taxCoinName])
+        self.sliceFiatReturn.setColor(self.styleHandler.getQColor('PRIMARY'))
+        self.sliceCoinValue.setValue(hypotheticalCoinValueNoFiat[taxCoinName])
+
+        if (hypotheticalCoinValueNoFiat[taxCoinName] + totalReturnFiat[taxCoinName]) \
+                < totalInvestFiat[taxCoinName]:
+            self.sliceCoinValue.setColor(self.negColor)
+            self.currentFiatValueChart.chartView.setColor([self.neutrColor, self.negColor,
+                                                       self.styleHandler.getQColor('PRIMARY')])
+        else:
+            self.sliceCoinValue.setColor(self.posColor)
+            self.currentFiatValueChart.chartView.setColor([self.neutrColor, self.posColor,
+                                                       self.styleHandler.getQColor('PRIMARY')])
+
+        # profit chart
+        # dicts = []
+        # for dict in [paidFeesPerYear, realizedProfitPerYear]:
+        #     dicts.append({})
+        #     for key in dict:
+        #         dicts[-1][key] = (dict[key][taxCoinName])
+        # self.profitChart.updateChart(dicts, ['fees', 'profit'])
+        # colorProfit = self.posColor
+        # colorFees = self.styleHandler.getQColor('PRIMARY')
+        # self.profitChart.setColor([colorFees, colorProfit])
+
+        # dict = {}
+        # for year in paidFeesPerYear:
+        #     dict[year] = {}
+        #     for label, value in zip(['fees', 'profit'], [paidFeesPerYear, realizedProfitPerYear]):
+        #         dict[year][label] = value[year][taxCoinName]
+        # self.profitPerYearTable.updateChart(dict)
+
 
         # pie chart
         pieSeries = qtchart.QPieSeries()
-        # topSlices = []
         sortedModelIndex = sorted(range(len(self.model)), key=lambda x: self.model.coins[x].currentValue[taxCoinName], reverse=True)
         otherssum = core.CoinValue()
         try:
@@ -718,7 +783,8 @@ class PortfolioOverview(qtwidgets.QWidget):
             topvalue = 0
         for index in sortedModelIndex:
             coin = self.model.coins[index]
-            if coin.currentValue[taxCoinName] > topvalue/30 and coin.currentValue[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/50):
+            if coin.currentValue[taxCoinName] > topvalue/40 and \
+                    coin.currentValue[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/75):
                 pieSeries.append(coin.coinname, coin.currentValue[taxCoinName])
             elif coin.currentValue[taxCoinName] > 0:
                 otherssum.add(coin.currentValue)
@@ -735,15 +801,9 @@ class PortfolioOverview(qtwidgets.QWidget):
             if slice.value() > abs(hypotheticalCoinValueNoFiat[taxCoinName]/20):
                 slice.setLabelVisible()
 
-        def nextColor(rgbcolor, step):
-            rgbcolornorm = [color/255 for color in rgbcolor]
-            hls_color = colorsys.rgb_to_hls(*tuple(rgbcolornorm))
-            rgbcolornew = colorsys.hls_to_rgb(hls_color[0]+step/360, hls_color[1], hls_color[2])
-            return [rgbcolornew[0]*255, rgbcolornew[1]*255, rgbcolornew[2]*255]
-
-        color = [191, 64, 159]
+        color = [255, 75, 225]
         for slice in pieSeries.slices():
-            color = nextColor(color, 50)
+            color = style.nextColor(color, 55)
             slice.setBrush(qtgui.QColor(*tuple(color)))
             slice.setLabelColor(qtgui.QColor(*tuple(color)))
             slice.setLabelPosition(qtchart.QPieSlice.LabelOutside)
