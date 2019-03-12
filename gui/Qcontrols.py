@@ -189,10 +189,10 @@ class StyledLabelCont(qtwidgets.QFrame):
         sb = self.body.sizeHint()
         if self.title.isChecked():
             s.setHeight((st.height() + sb.height()) + 10)
-            s.setWidth(120)
+            s.setWidth(150)
         else:
             s.setHeight(st.height())
-            s.setWidth(120)
+            s.setWidth(150)
         return s
 
     def minimumSize(self):
