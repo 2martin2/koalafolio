@@ -94,6 +94,7 @@ class PortfolioPage(Page):
         gui = {}
         gui['portfolioFilterRow'] = str(self.coinProxyModel.sortedRow)
         gui['portfolioFilterDir'] = str(self.coinProxyModel.sortedDir)
+        gui['performanceChartIndex'] = self.coinDataFrame.perfChartCont.chartIndex
         return gui
 
 

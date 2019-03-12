@@ -20,6 +20,76 @@ import gui.QLogger as logger
 qt = qtcore.Qt
 localLogger = logger.globalLogger
 
+# container for switchable charts
+class ChartCont(qtwidgets.QFrame):
+    def __init__(self, *args, **kwargs):
+        super(ChartCont, self).__init__(*args, **kwargs)
+
+        self.setObjectName('ChartCont')
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setFrameShape(qtwidgets.QFrame.StyledPanel)
+
+        self.charts = []
+        self.chartIndex = None
+
+        self.rightButton = qtwidgets.QPushButton('>', self)
+        self.rightButton.clicked.connect(self.rightButtonClicked)
+        self.leftButton = qtwidgets.QPushButton('<', self)
+        self.leftButton.clicked.connect(self.leftButtonClicked)
+        for button in [self.leftButton, self.rightButton]:
+            button.setFixedSize(qtcore.QSize(20, 20))
+        self.updateButtonPosition()
+
+    def updateButtonPosition(self, height=20):
+        leftPos = qtcore.QPoint(5, 5)
+        rightPos = qtcore.QPoint(self.width() - self.rightButton.width() - 5, 5)
+        self.rightButton.move(rightPos)
+        self.leftButton.move(leftPos)
+        for button in [self.leftButton, self.rightButton]:
+            button.setFixedSize(qtcore.QSize(20, height))
+            button.raise_()
+
+    def addChart(self, chart):
+        self.charts.append(chart)
+        chart.setParent(self)
+        self.setChartIndex(len(self.charts)-1)
+        self.setFixedWidth(max([chart.width() for chart in self.charts]))
+        self.setFixedHeight(max([chart.height() for chart in self.charts]))
+        self.updateButtonPosition()
+
+    def deleteCharts(self):
+        self.charts = []
+        self.setFixedWidth(max([chart.width() for chart in self.charts]))
+        self.setFixedHeight(max([chart.height() for chart in self.charts]))
+        self.updateButtonPosition()
+
+    def setChartIndex(self, index):
+        if index < 0:
+            index = len(self.charts) - index
+        if index in range(len(self.charts)):
+            if self.chartIndex is not None:
+                self.charts[self.chartIndex].setVisible(False)
+            self.charts[index].setVisible(True)
+            self.chartIndex = index
+            print(str(self.chartIndex))
+            self.updateButtonPosition(self.charts[self.chartIndex].chartView.heading.height())
+            return True
+        return False
+
+    def leftButtonClicked(self):
+        print('left clicked')
+        if self.chartIndex is not None:
+            if not self.setChartIndex(self.chartIndex - 1):
+                self.setChartIndex(len(self.charts)-1)
+
+    def rightButtonClicked(self):
+        print('right clicked')
+        if self.chartIndex is not None:
+            if not self.setChartIndex(self.chartIndex + 1):
+                self.setChartIndex(0)
+
+
+
 
 # labeled donut/pie chart
 class LabeledDonatChart(qtwidgets.QFrame):
@@ -89,8 +159,9 @@ class LabeledChartView(qtchart.QChartView):
             self.heading.setVisible(True)
         else:
             self.heading.setVisible(False)
-            self.heading.setMargin(0)
-            self.heading.adjustSize()
+        self.heading.setMargin(3)
+        self.heading.adjustSize()
+        self.heading.setObjectName('heading')
         headingPos = qtcore.QPoint(self.width()/2 - self.heading.width()/2, 5)
         self.heading.move(headingPos)
         self.labels = [qtwidgets.QLabel('', self) for num in range(numberLabels)]
@@ -102,6 +173,9 @@ class LabeledChartView(qtchart.QChartView):
 
         self.setColor(qtgui.QColor(255, 255, 255))
         self.labelAlignment = qt.AlignRight
+
+    def setHeadingPos(self, pos):
+        self.heading.move(pos)
 
     def updateLabelPos(self):
         center = self.geometry().center()
@@ -167,29 +241,21 @@ class LabeledChartView(qtchart.QChartView):
             if isBackgroundTransparent:
                 for label, col in zip(self.labels, cols):
                     label.setStyleSheet('QLabel{background-color: rgba(0, 0, 0, 0); color:  ' + col.name() + ';}' +
-                                        'QToolTip{border: 1px solid ' + col.name() + ';background-color: ' +
-                                        style.myStyle.getQColor('BACKGROUND').name() +
-                                        '}')
+                                        'QToolTip{border: 1px solid ' + col.name() + '}')
             else:
                 for label, col in zip(self.labels, cols):
                     label.setStyleSheet('QLabel{border-radius: 5px ; color:  ' + col.name() + ';}' +
-                                        'QToolTip{border: 1px solid ' + col.name() + ';background-color: ' +
-                                        style.myStyle.getQColor('BACKGROUND').name() +
-                                        '}')
+                                        'QToolTip{border: 1px solid ' + col.name() + '}')
         except TypeError:
             col = cols
             if isBackgroundTransparent:
                 for label in self.labels:
                     label.setStyleSheet('QLabel{background-color: rgba(0, 0, 0, 0); color:  ' + col.name() + ';}' +
-                                        'QToolTip{border: 1px solid ' + col.name() + ';background-color: ' +
-                                        style.myStyle.getQColor('BACKGROUND').name() +
-                                        '}')
+                                        'QToolTip{border: 1px solid ' + col.name() + '}')
             else:
                 for label in self.labels:
                     label.setStyleSheet('QLabel{border-radius: 5px ; color:  ' + col.name() + ';}' +
-                                        'QToolTip{border: 1px solid ' + col.name() + ';background-color: ' +
-                                        style.myStyle.getQColor('BACKGROUND').name() +
-                                        '}')
+                                        'QToolTip{border: 1px solid ' + col.name() + '}')
 
 
 class HorizontalStackedBarChart(qtwidgets.QWidget):

@@ -422,27 +422,31 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.horzLayout = qtwidgets.QHBoxLayout(self)
         self.horzLayout.setContentsMargins(0, 0, 0, 0)
 
-
         # tax value char
         self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
-                                                          'crypto performance', parent=self)
+                                                          'crypto performance')
         self.currentValueChart.setHeadingToolTip('this chart shows\nthe performance of\n' +
                                                  'your portfolio\nrelative to the\ncurrent invest\n' +
                                                  '(profit from crypto\ntrades is reinvested)')
         self.donutSliceInvested = self.currentValueChart.addSlice('invested', 1, -1, False)
         self.donutSlicePerformance = self.currentValueChart.addSlice('performance', 0.5, -1, False)
-        self.horzLayout.addWidget(self.currentValueChart)
+        # self.horzLayout.addWidget(self.currentValueChart)
 
         # fiat value chart
         self.currentFiatValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
-                                                              'fiat performance', parent=self)
+                                                              'fiat performance')
         self.currentFiatValueChart.setHeadingToolTip('this chart shows\nthe performance of\nyour portfolio\n' +
                                                      'relative to the\ninitial fiat invest')
         self.sliceFiatInvested = self.currentFiatValueChart.addSlice('fiat invest', 1, -1, False)
         self.sliceCoinValue = self.currentFiatValueChart.addSlice('coin value', 0.5, -1, False)
         self.sliceFiatReturn = self.currentFiatValueChart.addSlice('fiat return', 0.5, -1, False)
-        self.horzLayout.addWidget(self.currentFiatValueChart)
+        # self.horzLayout.addWidget(self.currentFiatValueChart)
 
+        self.perfChartCont = charts.ChartCont(self)
+        self.perfChartCont.addChart(self.currentValueChart)
+        self.perfChartCont.addChart(self.currentFiatValueChart)
+        self.perfChartCont.setChartIndex(settings.mySettings.getGuiSetting('performanceChartIndex'))
+        self.horzLayout.addWidget(self.perfChartCont)
 
         # realized profit (relevant for tax)
         self.realizedProfitLabel = controls.StyledLabelCont(self, 'realized profit')

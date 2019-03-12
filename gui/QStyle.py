@@ -359,16 +359,19 @@ QLabel{
     background-color: rgba(0, 0, 0, 0);
 }
 
-* LabeledChartView{
+/*QFrame#ChartCont LabeledChartView{
     border: 2px solid PRIMARY;
     border-radius: 10;
     background-color: rgbs(0, 0, 0, 0);
 }
-* LabeledChartView::heading{
-    background-color: PRIMARY;
-}
+LabeledChartView QLabel#heading{
+    color: TEXT_HIGHLIGHTED;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT, stop:1 PRIMARY);
+    border-radius: 3px;
+}*/
 
-* LabeledDonatChart{
+LabeledDonatChart{
     background-color: rgbs(0, 0, 0, 0);
 }
 
