@@ -39,9 +39,21 @@ class QSettings(settings.Settings):
         self['color']['BACKGROUND'] = '42,46,51'
         self['color']['TEXT_NORMAL'] = '255,255,255'
         self['color']['TEXT_HIGHLIGHTED'] = '42,46,51'
-        self['color']['PRIMARY'] = '75,185,255'
-        self['color']['SECONDARY'] = '0,255,0'
-        self['color']['TERTIARY'] = '255,0,0'
+        self['color']['PRIMARY'] = '75,180,255'
+        self['color']['SECONDARY'] = '255,105,75'
+        self['color']['TERTIARY'] = '75,255,240'
+        self['color']['NEGATIV'] = '255,90,75'
+        self['color']['POSITIV'] = '90,255,75'
+        self['color']['NEUTRAL'] = '200,200,200'
+        # gui settings
+        self['gui'] = {}
+        self['gui']['filterUseRegex'] = 'True'
+        self['gui']['portfolioFilterRow'] = '3'
+        self['gui']['tradeFilterRow'] = '2'
+        self['gui']['portfolioFilterDir'] = (str(qt.AscendingOrder))
+        self['gui']['tradeFilterDir'] = str(qt.AscendingOrder)
+        self['gui']['toolTipsEnabled'] = 'True'
+        self['gui']['performanceChartIndex'] = '0'
 
         super(QSettings, self).initSettings()
 
@@ -92,10 +104,6 @@ class QSettings(settings.Settings):
                 colorDict[key.upper()] = convertColor(self['color'][key], 0, 0, 0)
                 continue
             colorDict[key.upper()] = convertColor(self['color'][key], 255, 255, 255)
-        # BACKGROUND = convertColor(self['color']['BACKGROUND'], 255, 255, 255)
-        # PRIMARY = convertColor(self['color']['PRIMARY'], 100, 200, 255)
-        # SECONDARY = convertColor(self['color']['SECONDARY'], 255, 150, 50)
-        # TERTIARY = convertColor(self['color']['TERTIARY'], 0, 255, 150)
         return colorDict
 
     def getColor(self, name):
@@ -109,6 +117,48 @@ class QSettings(settings.Settings):
         for key in self['colors']:
             if key.lower() == name.lower():
                 self['colors'][key] = str(value).replace('(', '').replace(')', '')
+
+    def getGuiSettings(self):
+        gui = {}
+        try:
+            gui['filterUseRegex'] = self.getboolean('gui', 'filterUseRegex')
+        except ValueError:
+            gui['filterUseRegex'] = True
+        try:
+            gui['portfolioFilterRow'] = self.getint('gui', 'portfolioFilterRow')
+        except ValueError:
+            gui['portfolioFilterRow'] = 3
+        try:
+            gui['tradeFilterRow'] = self.getint('gui', 'tradeFilterRow')
+        except ValueError:
+            gui['tradeFilterRow'] = 2
+        try:
+            gui['portfolioFilterDir'] = self.getint('gui', 'portfolioFilterDir')
+        except ValueError:
+            gui['portfolioFilterDir'] = qt.AscendingOrder
+        try:
+            gui['tradeFilterDir'] = self.getint('gui', 'tradeFilterDir')
+        except ValueError:
+            gui['tradeFilterDir'] = qt.AscendingOrder
+        try:
+            gui['toolTipsEnabled'] = self.getboolean('gui', 'toolTipsEnabled')
+        except ValueError:
+            gui['toolTipsEnabled'] = True
+        try:
+            gui['performanceChartIndex'] = self.getint('gui', 'performanceChartIndex')
+        except ValueError:
+            gui['performanceChartIndex'] = 0
+        return gui
+
+    def getGuiSetting(self, key):
+        return self.getGuiSettings()[key]
+
+    def setGuiSettings(self, gui):
+        for key in gui:
+            if key in self['gui']:
+                self['gui'][key] = str(gui[key])
+            else:
+                raise KeyError('invalid key ' + key + ' for gui settings')
 
 
 mySettings = QSettings()

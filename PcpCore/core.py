@@ -5,6 +5,7 @@ import web.cryptocompareApi as ccapi
 import PcpCore.settings as settings
 import Import.Converter as converter
 import PcpCore.logger as logger
+from dateutil.relativedelta import relativedelta
 
 # constants
 EXACT = 0
@@ -156,6 +157,8 @@ class CoinValue():
             for key in self.value:
                 if divider.value[key] != 0:
                     coinValue.value[key] = self.value[key] / divider.value[key]
+                elif self.value[key] == 0:  # if both values are zero return 1
+                    coinValue.value[key] = 1
         else:
             if not divider == 0:
                 for key in self.value:
@@ -350,8 +353,11 @@ class TradeList:
         return True
 
     def mergeTradeList(self, tradeList):
-        self.trades = list(set().union(self.trades, tradeList.trades))
-        return self
+        addedTrades = TradeList()
+        for trade in tradeList:
+            if self.addTrade(trade):
+                addedTrades.addTrade(trade)
+        return addedTrades
 
     def reduceTradeList(self):
         self.trades = list(set(self.trades))
@@ -477,6 +483,8 @@ class TradeMatcher:
         self.sellsMatched = []
         self.buysMatched = []
         self.profitMatched = []
+        self.profitMatchedTime = []
+        self.profitMatchedBuyTime = []
         self.buysLeft = []
 
     def setTrades(self, trades):
@@ -526,20 +534,17 @@ class TradeMatcher:
             self.buysBuffer = buysTemp
 
     def matchTrades(self, timemode=DAYWISE):
-        #        print('match coin: ' + self.trades[0].coin + ', number of trades: ' + str(len(self.trades)))
         self.prepareTrades(timemode)
-
-        #        print('number of sells: ' + str(len(self.sells)) + ', number of buys: ' + str(len(self.buysBuffer)))
         self.sellsMatched = []
         self.buysMatched = []
         self.profitMatched = []
+        self.profitMatchedTime = []
+        self.profitMatchedBuyTime = []
         self.buysLeft = []
         buyIndex = 0
         sellIndex = 0
         maxIter = 10 * len(self.sellsBuffer)
         while (sellIndex < len(self.sellsBuffer) and buyIndex < len(self.buysBuffer)):
-            #            sell = self.sellsBuffer[sellIndex]
-            #            buy = self.buysBuffer[buyIndex]
             if self.sellsBuffer[sellIndex].date < self.buysBuffer[buyIndex].date:  # sell is bevore buy
                 # no buy trade can be matched -> ignore sellTrade
                 logger.globalLogger.warning('no earlier buyTrade available for sellTrade: ' + self.sellsBuffer[
@@ -585,6 +590,8 @@ class TradeMatcher:
 
                 # calculate profit of last matched trades
                 self.profitMatched.append(self.calculateProfit(self.buysMatched[-1], self.sellsMatched[-1]))
+                self.profitMatchedTime.append(self.sellsMatched[-1].date)
+                self.profitMatchedBuyTime.append(self.buysMatched[-1].date)
             maxIter -= 1
             if maxIter <= 0:
                 logger.globalLogger.warning('maximum of matching iterations reached for coin ' + str(self.trades[0].coin))
@@ -599,6 +606,19 @@ class TradeMatcher:
 
     def getTotalProfit(self):
         return sum(self.profitMatched, CoinValue())
+
+    # def getTimeInvest(self, date):
+
+
+    def getTimeDeltaProfit(self, fromDate, toDate, taxFreeTimeDelta=-1):
+        if taxFreeTimeDelta == -1:
+            return sum([profit for profit, date in zip(self.profitMatched, self.profitMatchedTime)
+                        if (date >= fromDate and date <=toDate)], CoinValue())
+        else:
+            return sum([profit for profit, date, buydate in zip(self.profitMatched, self.profitMatchedTime,
+                                                                  self.profitMatchedBuyTime)
+                        if (date >= fromDate and date <= toDate and (date - relativedelta(years=taxFreeTimeDelta) <= buydate))],
+                       CoinValue())
 
     def getInitialPrice(self):
         initialValue = CoinValue()
@@ -747,9 +767,6 @@ class CoinBalance:
             # todo: create logging entry
             self.initialValue = self.tradeMatcher.getInitialPrice().mult(self.balance)
 
-    #    def calculateBoughtValue(self, initialTradeValue):
-    #        self.initialValue.add(initialTradeValue)
-
     def getInitialPrice(self):
         return self.initialValue.div(self.balance)
 
@@ -828,7 +845,7 @@ class CoinList:
         self.matchTrades()
         return self
 
-    def removeTrades(self, trades):
+    def deleteTrades(self, trades):
         for trade in trades:
             self.removeTrade(trade)
         # remove all empty coins

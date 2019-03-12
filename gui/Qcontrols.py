@@ -11,6 +11,7 @@ import PyQt5.QtCore as qtcore
 import re
 from pathlib import Path
 import gui.QLogger as logger
+import gui.QSettings as settings
 
 qt = qtcore.Qt
 # %% constants
@@ -31,6 +32,7 @@ class StyledFrame(qtwidgets.QFrame):
         self.setFrameShadow(qtwidgets.QFrame.Raised)
 
 
+# status bar for printing logging entries
 class StatusBar(StyledFrame):
     def __init__(self, parent, height=80, *args, **kwargs):
         super(StatusBar, self).__init__(parent=parent, *args, **kwargs)
@@ -52,6 +54,7 @@ class StatusBar(StyledFrame):
         self.statusView.setModel(model)
 
 
+# lineEdit where files can be dropped
 class LineEditDropable(qtwidgets.QLineEdit):
     def __init__(self, parent, *args, **kwargs):
         super(LineEditDropable, self).__init__(parent=parent, *args, **kwargs)
@@ -78,6 +81,7 @@ class LineEditDropable(qtwidgets.QLineEdit):
         event.acceptProposedAction()
 
 
+# path input with line edit and qfiledialo
 class PathInput(qtwidgets.QWidget):
     textChanged = qtcore.pyqtSignal()
 
@@ -144,9 +148,129 @@ class PathInput(qtwidgets.QWidget):
         return False
 
 
-#    def _pathChangedHandler(self, *args):    
-#        self.event_generate('<<pathChanged>>')
+# styled label for showing single values in gui
+class StyledLabelCont(qtwidgets.QFrame):
+    def __init__(self, parent, header='', text='', *args, **kwargs):
+        super(StyledLabelCont, self).__init__(parent=parent, *args, **kwargs)
 
+        self.setObjectName('StyledLabelCont')
+        self.title = qtwidgets.QPushButton(header, self)
+        self.title.setCheckable(True)
+        self.title.setObjectName('StyledLabelTitle')
+        self.title.setMinimumHeight(25)
+        # self.title.setAlignment(qt.AlignCenterS)
+        titleFont = qtgui.QFont("Arial", 11)
+        self.title.setFont(titleFont)
+
+        self.body = qtwidgets.QWidget()
+        # self.body.setAlignment(qt.AlignCenter)
+        self.body.setObjectName('StyledLabelBody')
+        self.body.sizePolicy().setRetainSizeWhenHidden(False)
+
+        self.bodyLayout = qtwidgets.QGridLayout(self.body)
+        self.bodyLayout.setContentsMargins(6, 4, 6, 4)
+        self.bodyLayout.setOriginCorner(qt.TopRightCorner)
+
+        self.vertLayout = qtwidgets.QVBoxLayout()
+        self.vertLayout.addWidget(self.title)
+        self.vertLayout.addWidget(self.body)
+        self.vertLayout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.vertLayout)
+
+        self.title.toggled.connect(lambda state: self.isToggled(state))
+        self.title.setChecked(True)
+
+    def minimumSizeHint(self):
+        return self.sizeHint()
+
+    def sizeHint(self):
+        s = qtcore.QSize()
+        st = self.title.sizeHint()
+        sb = self.body.sizeHint()
+        if self.title.isChecked():
+            s.setHeight((st.height() + sb.height()) + 10)
+            s.setWidth(135)
+        else:
+            s.setHeight(st.height())
+            s.setWidth(135)
+        return s
+
+    def minimumSize(self):
+        self.minimumSizeHint()
+
+    def setHeader(self, header):
+        self.title.setText(header)
+        # self.resize(self.sizeHint())
+
+    def addWidget(self, widget):
+        widget.setParent(self.body)
+        self.bodyLayout.addWidget(widget, len(self.body.children())-2, 0, qt.AlignRight)
+        self.resize(self.sizeHint())
+
+    def setBodyColor(self, color):
+        self.body.setStyleSheet("color: " + str(color))
+
+    def isToggled(self, checked):
+        self.body.setVisible(checked)
+        self.resize(self.sizeHint())
+
+
+class DragWidget(qtwidgets.QWidget):
+    def __init__(self, *args, **kwargs):
+        super(DragWidget, self).__init__(*args, **kwargs)
+        self.setAcceptDrops(True)
+        self.setObjectName('DragWidget')
+        # self.setStyleSheet('QFrame#DragWidget{background-color: black}')
+        self.dragObject = None
+        self.dragPixmap = qtgui.QPixmap()
+        self.dragDelta = qtcore.QPoint(0, 0)
+
+    def setMoveArea(self, ml=10, mu=10, mr=10, mb=10):
+        g = self.geometry()
+        self.moveArea = qtcore.QRect(ml, mu, g.width() - 2 * mr, g.height() - 2 * mb)
+
+    def move(self, *args, **kwargs):
+        super(DragWidget, self).move(*args, **kwargs)
+        self.setMoveArea(10)
+
+    def minimumSizeHint(self):
+        s = qtcore.QSize()
+        s.setWidth(max(child.pos().x() + child.width() + 10 for child in self.children()))
+        s.setHeight(max(child.pos().y() + child.height() + 10 for child in self.children()))
+        return s
+
+    def sizeHint(self):
+        return self.parent().size()*2
+
+    def mousePressEvent(self, event):
+        self.setMoveArea(0, 0, 50, 30)
+        self.dragObject = self.childAt(event.pos())
+        if not self.dragObject:
+            return
+        while(self.dragObject.parent() != self):
+            self.dragObject = self.dragObject.parent()
+            if not self.dragObject:
+                return
+        self.dragDelta = self.dragObject.pos() - event.pos()
+        self.dragObject.render(self.dragPixmap)
+        event.ignore()
+
+    def mouseMoveEvent(self, event):
+        if self.dragObject:
+            objPos = event.pos() + self.dragDelta
+            if self.moveArea.contains(objPos):
+                self.dragObject.move(objPos)
+            # elif not self.geometry().contains(event.pos()):
+            else:
+                self.dragObject = None
+
+    def mouseReleaseEvent(self, event):
+        if self.dragObject:
+            objPos = event.pos() + self.dragDelta
+            if self.moveArea.contains(objPos):
+                self.dragObject.move(objPos)
+                self.updateGeometry()
+        self.dragObject = None
 
 # %% tables
 class DataFrameTable(qtwidgets.QTableWidget):
@@ -180,40 +304,99 @@ class DataFrameTable(qtwidgets.QTableWidget):
             for rowIndex in range(len(column)):
                 self.setItem(rowIndex, columnIndex, qtwidgets.QTableWidgetItem(str(column[rowIndex])))
 
+
 # && Filterable Trade Table Widget
 class QFilterTableView(qtwidgets.QWidget):
     def __init__(self, parent, tableView, *args, **kwargs):
         super(QFilterTableView, self).__init__(parent=parent, *args, **kwargs)
 
+        self.proxyModel = SortFilterProxyModel()
         self.tableView = tableView
         self.tableView.setParent(self)
+        self.tableView.setModel(self.proxyModel)
+        self.tableView.show()
 
-        self.filterBoxes = []
-        self.gridLayout = qtwidgets.QGridLayout()
+        self.filterLine = qtwidgets.QWidget(self)
+        self.filterLine.setFixedHeight(20)
+        self.filterMargin = 4
         self.resetFilterButton = qtwidgets.QPushButton('X', self)
-        self.resetFilterButton.setFixedWidth(28)
+        self.resetFilterButton.setFixedWidth(25)
+        self.resetFilterButton.setFixedHeight(20)
         self.resetFilterButton.clicked.connect(self.clearFilter)
-        self.gridLayout.addWidget(self.resetFilterButton, 0, 0)
-        col = 1
+        self.resetFilterButton.move(0, 0)
+
+        self.initFilterBoxes()
+
+        self.vertLayout = qtwidgets.QVBoxLayout(self)
+        self.vertLayout.addWidget(self.filterLine)
+        self.vertLayout.addWidget(self.tableView)
+        self.vertLayout.setContentsMargins(5, 2, 5, 5)
+
+        self.tableView.viewResized.connect(self.layoutFilterRow)
+        self.tableView.viewUpdated.connect(self.layoutFilterRow)
+        self.tableView.horizontalHeader().geometriesChanged.connect(self.layoutFilterRow)
+        self.tableView.horizontalHeader().sectionResized.connect(self.sectionChanged)
+
+    def initFilterBoxes(self):
+        self.filterBoxes = []
         for index in range(self.tableView.model().columnCount()):
             self.filterBoxes.append(qtwidgets.QLineEdit(self))
             self.filterBoxes[index].textChanged.connect(lambda t, x=index: self.filterColumns(t, x))
-            self.gridLayout.addWidget(self.filterBoxes[index], 0, col)
-            col += 1
-        self.gridLayout.addItem(qtwidgets.QSpacerItem(12, 10), 0, col)
+            self.filterBoxes[index].setPlaceholderText('no filter')
+            self.filterBoxes[index].setFixedHeight(20)
+        self.layoutFilterRow()
 
-        self.vertLayout = qtwidgets.QVBoxLayout(self)
-        self.vertLayout.addLayout(self.gridLayout)
-        self.vertLayout.addWidget(self.tableView)
+    def sectionChanged(self, index, oldSize, newSize):
+        if index < len(self.filterBoxes):
+            self.setFilterBoxSize(index, newSize)
+
+    def layoutFilterRow(self):
+        tableStart = 5
+        self.resetFilterButton.move(tableStart, 0)
+        vertHeaderWidth = self.tableView.verticalHeader().width()
+        buttonWidth = 25 if vertHeaderWidth < 25 else vertHeaderWidth
+        self.resetFilterButton.setFixedWidth(buttonWidth)
+        # layout boxes
+        if self.filterBoxes:
+            self.filterBoxes[0].move(tableStart + buttonWidth + self.filterMargin, 0)
+            self.setFilterBoxSize(0, self.tableView.columnWidth(0))
+
+
+    def setFilterBoxSize(self, index, size):
+        size -= self.filterMargin
+        if index == 0:
+            # check if button needs space of first column
+            vertHeaderWidth = self.tableView.verticalHeader().width()
+            buttonWidth = self.resetFilterButton.width()
+            filterSize = size - buttonWidth + vertHeaderWidth
+            # filterSize = filterSize if filterSize > 20 else 20
+            self.filterBoxes[index].setFixedWidth(filterSize)
+        else:
+            self.filterBoxes[index].setFixedWidth(size)
+        # move filterboxes after changed box
+        for col in range(index+1, len(self.filterBoxes)):
+            pos = self.filterBoxes[col - 1].pos()
+            pos.setX(pos.x() + self.filterBoxes[col - 1].width() + self.filterMargin)
+            self.filterBoxes[col].move(pos)
+
+    def setModel(self, model):
+        self.proxyModel.setSourceModel(model)
+        self.initFilterBoxes()
+
 
     def filterColumns(self, text, col):
-        print('filter trades: ' + str(col) + '; ' + text)
         self.tableView.model().setFilterByColumn(text, col)
-
 
     def clearFilter(self):
         for filterBox in self.filterBoxes:
             filterBox.clear()
+
+    def switchRegexFilter(self, state):
+        if state == qt.Checked:
+            self.proxyModel.useRegex = True
+        else:  # not checked
+            self.proxyModel.useRegex = False
+
 
 
 # %% Trade table model
@@ -224,6 +407,14 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
         self.filters = {}
         self.setFilterCaseSensitivity(qt.CaseInsensitive)
 
+        self.sortedRow = 0
+        self.sortedDir = 0
+
+    def sort(self, row, order):
+        super(SortFilterProxyModel, self).sort(row, order)
+        self.sortedRow = row
+        self.sortedDir = order
+
     def setFilterByColumn(self, regex, column):
         self.filters[column] = regex
         self.invalidateFilter()
@@ -233,8 +424,15 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
             ix = self.sourceModel().index(source_row, key, source_parent)
             if ix.isValid():
                 text = str(self.sourceModel().data(ix))
-                if not re.match('.*' + regex + '.*', text, re.IGNORECASE):
-                    return False
+                try:
+                    if settings.mySettings.getGuiSettings()['filterUseRegex']:
+                        if not re.match('.*' + regex + '.*', text, re.IGNORECASE):
+                            return False
+                    else:  # no regex
+                        if not regex.lower() in text.lower():
+                            return False
+                except Exception as ex:  # skip column if regex error
+                    pass
         return True
 
 

@@ -36,7 +36,7 @@ class Settings(configparser.ConfigParser):
         # set default settings
         # general settings
         self['general'] = {}
-        self['general']['version'] = '0.4.0'
+        self['general']['version'] = '0.5.0'
         self['general']['timeModeDaywise'] = 'True'
         self['general']['priceUpdateInterval(s)'] = '100'
         # proxy settings
@@ -53,6 +53,10 @@ class Settings(configparser.ConfigParser):
         self['currency']['defaultDisplayCurrencies'] = 'EUR,USD,BTC'
         self['currency']['isFiat'] = 'EUR,USD,GBP,JPY,CNY,RUB,AUD,CAD,SGD,PLN,HKD,CHF,INR,BRL,KRW,NZD,ZAR'
         self['currency']['coinswapdict'] = "{'HOT':'HOT*','XBT':'BTC','IOTA':'IOT'}"
+        # tax settings
+        self['tax'] = {}
+        self['tax']['taxfreelimit'] = 'True'
+        self['tax']['taxfreelimityears'] = '1'
 
     def saveSettings(self):
         try:
@@ -67,7 +71,7 @@ class Settings(configparser.ConfigParser):
     def readSettings(self):
         try:
             self.read(self.filePath)
-            self['general']['version'] = '0.4.0'
+            self['general']['version'] = '0.5.0'
             logger.globalLogger.info('settings loaded')
         except Exception as ex:
             logger.globalLogger.error('settings can not be loaded: ' + str(ex))
@@ -119,5 +123,25 @@ class Settings(configparser.ConfigParser):
         except Exception as ex:
             return dict()
             logger.globalLogger.warning('error while parsing coinswapdict from settings: ' + str(ex))
+
+    def taxSettings(self):
+        tax = {}
+        try:
+            tax['taxfreelimit'] = self.getboolean('tax', 'taxfreelimit')
+        except ValueError:
+            tax['taxfreelimit'] = True
+        try:
+            tax['taxfreelimityears'] = self.getint('tax', 'taxfreelimityears')
+        except ValueError:
+            tax['taxfreelimityears'] = 1
+        return tax
+
+    def getTaxSetting(self, key):
+        tax = self.taxSettings()
+        return tax[key]
+
+    def setTaxSettings(self, tax):
+        for key in tax:
+            self['tax'][key] = str(tax[key])
 
 mySettings = Settings()

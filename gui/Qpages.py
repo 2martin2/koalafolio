@@ -69,11 +69,12 @@ class PortfolioPage(Page):
         # self.coinDataFrame.setFixedHeight(200)
         self.coinDataFrame.setModel(self.controller.coinList)
 
-
         self.coinTableView = ptable.QPortfolioTableView(self)
         self.coinProxyModel = ptable.QTableSortingModel()
         self.coinProxyModel.setSourceModel(self.controller.coinList)
         self.coinTableView.setModel(self.coinProxyModel)
+        guiSettings = settings.mySettings.getGuiSettings()
+        self.coinTableView.sortByColumn(guiSettings['portfolioFilterRow'], guiSettings['portfolioFilterDir'])
 
         self.coinTableView.show()
 
@@ -81,13 +82,20 @@ class PortfolioPage(Page):
         self.verticalLayout = qtwidgets.QVBoxLayout()
         self.verticalLayout.addWidget(self.coinDataFrame)
         self.verticalLayout.addWidget(self.coinTableView)
-        #        self.verticalLayout.addWidget(self.coinTable)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
 
         self.mainLayout.addLayout(self.verticalLayout)
 
     # refresh page every time it is activated
     def refresh(self):
-        pass
+        self.controller.coinList.triggerPriceUpdate()
+
+    def getGuiProps(self):
+        gui = {}
+        gui['portfolioFilterRow'] = str(self.coinProxyModel.sortedRow)
+        gui['portfolioFilterDir'] = str(self.coinProxyModel.sortedDir)
+        gui['performanceChartIndex'] = self.coinDataFrame.perfChartCont.chartIndex
+        return gui
 
 
 # %% trades page showing all the imported trades
@@ -104,11 +112,11 @@ class TradesPage(Page):
 
         # table for tradeList        
         self.tradeTableView = ttable.QTradeTableView(self)
-        self.tradeProxyModel = controls.SortFilterProxyModel()
-        self.tradeProxyModel.setSourceModel(self.controller.tradeList)
-        self.tradeTableView.setModel(self.tradeProxyModel)
         self.tradeTableWidget = controls.QFilterTableView(self, self.tradeTableView)
-        self.tradeTableView.show()
+        self.tradeTableWidget.setModel(self.controller.tradeList)
+        gui = settings.mySettings.getGuiSettings()
+        self.tradeTableView.sortByColumn(gui['tradeFilterRow'], gui['tradeFilterDir'])
+
 
         # controls
         self.deleteSelectedTradesButton = qtwidgets.QPushButton('delete selected', self)
@@ -116,7 +124,7 @@ class TradesPage(Page):
         self.deleteTradesButton = qtwidgets.QPushButton('delete all', self)
         self.deleteTradesButton.clicked.connect(self.deleteAllTrades)
         self.undoButton = qtwidgets.QPushButton('undo', self)
-        self.undoButton.clicked.connect(self.undoRemoveTrades)
+        self.undoButton.clicked.connect(self.undoRemoveAddTrades)
         self.reloadPricesButton = qtwidgets.QPushButton('reload prices', self)
         self.reloadPricesButton.clicked.connect(self.reloadPrices)
 
@@ -141,10 +149,10 @@ class TradesPage(Page):
     def refresh(self):
         pass
 
-    def undoRemoveTrades(self):
-        self.undoButton.clicked.disconnect(self.undoRemoveTrades)
-        self.controller.tradeList.undoRemoveTrades()
-        self.undoButton.clicked.connect(self.undoRemoveTrades)
+    def undoRemoveAddTrades(self):
+        self.undoButton.clicked.disconnect(self.undoRemoveAddTrades)
+        self.controller.tradeList.undoRemoveAddTrades()
+        self.undoButton.clicked.connect(self.undoRemoveAddTrades)
 
     def deleteAllTrades(self):
         self.deleteTradesButton.clicked.disconnect(self.deleteAllTrades)
@@ -160,9 +168,11 @@ class TradesPage(Page):
         self.controller.tradeList.clearPriceFlag()
         self.controller.tradeList.updatePrices(self.controller.tradeList)
 
-
-#    def tradesChanged(self):
-#        self.tradeTable.setTradeList(self.controller.tradeList)
+    def getGuiProps(self):
+        gui = {}
+        gui['tradeFilterRow'] = str(self.tradeTableWidget.proxyModel.sortedRow)
+        gui['tradeFilterDir'] = str(self.tradeTableWidget.proxyModel.sortedDir)
+        return gui
 
 
 # %% import page for importing csv, txt, xls ...
@@ -698,8 +708,7 @@ class ExportPage(Page):
         self.timeLimitEdit = qtwidgets.QSpinBox(self.exportProfitFrame)
         self.timeLimitEdit.setValue(1)
         self.timeLimitEdit.setMinimum(0)
-        self.timeLimitBox.stateChanged.connect(self.timeLimitCheckBoxChanged)
-        self.timeLimitBox.setCheckState(qt.Unchecked)
+        self.timeLimitBox.setCheckState(qt.Checked)
 
         self.timeLimitLayout = qtwidgets.QHBoxLayout()
         self.timeLimitLayout.addWidget(self.timeLimitLabel)
@@ -731,6 +740,7 @@ class ExportPage(Page):
         # label
         # checkbox
 
+        self.timeLimitBox.stateChanged.connect(self.timeLimitCheckBoxChanged)
         self.timeLimitCheckBoxChanged()
 
         # export button

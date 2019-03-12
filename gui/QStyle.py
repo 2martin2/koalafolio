@@ -95,48 +95,64 @@ class StyleSheetHandler():
         except Exception as ex:
             localLogger.error('setting stylesheet on target failed: ' + str(ex))
 
-    def replaceColors(self):
-        # constants
+    def updateColor(self):
         colors = settings.mySettings.getColors()
+        self.QColors = {}
         for colorName in colors:
             self.QColors[colorName] = qtgui.QColor(*colors[colorName])
             # calculate light/ dark colors
-            colorMidLight = chnageLightness(colors[colorName], 10)
             colorNameMidLight = colorName + '_MIDLIGHT'
-            colorMidDark = chnageLightness(colors[colorName], -10)
+            self.QColors[colorNameMidLight] = qtgui.QColor(*chnageLightness(colors[colorName], 10))
             colorNameMidDark = colorName + '_MIDDARK'
-            colorLight = chnageLightness(colors[colorName], 25)
+            self.QColors[colorNameMidDark] = qtgui.QColor(*chnageLightness(colors[colorName], -10))
             colorNameLight = colorName + '_LIGHT'
-            colorDark = chnageLightness(colors[colorName], -25)
+            self.QColors[colorNameLight] = qtgui.QColor(*chnageLightness(colors[colorName], 25))
             colorNameDark = colorName + '_DARK'
+            self.QColors[colorNameDark] = qtgui.QColor(*chnageLightness(colors[colorName], -25))
+
+    def replaceColors(self):
+        self.updateColor()
+        # constants
+        colors = settings.mySettings.getColors()
+        for colorName in colors:
+            # calculate light/ dark colors
+            colorNameMidLight = colorName + '_MIDLIGHT'
+            colorMidLight = self.getQColor(colorNameMidLight)
+            colorNameMidDark = colorName + '_MIDDARK'
+            colorMidDark = self.getQColor(colorNameMidDark)
+            colorNameLight = colorName + '_LIGHT'
+            colorLight = self.getQColor(colorNameLight)
+            colorNameDark = colorName + '_DARK'
+            colorDark = self.getQColor(colorNameDark)
+
             # replace color (dark and light first, otherwise they will be replaced partly)
-            hexColorMidLight = TupleToHexColor(colorMidLight)
+            hexColorMidLight = colorMidLight.name()
             self.activeStyleSheet = self.activeStyleSheet.replace(colorNameMidLight, hexColorMidLight)
-            hexColorMidDark = TupleToHexColor(colorMidDark)
+            hexColorMidDark = colorMidDark.name()
             self.activeStyleSheet = self.activeStyleSheet.replace(colorNameMidDark, hexColorMidDark)
-            hexColorLight = TupleToHexColor(colorLight)
+            hexColorLight = colorLight.name()
             self.activeStyleSheet = self.activeStyleSheet.replace(colorNameLight, hexColorLight)
-            hexColorDark = TupleToHexColor(colorDark)
+            hexColorDark = colorDark.name()
             self.activeStyleSheet = self.activeStyleSheet.replace(colorNameDark, hexColorDark)
-            hexColor = TupleToHexColor(colors[colorName])
+            hexColor = self.getQColor(colorName).name()
             self.activeStyleSheet = self.activeStyleSheet.replace(colorName, hexColor)
 
-        # set palette
-        # palette = self.target.palette()
-        # palette.setColor(qtgui.QPalette.Window, QColors['BACKGROUND'])
-        # palette.setColor(qtgui.QPalette.WindowText, QColors['TEXT_NORMAL'])
-        # palette.setColor(qtgui.QPalette.Base, QColors['BACKGROUND'])
-        # palette.setColor(qtgui.QPalette.ToolTipBase, QColors['BACKGROUND'])
-        # palette.setColor(qtgui.QPalette.ToolTipText, QColors['TEXT_NORMAL'])
-        # palette.setColor(qtgui.QPalette.Text, QColors['TEXT_NORMAL'])
-        # palette.setColor(qtgui.QPalette.Button, QColors['PRIMARY'])
-        # palette.setColor(qtgui.QPalette.ButtonText, QColors['TEXT_HIGHLIGHTED'])
-        # palette.setColor(qtgui.QPalette.BrightText, QColors['TEXT_HIGHLIGHTED'])
-        # self.target.setPalette(palette)
+    def getQColor(self, name):
+        return self.QColors[name]
+
+# functions
+def nextColor(rgbcolor, step):
+    rgbcolornorm = [color/255 for color in rgbcolor]
+    hls_color = colorsys.rgb_to_hls(*tuple(rgbcolornorm))
+    rgbcolornew = colorsys.hls_to_rgb(hls_color[0]+step/360, hls_color[1], hls_color[2])
+    return [round(col, 1) for col in [rgbcolornew[0]*255, rgbcolornew[1]*255, rgbcolornew[2]*255]]
 
 
+# globals
+myStyle = None
 
 
+# templates
 defaultStylesheetTemplate = "* {{ background-color: {0} }} " \
                             "QFrame {{ border: 0px solid black; background-color: {0} }} "
 # defaultStyleSheetColored = defaultStylesheetTemplate.format(settings.mySettings['window']['windowColor'])
@@ -333,10 +349,56 @@ QFrame#QSubPage{
     margin: 10px 0px 0px 0px;
 }
 
+QToolTip{
+    border: 1px solid PRIMARY;
+    border-radius: 3;
+    background-color: BACKGROUND;
+}
+
+QLabel{
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/*QFrame#ChartCont LabeledChartView{
+    border: 2px solid PRIMARY;
+    border-radius: 10;
+    background-color: rgbs(0, 0, 0, 0);
+}
+LabeledChartView QLabel#heading{
+    color: TEXT_HIGHLIGHTED;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT, stop:1 PRIMARY);
+    border-radius: 3px;
+}*/
+
+LabeledDonatChart{
+    background-color: rgbs(0, 0, 0, 0);
+}
+
 /* line edit */
 QLineEdit{
     border: 1px solid PRIMARY_DARK;
     border-radius: 2px;
+}
+
+/* portfolio labels */
+QWidget#StyledLabelCont{
+    color: TEXT;
+    border: 2px solid PRIMARY;
+    border-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT stop:1 PRIMARY);
+    border-radius: 5px;
+}
+QWidget#StyledLabelTitle{
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 PRIMARY, stop: 1 PRIMARY_MIDLIGHT);
+    color: TEXT_HIGHLIGHTED;
+    border: 0px solid PRIMARY_DARK;
+    border-radius: 2px;
+}
+QWidget#StyledLabelTitle:pressed {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 PRIMARY_MIDLIGHT, stop: 1 PRIMARY);
 }
 
 /* buttons*/
@@ -349,7 +411,7 @@ QPushButton {
     color: TEXT_HIGHLIGHTED;
 }
 
-QPushButton:pressed {
+QPushButton:checked {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                       stop: 0 PRIMARY_MIDLIGHT, stop: 1 PRIMARY);
 }
@@ -391,6 +453,7 @@ QHeaderView::section {
     padding-left: 4px;
     border: 1px solid PRIMARY_DARK;
 }
+
 
 /*QHeaderView::section:checked
 {

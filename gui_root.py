@@ -95,6 +95,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.settings = settings.mySettings.setPath(self.dataPath)
         self.styleSheetHandler = style.StyleSheetHandler(self)
         self.styleSheetHandler.setPath(self.appPath)
+        style.myStyle = self.styleSheetHandler
 
 
     # setup window style
@@ -137,7 +138,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))
         # todo pass new trades with signal
         self.tradeList.tradesAdded.connect(lambda tradeList: self.coinList.addTrades(tradeList))
-        self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.removeTrades(tradeList))
+        self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.deleteTrades(tradeList))
         self.tradeList.pricesUpdated.connect(self.coinList.histPricesChanged)
         self.tradeList.histPriceUpdateFinished.connect(self.coinList.histPriceUpdateFinished)
         self.logger.info('data initialized')
@@ -234,9 +235,13 @@ class PortfolioApp(qtwidgets.QWidget):
                 pass
 
     def closeEvent(self, event):
+        # save window props
         geometry = self.geometry()
         state = self.windowState()
         self.settings.setWindowProperties(geometry, state)
+        # save gui props
+        self.settings.setGuiSettings(self.tradesPage.getGuiProps())
+        self.settings.setGuiSettings(self.portfolioPage.getGuiProps())
         self.settings.saveSettings()
         event.accept()
 
