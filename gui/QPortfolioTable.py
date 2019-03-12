@@ -763,13 +763,13 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.profitTable.setRowCount(len(years))
         self.profitTable.setVerticalHeaderLabels(years)
         for year, row in zip(realizedProfitPerYear, range(len(realizedProfitPerYear))):
-            self.profitTable.setItem(row, 0, qtwidgets.QTableWidgetItem(str(realizedProfitPerYear[year][taxCoinName])))
+            self.profitTable.setItem(row, 0, qtwidgets.QTableWidgetItem(controls.floatToString(realizedProfitPerYear[year][taxCoinName], 5)))
 
 
         self.feeTable.setRowCount(len(years))
         self.feeTable.setVerticalHeaderLabels(years)
         for year, row in zip(paidFeesPerYear, range(len(paidFeesPerYear))):
-            self.feeTable.setItem(row, 0, qtwidgets.QTableWidgetItem(str(paidFeesPerYear[year][taxCoinName])))
+            self.feeTable.setItem(row, 0, qtwidgets.QTableWidgetItem(controls.floatToString(paidFeesPerYear[year][taxCoinName], 5)))
 
         # profit chart
         # dicts = []
