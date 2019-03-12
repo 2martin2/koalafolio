@@ -22,11 +22,13 @@ localLogger = logger.globalLogger
 
 
 # labeled donut/pie chart
-class LabeledDonatChart(qtwidgets.QWidget):
+class LabeledDonatChart(qtwidgets.QFrame):
     def __init__(self, width, height, numberLabels=3, heading='', *args, **kwargs):
         super(LabeledDonatChart, self).__init__(*args, **kwargs)
 
         # widget properties
+        self.setObjectName('LabeledDonatChart')
+        self.setFrameShape(qtwidgets.QFrame.StyledPanel)
         self.setFixedWidth(width)
         self.setFixedHeight(height)
         self.setContentsMargins(0, 0, 0, 0)
@@ -65,6 +67,9 @@ class LabeledDonatChart(qtwidgets.QWidget):
     def setLabelToolTip(self, strings):
         self.chartView.setLabelToolTip(strings)
 
+    def setHeadingToolTip(self, string):
+        self.chartView.setHeadingToolTip(string)
+
     def __iter__(self):
         return iter(self.series.slices())
 
@@ -76,6 +81,7 @@ class LabeledChartView(qtchart.QChartView):
 
         self.setMinimumHeight(height)
         self.setMinimumWidth(width)
+        self.setObjectName('LabeledChartView')
 
         self.heading = qtwidgets.QLabel(heading, self)
         self.heading.setFont(qtgui.QFont("Arial", 12))
@@ -106,7 +112,7 @@ class LabeledChartView(qtchart.QChartView):
             # move labels up to have the middle one in the center
             origin.setY(origin.y() - sum([label.height() for label in self.labels])/2)
             # move labels left to have them in the center
-            origin.setX(origin.x() - self.labels[col].width()/2)
+            origin.setX(origin.x() - self.labels[col].width()/2 + 2)
 
         if self.labelAlignment == qt.AlignLeft:
             maxWidth = max([label.width() for label in self.labels])
@@ -135,7 +141,8 @@ class LabeledChartView(qtchart.QChartView):
             font.setPointSize(12)
             label.setFont(font)
             label.adjustSize()
-            while(label.width() > 100):
+        while(max([label.width() for label in self.labels]) > 90):
+            for label in self.labels:
                 font = label.font()
                 font.setPointSize(font.pointSize() - 1)
                 label.setFont(font)
@@ -152,29 +159,36 @@ class LabeledChartView(qtchart.QChartView):
             for label, string in zip(self.labels, strings):
                 label.setToolTip(string)
 
+    def setHeadingToolTip(self, string):
+        self.heading.setToolTip(string)
+
     def setColor(self, cols, isBackgroundTransparent=True):
         try:
             if isBackgroundTransparent:
                 for label, col in zip(self.labels, cols):
                     label.setStyleSheet('QLabel{background-color: rgba(0, 0, 0, 0); color:  ' + col.name() + ';}' +
-                                        'QToolTip{background-color: ' + style.myStyle.getQColor('BACKGROUND').name() +
+                                        'QToolTip{border: 1px solid ' + col.name() + ';background-color: ' +
+                                        style.myStyle.getQColor('BACKGROUND').name() +
                                         '}')
             else:
                 for label, col in zip(self.labels, cols):
                     label.setStyleSheet('QLabel{border-radius: 5px ; color:  ' + col.name() + ';}' +
-                                        'QToolTip{background-color: ' + style.myStyle.getQColor('BACKGROUND').name() +
+                                        'QToolTip{border: 1px solid ' + col.name() + ';background-color: ' +
+                                        style.myStyle.getQColor('BACKGROUND').name() +
                                         '}')
         except TypeError:
             col = cols
             if isBackgroundTransparent:
                 for label in self.labels:
                     label.setStyleSheet('QLabel{background-color: rgba(0, 0, 0, 0); color:  ' + col.name() + ';}' +
-                                        'QToolTip{background-color: ' + style.myStyle.getQColor('BACKGROUND').name() +
+                                        'QToolTip{border: 1px solid ' + col.name() + ';background-color: ' +
+                                        style.myStyle.getQColor('BACKGROUND').name() +
                                         '}')
             else:
                 for label in self.labels:
                     label.setStyleSheet('QLabel{border-radius: 5px ; color:  ' + col.name() + ';}' +
-                                        'QToolTip{background-color: ' + style.myStyle.getQColor('BACKGROUND').name() +
+                                        'QToolTip{border: 1px solid ' + col.name() + ';background-color: ' +
+                                        style.myStyle.getQColor('BACKGROUND').name() +
                                         '}')
 
 

@@ -349,6 +349,29 @@ QFrame#QSubPage{
     margin: 10px 0px 0px 0px;
 }
 
+QToolTip{
+    border: 1px solid PRIMARY;
+    border-radius: 3;
+    background-color: BACKGROUND;
+}
+
+QLabel{
+    background-color: rgba(0, 0, 0, 0);
+}
+
+* LabeledChartView{
+    border: 2px solid PRIMARY;
+    border-radius: 10;
+    background-color: rgbs(0, 0, 0, 0);
+}
+* LabeledChartView::heading{
+    background-color: PRIMARY;
+}
+
+* LabeledDonatChart{
+    background-color: rgbs(0, 0, 0, 0);
+}
+
 /* line edit */
 QLineEdit{
     border: 1px solid PRIMARY_DARK;
@@ -427,6 +450,7 @@ QHeaderView::section {
     padding-left: 4px;
     border: 1px solid PRIMARY_DARK;
 }
+
 
 /*QHeaderView::section:checked
 {
