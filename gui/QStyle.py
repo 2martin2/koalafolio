@@ -383,7 +383,7 @@ QLineEdit{
 
 /* portfolio labels */
 QWidget#StyledLabelCont{
-    color: TEXT;
+    color: TEXT_NORMAL;
     border: 2px solid PRIMARY;
     border-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT stop:1 PRIMARY);

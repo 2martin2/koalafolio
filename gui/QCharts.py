@@ -71,19 +71,16 @@ class ChartCont(qtwidgets.QFrame):
                 self.charts[self.chartIndex].setVisible(False)
             self.charts[index].setVisible(True)
             self.chartIndex = index
-            print(str(self.chartIndex))
             self.updateButtonPosition(self.charts[self.chartIndex].chartView.heading.height())
             return True
         return False
 
     def leftButtonClicked(self):
-        print('left clicked')
         if self.chartIndex is not None:
             if not self.setChartIndex(self.chartIndex - 1):
                 self.setChartIndex(len(self.charts)-1)
 
     def rightButtonClicked(self):
-        print('right clicked')
         if self.chartIndex is not None:
             if not self.setChartIndex(self.chartIndex + 1):
                 self.setChartIndex(0)
