@@ -422,45 +422,14 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.horzLayout = qtwidgets.QHBoxLayout(self)
         self.horzLayout.setContentsMargins(0, 0, 0, 0)
 
-        # tax value char
-        self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
-                                                          'crypto performance')
-        self.currentValueChart.setHeadingToolTip('this chart shows\nthe performance of\n' +
-                                                 'your portfolio\nrelative to the\ncurrent invest\n' +
-                                                 '(profit from crypto\ntrades is reinvested)')
-        self.donutSliceInvested = self.currentValueChart.addSlice('invested', 1, -1, False)
-        self.donutSlicePerformance = self.currentValueChart.addSlice('performance', 0.5, -1, False)
-        # self.horzLayout.addWidget(self.currentValueChart)
-
-        # fiat value chart
-        self.currentFiatValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
-                                                              'fiat performance')
-        self.currentFiatValueChart.setHeadingToolTip('this chart shows\nthe performance of\nyour portfolio\n' +
-                                                     'relative to the\ninitial fiat invest')
-        self.sliceFiatInvested = self.currentFiatValueChart.addSlice('fiat invest', 1, -1, False)
-        self.sliceCoinValue = self.currentFiatValueChart.addSlice('coin value', 0.5, -1, False)
-        self.sliceFiatReturn = self.currentFiatValueChart.addSlice('fiat return', 0.5, -1, False)
-        # self.horzLayout.addWidget(self.currentFiatValueChart)
-
-        self.perfChartCont = charts.ChartCont(self)
-        self.perfChartCont.addChart(self.currentValueChart)
-        self.perfChartCont.addChart(self.currentFiatValueChart)
-        self.perfChartCont.setChartIndex(settings.mySettings.getGuiSetting('performanceChartIndex'))
-        self.horzLayout.addWidget(self.perfChartCont)
-
         # realized profit (relevant for tax)
         self.realizedProfitLabel = controls.StyledLabelCont(self, 'realized profit')
-        # self.realizedProfitValue = qtwidgets.QLabel('xxx')
-        # self.realizedProfitValue.setFont(qtgui.QFont('Arial', 12))
-        # self.realizedProfitLabel.addWidget(self.realizedProfitValue)
-
         # profit table
         self.profitTable = qtwidgets.QTableWidget()
         self.profitTable.setColumnCount(1)
         self.profitTable.horizontalHeader().setVisible(False)
         self.profitTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
         self.realizedProfitLabel.addWidget(self.profitTable)
-
         # paid fees
         self.paidFeesLabel = controls.StyledLabelCont(self, 'fees paid')
         self.feeTable = qtwidgets.QTableWidget()
@@ -468,12 +437,10 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.feeTable.horizontalHeader().setVisible(False)
         self.feeTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
         self.paidFeesLabel.addWidget(self.feeTable)
-        # self.paidFeesValue = qtwidgets.QLabel('xxx')
-        # self.paidFeesValue.setFont(qtgui.QFont('Arial', 12))
-        # self.paidFeesLabel.addWidget(self.paidFeesValue)
 
-        #
-        # self.horzLayout.addStretch()
+        # pie chart
+        self.portfolioChart = charts.LabeledDonatChart(self.height + 30, self.height, 1, parent=self)
+        self.horzLayout.addWidget(self.portfolioChart)
 
         # # profit table
         # self.profitPerYearTable = charts.ProfitPerYearWidget(self.height*0.8, self.height, parent=self)
@@ -561,10 +528,28 @@ class PortfolioOverview(qtwidgets.QWidget):
             row = 0
             column += 1
 
+        # tax value char
+        self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
+                                                          'crypto performance')
+        self.currentValueChart.setHeadingToolTip('this chart shows\nthe performance of\n' +
+                                                 'your portfolio\nrelative to the\ncurrent invest\n' +
+                                                 '(profit from crypto\ntrades is reinvested)')
+        self.donutSliceInvested = self.currentValueChart.addSlice('invested', 1, -1, False)
+        self.donutSlicePerformance = self.currentValueChart.addSlice('performance', 0.5, -1, False)
+        # fiat value chart
+        self.currentFiatValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
+                                                              'fiat performance')
+        self.currentFiatValueChart.setHeadingToolTip('this chart shows\nthe performance of\nyour portfolio\n' +
+                                                     'relative to the\ninitial fiat invest')
+        self.sliceFiatInvested = self.currentFiatValueChart.addSlice('fiat invest', 1, -1, False)
+        self.sliceCoinValue = self.currentFiatValueChart.addSlice('coin value', 0.5, -1, False)
+        self.sliceFiatReturn = self.currentFiatValueChart.addSlice('fiat return', 0.5, -1, False)
 
-        # pie chart
-        self.portfolioChart = charts.LabeledDonatChart(self.height+30, self.height, 1, parent=self)
-        self.horzLayout.addWidget(self.portfolioChart)
+        self.perfChartCont = charts.ChartCont(self)
+        self.perfChartCont.addChart(self.currentValueChart)
+        self.perfChartCont.addChart(self.currentFiatValueChart)
+        self.perfChartCont.setChartIndex(settings.mySettings.getGuiSetting('performanceChartIndex'))
+        self.horzLayout.addWidget(self.perfChartCont)
 
         self.refresh()
 
