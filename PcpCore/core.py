@@ -5,6 +5,7 @@ import web.cryptocompareApi as ccapi
 import PcpCore.settings as settings
 import Import.Converter as converter
 import PcpCore.logger as logger
+import datetime
 from dateutil.relativedelta import relativedelta
 
 # constants
@@ -665,6 +666,20 @@ class TradeMatcher:
         if self.buysLeft:
             return self.buysLeft[0].date
         return None
+
+    def getBuyAmountLeftToDate(self, date):
+        amount = 0
+        for trade in self.buysLeft:
+            try:
+                if trade.date < date:
+                    amount += trade.amount
+            except TypeError:
+                if trade.date.date() < date:
+                    amount += trade.amount
+        return amount
+
+    def getBuyAmountLeftTaxFree(self, taxfreeLimit):
+        return self.getBuyAmountLeftToDate(datetime.datetime.now().date() - relativedelta(years=1))
 
 
 # %% Coin_Balance
