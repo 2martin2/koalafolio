@@ -191,17 +191,23 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
         elif index.column() == 1:  # balance
             coinBalance = index.data(qt.DisplayRole)
             balance = controls.floatToString(coinBalance.balance, 5)
-            buyAmount = controls.floatToString(coinBalance.tradeMatcher.getBuyAmount(), 4)
-            sellAmount = controls.floatToString(coinBalance.tradeMatcher.getSellAmount(), 4)
-            firstBuyLeftDate = coinBalance.tradeMatcher.getFirstBuyLeftDate()
-            if firstBuyLeftDate:
-                now = datetime.datetime.now()
-                yearDif = now.year - firstBuyLeftDate.year
-                monthDif = now.month - firstBuyLeftDate.month
-                dayDif = now.day - firstBuyLeftDate.day
-                if monthDif < 0 or (monthDif == 0 and dayDif < 0):
-                    yearDif -= 1
-                freeBuyYears = '>' + str(yearDif) + 'y'
+            if settings.mySettings.getTaxSetting('taxfreelimit'):
+                taxFreeLimitYears = settings.mySettings.getTaxSetting('taxfreelimityears')
+                freeBuyYears = '>' + str(taxFreeLimitYears) + 'y'
+                buyAmountVal = coinBalance.tradeMatcher.getBuyAmountLeftTaxFree(taxFreeLimitYears)
+                buyAmount = controls.floatToString(buyAmountVal, 4)
+            else:
+                buyAmount = controls.floatToString(coinBalance.tradeMatcher.getBuyAmount(), 4)
+                sellAmount = controls.floatToString(coinBalance.tradeMatcher.getSellAmount(), 4)
+                firstBuyLeftDate = coinBalance.tradeMatcher.getFirstBuyLeftDate()
+                if firstBuyLeftDate:
+                    now = datetime.datetime.now()
+                    yearDif = now.year - firstBuyLeftDate.year
+                    monthDif = now.month - firstBuyLeftDate.month
+                    dayDif = now.day - firstBuyLeftDate.day
+                    if monthDif < 0 or (monthDif == 0 and dayDif < 0):
+                        yearDif -= 1
+                    freeBuyYears = '>' + str(yearDif) + 'y'
 
             defaultFont = painter.font()
             # paint balance text
@@ -211,23 +217,34 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             painter.drawText(contentRect, qt.AlignHCenter | qt.AlignTop, balance)
             painter.setFont(defaultFont)
 
-            # paint buy
-            buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
-            buyBrush = qtgui.QBrush(buyColor)
-            buyPen = painter.pen()
-            buyPen.setBrush(buyBrush)
-            painter.setPen(buyPen)
-            painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
-            if firstBuyLeftDate:
-                painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
+            if settings.mySettings.getTaxSetting('taxfreelimit'):
+                if buyAmountVal > 0:
+                    # paint buy that can be sold tax free
+                    buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
+                    buyBrush = qtgui.QBrush(buyColor)
+                    buyPen = painter.pen()
+                    buyPen.setBrush(buyBrush)
+                    painter.setPen(buyPen)
+                    painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
+                    painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
+            else:
+                # paint buy
+                buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
+                buyBrush = qtgui.QBrush(buyColor)
+                buyPen = painter.pen()
+                buyPen.setBrush(buyBrush)
+                painter.setPen(buyPen)
+                painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
+                if firstBuyLeftDate:
+                    painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
 
-            # paint sell
-            sellColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
-            sellBrush = qtgui.QBrush(sellColor)
-            sellPen = painter.pen()
-            sellPen.setBrush(sellBrush)
-            painter.setPen(sellPen)
-            painter.drawText(contentRect, qt.AlignRight | qt.AlignBottom, sellAmount)
+                # paint sell
+                sellColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
+                sellBrush = qtgui.QBrush(sellColor)
+                sellPen = painter.pen()
+                sellPen.setBrush(sellBrush)
+                painter.setPen(sellPen)
+                painter.drawText(contentRect, qt.AlignRight | qt.AlignBottom, sellAmount)
 
         elif index.column() == 2:
             profit = index.data(qt.DisplayRole)
