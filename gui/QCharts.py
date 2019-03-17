@@ -32,13 +32,22 @@ class ChartCont(qtwidgets.QFrame):
         self.charts = []
         self.chartIndex = None
 
-        self.rightButton = qtwidgets.QPushButton('>', self)
+        self.rightButton = qtwidgets.QPushButton('', self)
         self.rightButton.clicked.connect(self.rightButtonClicked)
-        self.leftButton = qtwidgets.QPushButton('<', self)
+        self.leftButton = qtwidgets.QPushButton('', self)
         self.leftButton.clicked.connect(self.leftButtonClicked)
+        self.setButtonStyle()
         for button in [self.leftButton, self.rightButton]:
             button.setFixedSize(qtcore.QSize(20, 20))
         self.updateButtonPosition()
+
+    def clearButtonStyle(self):
+        self.rightButton.setStyleSheet("")
+        self.leftButton.setStyleSheet("")
+
+    def setButtonStyle(self):
+        self.rightButton.setStyleSheet("QPushButton {border-image: url(./graphics/right.png) 0 15 0 15 stretch;}")
+        self.leftButton.setStyleSheet("QPushButton {border-image: url(./graphics/left.png) 0 15 0 15 stretch;}")
 
     def updateButtonPosition(self, height=20):
         leftPos = qtcore.QPoint(5, 5)

@@ -48,6 +48,8 @@ class PortfolioApp(qtwidgets.QWidget):
     IMPORTPAGEINDEX = 2
     EXPORTPAGEINDEX = 3
     SETTINGSPAGEINDEX = 4
+    startRefresh = qtcore.pyqtSignal()
+    endRefresh = qtcore.pyqtSignal()
 
     def __init__(self, parent=None):
         super(PortfolioApp, self).__init__(parent=parent)
@@ -74,7 +76,25 @@ class PortfolioApp(qtwidgets.QWidget):
         self.logger.info('application initialized')
 
     def reinit(self):
+        self.startRefresh.emit()
+        # delete button styles before style update, otherwise qt will crash
+        self.buttonPortfolio.setStyleSheet("")
+        self.buttonTrades.setStyleSheet("")
+        self.buttonImport.setStyleSheet("")
+        self.buttonExport.setStyleSheet("")
+        self.buttonSettings.setStyleSheet("")
         self.initStyle()
+        self.buttonPortfolio.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/portfolio.png) 0 15 0 15 stretch;}")
+        self.buttonTrades.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/trades.png) 0 15 0 15 stretch;}")
+        self.buttonImport.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/import.png) 0 15 0 15 stretch;}")
+        self.buttonExport.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/export.png) 0 15 0 15 stretch;}")
+        self.buttonSettings.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/settings.png) 0 15 0 15 stretch;}")
+        self.endRefresh.emit()
 
     # load environment/ settings
     def initEnv(self):
@@ -156,11 +176,29 @@ class PortfolioApp(qtwidgets.QWidget):
         self.sidebarFrame.setFixedWidth(120)
 
         # buttons sidebar
-        self.buttonPortfolio = qtwidgets.QPushButton("Portfolio", self.sidebarFrame)
-        self.buttonTrades = qtwidgets.QPushButton("Trades", self.sidebarFrame)
-        self.buttonImport = qtwidgets.QPushButton("Import", self.sidebarFrame)
-        self.buttonExport = qtwidgets.QPushButton("Export", self.sidebarFrame)
-        self.buttonSettings = qtwidgets.QPushButton("Settings", self.sidebarFrame)
+        self.buttonPortfolio = qtwidgets.QPushButton("", self.sidebarFrame)
+        self.buttonTrades = qtwidgets.QPushButton("", self.sidebarFrame)
+        self.buttonImport = qtwidgets.QPushButton("", self.sidebarFrame)
+        self.buttonExport = qtwidgets.QPushButton("", self.sidebarFrame)
+        self.buttonSettings = qtwidgets.QPushButton("", self.sidebarFrame)
+
+        self.buttonPortfolio.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/portfolio.png) 0 15 0 15 stretch;}")
+        self.buttonTrades.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/trades.png) 0 15 0 15 stretch;}")
+        self.buttonImport.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/import.png) 0 15 0 15 stretch;}")
+        self.buttonExport.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/export.png) 0 15 0 15 stretch;}")
+        self.buttonSettings.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/settings.png) 0 15 0 15 stretch;}")
+
+        self.buttonPortfolio.setToolTip('portfolio')
+        self.buttonTrades.setToolTip('trades')
+        self.buttonImport.setToolTip('import')
+        self.buttonExport.setToolTip('export')
+        self.buttonSettings.setToolTip('settings')
+
         self.buttonPortfolio.clicked.connect(lambda: self.showFrame(self.PORTFOLIOPAGEINDEX))
         self.buttonTrades.clicked.connect(lambda: self.showFrame(self.TRADESPAGEINDEX))
         self.buttonImport.clicked.connect(lambda: self.showFrame(self.IMPORTPAGEINDEX))
