@@ -320,6 +320,7 @@ class QFilterTableView(qtwidgets.QWidget):
         self.filterLine.setFixedHeight(20)
         self.filterMargin = 4
         self.resetFilterButton = qtwidgets.QPushButton('X', self)
+        # self.setWidgetStyle()
         self.resetFilterButton.setFixedWidth(25)
         self.resetFilterButton.setFixedHeight(20)
         self.resetFilterButton.clicked.connect(self.clearFilter)
@@ -336,6 +337,14 @@ class QFilterTableView(qtwidgets.QWidget):
         self.tableView.viewUpdated.connect(self.layoutFilterRow)
         self.tableView.horizontalHeader().geometriesChanged.connect(self.layoutFilterRow)
         self.tableView.horizontalHeader().sectionResized.connect(self.sectionChanged)
+
+    def clearWidgetStyle(self):
+        self.resetFilterButton.setStyleSheet("")
+
+    def setWidgetStyle(self):
+        margin = (self.resetFilterButton.width() - self.resetFilterButton.height())
+        self.resetFilterButton.setStyleSheet(
+            "QPushButton {border-image: url(./graphics/delete.png) " + str(margin) + " 0 " + str(margin) + " 0 stretch;}")
 
     def initFilterBoxes(self):
         self.filterBoxes = []

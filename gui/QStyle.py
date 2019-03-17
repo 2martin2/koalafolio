@@ -383,7 +383,7 @@ QLineEdit{
 
 /* portfolio labels */
 QWidget#StyledLabelCont{
-    color: TEXT_NORMAL;
+    color: TEXT;
     border: 2px solid PRIMARY;
     border-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT stop:1 PRIMARY);
@@ -391,38 +391,47 @@ QWidget#StyledLabelCont{
 }
 QWidget#StyledLabelTitle{
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                      stop: 0 PRIMARY, stop: 1 PRIMARY_MIDLIGHT);
+                                      stop: 0 PRIMARY_MIDLIGHT, stop: 1 PRIMARY);
     color: TEXT_HIGHLIGHTED;
     border: 0px solid PRIMARY_DARK;
     border-radius: 2px;
 }
-QWidget#StyledLabelTitle:pressed {
+QWidget#StyledLabelTitle:hover {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                      stop: 0 PRIMARY_MIDLIGHT, stop: 1 PRIMARY);
+                                      stop: 0 PRIMARY_LIGHT, stop: 1 PRIMARY);
+}
+QWidget#StyledLabelTitle:checked {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 PRIMARY, stop: 1 PRIMARY_MIDLIGHT);
+}
+QWidget#StyledLabelTitle:checked:hover {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 PRIMARY, stop: 1 PRIMARY_LIGHT);
 }
 
 /* buttons*/
 QPushButton {
-    border: 1px solid PRIMARY_DARK;
+    border: 2px solid PRIMARY;
     border-radius: 6px;
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                       stop: 0 PRIMARY, stop: 1 PRIMARY_MIDLIGHT);
     padding: 4px 7px 4px 7px;
     color: TEXT_HIGHLIGHTED;
 }
-
-QPushButton:checked {
+QPushButton:pressed {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                       stop: 0 PRIMARY_MIDLIGHT, stop: 1 PRIMARY);
+    border: 2px solid PRIMARY_LIGHT;
+    border-radius: 6px;
+}
+QPushButton:hover {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 PRIMARY, stop: 1 PRIMARY_LIGHT);
+    border: 2px solid PRIMARY_MIDLIGHT;
+    border-radius: 6px;
 }
 
-QPushButton:flat {
-    border: none;
-}
 
-QPushButton:default {
-    border-color: PRIMARY;
-}
 
 /* import and settings treeview */
 QTreeView{
@@ -452,6 +461,13 @@ QHeaderView::section {
     color: TEXT_HIGHLIGHTED;
     padding-left: 4px;
     border: 1px solid PRIMARY_DARK;
+}
+QHeaderView::section:hover {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                stop:0 PRIMARY_MIDLIGHT, stop: 0.4 PRIMARY_LIGHT stop:1 PRIMARY_MIDLIGHT);
+    color: TEXT_HIGHLIGHTED;
+    padding-left: 4px;
+    border: 1px solid PRIMARY_MIDLIGHT;
 }
 
 

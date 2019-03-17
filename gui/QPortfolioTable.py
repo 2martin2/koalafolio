@@ -474,6 +474,8 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.sliceFiatReturn = self.currentFiatValueChart.addSlice('fiat return', 0.5, -1, False)
 
         self.perfChartCont = charts.ChartCont(self)
+        self.controller.startRefresh.connect(self.perfChartCont.clearButtonStyle)
+        self.controller.endRefresh.connect(self.perfChartCont.setButtonStyle)
         self.perfChartCont.addChart(self.currentValueChart)
         self.perfChartCont.addChart(self.currentFiatValueChart)
         self.perfChartCont.setChartIndex(settings.mySettings.getGuiSetting('performanceChartIndex'))
