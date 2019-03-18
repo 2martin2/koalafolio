@@ -52,8 +52,11 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
 
         # init keys and header
         self.keys = [*core.CoinValue().value]
-        self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + ['value ' + key for key in self.keys]
+        self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] +\
+                      ['value ' + key for key in self.keys]
         self.firstValueColumn = 3
+        self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' +\
+                                  'invest price\t\tcurrent price\t\tchange/24h'
 
     def rowCount(self, parent):
         return len(self.coins)
@@ -83,8 +86,18 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         if role == qt.ToolTipRole:
             if orientation == qt.Horizontal:
                 if section >= 3:
-                    return 'invest value\t\tcurrent value\t\tperformance\ninvest price\t\tcurrent price\t\tchange/24h'
+                    return self.valueHeaderToolTip
         return qtcore.QVariant()
+
+    def changeValueColumnWidth(self, cols):
+        if cols == 3:
+            self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' + \
+                                        'invest price\t\tcurrent price\t\tchange/24h'
+        elif cols == 2:
+            self.valueHeaderToolTip = 'current value\t\tperformance\n' + \
+                                      'current price\t\tchange/24h'
+        else:
+            self.valueHeaderToolTip = 'current price\nchange/24h'
 
     def setData(self, index, value, role):
         if role == qt.EditRole:
@@ -169,6 +182,8 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
 # %% portfolio table delegate
 # class QCoinBalanceDelegate(qtwidgets.QStyledItemDelegate):
 class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
+    valueColumnWidthChanged = qtcore.pyqtSignal(int)
+
     def __init__(self, *args, **kwargs):
         super(QCoinTableDelegate, self).__init__(*args, **kwargs)
 
@@ -283,41 +298,59 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             gainDay = coinBalance.change24h[key]
             gainDayStr = ("%.2f%%/24h" % (gainDay))
 
-            # draw bought value
-            defaultFont = painter.font()
-            newFont = painter.font()
-            newFont.setPixelSize(14)
-            painter.setFont(newFont)
-            painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, boughtValueStr)
-            painter.setFont(defaultFont)
-            painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, boughtPriceStr)
+            positivColor = style.myStyle.getQColor('POSITIV')
+            negativColor = style.myStyle.getQColor('NEGATIV')
+            neutralColor = style.myStyle.getQColor('NEUTRAL')
 
-            # draw current value and gain
-            if gain >= 0:
-                drawColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
-            else:
-                drawColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
-            pen = painter.pen()
-            pen.setBrush(qtgui.QBrush(drawColor))
-            painter.setPen(pen)
-            defaultFont = painter.font()
-            newFont = painter.font()
-            newFont.setPixelSize(14)
-            painter.setFont(newFont)
-            painter.drawText(contentRect, qt.AlignHCenter | qt.AlignTop, currentValueStr)
-            painter.drawText(contentRect, qt.AlignRight | qt.AlignTop, gainStr)
-            painter.setFont(defaultFont)
-            painter.drawText(contentRect, qt.AlignHCenter | qt.AlignBottom, currentPriceStr)
+            def drawText(alignHorz, alignVert, fontSize, color, text):
+                newFont = painter.font()
+                newFont.setPixelSize(fontSize)
+                painter.setFont(newFont)
+                pen = painter.pen()
+                pen.setColor(color)
+                painter.setPen(pen)
+                painter.drawText(contentRect, alignHorz | alignVert, text)
 
-            # draw day gain
-            if gainDay >= 0:
-                drawColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
-            else:
-                drawColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
-            pen = painter.pen()
-            pen.setBrush(qtgui.QBrush(drawColor))
-            painter.setPen(pen)
-            painter.drawText(contentRect, qt.AlignRight | qt.AlignBottom, gainDayStr)
+            if contentRect.width() >= 200:  # draw all
+                drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, boughtValueStr)
+                drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, boughtPriceStr)
+                if gain >= 0:
+                    drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentValueStr)
+                    drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, currentPriceStr)
+                    drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
+                else:
+                    drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentValueStr)
+                    drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, currentPriceStr)
+                    drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                if gainDay >= 0:
+                    drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
+                else:
+                    drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
+                self.valueColumnWidthChanged.emit(3)
+            elif contentRect.width() >= 110:  # skip current value and price
+                if gain >= 0:
+                    drawText(qt.AlignLeft, qt.AlignTop, 14, positivColor, currentValueStr)
+                    drawText(qt.AlignLeft, qt.AlignBottom, 12, positivColor, currentPriceStr)
+                    drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
+                else:
+                    drawText(qt.AlignLeft, qt.AlignTop, 14, negativColor, currentValueStr)
+                    drawText(qt.AlignLeft, qt.AlignBottom, 12, negativColor, currentPriceStr)
+                    drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                if gainDay >= 0:
+                    drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
+                else:
+                    drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
+                self.valueColumnWidthChanged.emit(2)
+            else:  # draw value and daygain
+                if gain >= 0:
+                    drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
+                else:
+                    drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
+                if gainDay >= 0:
+                    drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, gainDayStr)
+                else:
+                    drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
+                self.valueColumnWidthChanged.emit(1)
 
         painter.restore()
 
