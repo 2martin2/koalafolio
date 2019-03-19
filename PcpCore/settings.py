@@ -6,7 +6,6 @@ Created on Thu Oct  4 15:15:19 2018
 """
 
 # todo: check why default section is written to file ?!
-# todo: implement conversion from Settings Dict as get and set methods
 # todo: reinit view and data when displaycurrencies are changed during runtime
 
 import os, ast, re
