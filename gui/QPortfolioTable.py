@@ -75,6 +75,7 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
             if index.column() >= self.firstValueColumn:  # return CoinBalance and key
                 keys = [*core.CoinValue().value]
                 return self.coins[index.row()], keys[index.column() - self.firstValueColumn]
+
         return qtcore.QVariant()
 
     def headerData(self, section, orientation, role):
@@ -300,7 +301,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
             positivColor = style.myStyle.getQColor('POSITIV')
             negativColor = style.myStyle.getQColor('NEGATIV')
-            neutralColor = style.myStyle.getQColor('NEUTRAL')
+            neutralColor = style.myStyle.getQColor('TEXT_NORMAL')
 
             def drawText(alignHorz, alignVert, fontSize, color, text):
                 newFont = painter.font()
@@ -609,7 +610,7 @@ class PortfolioOverview(qtwidgets.QWidget):
     def refresh(self):
         self.negColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
         self.posColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
-        self.neutrColor = qtgui.QColor(*settings.mySettings.getColor('NEUTRAL'))
+        self.neutrColor = qtgui.QColor(*settings.mySettings.getColor('TEXT_NORMAL'))
 
     def setModel(self, model):
         self.model = model
@@ -867,7 +868,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.portfolioChart.setSeries(pieSeries)
         self.portfolioChart.chartView.setText([controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName],
                                                             numberOfDecimals) + ' ' + taxCoinName])
-        self.portfolioChart.chartView.setColor(qtgui.QColor(*settings.mySettings.getColor('NEUTRAL')), False)
+        self.portfolioChart.chartView.setColor(self.neutrColor, False)
 
 
     def displayCurrenciesChangedSlot(self):
