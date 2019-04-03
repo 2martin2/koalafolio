@@ -122,7 +122,6 @@ class PortfolioApp(qtwidgets.QWidget):
     def initWindow(self):
         self.logger.info('initializing window ...')
         #        self.setWindowFlags(qtcore.Qt.FramelessWindowHint)
-        # todo: move settings checks to settings class (use fallback values if invalid settings are detected)
         windowProps = self.settings.getWindowProperties()
         self.setWindowState(windowProps['state'])
         self.setGeometry(windowProps['geometry'])
@@ -156,7 +155,6 @@ class PortfolioApp(qtwidgets.QWidget):
 
 
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))
-        # todo pass new trades with signal
         self.tradeList.tradesAdded.connect(lambda tradeList: self.coinList.addTrades(tradeList))
         self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.deleteTrades(tradeList))
         self.tradeList.pricesUpdated.connect(self.coinList.histPricesChanged)

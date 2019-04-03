@@ -201,10 +201,10 @@ class ImportPage(Page):
         self.refresh()
 
     def initData(self):
-        self.newTradesBuffer = ttable.QTradeTableModel()
+        self.newTradesBuffer = ttable.QImportTradeTableModel(self.controller.tradeList)
         self.newTradesBuffer.showPrices(False)
         self.newTradesBuffer.columnNotEditable = [0, 1]
-        self.newFeesBuffer = ttable.QTradeTableModel()
+        self.newFeesBuffer = ttable.QImportTradeTableModel(self.controller.tradeList)
         self.newFeesBuffer.showPrices(False)
         self.newFeesBuffer.columnNotEditable = [0, 1]
         self.skippedRows = 0
@@ -250,8 +250,10 @@ class ImportPage(Page):
         self.newFeesBuffer.clearTrades()
 
     def finishImport(self):
-        self.controller.tradeList.addTrades(self.getNewTrades())
-        self.controller.tradeList.addTrades(self.getNewFees())
+        newTrades = core.TradeList()
+        newTrades.mergeTradeList(self.getNewTrades())
+        newTrades.mergeTradeList(self.getNewFees())
+        self.controller.tradeList.addTrades(newTrades)
         # jump to TradesPage
         self.controller.showFrame(self.controller.TRADESPAGEINDEX)
 
@@ -508,10 +510,10 @@ class ImportPreviewPage(SubPage):
     # create empty buffer for file path  
     def initData(self):
         self.filePathIndex = 0
-        self.tradeListTemp = ttable.QTradeTableModel()
+        self.tradeListTemp = ttable.QImportTradeTableModel(self.controller.controller.tradeList)
         self.tradeListTemp.showPrices(False)
         self.tradeListTemp.columnNotEditable = [0, 1]
-        self.feeListTemp = ttable.QTradeTableModel()
+        self.feeListTemp = ttable.QImportTradeTableModel(self.controller.controller.tradeList)
         self.feeListTemp.showPrices(False)
         self.feeListTemp.columnNotEditable = [0, 1]
 

@@ -5,6 +5,7 @@ import PcpCore.settings as settings
 import re, numbers, pandas
 import Import.RegexPatterns as pat
 import datetime, tzlocal, pytz
+import dateutil
 
 def exodusJsonToDataFrame(data):
     # txId, error, date, confirmations, meta, token, coinAmount, coinName, feeAmount, to, toCoin
@@ -125,7 +126,7 @@ def modelCallback_exodus(headernames, dataFrame):
         if isFee:  # if fee
             fee = createFee(date=convertDate(dataFrame[headernames[0]][row]),
                             amountStr=dataFrame[headernames[4]][row],
-                            coin=dataFrame[headernames[5]][row],
+                            maincoin=dataFrame[headernames[5]][row],
                             exchange=exchange,
                             wallet='exodus')
             fee.generateID()
@@ -361,7 +362,8 @@ def modelCallback_0(headernames, dataFrame):
                     # use main coin
                     feecoin = tempTrade_main.coin
                 # set coin amount
-                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[7]][row], coin=feecoin,
+                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[7]][row], maincoin=feecoin,
+                                subcoin=tempTrade_sub.coin,
                                 exchange=tempTrade_main.exchange, externId=tempTrade_main.externId)
                 fee.generateID()
                 feeList.addTrade(fee)
@@ -445,7 +447,8 @@ def modelCallback_2(headernames, dataFrame):
                     # use main coin
                     feecoin = tempTrade_main.coin
                 # set coin amount
-                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[6]][row], coin=feecoin,
+                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[6]][row], maincoin=feecoin,
+                                subcoin=tempTrade_sub.coin,
                                 exchange=tempTrade_main.exchange, externId=tempTrade_main.externId)
                 fee.generateID()
                 feeList.addTrade(fee)
@@ -493,7 +496,7 @@ def modelCallback_3(headernames, dataFrame):
         try:
             if headernames[5]:  # if fee
                 feecoin = tempTrade_sub.coin
-                fee = createFee(date=tempTrade_sub.date, amountStr=dataFrame[headernames[5]][row], coin=feecoin,
+                fee = createFee(date=tempTrade_sub.date, amountStr=dataFrame[headernames[5]][row], maincoin=feecoin,
                                 exchange=tempTrade_sub.exchange, externId=tempTrade_sub.externId)
                 fee.generateID()
                 feeList.addTrade(fee)
@@ -517,7 +520,7 @@ def modelCallback_4(headernames, dataFrame):
                 externId = str(dataFrame[headernames[7]][row])
             fees = dataFrame[headernames[8]][row]
             coin = str(dataFrame[headernames[2]][row])
-            fee = createFee(date=date, amountStr=fees, coin=coin, exchange='bitcoinde', externId=externId)
+            fee = createFee(date=date, amountStr=fees, maincoin=coin, exchange='bitcoinde', externId=externId)
             fee.generateID()
             feeList.addTrade(fee)
         else:
@@ -602,9 +605,9 @@ def modelCallback_4(headernames, dataFrame):
             # fees
             try:
                 # get fee
-                feeMain = createFee(date=tempTrade_main.date, amountStr=fees_main, coin=tempTrade_main.coin,
+                feeMain = createFee(date=tempTrade_main.date, amountStr=fees_main, maincoin=tempTrade_main.coin,
                                     exchange='bitcoinde', externId=tempTrade_main.externId)
-                feeSub = createFee(date=tempTrade_sub.date, amountStr=fees_sub, coin=tempTrade_sub.coin,
+                feeSub = createFee(date=tempTrade_sub.date, amountStr=fees_sub, maincoin=tempTrade_sub.coin,
                                    exchange='bitcoinde', externId=tempTrade_sub.externId)
                 feeMain.generateID()
                 feeSub.generateID()
@@ -674,7 +677,8 @@ def modelCallback_5(headernames, dataFrame):
                     # use main coin
                     feecoin = tempTrade_main.coin
                 # set coin amount
-                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[6]][row], coin=feecoin,
+                fee = createFee(date=tempTrade_main.date, amountStr=dataFrame[headernames[6]][row], maincoin=feecoin,
+                                subcoin=tempTrade_sub.coin,
                                 exchange=tempTrade_main.exchange, externId=tempTrade_main.externId)
                 fee.generateID()
                 feeList.addTrade(fee)
@@ -742,7 +746,8 @@ def modelCallback_Template1(headernames, dataFrame):
                     # use buy coin
                     feecoin = tempTrade_buy.coin
                 # set coin amount
-                fee = createFee(date=date, amountStr=dataFrame[headernames[7]][row], coin=feecoin,
+                fee = createFee(date=date, amountStr=dataFrame[headernames[7]][row], maincoin=feecoin,
+                                subcoin=tempTrade_sell.coin,
                                 exchange=exchange)
                 fee.generateID()
                 feeList.addTrade(fee)
@@ -838,51 +843,55 @@ def convertDate(dateString, useLocalTime=True):
     # check if pandas time pattern fits
     #    match = pat.Pandas_TIME_REGEX.match(dateString)
     timestamp = None
-    if pat.Pandas_TIME_REGEX.match(dateString):
-        timestamp = pandas.to_datetime(dateString, utc=True)
-    for i in range(len(pat.TIME_REGEX)):
-        tempMatch = pat.TIME_REGEX[i].match(dateString)
-        if tempMatch:
-            # correct wrong formats
-            if i == pat.TIME_SPECIAL_PATTERN_INDEX[0]:
-                groups = tempMatch.group
-                dateString = groups(1) + '0' + groups(2)
-            elif i == pat.TIME_SPECIAL_PATTERN_INDEX[1]:
-                groups = tempMatch.group
-                hour = groups(5)
-                if groups(7).upper() == 'PM':
-                    hour = str(int(groups(5))+12)
-                    if hour == '24':
-                        hour = '00'
-                dateString = ""
-                if len(groups(1)) == 1:
-                    dateString += '0' + groups(1) + groups(2)
-                else:
-                    dateString += groups(1) + groups(2)
-                if len(groups(3)) == 1:
-                    dateString += '0' + groups(3) + groups(4)
-                else:
-                    dateString += groups(3) + groups(4)
-                if len(hour) == 1:
-                    dateString += '0' + hour + groups(6)
-                else:
-                    dateString += hour + groups(6)
+    try:  # try dateutil parser
+        timestamp = dateutil.parser.parse(dateString)
+    except ValueError:  # manuel parsing
+        print('manuel parsing')
+        if pat.Pandas_TIME_REGEX.match(dateString):
+            timestamp = pandas.to_datetime(dateString, utc=True)
+        for i in range(len(pat.TIME_REGEX)):
+            tempMatch = pat.TIME_REGEX[i].match(dateString)
+            if tempMatch:
+                # correct wrong formats
+                if i == pat.TIME_SPECIAL_PATTERN_INDEX[0]:
+                    groups = tempMatch.group
+                    dateString = groups(1) + '0' + groups(2)
+                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[1]:
+                    groups = tempMatch.group
+                    hour = groups(5)
+                    if groups(7).upper() == 'PM':
+                        hour = str(int(groups(5))+12)
+                        if hour == '24':
+                            hour = '00'
+                    dateString = ""
+                    if len(groups(1)) == 1:
+                        dateString += '0' + groups(1) + groups(2)
+                    else:
+                        dateString += groups(1) + groups(2)
+                    if len(groups(3)) == 1:
+                        dateString += '0' + groups(3) + groups(4)
+                    else:
+                        dateString += groups(3) + groups(4)
+                    if len(hour) == 1:
+                        dateString += '0' + hour + groups(6)
+                    else:
+                        dateString += hour + groups(6)
 
-            elif i == pat.TIME_SPECIAL_PATTERN_INDEX[2]:
-                groups = tempMatch.group
-                dateString = groups(1) + groups(3)
-            elif i == pat.TIME_SPECIAL_PATTERN_INDEX[3]:
-                groups = tempMatch.group
-                dateString = groups(1)
-            elif i == pat.TIME_SPECIAL_PATTERN_INDEX[4]:
-                groups = tempMatch.group
-                dateString = groups(1) + groups(3) + groups(2) + ' ' + groups(5)
-            elif i == pat.TIME_SPECIAL_PATTERN_INDEX[5]:
-                groups = tempMatch.group
-                dateString = groups(1) + ' ' + groups(2) + ' +0000'
-            # convert to datetime
-            timestamp = datetime.datetime.strptime(dateString, pat.TIME_FORMAT[i])
-            break
+                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[2]:
+                    groups = tempMatch.group
+                    dateString = groups(1) + groups(3)
+                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[3]:
+                    groups = tempMatch.group
+                    dateString = groups(1)
+                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[4]:
+                    groups = tempMatch.group
+                    dateString = groups(1) + groups(3) + groups(2) + ' ' + groups(5)
+                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[5]:
+                    groups = tempMatch.group
+                    dateString = groups(1) + ' ' + groups(2) + ' +0000'
+                # convert to datetime
+                timestamp = datetime.datetime.strptime(dateString, pat.TIME_FORMAT[i])
+                break
     if timestamp:
         # if no info about timezone included
         if not timestamp.tzinfo:
@@ -900,6 +909,8 @@ def convertDate(dateString, useLocalTime=True):
             # convert to system timezone
             myTimezone = tzlocal.get_localzone()
             timestamp = timestamp.astimezone(myTimezone)
+    else:
+        raise SyntaxError("date format not supported")
     return timestamp
 
 
@@ -919,19 +930,22 @@ def createTrades(tradeId='', externId=''):
     pass
 
 
-def createFee(date, amountStr, coin, exchange, wallet='', feeId='', externId=''):
+def createFee(date, amountStr, maincoin, exchange, subcoin=None, wallet='', feeId='', externId=''):
     fee = core.Trade()
     fee.tradeID = feeId
     fee.externId = externId
     fee.tradeType = 'fee'
     fee.date = date
-    fee.coin = coin
+    fee.coin = maincoin
     if isinstance(amountStr, numbers.Number):  # if amount is number
         amount = - abs(amountStr)
     else:  # no number so use regex to extract the number
         feeMatch = pat.NUMBER_REGEX.match(amountStr)
         # check standard coins in fee value
-        stdcoins = ['BTC', 'BNB', 'ETH']
+        if subcoin:
+            stdcoins = ['BTC', 'BNB', 'ETH', maincoin, subcoin]
+        else:
+            stdcoins = ['BTC', 'BNB', 'ETH', maincoin]
         for stdcoin in stdcoins:
             if stdcoin in feeMatch.group(4).upper():
                 fee.coin = stdcoin  # use this coin as fee coin
