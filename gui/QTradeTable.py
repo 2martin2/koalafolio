@@ -23,6 +23,7 @@ import gui.QThreads as threads
 import gui.QLogger as logger
 import Import.TradeImporter as importer
 import Import.Models as models
+import gui.QStyle as style
 
 localLogger = logger.globalLogger
 qt = qtcore.Qt
@@ -234,6 +235,15 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
 
     def saveTrades(self):
         if self.dataPath:
+            try:
+                os.remove(os.path.join(self.dataPath, 'Trades.csv.bak'))
+            except Exception as ex:
+                print('error deleting trades backup in QTradeContainer: ' + str(ex))
+            try:
+                os.rename(os.path.join(self.dataPath, 'Trades.csv'),
+                          os.path.join(self.dataPath, 'Trades.csv.bak'))
+            except Exception as ex:
+                print('error creating trades backup in QTradeContainer: ' + str(ex))
             try:
                 self.toCsv(os.path.join(self.dataPath, 'Trades.csv'))
             except Exception as ex:
@@ -504,6 +514,21 @@ class QTradeTableModel(QTradeContainer):
             RowStartIndex = self.index(0, self.firstValueColumn)
             RowEndIndex = self.index(len(self.trades) - 1, len(self.header) - 1)
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
+
+
+# %% import Trade table model
+class QImportTradeTableModel(QTradeTableModel):
+    def __init__(self, baseModel, *args, **kwargs):
+        super(QImportTradeTableModel, self).__init__(*args, **kwargs)
+
+        self.baseModel = baseModel
+
+    def data(self, index, role=qt.DisplayRole):
+        if role == qt.ForegroundRole:
+            if self.trades[index.row()] in self.baseModel.trades:
+                return style.myStyle.getQColor('text_highlighted_midlight'.upper())
+        return super(QImportTradeTableModel, self).data(index, role)
+
 
 
 # %% Trade table delegates
