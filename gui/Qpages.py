@@ -405,7 +405,7 @@ class ImportSelectPage(SubPage):
                         self.controller.filesNotImported += 1
                 else:
                     self.controller.filesNotImported += 1
-            if not (self.controller.getNewTrades().isEmpty()):
+            if not (self.controller.getNewTrades().isEmpty() and self.controller.getNewFees().isEmpty()):
                 self.controller.showFrame(self.controller.IMPORTFINISHPAGEINDEX)
             else:
                 localLogger.info('please select at least one valid file')
@@ -576,7 +576,7 @@ class ImportPreviewPage(SubPage):
             self.infoLabel.setText('fileimport failed')
 
     def finishImportPreview(self):
-        if not (self.controller.getNewTrades().isEmpty()):
+        if not (self.controller.getNewTrades().isEmpty() and self.controller.getNewFees().isEmpty()):
             self.controller.showFrame(self.controller.IMPORTFINISHPAGEINDEX)
         else:
             self.controller.showFrame(self.controller.IMPORTSELECTPAGEINDEX)
