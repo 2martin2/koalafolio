@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-import cryptocompare.cryptocompare as cryptcomp
+import web.cryptocompare as cryptcomp
 # import datetime
 import PcpCore.core as core
 import PcpCore.settings as settings
