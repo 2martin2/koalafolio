@@ -293,7 +293,7 @@ class PortfolioApp(qtwidgets.QWidget):
         return self.coinList
 
 
-if __name__ == '__main__':
+def main():
     PcpCore.logger.globalLogger = logger.globalLogger
     PcpCore.settings.mySettings = settings.mySettings
     app = qtwidgets.QApplication(sys.argv)
@@ -301,3 +301,6 @@ if __name__ == '__main__':
     window = PortfolioApp()
 
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()

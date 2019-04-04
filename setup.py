@@ -5,7 +5,7 @@ with open('README.rst', encoding="utf-8") as f:
 
 setuptools.setup(
         name='koalafolio',
-        version='0.5.8',
+        version='0.5.8.4',
         description='portfolio app for crypto trading and tax reporting',
         long_description=readme,
         url='https://github.com/2martin2/pycryptoportfolio',
@@ -17,5 +17,10 @@ setuptools.setup(
         packages=setuptools.find_packages(),
         classifiers=['Programming Language :: Python :: 3'],
 		install_requires=['pandas', 'pyqt5', 'pyqtchart', 'tzlocal', 'pyinstaller', 'xlrd', 'requests', 'openpyxl'],
-		include_package_data=True
+		include_package_data=True,
+		entry_points={
+				'console_scripts': [
+					'koalafolio = koalafolio.gui_root:main',
+				],
+			}
         )
