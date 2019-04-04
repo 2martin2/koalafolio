@@ -1,1 +1,1 @@
-python -m cProfile gui_root.py
+python -m cProfile koalafolio.py
