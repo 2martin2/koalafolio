@@ -316,8 +316,8 @@ def modelCallback_0(headernames, dataFrame):
         tempTrade_sub.tradeType = 'trade'
         tempTrade_main.tradeType = 'trade'
         # get coin
-        tempTrade_sub.coin = re.match(r'^(.*)/.*$', dataFrame[headernames[2]][row]).group(1).upper()
-        tempTrade_main.coin = re.match(r'^.*/(.*)$', dataFrame[headernames[2]][row]).group(1).upper()
+        tempTrade_sub.coin = re.match(r'^(.*)(/|-).*$', dataFrame[headernames[2]][row]).group(1).upper()
+        tempTrade_main.coin = re.match(r'^.*(/|-)(.*)$', dataFrame[headernames[2]][row]).group(2).upper()
         # swap Coin Name
         swapCoinName(tempTrade_sub)
         swapCoinName(tempTrade_main)
