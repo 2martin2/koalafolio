@@ -1,4 +1,4 @@
-include koalaicon.ico
-include KoalaIcon.png
+include koalafolio/koalaicon.ico
+include koalafolio/KoalaIcon.png
 include README.rst
-include graphics/*
+include koalafolio/graphics/*

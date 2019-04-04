@@ -1,9 +1,9 @@
-from setuptools import setup
+import setuptools
 
 with open('README.rst', encoding="utf-8") as f:
     readme = f.read()
 
-setup(
+setuptools.setup(
         name='koalafolio',
         version='0.5.8',
         description='portfolio app for crypto trading and tax reporting',
@@ -14,7 +14,7 @@ setup(
         keywords='crypto cryptocoins tax portfolio tracking',
         license='GPL-3.0',
         python_requires='>=3',
-        packages=['exp', 'gui', 'Import', 'PcpCore', 'Styles', 'web'],
+        packages=setuptools.find_packages(),
         classifiers=['Programming Language :: Python :: 3'],
 		install_requires=['pandas', 'pyqt5', 'pyqtchart', 'tzlocal', 'pyinstaller', 'xlrd', 'requests', 'openpyxl'],
 		include_package_data=True
