@@ -5,17 +5,17 @@ import re
 # %% header patterns
 # general
 ID_REGEX_PATTERN = r'^((transaction)|(trade)|(order)|())( *|_)((id)|(uuid)|(number)|(nummer)|(referenz))|#$'  # id
-DATE_REGEX_PATTERN = r'^((date.*)|datum|(time(|stamp))|(closed)|(updated))$'  # date
+DATE_REGEX_PATTERN = r'^((Filled time)|(date.*)|datum|(time(|stamp))|(closed)|(updated)|(tradeCreatedAt))$'  # date
 TYPE_REGEX_PATTERN = r'^(((transaction)|(trade)|(order)|())( *|_)((typ(|e))|(side))|(sell/buy))$'  # type
 FEE_REGEX_PATTERN = r'^((fee(|s))|(commission)(|paid))$'  # fee
 FEECOIN_REGEX_PATTERN = r'^(((fee)|(commission))(| *)((coin)|(currency)))|(coin\.3)$'  # feecoin
 STATUS_REGEX_PATTERN = r'^(status)$'
 
 # model 0
-PAIR_REGEX_PATTERN_0 = r'^(((trading)|)(| *)(pair)|(currency(|s))|(market)|(coins)|(instrument))$'  # coinpair
+PAIR_REGEX_PATTERN_0 = r'^(((trading)|)(| *)(pair)|(symbol)|(currency(|s))|(market)|(coins)|(instrument))$'  # coinpair
 PRICE_AVERAGE_REGEX_PATTERN_0 = r'^((filled)|)(| *)((price))(|(| *)per(| *)coin)$'
-AMOUNT_MAIN_REGEX_PATTERN_0 = r'^((sub)|)((total)|(value)|(volume))$'
-AMOUNT_SUB_REGEX_PATTERN_0 = r'^(executed|)(| *)((am+ount)|(quantity)|(filled))$'
+AMOUNT_MAIN_REGEX_PATTERN_0 = r'^((sub)|)((total)|(value)|(volume)|(funds))$'
+AMOUNT_SUB_REGEX_PATTERN_0 = r'^(executed|)(| *)((am+ount)|(size)|(quantity)|(filled))$'
 # model 1
 PAIR_REGEX_PATTERN_1 = r'^exchange$'
 PRICE_AVERAGE_REGEX_PATTERN_1 = r'^limit$'
