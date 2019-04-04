@@ -519,6 +519,8 @@ class ImportPreviewPage(SubPage):
 
     # refresh data
     def refresh(self):
+        self.tradeListTemp.clearTrades()
+        self.feeListTemp.clearTrades()
         self.filePathIndex = 0
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
