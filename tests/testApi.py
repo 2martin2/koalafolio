@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import cryptocompare.cryptocompare as cryptcomp
+import web.cryptocompare as cryptcomp
 import requests, datetime
 
 

@@ -1,0 +1,4 @@
+include koalaicon.ico
+include KoalaIcon.png
+include README.rst
+include graphics/*
