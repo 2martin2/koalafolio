@@ -14,7 +14,7 @@ setuptools.setup(
     author_email='2martin2@protonmail.com',
     keywords='crypto cryptocoins tax portfolio tracking',
     license='GPL-3.0',
-    python_requires='>=3',
+    python_requires='>=3.7',
     packages=setuptools.find_packages(),
     classifiers=['Programming Language :: Python :: 3'],
     install_requires=['pandas', 'pyqt5', 'pyqtchart', 'tzlocal', 'pyinstaller', 'xlrd', 'requests', 'openpyxl'],
