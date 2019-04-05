@@ -17,7 +17,7 @@ setuptools.setup(
     python_requires='>=3.7',
     packages=setuptools.find_packages(),
     classifiers=['Programming Language :: Python :: 3'],
-    install_requires=['pandas', 'pyqt5', 'pyqtchart', 'tzlocal', 'pyinstaller', 'xlrd', 'requests', 'openpyxl'],
+    install_requires=['pandas', 'pyqt5', 'pyqtchart', 'tzlocal', 'xlrd', 'requests', 'openpyxl'],
     include_package_data=True,
     entry_points={
             'console_scripts': [
