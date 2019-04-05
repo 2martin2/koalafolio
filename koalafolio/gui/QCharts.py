@@ -16,6 +16,8 @@ import koalafolio.gui.QSettings as settings
 import koalafolio.gui.QStyle as style
 import datetime
 import koalafolio.gui.QLogger as logger
+import koalafolio.gui_root as gui_root
+import os
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -46,8 +48,13 @@ class ChartCont(qtwidgets.QFrame):
         self.leftButton.setStyleSheet("")
 
     def setButtonStyle(self):
-        self.rightButton.setStyleSheet("QPushButton {border-image: url(./graphics/right.png) 0 15 0 15 stretch;}")
-        self.leftButton.setStyleSheet("QPushButton {border-image: url(./graphics/left.png) 0 15 0 15 stretch;}")
+        appPath = gui_root.application_path
+        self.rightButton.setStyleSheet("QPushButton {border-image: url(" +
+                                           os.path.join(appPath, 'graphics', 'right.png').replace('\\', '/') +
+                                           ") 0 15 0 15 stretch;}")
+        self.leftButton.setStyleSheet("QPushButton {border-image: url(" +
+                                       os.path.join(appPath, 'graphics', 'left.png').replace('\\', '/') +
+                                       ") 0 15 0 15 stretch;}")
 
     def updateButtonPosition(self, height=20):
         leftPos = qtcore.QPoint(5, 5)

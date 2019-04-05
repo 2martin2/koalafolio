@@ -84,16 +84,21 @@ class PortfolioApp(qtwidgets.QWidget):
         self.buttonExport.setStyleSheet("")
         self.buttonSettings.setStyleSheet("")
         self.initStyle()
-        self.buttonPortfolio.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/portfolio.png) 0 15 0 15 stretch;}")
-        self.buttonTrades.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/trades.png) 0 15 0 15 stretch;}")
-        self.buttonImport.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/import.png) 0 15 0 15 stretch;}")
-        self.buttonExport.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/export.png) 0 15 0 15 stretch;}")
-        self.buttonSettings.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/settings.png) 0 15 0 15 stretch;}")
+        self.buttonPortfolio.setStyleSheet("QPushButton {border-image: url(" +
+                                           os.path.join(self.appPath, 'graphics', 'portfolio.png').replace('\\', '/') +
+                                           ") 0 15 0 15 stretch;}")
+        self.buttonTrades.setStyleSheet("QPushButton {border-image: url(" +
+                                        os.path.join(self.appPath, 'graphics', 'trades.png').replace('\\', '/') +
+                                        ") 0 15 0 15 stretch;}")
+        self.buttonImport.setStyleSheet("QPushButton {border-image: url(" +
+                                        os.path.join(self.appPath, 'graphics', 'import.png').replace('\\', '/') +
+                                        ") 0 15 0 15 stretch;}")
+        self.buttonExport.setStyleSheet("QPushButton {border-image: url(" +
+                                        os.path.join(self.appPath, 'graphics', 'export.png').replace('\\', '/') +
+                                        ") 0 15 0 15 stretch;}")
+        self.buttonSettings.setStyleSheet("QPushButton {border-image: url(" +
+                                          os.path.join(self.appPath, 'graphics', 'settings.png').replace('\\', '/') +
+                                          ") 0 15 0 15 stretch;}")
         self.endRefresh.emit()
 
     # load environment/ settings
@@ -161,6 +166,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.tradeList.histPriceUpdateFinished.connect(self.coinList.histPriceUpdateFinished)
         self.logger.info('data initialized')
 
+
     # setup layout
     def layoutUI(self):
         self.logger.info('initializing gui layout ...')
@@ -180,16 +186,21 @@ class PortfolioApp(qtwidgets.QWidget):
         self.buttonExport = qtwidgets.QPushButton("", self.sidebarFrame)
         self.buttonSettings = qtwidgets.QPushButton("", self.sidebarFrame)
 
-        self.buttonPortfolio.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/portfolio.png) 0 15 0 15 stretch;}")
-        self.buttonTrades.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/trades.png) 0 15 0 15 stretch;}")
-        self.buttonImport.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/import.png) 0 15 0 15 stretch;}")
-        self.buttonExport.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/export.png) 0 15 0 15 stretch;}")
-        self.buttonSettings.setStyleSheet(
-            "QPushButton {border-image: url(./graphics/settings.png) 0 15 0 15 stretch;}")
+        self.buttonPortfolio.setStyleSheet("QPushButton {border-image: url(" +
+                                           os.path.join(self.appPath, 'graphics', 'portfolio.png').replace('\\', '/') +
+                                           ") 0 15 0 15 stretch;}")
+        self.buttonTrades.setStyleSheet("QPushButton {border-image: url(" +
+                                           os.path.join(self.appPath, 'graphics', 'trades.png').replace('\\', '/') +
+                                           ") 0 15 0 15 stretch;}")
+        self.buttonImport.setStyleSheet("QPushButton {border-image: url(" +
+                                           os.path.join(self.appPath, 'graphics', 'import.png').replace('\\', '/') +
+                                           ") 0 15 0 15 stretch;}")
+        self.buttonExport.setStyleSheet("QPushButton {border-image: url(" +
+                                           os.path.join(self.appPath, 'graphics', 'export.png').replace('\\', '/') +
+                                           ") 0 15 0 15 stretch;}")
+        self.buttonSettings.setStyleSheet("QPushButton {border-image: url(" +
+                                           os.path.join(self.appPath, 'graphics', 'settings.png').replace('\\', '/') +
+                                           ") 0 15 0 15 stretch;}")
 
         self.buttonPortfolio.setToolTip('portfolio')
         self.buttonTrades.setToolTip('trades')
