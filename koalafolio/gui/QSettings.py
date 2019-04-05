@@ -27,7 +27,7 @@ class QSettings(settings.Settings):
 
         # window settings
         self['window'] = {}
-        self['window']['windowsize'] = '1200x600'
+        self['window']['windowsize'] = '1400x600'
         self['window']['windowpos'] = '200,200'
         self['window']['windowstate'] = '0'
         self['window']['windowTitle'] = 'KoalaFolio'
@@ -49,7 +49,7 @@ class QSettings(settings.Settings):
         self['gui']['filterUseRegex'] = 'True'
         self['gui']['portfolioFilterRow'] = '3'
         self['gui']['tradeFilterRow'] = '2'
-        self['gui']['portfolioFilterDir'] = (str(qt.AscendingOrder))
+        self['gui']['portfolioFilterDir'] = (str(qt.DescendingOrder))
         self['gui']['tradeFilterDir'] = str(qt.AscendingOrder)
         self['gui']['toolTipsEnabled'] = 'True'
         self['gui']['performanceChartIndex'] = '0'
