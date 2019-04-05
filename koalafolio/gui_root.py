@@ -308,6 +308,12 @@ def main():
     coreLogger.globalLogger = logger.globalLogger
     coreSettings.mySettings = settings.mySettings
     app = qtwidgets.QApplication(sys.argv)
+    try:
+        app_icon = qtgui.QIcon()
+        app_icon.addFile(os.path.join(application_path, 'KoalaIcon.png'), qtcore.QSize(256, 256))
+        app.setWindowIcon(app_icon)
+    except Exception as ex:
+        print(str(ex))
     #    app.setStyle(qtwidgets.QStyleFactory.create('Fusion'))
     window = PortfolioApp()
 
