@@ -10,8 +10,8 @@ import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import re
 from pathlib import Path
-import gui.QLogger as logger
-import gui.QSettings as settings
+import koalafolio.gui.QLogger as logger
+import koalafolio.gui.QSettings as settings
 
 qt = qtcore.Qt
 # %% constants

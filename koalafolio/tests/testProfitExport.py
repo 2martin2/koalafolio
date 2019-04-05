@@ -5,9 +5,9 @@ Created on Thu Jan 08 15:11:38 2019
 @author: Martin
 """
 import datetime
-import PcpCore.settings as settings
-import PcpCore.core as core
-import Import.TradeImporter as importer
+import koalafolio.PcpCore.settings as settings
+import koalafolio.PcpCore.core as core
+import koalafolio.Import.TradeImporter as importer
 from export.profitExport import createProfitExcel
 
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font

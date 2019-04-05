@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import Import.RegexPatterns as pat
-import Import.Converter as converter
+import koalafolio.Import.RegexPatterns as pat
+import koalafolio.Import.Converter as converter
 
 
 class Importmodel:

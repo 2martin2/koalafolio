@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 
-import web.cryptocompare as cryptcomp
+import koalafolio.web.cryptocompare as cryptcomp
 # import datetime
-import PcpCore.core as core
-import PcpCore.settings as settings
+import koalafolio.PcpCore.core as core
+import koalafolio.PcpCore.settings as settings
 import time
-import PcpCore.logger as logger
+import koalafolio.PcpCore.logger as logger
 
 
 # coinList = cryptcomp.get_coin_list(format=True)

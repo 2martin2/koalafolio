@@ -8,14 +8,14 @@ Created on Thu Aug 23 21:45:16 2018
 # from IPython import get_ipython
 # get_ipython().magic('reset -sf')
 
-import Import.TradeImporter as importer
-import Import.Converter as converter
-import PcpCore.settings as settings
+import koalafolio.Import.TradeImporter as importer
+import koalafolio.Import.Converter as converter
+import koalafolio.PcpCore.settings as settings
 import sys
 import os
-import Import.Models as models
-import PcpCore.core as core
-import exp.profitExport as export
+import koalafolio.Import.Models as models
+import koalafolio.PcpCore.core as core
+import koalafolio.exp.profitExport as export
 import datetime
 
 if getattr(sys, 'frozen', False):

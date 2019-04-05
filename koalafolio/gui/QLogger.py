@@ -7,7 +7,7 @@ Created on Wen Jan 02 14:21:00 2019
 
 import shutil
 import os.path
-import PcpCore.logger as logger
+import koalafolio.PcpCore.logger as logger
 import PyQt5.QtCore as qtcore
 import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets

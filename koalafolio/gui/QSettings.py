@@ -8,11 +8,11 @@ Created on Thu Oct  4 15:15:19 2018
 # todo: check why default section is written to file ?!
 
 
-import gui.QLogger as logger
+import koalafolio.gui.QLogger as logger
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import PyQt5.QtGui as qtgui
-import PcpCore.settings as settings
+import koalafolio.PcpCore.settings as settings
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger

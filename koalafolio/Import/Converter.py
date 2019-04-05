@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import PcpCore.core as core
-import PcpCore.settings as settings
+import koalafolio.PcpCore.core as core
+import koalafolio.PcpCore.settings as settings
 import re, numbers, pandas
-import Import.RegexPatterns as pat
+import koalafolio.Import.RegexPatterns as pat
 import datetime, tzlocal, pytz
 import dateutil
 

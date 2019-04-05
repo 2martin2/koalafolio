@@ -10,18 +10,18 @@ import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import PyQt5.QtChart as qtchart
 
-import gui.Qpages as pages
-import gui.Qcontrols as controls
-import gui.QPortfolioTable as ptable
-import gui.QTradeTable as ttable
-import gui.QThreads as threads
-import PcpCore.logger
-import gui.QLogger as logger
+import koalafolio.gui.Qpages as pages
+import koalafolio.gui.Qcontrols as controls
+import koalafolio.gui.QPortfolioTable as ptable
+import koalafolio.gui.QTradeTable as ttable
+import koalafolio.gui.QThreads as threads
+import koalafolio.PcpCore.logger as coreLogger
+import koalafolio.gui.QLogger as logger
 import sys
 import os
-import PcpCore.settings
-import gui.QSettings as settings
-import gui.QStyle as style
+import koalafolio.PcpCore.settings as coreSettings
+import koalafolio.gui.QSettings as settings
+import koalafolio.gui.QStyle as style
 
 qt = qtcore.Qt
 # %% constants
@@ -294,8 +294,8 @@ class PortfolioApp(qtwidgets.QWidget):
 
 
 def main():
-    PcpCore.logger.globalLogger = logger.globalLogger
-    PcpCore.settings.mySettings = settings.mySettings
+    coreLogger.globalLogger = logger.globalLogger
+    coreSettings.mySettings = settings.mySettings
     app = qtwidgets.QApplication(sys.argv)
     #    app.setStyle(qtwidgets.QStyleFactory.create('Fusion'))
     window = PortfolioApp()

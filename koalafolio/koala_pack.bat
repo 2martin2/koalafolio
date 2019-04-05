@@ -1,1 +1,0 @@
-pipenv run pyinstaller --onefile --windowed --icon=KoalaIcon.ico koalafolio.py

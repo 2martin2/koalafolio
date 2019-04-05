@@ -1,4 +1,4 @@
-import gui.QStyle as style
+import koalafolio.gui.QStyle as style
 
 color = [75, 180, 255]
 colors = [color]

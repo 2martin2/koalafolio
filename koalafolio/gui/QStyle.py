@@ -8,10 +8,10 @@ Created on Sun Sep 16 09:57:14 2018
 import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwigets
 import PyQt5.QtCore as qtcore
-import gui.QLogger as logger
+import koalafolio.gui.QLogger as logger
 import os
 import re
-import gui.QSettings as settings
+import koalafolio.gui.QSettings as settings
 import colorsys
 
 localLogger = logger.globalLogger

@@ -7,9 +7,9 @@ Created on Tue Nov 27 21:03:59 2018
 import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-import gui.QSettings as settings
-import web.cryptocompareApi as ccapi
-import PcpCore.core as core
+import koalafolio.gui.QSettings as settings
+import koalafolio.web.cryptocompareApi as ccapi
+import koalafolio.PcpCore.core as core
 
 
 class CryptoCompare(qtcore.QObject):

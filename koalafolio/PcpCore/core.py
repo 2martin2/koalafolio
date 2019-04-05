@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import pandas, hashlib, threading
-import web.cryptocompareApi as ccapi
-import PcpCore.settings as settings
-import Import.Converter as converter
-import PcpCore.logger as logger
+import koalafolio.web.cryptocompareApi as ccapi
+import koalafolio.PcpCore.settings as settings
+import koalafolio.Import.Converter as converter
+import koalafolio.PcpCore.logger as logger
 import datetime
 from dateutil.relativedelta import relativedelta
 

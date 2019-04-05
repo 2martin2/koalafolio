@@ -1,1 +1,1 @@
-python3 -m pipenv run pyinstaller --onefile --windowed koalafolio.py
+python3 -m pipenv run pyinstaller --onefile --windowed gui_root.py --name=koalafolio

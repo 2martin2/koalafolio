@@ -10,7 +10,7 @@ Created on Thu Oct  4 15:15:19 2018
 
 import os, ast, re
 import configparser
-import PcpCore.logger as logger
+import koalafolio.PcpCore.logger as logger
 
 
 dictRegex = re.compile(r'^\{ *(\'.+\' *\: *\'.+\' *\, *)* *\'.+\' *\: *\'.+\'\ *}$')

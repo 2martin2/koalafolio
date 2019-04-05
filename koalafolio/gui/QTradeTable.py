@@ -15,15 +15,15 @@ Created on Sun Dec 16 19:09:51 2018
 import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-import gui.Qcontrols as controls
+import koalafolio.gui.Qcontrols as controls
 import os
-import PcpCore.core as core
-import Import.Converter as converter
-import gui.QThreads as threads
-import gui.QLogger as logger
-import Import.TradeImporter as importer
-import Import.Models as models
-import gui.QStyle as style
+import koalafolio.PcpCore.core as core
+import koalafolio.Import.Converter as converter
+import koalafolio.gui.QThreads as threads
+import koalafolio.gui.QLogger as logger
+import koalafolio.Import.TradeImporter as importer
+import koalafolio.Import.Models as models
+import koalafolio.gui.QStyle as style
 
 localLogger = logger.globalLogger
 qt = qtcore.Qt

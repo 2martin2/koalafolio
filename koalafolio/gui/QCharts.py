@@ -10,12 +10,12 @@ import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import PyQt5.QtChart as qtchart
-import gui.Qcontrols as controls
-import PcpCore.core as core
-import gui.QSettings as settings
-import gui.QStyle as style
+import koalafolio.gui.Qcontrols as controls
+import koalafolio.PcpCore.core as core
+import koalafolio.gui.QSettings as settings
+import koalafolio.gui.QStyle as style
 import datetime
-import gui.QLogger as logger
+import koalafolio.gui.QLogger as logger
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger

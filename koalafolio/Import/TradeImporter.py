@@ -5,11 +5,11 @@ Created on Fri Aug 24 09:44:38 2018
 @author: Martin
 """
 import os, pandas, re
-import PcpCore.core as core
-import PcpCore.settings as settings
-import Import.Converter as converter
+import koalafolio.PcpCore.core as core
+import koalafolio.PcpCore.settings as settings
+import koalafolio.Import.Converter as converter
 import json
-import PcpCore.logger as logger
+import koalafolio.PcpCore.logger as logger
 
 localLogger = logger.globalLogger
 

@@ -8,21 +8,21 @@ Created on Sun Sep 16 20:17:51 2018
 import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-import gui.Qcontrols as controls
-import gui.QPortfolioTable as ptable
-import Import.TradeImporter as importer
-import Import.Models as importModels
-import PcpCore.core as core
-import gui.QTradeTable as ttable
-import gui.QThreads as threads
-import Import.Models as models
+import koalafolio.gui.Qcontrols as controls
+import koalafolio.gui.QPortfolioTable as ptable
+import koalafolio.Import.TradeImporter as importer
+import koalafolio.Import.Models as importModels
+import koalafolio.PcpCore.core as core
+import koalafolio.gui.QTradeTable as ttable
+import koalafolio.gui.QThreads as threads
+import koalafolio.Import.Models as models
 import os
 import re
-import gui.QSettings as settings
+import koalafolio.gui.QSettings as settings
 import datetime
 from pathlib import Path
-import gui.QLogger as logger
-import exp.profitExport as profex
+import koalafolio.gui.QLogger as logger
+import koalafolio.exp.profitExport as profex
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import web.cryptocompare as cryptcomp
+import koalafolio.web.cryptocompare as cryptcomp
 import requests, datetime
 
 

@@ -5,10 +5,10 @@ Created on Fri Aug 24 09:44:38 2018
 @author: Martin
 """
 import openpyxl
-import PcpCore.settings as settings
+import koalafolio.PcpCore.settings as settings
 import datetime
 from dateutil.relativedelta import relativedelta
-import PcpCore.core as core
+import koalafolio.PcpCore.core as core
 import re
 
 from openpyxl.styles import PatternFill, Alignment, Font
