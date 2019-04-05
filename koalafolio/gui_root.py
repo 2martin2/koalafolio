@@ -137,7 +137,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.setWindowTitle(self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version'])
         try:
             app_icon = qtgui.QIcon()
-            app_icon.addFile('KoalaIcon.png', qtcore.QSize(256, 256))
+            app_icon.addFile(os.path.join(self.appPath, 'KoalaIcon.png'), qtcore.QSize(256, 256))
             self.setWindowIcon(app_icon)
         except Exception as ex:
             print(str(ex))
