@@ -218,33 +218,36 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                 # newTradeList = core.TradeList()
                 # newTradeList.fromCsv(os.path.join(self.dataPath, 'Trades.csv'))
                 # self.addTrades(newTradeList)
-                content = importer.loadTradesFromFile(os.path.join(self.dataPath, 'Trades.csv'))
-                if not content.empty:
-                    tradeListTemp, feeListTemp, match, skippedRows = importer.convertTradesSingle(
-                        models.IMPORT_MODEL_LIST, content, os.path.join(self.dataPath, 'Trades.csv'))
-                    # check import
-                    if match:
-                        self.mergeTradeList(tradeListTemp)
-                        self.mergeTradeList(feeListTemp)
-                        importedRows = len(tradeListTemp.trades) + len(feeListTemp.trades)
-                        localLogger.info('imported trades: ' + str(importedRows)
-                                         + '; skipped trades: ' + str(skippedRows))
+                if os.path.isfile(os.path.join(self.dataPath, 'Trades.csv')):
+                    content = importer.loadTradesFromFile(os.path.join(self.dataPath, 'Trades.csv'))
+                    if not content.empty:
+                        tradeListTemp, feeListTemp, match, skippedRows = importer.convertTradesSingle(
+                            models.IMPORT_MODEL_LIST, content, os.path.join(self.dataPath, 'Trades.csv'))
+                        # check import
+                        if match:
+                            self.mergeTradeList(tradeListTemp)
+                            self.mergeTradeList(feeListTemp)
+                            importedRows = len(tradeListTemp.trades) + len(feeListTemp.trades)
+                            localLogger.info('imported trades: ' + str(importedRows)
+                                             + '; skipped trades: ' + str(skippedRows))
             except Exception as ex:
                 localLogger.warning('error parsing trades: ' + str(ex))
         self.tradesAdded.emit(self)
 
     def saveTrades(self):
         if self.dataPath:
-            try:
-                os.remove(os.path.join(self.dataPath, 'Trades.csv.bak'))
-            except Exception as ex:
-                print('error deleting trades backup in QTradeContainer: ' + str(ex))
-            try:
-                os.rename(os.path.join(self.dataPath, 'Trades.csv'),
-                          os.path.join(self.dataPath, 'Trades.csv.bak'))
-            except Exception as ex:
-                print('error creating trades backup in QTradeContainer: ' + str(ex))
-            try:
+            if os.path.isfile(os.path.join(self.dataPath, 'Trades.csv')):
+                if os.path.isfile(os.path.join(self.dataPath, 'Trades.csv.bak')):
+                    try:  # delete old backup
+                        os.remove(os.path.join(self.dataPath, 'Trades.csv.bak'))
+                    except Exception as ex:
+                        print('error deleting trades backup in QTradeContainer: ' + str(ex))
+                try:  # create backup
+                    os.rename(os.path.join(self.dataPath, 'Trades.csv'),
+                              os.path.join(self.dataPath, 'Trades.csv.bak'))
+                except Exception as ex:
+                    print('error creating trades backup in QTradeContainer: ' + str(ex))
+            try:  # save trades
                 self.toCsv(os.path.join(self.dataPath, 'Trades.csv'))
             except Exception as ex:
                 localLogger.error('error saving trades in QTradeContainer: ' + str(ex))
