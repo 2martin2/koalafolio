@@ -105,21 +105,52 @@ class PortfolioApp(qtwidgets.QWidget):
     def initEnv(self):
         # handle paths
         self.appPath = application_path
-        self.dataPath = os.path.join(self.appPath, 'Data')
-        # check for DataFolder
+
+        # check access to app folder (does not work on windows)
+        if os.access(self.appPath, os.X_OK):
+            self.userDataPath = application_path
+        else:
+            self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
+                                                qtcore.QStandardPaths.AppDataLocation))
+            if not os.path.isdir(self.userDataPath):
+                try:
+                    os.mkdir(self.userDataPath)
+                except Exception as ex:
+                    print('error creating user data folder: ' + str(ex))
+                    # todo: critical error should be handled somehow
+
+        self.dataPath = os.path.join(self.userDataPath, 'Data')
+
+        # check DataFolder
         try:
             os.stat(self.dataPath)
-        except:
-            try:
+            self.logger = logger.globalLogger.setPath(self.dataPath)  # test logfile
+        except:  # folder not found/ not writable
+            try:  # try to create Data folder in app path
                 os.mkdir(self.dataPath)
-            except:
-                print('creating data folder failed')
-                # todo: critical error should be handled somehow (exit app, inform user)
+                self.logger = logger.globalLogger.setPath(self.dataPath)
+            except:  # creation of data folder not possible
+                # create data folder in system appDataPath
+                self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
+                                                    qtcore.QStandardPaths.AppDataLocation))
+                self.dataPath = os.path.join(self.userDataPath, 'Data')
+                try:
+                    os.stat(self.dataPath)
+                    self.logger = logger.globalLogger.setPath(self.dataPath)
+                except:  # folder not found/ not writable
+                    try:  # try to create Data folder in app path (could be skipped in case of PermissionError)
+                        if not os.path.isdir(self.userDataPath):
+                            os.mkdir(self.userDataPath)
+                        os.mkdir(self.dataPath)
+                        self.logger = logger.globalLogger.setPath(self.dataPath)
+                    except Exception as ex:
+                        print('creating data folder failed; changes will not be saved! ' + str(ex))
+                        # todo: critical error; should be handled somehow
         # create and read Settings
-        self.logger = logger.globalLogger.setPath(self.dataPath)
+        # self.logger = logger.globalLogger.setPath(self.dataPath)
         self.settings = settings.mySettings.setPath(self.dataPath)
         self.styleSheetHandler = style.StyleSheetHandler(self)
-        self.styleSheetHandler.setPath(self.appPath)
+        self.styleSheetHandler.setPath(self.userDataPath)
         style.myStyle = self.styleSheetHandler
 
 
@@ -312,6 +343,7 @@ def main():
         app_icon = qtgui.QIcon()
         app_icon.addFile(os.path.join(application_path, 'KoalaIcon.png'), qtcore.QSize(256, 256))
         app.setWindowIcon(app_icon)
+        app.setApplicationName('koalafolio')
     except Exception as ex:
         print(str(ex))
     #    app.setStyle(qtwidgets.QStyleFactory.create('Fusion'))

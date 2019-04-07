@@ -34,7 +34,6 @@ class Logger():
     def setPath(self, dir):
         self.filePath = os.path.join(dir, 'logfile.txt')
         self.backupLogFile()
-        # self.openLogFile()
         self.info('Start of Logging')
         return self
 
@@ -52,10 +51,12 @@ class Logger():
         if os.path.isfile(self.filePath):
             try:
                 shutil.copy(self.filePath, self.filePath + '.bak')
-                logFile = open(self.filePath, 'w')
-                logFile.close()
-            except Exception as ex:
-                print('error in logger: ' + str(ex))
+            except Exception as ex:  # copy not possible/ skip bakup creation
+                print('backup of logfile could not be created: ' + str(ex))
+        # try to write logfile ( exceptions will be handled in gui_root
+        logFile = open(self.filePath, 'w')
+        logFile.close()
+
 
 
 globalLogger = Logger()
