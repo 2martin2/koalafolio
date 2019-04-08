@@ -24,7 +24,7 @@ def updateTradeValue(trade):
         failedCounter = 0
         price = None
         while (failedCounter <= 10):
-            price = cryptcomp.get_historical_price(trade.coin, [key for key in trade.value.value], trade.date,
+            price = cryptcomp.get_historical_price(trade.coin, [key for key in trade.getValue().value], trade.date,
                                                    calculationType='Close', proxies=proxies, errorCheck=False)
             if trade.coin in price:
                 coinPrice = core.CoinValue()
@@ -55,7 +55,7 @@ def getHistoricalPrice(trade):
         proxies = {}
     if trade.date:
         failedCounter = 0
-        response = cryptcomp.get_historical_price(trade.coin, [key for key in trade.value.value], trade.date,
+        response = cryptcomp.get_historical_price(trade.coin, [key for key in trade.getValue().value], trade.date,
                                                calculationType='Close', proxies=proxies, errorCheck=False)
         if response:
             # check if wrong symbol
@@ -87,7 +87,7 @@ def updateCurrentCoinValues(coinList):
                 except Exception as ex:
                     print('error in updateCurrentCoinValues: ' + str(ex) + '; ' + str(prices))
                 else:
-                    coin.currentValue.value = price.mult(coin.balance)
+                    coin.currentPrice = price
             return True
         else:
             # if there is an error try again

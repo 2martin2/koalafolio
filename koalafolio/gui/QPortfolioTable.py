@@ -53,7 +53,7 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         # init keys and header
         self.keys = [*core.CoinValue().value]
         self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] +\
-                      ['value ' + key for key in self.keys]
+                      ['performance ' + key for key in self.keys]
         self.firstValueColumn = 3
         self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' +\
                                   'invest price\t\tcurrent price\t\tchange/24h'
@@ -94,11 +94,17 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         if cols == 3:
             self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' + \
                                         'invest price\t\tcurrent price\t\tchange/24h'
+            self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + \
+                          ['performance ' + key for key in self.keys]
         elif cols == 2:
             self.valueHeaderToolTip = 'current value\t\tperformance\n' + \
                                       'current price\t\tchange/24h'
+            self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + \
+                          ['performance ' + key for key in self.keys]
         else:
             self.valueHeaderToolTip = 'current price\nchange/24h'
+            self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + \
+                          ['price ' + key for key in self.keys]
 
     def setData(self, index, value, role):
         if role == qt.EditRole:
@@ -176,7 +182,7 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
         if column >= self.sourceModel().firstValueColumn:
             coinBalance1, key1 = index1.data()
             coinBalance2, key2 = index2.data()
-            return coinBalance1.currentValue[key1] < coinBalance2.currentValue[key2]
+            return coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2]
         return index1.data() < index2.data()
 
 
@@ -285,7 +291,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             coinBalance, key = index.data(qt.DisplayRole)
             boughtValue = coinBalance.initialValue[key]
             boughtPrice = coinBalance.getInitialPrice()[key]
-            currentValue = coinBalance.currentValue[key]
+            currentValue = coinBalance.getCurrentValue()[key]
             currentPrice = coinBalance.getCurrentPrice()[key]
             boughtValueStr = (controls.floatToString(boughtValue, 4))
             boughtPriceStr = (controls.floatToString(boughtPrice, 4) + '/p')
@@ -315,41 +321,53 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             if contentRect.width() >= 200:  # draw all
                 drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, boughtValueStr)
                 drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, boughtPriceStr)
-                if gain >= 0:
+                if gain > 0:
                     drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentValueStr)
                     drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, currentPriceStr)
                     drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
-                else:
+                elif gain < 0:
                     drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentValueStr)
                     drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, currentPriceStr)
                     drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                else:
+                    drawText(qt.AlignHCenter, qt.AlignTop, 14, neutralColor, currentValueStr)
+                    drawText(qt.AlignHCenter, qt.AlignBottom, 12, neutralColor, currentPriceStr)
+                    drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
                 if gainDay >= 0:
                     drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
                 else:
                     drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
                 self.valueColumnWidthChanged.emit(3)
             elif contentRect.width() >= 110:  # skip current value and price
-                if gain >= 0:
+                if gain > 0:
                     drawText(qt.AlignLeft, qt.AlignTop, 14, positivColor, currentValueStr)
                     drawText(qt.AlignLeft, qt.AlignBottom, 12, positivColor, currentPriceStr)
                     drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
-                else:
+                elif gain < 0:
                     drawText(qt.AlignLeft, qt.AlignTop, 14, negativColor, currentValueStr)
                     drawText(qt.AlignLeft, qt.AlignBottom, 12, negativColor, currentPriceStr)
                     drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                else:
+                    drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, currentValueStr)
+                    drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, currentPriceStr)
+                    drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
                 if gainDay >= 0:
                     drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
                 else:
                     drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
                 self.valueColumnWidthChanged.emit(2)
             else:  # draw value and daygain
-                if gain >= 0:
-                    drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
-                else:
-                    drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
+                # if gain > 0:
+                #     drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
+                # elif gain < 0:
+                #     drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
+                # else:
+                #     drawText(qt.AlignHCenter, qt.AlignTop, 14, neutralColor, currentPriceStr)
                 if gainDay >= 0:
+                    drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
                     drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, gainDayStr)
                 else:
+                    drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
                     drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
                 self.valueColumnWidthChanged.emit(1)
 
@@ -671,21 +689,21 @@ class PortfolioOverview(qtwidgets.QWidget):
             if coin.isFiat():  # calculate invested and returned fiat
                 for trade in coin.trades:
                     if trade.amount < 0:
-                        totalInvestFiat.add(trade.value.mult(-1))
+                        totalInvestFiat.add(trade.getValue().mult(-1))
                     else:
-                        totalReturnFiat.add(trade.value)
+                        totalReturnFiat.add(trade.getValue())
             else:  # calculate value of portfolio
                 currentInvestNoFiat.add(coin.initialValue)
-                hypotheticalCoinValueNoFiat.add(coin.currentValue)
+                hypotheticalCoinValueNoFiat.add(coin.getCurrentValue())
                 realizedProfit.add(coin.tradeMatcher.getTotalProfit())
             for trade in coin.trades:
                 if trade.tradeType == "fee":
-                    paidFees.add(trade.value)
+                    paidFees.add(trade.getValue())
                     for year in range(startYear, stopYear + 1):
                         startDate = datetime.date(year=year, month=1, day=1)
                         endDate = datetime.date(year=year, month=12, day=31)
                         if trade.date.date() >= startDate and trade.date.date() <= endDate:
-                            paidFeesPerYear[str(year)].add(trade.value)
+                            paidFeesPerYear[str(year)].add(trade.getValue())
 
             realizedProfitPerYearCoinList[coin.coinname] = (coin.tradeMatcher.getTimeDeltaProfit(
                     datetime.date(year=2017, month=1, day=1), datetime.date(year=2019, month=12, day=31),
@@ -696,10 +714,10 @@ class PortfolioOverview(qtwidgets.QWidget):
                 realizedProfitPerYear[str(year)].add(coin.tradeMatcher.getTimeDeltaProfit(startDate, endDate,
                     taxFreeTimeDelta=settings.mySettings.getTaxSetting('taxfreelimityears')))
                 if trade.tradeType == "fee" and trade.date.date() >= startDate and trade.date.date() <= endDate:
-                    paidFeesPerYear[str(year)].add(trade.value)
+                    paidFeesPerYear[str(year)].add(trade.getValue())
             # fiat and coins
             # currentInvestAll.add(coin.initialValue)
-            # hypotheticalValueAll.add(coin.currentValue)
+            # hypotheticalValueAll.add(coin.getCurrentValue())
             # realizedProfitAll.add(coin.tradeMatcher.getTotalProfit())
 
         realizedProfitPerYearCoinListSum = sum([realizedProfitPerYearCoinList[key] for key in realizedProfitPerYearCoinList])
@@ -833,19 +851,20 @@ class PortfolioOverview(qtwidgets.QWidget):
 
         # pie chart
         pieSeries = qtchart.QPieSeries()
-        sortedModelIndex = sorted(range(len(self.model)), key=lambda x: self.model.coins[x].currentValue[taxCoinName], reverse=True)
+        sortedModelIndex = sorted(range(len(self.model)),
+                                  key=lambda x: self.model.coins[x].getCurrentValue()[taxCoinName], reverse=True)
         otherssum = core.CoinValue()
         try:
-            topvalue = self.model.coins[sortedModelIndex[0]].currentValue[taxCoinName]
+            topvalue = self.model.coins[sortedModelIndex[0]].getCurrentValue()[taxCoinName]
         except IndexError:
             topvalue = 0
         for index in sortedModelIndex:
             coin = self.model.coins[index]
-            if coin.currentValue[taxCoinName] > topvalue/40 and \
-                    coin.currentValue[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/75):
-                pieSeries.append(coin.coinname, coin.currentValue[taxCoinName])
-            elif coin.currentValue[taxCoinName] > 0:
-                otherssum.add(coin.currentValue)
+            if coin.getCurrentValue()[taxCoinName] > topvalue/40 and \
+                    coin.getCurrentValue()[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/75):
+                pieSeries.append(coin.coinname, coin.getCurrentValue()[taxCoinName])
+            elif coin.getCurrentValue()[taxCoinName] > 0:
+                otherssum.add(coin.getCurrentValue())
         if otherssum[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/100):
             slice = pieSeries.append("others", otherssum[taxCoinName])
             slice.setLabelVisible()
