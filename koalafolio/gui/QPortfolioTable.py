@@ -477,6 +477,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.realizedProfitLabel = controls.StyledLabelCont(self, 'realized profit')
         # profit table
         self.profitTable = qtwidgets.QTableWidget()
+        self.profitTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
         self.profitTable.setColumnCount(1)
         self.profitTable.horizontalHeader().setVisible(False)
         self.profitTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
@@ -484,13 +485,14 @@ class PortfolioOverview(qtwidgets.QWidget):
         # paid fees
         self.paidFeesLabel = controls.StyledLabelCont(self, 'fees paid')
         self.feeTable = qtwidgets.QTableWidget()
+        self.feeTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
         self.feeTable.setColumnCount(1)
         self.feeTable.horizontalHeader().setVisible(False)
         self.feeTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
         self.paidFeesLabel.addWidget(self.feeTable)
 
 
-        # tax value char
+        # tax value chart
         self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
                                                           'crypto performance')
         self.currentValueChart.setHeadingToolTip('this chart shows\nthe performance of\n' +
