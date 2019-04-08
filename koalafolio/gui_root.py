@@ -110,8 +110,10 @@ class PortfolioApp(qtwidgets.QWidget):
         if os.access(self.appPath, os.X_OK):
             self.userDataPath = application_path
         else:
+            print('user data can not be saved in koala dir: ' + str(self.appPath))
             self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
                                                 qtcore.QStandardPaths.AppDataLocation))
+            print('user data will be saved in: ' + str(self.userDataPath))
             if not os.path.isdir(self.userDataPath):
                 try:
                     os.mkdir(self.userDataPath)
@@ -131,8 +133,10 @@ class PortfolioApp(qtwidgets.QWidget):
                 self.logger = logger.globalLogger.setPath(self.dataPath)
             except:  # creation of data folder not possible
                 # create data folder in system appDataPath
+                print('user data can not be saved in koala dir: ' + str(self.appPath))
                 self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
                                                     qtcore.QStandardPaths.AppDataLocation))
+                print('user data will be saved in: ' + str(self.userDataPath))
                 self.dataPath = os.path.join(self.userDataPath, 'Data')
                 try:
                     os.stat(self.dataPath)
