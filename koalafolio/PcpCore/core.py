@@ -666,6 +666,7 @@ class CoinBalance:
         self.change24h = CoinValue()
         self.trades = []
         self.tradeMatcher = TradeMatcher(self)
+        self.coinIcon = None
 
     def __lt__(self, other):
         return self.balance < other.balance
@@ -776,8 +777,8 @@ class CoinBalance:
         return [self.coinname, self.balance] + [self.getCurrentValue().value[key] for key in self.getCurrentValue().value]
 
     def toListComplete(self):
-        return [self.coinname, self.balance] + [self.initialValue.value[key] for key in self.initialValue.value] + [
-            self.getCurrentValue().value[key] for key in self.getCurrentValue().value]
+        return [self.coinname, self.balance] + [self.initialValue.value[key] for key in self.initialValue.value] + \
+               [self.getCurrentValue().value[key] for key in self.getCurrentValue().value]
 
 
 # %% CoinList
@@ -807,6 +808,7 @@ class CoinList:
     def addCoin(self, coinname):
         self.coins.append(CoinBalance())
         self.coins[-1].coinname = str(coinname)
+        # self.coins[-1].coinIcon = ccapi.getIcon(coinname)
         return self.coins[-1]
 
     def addTrade(self, trade):

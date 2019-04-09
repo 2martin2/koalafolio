@@ -10,10 +10,12 @@ import PyQt5.QtCore as qtcore
 import koalafolio.gui.QSettings as settings
 import koalafolio.web.cryptocompareApi as ccapi
 import koalafolio.PcpCore.core as core
+from PIL.ImageQt import ImageQt
 
 
 class CryptoCompare(qtcore.QObject):
     coinPricesLoaded = qtcore.pyqtSignal([dict])
+    coinIconsLoaded = qtcore.pyqtSignal([dict])
     historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
     # historicalPriceUpdateFinished = qtcore.pyqtSignal()
 
@@ -27,6 +29,17 @@ class CryptoCompare(qtcore.QObject):
         if coins:
             prices = ccapi.getCoinPrices(coins)
             self.coinPricesLoaded.emit(prices)
+
+    def loadCoinIcons(self, coins):
+        if coins:
+            icons = ccapi.getIcons(coins)
+            for key in icons:  # convert images to QIcon
+                if icons[key]:
+                    im = icons[key].convert("RGBA")
+                    qim = ImageQt(im)
+                    qpix = qtgui.QPixmap.fromImage(qim)
+                    icons[key] = qtgui.QIcon(qpix)
+        self.coinIconsLoaded.emit(icons)
 
     def loadHistoricalPrices(self, tradeList):
         newTrades = False
@@ -59,6 +72,7 @@ class CryptoCompare(qtcore.QObject):
 # %% threads
 class UpdatePriceThread(qtcore.QThread):
     coinPricesLoaded = qtcore.pyqtSignal([dict])
+    coinIconsLoaded = qtcore.pyqtSignal([dict])
     historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
 
     def __init__(self, coinList, tradeList):
@@ -74,12 +88,15 @@ class UpdatePriceThread(qtcore.QThread):
         self.cryptocompare = CryptoCompare()
         # retrun current price
         self.cryptocompare.coinPricesLoaded.connect(self.coinPricesLoaded)
+        self.cryptocompare.coinIconsLoaded.connect(self.coinIconsLoaded)
         # return hist prices
         self.cryptocompare.historicalPricesLoaded.connect(self.historicalPricesLoaded)
         # load hist prices for trades
         self.tradeList.triggerHistPriceUpdate.connect(lambda tradeList: self.cryptocompare.loadHistoricalPrices(tradeList))
         # load current prices for coins
+        self.coinList.PriceUpdateRequest.connect(lambda coins: self.cryptocompare.loadPrices(coins))
         self.coinList.coinAdded.connect(lambda coins: self.cryptocompare.loadPrices(coins))
+        self.coinList.coinAdded.connect(lambda coins: self.cryptocompare.loadCoinIcons(coins))
         self.priceTimer = qtcore.QTimer()
         self.histTimer = qtcore.QTimer()
         self.priceTimer.timeout.connect(lambda: self.cryptocompare.loadPrices(self.coinList.getCoinNames()))

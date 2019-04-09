@@ -18,6 +18,7 @@ import colorsys
 import koalafolio.gui.QThreads as threads
 import datetime
 import koalafolio.gui.QLogger as logger
+from PIL.ImageQt import ImageQt
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -46,6 +47,7 @@ class QPortfolioTableView(qtwidgets.QTableView):
 # %% portfolio table model
 class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
     coinAdded = qtcore.pyqtSignal([list])
+    PriceUpdateRequest = qtcore.pyqtSignal([list])
 
     def __init__(self, *args, **kwargs):
         super(QPortfolioTableModel, self).__init__(*args, **kwargs)
@@ -75,6 +77,21 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
             if index.column() >= self.firstValueColumn:  # return CoinBalance and key
                 keys = [*core.CoinValue().value]
                 return self.coins[index.row()], keys[index.column() - self.firstValueColumn]
+        if role == qt.DecorationRole:
+            if index.column() == 0:
+
+                coinIcon = self.coins[index.row()].coinIcon
+                if coinIcon:
+                    return coinIcon
+                    # im = coinIcon.convert("RGBA")
+                    # # data = im.tobytes("raw", "RGBA")
+                    # # data2 = imageResponse.content
+                    # # qim = qtgui.QImage(data, im.size[0], im.size[1], qtgui.QImage.Format_ARGB32)
+                    # qim = ImageQt(im)
+                    # qpix = qtgui.QPixmap.fromImage(qim)
+                    # return qtgui.QIcon(qpix)
+                else:
+                    return qtcore.QVariant()
 
         return qtcore.QVariant()
 
@@ -145,15 +162,25 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         self.beginResetModel()
         super(QPortfolioTableModel, self).addTrades(trades)
         self.endResetModel()
+        #  load prices and icons of all coins (not necessary but faster)
+        # todo: only pass new coins
         self.coinAdded.emit(self.getCoinNames())
 
     def triggerPriceUpdate(self):
-        self.coinAdded.emit(self.getCoinNames())
+        self.PriceUpdateRequest.emit(self.getCoinNames())
 
     def addCoin(self, coinname):
-        retval = super(QPortfolioTableModel, self).addCoin(coinname)
-        # self.coinAdded.emit([coinname])
-        return retval
+        newCoin = super(QPortfolioTableModel, self).addCoin(coinname)
+        # coin update will be done for all coins at once since it is much faster
+        # self.coinAdded.emit([newCoin.coinname])
+        return newCoin
+
+    def setIcons(self, icons):
+        for coin in icons:
+            self.getCoinByName(coin).coinIcon = icons[coin]
+        RowStartIndex = self.index(0, 0)
+        RowEndIndex = self.index(len(self.coins) - 1, 0)
+        self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def deleteTrades(self, trades):
         self.beginResetModel()

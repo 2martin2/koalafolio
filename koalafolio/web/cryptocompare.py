@@ -3,7 +3,9 @@ import time
 import datetime
 
 # API
+URL_CRYPTOCOMPARE = 'https://www.cryptocompare.com'
 URL_COIN_LIST = 'https://www.cryptocompare.com/api/data/coinlist/'
+URL_COIN_GENERAL = 'https://min-api.cryptocompare.com/data/coin/generalinfo?fsyms={}&tsyms={}'
 URL_PRICE = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms={}&tsyms={}'
 URL_PRICE_MULTI = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms={}&tsyms={}'
 URL_PRICE_MULTI_FULL = 'https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms={}'
@@ -89,3 +91,10 @@ def get_exchanges(*args, **kwargs):
     response = query_cryptocompare(URL_EXCHANGES, *args, **kwargs)
     if response:
         return response['Data']
+
+def get_coin_general_info(coin, curr=CURR, *args, **kwargs):
+    return query_cryptocompare(URL_COIN_GENERAL.format(coin, format_parameter(curr)), *args, **kwargs)
+
+def get_coin_general_info(coins, curr=CURR, *args, **kwargs):
+    return query_cryptocompare(URL_COIN_GENERAL, params={'fsyms': coins, 'tsym': str(curr)}, *args, **kwargs)
+

@@ -7,6 +7,9 @@ import koalafolio.PcpCore.core as core
 import koalafolio.PcpCore.settings as settings
 import time
 import koalafolio.PcpCore.logger as logger
+from PIL import Image
+from io import BytesIO
+import requests
 
 
 # coinList = cryptcomp.get_coin_list(format=True)
@@ -116,6 +119,7 @@ def getCoinPrices(coins):
         else:
             logger.globalLogger.warning('error loading prices')
         return {}
+
 def update24hChange(coinList):
     if settings.mySettings.proxies():
         proxies = settings.mySettings.proxies()
@@ -142,3 +146,24 @@ def update24hChange(coinList):
             time.sleep(10)
     print('price update failed')
     return False
+
+
+def getIcon(coin, *args, **kwargs):
+    coinInfo = cryptcomp.get_coin_general_info(coin, *args, **kwargs)
+    try:
+        imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'])
+    except:
+        return None
+    return Image.open(BytesIO(imageResponse.content))
+
+def getIcons(coins, *args, **kwargs):
+    coinInfo = cryptcomp.get_coin_general_info(coins, *args, **kwargs)
+    icons = {}
+    try:
+        for data in coinInfo['Data']:
+            imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'])
+            icons[data['CoinInfo']['Name']] = Image.open(BytesIO(imageResponse.content))
+    except Exception as ex:
+        print('error in getIcons: ' + str(ex))
+        # todo: create logging
+    return icons
