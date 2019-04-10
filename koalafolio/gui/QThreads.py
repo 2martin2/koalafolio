@@ -39,7 +39,7 @@ class CryptoCompare(qtcore.QObject):
                     qim = ImageQt(im)
                     qpix = qtgui.QPixmap.fromImage(qim)
                     icons[key] = qtgui.QIcon(qpix)
-        self.coinIconsLoaded.emit(icons)
+            self.coinIconsLoaded.emit(icons)
 
     def loadHistoricalPrices(self, tradeList):
         newTrades = False
