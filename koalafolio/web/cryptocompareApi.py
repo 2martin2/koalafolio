@@ -7,6 +7,9 @@ import koalafolio.PcpCore.core as core
 import koalafolio.PcpCore.settings as settings
 import time
 import koalafolio.PcpCore.logger as logger
+from PIL import Image
+from io import BytesIO
+import requests
 
 
 # coinList = cryptcomp.get_coin_list(format=True)
@@ -24,7 +27,7 @@ def updateTradeValue(trade):
         failedCounter = 0
         price = None
         while (failedCounter <= 10):
-            price = cryptcomp.get_historical_price(trade.coin, [key for key in trade.value.value], trade.date,
+            price = cryptcomp.get_historical_price(trade.coin, [key for key in trade.getValue().value], trade.date,
                                                    calculationType='Close', proxies=proxies, errorCheck=False)
             if trade.coin in price:
                 coinPrice = core.CoinValue()
@@ -55,7 +58,7 @@ def getHistoricalPrice(trade):
         proxies = {}
     if trade.date:
         failedCounter = 0
-        response = cryptcomp.get_historical_price(trade.coin, [key for key in trade.value.value], trade.date,
+        response = cryptcomp.get_historical_price(trade.coin, [key for key in trade.getValue().value], trade.date,
                                                calculationType='Close', proxies=proxies, errorCheck=False)
         if response:
             # check if wrong symbol
@@ -87,7 +90,7 @@ def updateCurrentCoinValues(coinList):
                 except Exception as ex:
                     print('error in updateCurrentCoinValues: ' + str(ex) + '; ' + str(prices))
                 else:
-                    coin.currentValue.value = price.mult(coin.balance)
+                    coin.currentPrice = price
             return True
         else:
             # if there is an error try again
@@ -116,6 +119,7 @@ def getCoinPrices(coins):
         else:
             logger.globalLogger.warning('error loading prices')
         return {}
+
 def update24hChange(coinList):
     if settings.mySettings.proxies():
         proxies = settings.mySettings.proxies()
@@ -142,3 +146,24 @@ def update24hChange(coinList):
             time.sleep(10)
     print('price update failed')
     return False
+
+
+def getIcon(coin, *args, **kwargs):
+    coinInfo = cryptcomp.get_coin_general_info(coin, *args, **kwargs)
+    try:
+        imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'])
+    except:
+        return None
+    return Image.open(BytesIO(imageResponse.content))
+
+def getIcons(coins, *args, **kwargs):
+    coinInfo = cryptcomp.get_coin_general_info(coins, *args, **kwargs)
+    icons = {}
+    try:
+        for data in coinInfo['Data']:
+            imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'])
+            icons[data['CoinInfo']['Name']] = Image.open(BytesIO(imageResponse.content))
+    except Exception as ex:
+        print('error in getIcons: ' + str(ex))
+        # todo: create logging
+    return icons

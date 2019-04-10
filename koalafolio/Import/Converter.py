@@ -795,7 +795,7 @@ def modelCallback_TradeList(headernames, dataFrame):
                             trade.valueLoaded = False
 
                     for valueInd in range(len(valueHeaders)):  # load all included historical values
-                        trade.value[keysImport[valueInd]] = float(dataFrame[valueHeaders[valueInd]][row])
+                        trade.setValue(keysImport[valueInd], float(dataFrame[valueHeaders[valueInd]][row]))
 
             # exchange
             if headernames[7]:

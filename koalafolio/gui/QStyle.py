@@ -101,6 +101,10 @@ class StyleSheetHandler():
         for colorName in colors:
             self.QColors[colorName] = qtgui.QColor(*colors[colorName])
             # calculate light/ dark colors
+            colorNameBitLight = colorName + '_BITLIGHT'
+            self.QColors[colorNameBitLight] = qtgui.QColor(*chnageLightness(colors[colorName], 2))
+            colorNameBitDark = colorName + '_BITDARK'
+            self.QColors[colorNameBitDark] = qtgui.QColor(*chnageLightness(colors[colorName], -2))
             colorNameMidLight = colorName + '_MIDLIGHT'
             self.QColors[colorNameMidLight] = qtgui.QColor(*chnageLightness(colors[colorName], 10))
             colorNameMidDark = colorName + '_MIDDARK'
@@ -116,6 +120,10 @@ class StyleSheetHandler():
         colors = settings.mySettings.getColors()
         for colorName in colors:
             # calculate light/ dark colors
+            colorNameBitLight = colorName + '_BITLIGHT'
+            colorBitLight = self.getQColor(colorNameBitLight)
+            colorNameBitDark = colorName + '_BITDARK'
+            colorBitDark = self.getQColor(colorNameBitDark)
             colorNameMidLight = colorName + '_MIDLIGHT'
             colorMidLight = self.getQColor(colorNameMidLight)
             colorNameMidDark = colorName + '_MIDDARK'
@@ -126,6 +134,10 @@ class StyleSheetHandler():
             colorDark = self.getQColor(colorNameDark)
 
             # replace color (dark and light first, otherwise they will be replaced partly)
+            hexColorBitLight = colorBitLight.name()
+            self.activeStyleSheet = self.activeStyleSheet.replace(colorNameBitLight, hexColorBitLight)
+            hexColorBitDark = colorBitDark.name()
+            self.activeStyleSheet = self.activeStyleSheet.replace(colorNameBitDark, hexColorBitDark)
             hexColorMidLight = colorMidLight.name()
             self.activeStyleSheet = self.activeStyleSheet.replace(colorNameMidLight, hexColorMidLight)
             hexColorMidDark = colorMidDark.name()

@@ -234,8 +234,8 @@ class Trade:
         self.amount = self.amount + trade.amount
 
     def toList(self):
-        return [self.tradeID, self.date, self.tradeType, self.coin, self.amount] + [self.value.value[key] for key in
-                                                                                    self.value.value]
+        return [self.tradeID, self.date, self.tradeType, self.coin, self.amount] + \
+               [self.getValue().value[key] for key in self.getValue().value]
 
     def getHeaderComplete(self):
         myCoinValue = CoinValue()
@@ -248,38 +248,20 @@ class Trade:
     def toDataFrame(self):
         return initTradeList([self.toList()])
 
-    def fromSeries(self, series):
-        self.tradeID = series['id']
-        self.externId = series['externId']
-        self.tradePartnerId = series['tradePartnerId']
-        if isinstance(series['date'], str):
-            self.date = converter.convertDate(series['date'])
-        else:
-            self.date = series['date']
-        self.tradeType = series['type']
-        self.coin = series['coin']
-        self.amount = series['amount']
-        self.exchange = str(series['exchange']) if not str(series['exchange']) == 'nan' else ''
-        self.wallet = str(series['wallet']) if not str(series['wallet']) == 'nan' else ''
-        loadingValuesFailed = False
-        for key in self.value.value:
-            try:
-                self.value.value[key] = series['value' + key]
-            except Exception as ex:
-                # logger.globalLogger.warning('error parsing historical price of trade: ' + str(ex))
-                # logger.globalLogger.info('reset valueLoaded flag')
-                laodingValuesFailed = True
-        if loadingValuesFailed:
-            self.valueLoaded = False
-        else:
-            self.valueLoaded = series['valueLoaded']
-        return self
-
     def updateValue(self):
         return ccapi.updateTradeValue(self)
 
     def getPrice(self):
         return self.value.div(self.amount)
+
+    def getValue(self):
+        return self.value
+
+    def setValue(self, key, value):
+        self.value[key] = value
+
+    def setValueAll(self, value):
+        self.value = value
 
     def isFiat(self):
         for fiat in settings.mySettings.fiatList():
@@ -381,11 +363,6 @@ class TradeList:
             trades.append(trade.toListComplete())
         return initTradeListComplete(trades)
 
-    def fromDataFrame(self, dataframe):
-        for index, row in dataframe.iterrows():
-            self.addTrade(Trade().fromSeries(row))
-        return self
-
     def generateIDs(self):
         for trade in self.trades:
             if not trade.tradeID:
@@ -414,14 +391,14 @@ class TradeList:
                 if partner.valueLoaded:
                     # use partner value if value update was not possible or if trade has a fiat partner
                     if (not trade.valueLoaded) or partner.isFiat():
-                        trade.value = partner.value.mult(-1)
+                        trade.setValueAll(partner.getValue().mult(-1))
                         trade.valueLoaded = True
                     # if both values loaded and both trades are crypto use the same value
                     elif not trade.isFiat():
-                        if trade.value < partner.value:  # use smaller value (tax will be paid later)
-                            partner.value = trade.value.mult(-1)
+                        if trade.getValue() < partner.getValue():  # use smaller value (tax will be paid later)
+                            partner.setValueAll(trade.getValue().mult(-1))
                         else:
-                            trade.value = partner.value.mult(-1)
+                            trade.setValueAll(partner.getValue().mult(-1))
 
     def updateValues(self):
         # load values of all trades
@@ -438,14 +415,14 @@ class TradeList:
                 if partner.valueLoaded:
                     # use partner value if value update was not possible or if trade has a fiat partner
                     if (not trade.valueLoaded) or partner.isFiat():
-                        trade.value = partner.value.mult(-1)
+                        trade.setValueAll(partner.getValue().mult(-1))
                         trade.valueLoaded = True
                     # if both values loaded and both trades are crypto use the same value
                     elif not trade.isFiat():
-                        if trade.value < partner.value:  # use smaller value (tax will be paid later)
-                            partner.value = trade.value.mult(-1)
+                        if trade.getValue() < partner.getValue():  # use smaller value (tax will be paid later)
+                            partner.setValueAll(trade.getValue().mult(-1))
                         else:
-                            trade.value = partner.value.mult(-1)
+                            trade.setValueAll(partner.getValue().mult(-1))
 
 
     def getTradeById(self, tradeId):
@@ -465,9 +442,6 @@ class TradeList:
             file.write(','.join(Trade().getHeaderComplete()) + '\n')
             for trade in self:
                 file.write(','.join(str(e) for e in trade.toListComplete()) + '\n')
-
-    def fromCsv(self, path):
-        self.fromDataFrame(pandas.read_csv(path))
 
     def clearPriceFlag(self):
         for trade in self.trades:
@@ -603,7 +577,7 @@ class TradeMatcher:
         self.buysLeft = self.buysBuffer[buyIndex:]
 
     def calculateProfit(self, buyTrade, sellTrade):
-        return sellTrade.value.copy().sub(buyTrade.value)
+        return sellTrade.getValue().copy().sub(buyTrade.getValue())
 
     def getTotalProfit(self):
         return sum(self.profitMatched, CoinValue())
@@ -688,10 +662,12 @@ class CoinBalance:
         self.coinname = None
         self.balance = 0
         self.initialValue = CoinValue()
-        self.currentValue = CoinValue()
+        self.currentPrice = CoinValue()
         self.change24h = CoinValue()
         self.trades = []
         self.tradeMatcher = TradeMatcher(self)
+        self.coinIcon = None
+        self.notes = ""
 
     def __lt__(self, other):
         return self.balance < other.balance
@@ -727,11 +703,8 @@ class CoinBalance:
                     return None
             # if trade doesnt exist then add it
             self.trades.append(trade)
-            # update current value (use current price)
-            newAmount = self.balance + trade.amount
-            self.currentValue = self.currentValue.mult(newAmount).div(self.balance)
-            # update balance
-            self.balance = newAmount
+            # update balance (use current price)
+            self.balance += trade.amount
             return self
         else:
             return None
@@ -741,23 +714,16 @@ class CoinBalance:
             # check if trade exists
             if trade in self.trades:
                 self.trades.remove(trade)
-            # update current value (use current price)
-            newAmount = self.balance - trade.amount
-            self.currentValue = self.currentValue.mult(newAmount).div(self.balance)
-            # update balance
-            self.balance = newAmount
+            # update balance (use current price)
+            self.balance -= trade.amount
             return self
         else:
             return None
 
     def updateBalance(self):
-        newAmount = 0
+        self.balance = 0
         for trade in self.trades:
-            newAmount += trade.amount
-        # update current value (use current price)
-        self.currentValue = self.currentValue.mult(newAmount).div(self.balance)
-        # update balance
-        self.balance = newAmount
+            self.balance += trade.amount
 
     def isFiat(self):
         for fiat in settings.mySettings.fiatList():
@@ -786,7 +752,13 @@ class CoinBalance:
         return self.initialValue.div(self.balance)
 
     def getCurrentPrice(self):
-        return self.currentValue.div(self.balance)
+        return self.currentPrice.copy()
+
+    def getCurrentValue(self):
+        return self.currentPrice.mult(self.balance)
+
+    def setCurrentValueAll(self, value):
+        self.currentPrice = value.div(self.balance)
 
     def getFees(self):
         fees = []
@@ -799,15 +771,15 @@ class CoinBalance:
         fees = CoinValue()
         for trade in self.trades:
             if trade.tradeType == "fee":
-                fees.add(trade.value)
+                fees.add(trade.getValue())
         return fees
 
     def toList(self):
-        return [self.coinname, self.balance] + [self.currentValue.value[key] for key in self.currentValue.value]
+        return [self.coinname, self.balance] + [self.getCurrentValue().value[key] for key in self.getCurrentValue().value]
 
     def toListComplete(self):
-        return [self.coinname, self.balance] + [self.initialValue.value[key] for key in self.initialValue.value] + [
-            self.currentValue.value[key] for key in self.currentValue.value]
+        return [self.coinname, self.balance] + [self.initialValue.value[key] for key in self.initialValue.value] + \
+               [self.getCurrentValue().value[key] for key in self.getCurrentValue().value]
 
 
 # %% CoinList
@@ -828,7 +800,7 @@ class CoinList:
     def __getitem__(self, key):
         return self.getCoinByName(key)
 
-    def isMember(self, coinname):
+    def hasMember(self, coinname):
         for coin in self.coins:
             if coin.coinname == coinname.upper():
                 return True
@@ -837,6 +809,7 @@ class CoinList:
     def addCoin(self, coinname):
         self.coins.append(CoinBalance())
         self.coins[-1].coinname = str(coinname)
+        # self.coins[-1].coinIcon = ccapi.getIcon(coinname)
         return self.coins[-1]
 
     def addTrade(self, trade):
@@ -920,9 +893,9 @@ class CoinList:
     # set prices from dict
     def setPrices(self, prices):
         for coin in self.coins:
-                for key in coin.currentValue:
+                for key in coin.currentPrice:
                     try:
-                        coin.currentValue[key] = prices[coin.coinname][key]['PRICE'] * coin.balance
+                        coin.currentPrice[key] = prices[coin.coinname][key]['PRICE']
                         coin.change24h[key] = prices[coin.coinname][key]['CHANGEPCT24HOUR']
                     except KeyError:
                         pass

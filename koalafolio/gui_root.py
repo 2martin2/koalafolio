@@ -71,7 +71,9 @@ class PortfolioApp(qtwidgets.QWidget):
 
         # start the background threads
         self.startThreads()
+        self.coinList.restoreCoins()
         self.tradeList.restoreTrades()
+
 
         self.logger.info('application initialized')
 
@@ -110,8 +112,10 @@ class PortfolioApp(qtwidgets.QWidget):
         if os.access(self.appPath, os.X_OK):
             self.userDataPath = application_path
         else:
+            print('user data can not be saved in koala dir: ' + str(self.appPath))
             self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
                                                 qtcore.QStandardPaths.AppDataLocation))
+            print('user data will be saved in: ' + str(self.userDataPath))
             if not os.path.isdir(self.userDataPath):
                 try:
                     os.mkdir(self.userDataPath)
@@ -131,8 +135,10 @@ class PortfolioApp(qtwidgets.QWidget):
                 self.logger = logger.globalLogger.setPath(self.dataPath)
             except:  # creation of data folder not possible
                 # create data folder in system appDataPath
+                print('user data can not be saved in koala dir: ' + str(self.appPath))
                 self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
                                                     qtcore.QStandardPaths.AppDataLocation))
+                print('user data will be saved in: ' + str(self.userDataPath))
                 self.dataPath = os.path.join(self.userDataPath, 'Data')
                 try:
                     os.stat(self.dataPath)
@@ -187,7 +193,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.logList = logger.QLogModel()
         self.settingsModel = settings.SettingsModel(self.settings)
         self.tradeList = ttable.QTradeTableModel(self.dataPath)
-        self.coinList = ptable.QPortfolioTableModel()
+        self.coinList = ptable.QPortfolioTableModel(self.dataPath)
 
 
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))
@@ -290,6 +296,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.logger.info('starting threads ...')
         self.priceThread = threads.UpdatePriceThread(self.coinList, self.tradeList)
         self.priceThread.coinPricesLoaded.connect(lambda prices: self.coinList.setPrices(prices))
+        self.priceThread.coinIconsLoaded.connect(lambda icons: self.coinList.setIcons(icons))
         self.priceThread.historicalPricesLoaded.connect(lambda prices, tradesLeft:
                                                         self.tradeList.setHistPrices(prices, tradesLeft))
         self.priceThread.start()

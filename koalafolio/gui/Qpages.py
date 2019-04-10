@@ -78,6 +78,8 @@ class PortfolioPage(Page):
         guiSettings = settings.mySettings.getGuiSettings()
         self.coinTableView.sortByColumn(guiSettings['portfolioFilterRow'], guiSettings['portfolioFilterDir'])
 
+        # self.coinTableView.clicked.connect(self.tableClicked)
+
         self.coinTableView.show()
 
         # layout
@@ -99,6 +101,9 @@ class PortfolioPage(Page):
         gui['performanceChartIndex'] = self.coinDataFrame.perfChartCont.chartIndex
         return gui
 
+    # def tableClicked(self, index):
+    #     if index.column() == 0:
+    #         print(str(index.data()))
 
 # %% trades page showing all the imported trades
 class TradesPage(Page):

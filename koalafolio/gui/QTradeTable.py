@@ -62,7 +62,7 @@ class TradeTableWidget(qtwidgets.QTableWidget):
             trade = self.tradeList[rowIndex]
             tradeRow = [trade.tradeID, trade.tradePartnerId, trade.date, trade.tradeType, trade.coin, trade.amount,
                         trade.exchange if trade.exchange else '']
-            tradeRow += [trade.value[key] for key in trade.value]
+            tradeRow += [trade.getValue()[key] for key in trade.getValue()]
             self.setRow(tradeRow, rowIndex)
             columnNotEditable = [0, 1, 3, 4]
             for column in columnNotEditable:
@@ -103,7 +103,7 @@ class TradeTableWidget(qtwidgets.QTableWidget):
         elif column == 6:
             return trade.exchange
         elif column >= firstValueIndex:
-            return trade.value[self.keys[column - firstValueIndex]]
+            return trade.getValue()[self.keys[column - firstValueIndex]]
 
     def setTradeListItemByIndex(self, row, column):
         # ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange'] + ['value ' + key for key in self.keys]
@@ -130,7 +130,7 @@ class TradeTableWidget(qtwidgets.QTableWidget):
             elif column == 6:
                 trade.exchange = text
             elif column >= firstValueIndex:
-                trade.value[self.keys[column - firstValueIndex]] = float(text)
+                trade.setValue([self.keys[column - firstValueIndex]], float(text))
             self.tradeChanged.emit(trade)
         except Exception as ex:
             print('error in TradeTableWidget: ' + str(ex))

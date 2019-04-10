@@ -18,12 +18,15 @@ import colorsys
 import koalafolio.gui.QThreads as threads
 import datetime
 import koalafolio.gui.QLogger as logger
+from PIL.ImageQt import ImageQt
+import os
+import configparser
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 # %% portfolio table view
-class QPortfolioTableView(qtwidgets.QTableView):
+class QPortfolioTableView(qtwidgets.QTreeView):
     def __init__(self, parent, *args, **kwargs):
         super(QPortfolioTableView, self).__init__(parent=parent, *args, **kwargs)
 
@@ -34,48 +37,186 @@ class QPortfolioTableView(qtwidgets.QTableView):
         self.setColumnWidth(1, 160)
         self.horizontalHeader().setSectionResizeMode(2, qtwidgets.QHeaderView.Interactive)
         self.setColumnWidth(2, 100)
-        self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
-        self.verticalHeader().setVisible(False)
+        # self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
+        # self.verticalHeader().setVisible(False)
         self.setItemDelegate(QCoinTableDelegate())
+        # self.setRootIsDecorated(False)
 
         self.setSortingEnabled(True)
-        self.setEditTriggers(qtwidgets.QAbstractItemView.NoEditTriggers)
-        self.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
+        # self.setEditTriggers(qtwidgets.QAbstractItemView.NoEditTriggers)
+        # self.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
 
+        self.visibleEditorIndex = []
+        self.collapsed.connect(self.collapsedCallback)
+        self.expanded.connect(self.expandedCallback)
+
+        self.verticalScrollBar().setSingleStep(1)
+
+    def horizontalHeader(self):
+        return self.header()
+
+    def collapsedCallback(self, index):
+        child = self.model().index(0, 0, index)
+        self.closePersistentEditor(child)
+
+    def expandedCallback(self, index):
+        child = self.model().index(0, 0, index)
+        self.openPersistentEditor(child)
+
+    def drawRow(self, painter, options, index):
+        if index.parent().isValid():
+            firstSection = self.header().logicalIndex(0)
+            lastSection = self.header().logicalIndex(self.header().count() - 1)
+            left = self.header().sectionViewportPosition(firstSection)
+            right = self.header().sectionViewportPosition(lastSection) + self.header().sectionSize(lastSection)
+            indent = 1 * self.indentation()
+            left += indent
+
+            options.rect.setX(left)
+            options.rect.setWidth(right - left)
+
+            # self.itemDelegate(index).paint(painter, options, index)
+        else:
+            super(QPortfolioTableView, self).drawRow(painter, options, index)
+        painter.save()
+        myCol = style.myStyle.getQColor('BACKGROUND_BITDARK')
+        myBrush = qtgui.QBrush(myCol)
+        mypen = painter.pen()
+        mypen.setBrush(myBrush)
+        painter.setPen(mypen)
+        rect = options.rect
+        if index.parent().isValid():  # draw lower line over indent
+            # draw lower horz line
+            x = rect.x() - self.indentation()
+            painter.drawLine(x, rect.y() + rect.height(), rect.x() + rect.width(), rect.y() + rect.height())
+            # draw upper horz line
+            painter.drawLine(x, rect.y(), rect.x() + rect.width(), rect.y())
+        else:
+            # draw lower horz line
+            painter.drawLine(rect.x(), rect.y() + rect.height(), rect.x() + rect.width(), rect.y() + rect.height())
+        painter.restore()
+
+# %% portfolio coin container
+class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
+    coinAdded = qtcore.pyqtSignal([list])
+    PriceUpdateRequest = qtcore.pyqtSignal([list])
+
+    def __init__(self, dataPath=None, *args, **kwargs):
+        super(QCoinContainer, self).__init__(*args, **kwargs)
+
+        self.dataPath = dataPath
+        self.coinDatabase = QCoinInfoDatabase(path=dataPath)
+        # self.coinAdded.connect(self.saveCoins)
+
+    def setPath(self, path):
+        self.dataPath = path
+        self.coinDatabase.setPath(path)
+
+    def restoreCoins(self):
+        if self.dataPath:
+            # try to restore data from previous session
+            coins = self.coinDatabase.getCoins()
+            for coin in coins:
+                if not self.hasMember(coin):
+                    self.addCoin(coin)
+            self.coinDatabase.updateCoinInfo(self)
+        self.coinAdded.emit(self.getCoinNames())
+
+    def saveCoins(self):
+        if self.dataPath:
+            if os.path.isfile(os.path.join(self.dataPath, 'Coins.csv')):
+                if os.path.isfile(os.path.join(self.dataPath, 'Coins.csv.bak')):
+                    try:  # delete old backup
+                        os.remove(os.path.join(self.dataPath, 'Coins.csv.bak'))
+                    except Exception as ex:
+                        print('error deleting coin info backup in QCoinContainer: ' + str(ex))
+                try:  # create backup
+                    os.rename(os.path.join(self.dataPath, 'Coins.csv'),
+                              os.path.join(self.dataPath, 'Coins.csv.bak'))
+                except Exception as ex:
+                    print('error creating coin info backup in QCoinContainer: ' + str(ex))
+            self.coinDatabase.setCoinInfo(self)
+
+    def setNotes(self, index, notes):
+        self.coins[index].notes = notes
+        self.saveCoins()
 
 # %% portfolio table model
-class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
-    coinAdded = qtcore.pyqtSignal([list])
-
+class QPortfolioTableModel(QCoinContainer):
     def __init__(self, *args, **kwargs):
         super(QPortfolioTableModel, self).__init__(*args, **kwargs)
 
         # init keys and header
         self.keys = [*core.CoinValue().value]
         self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] +\
-                      ['value ' + key for key in self.keys]
+                      ['performance ' + key for key in self.keys]
         self.firstValueColumn = 3
         self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' +\
                                   'invest price\t\tcurrent price\t\tchange/24h'
 
+        self.parents = []
+
+
     def rowCount(self, parent):
-        return len(self.coins)
+        if parent.isValid():
+            if not parent.parent().isValid():  # first child level
+                return 1
+            else:
+                return 0  # only one child level
+        else:  # top level
+            return len(self.coins)
 
     def columnCount(self, parent):
-        return len(self.header)
+        if parent.isValid():
+            if not parent.parent().isValid():  # first child level
+                return 1
+            else:
+                return 0  # only one child level
+        else:  # top level
+            return len(self.header)
+
+    def parent(self, index):
+        try:
+            return self.parents[index.internalId()]
+        except IndexError:
+            return qtcore.QModelIndex()
+
+    def index(self, row, column, parent):
+        # save parent
+        if parent in self.parents:
+            parentId = self.parents.index(parent)
+        else:
+            self.parents.append(parent)
+            parentId = len(self.parents)-1
+        if not parent.isValid():  # top level
+            return self.createIndex(row, column, parentId)
+        if parent.isValid() and not parent.parent().isValid():  # first child level
+            return self.createIndex(row, 0, parentId)
+        # only one child level
+        return qtcore.QModelIndex()
 
     def data(self, index, role=qt.DisplayRole):
-        if role == qt.DisplayRole:
-            if index.column() == 0:  # coin row
-                return self.coins[index.row()].coinname  # return coinname
-            if index.column() == 1:  # balance row
-                return self.coins[index.row()]  # return CoinBalance
-            if index.column() == 2:  # profit row
-                return self.coins[index.row()].tradeMatcher.getTotalProfit()  # return profit
-            if index.column() >= self.firstValueColumn:  # return CoinBalance and key
-                keys = [*core.CoinValue().value]
-                return self.coins[index.row()], keys[index.column() - self.firstValueColumn]
-
+        if index.parent().isValid():  # child level
+            if role == qt.DisplayRole:
+                return self.coins[index.parent().row()].notes
+        else:  # top level
+            if role == qt.DisplayRole:
+                if index.column() == 0:  # coin row
+                    return self.coins[index.row()].coinname  # return coinname
+                if index.column() == 1:  # balance row
+                    return self.coins[index.row()]  # return CoinBalance
+                if index.column() == 2:  # profit row
+                    return self.coins[index.row()].tradeMatcher.getTotalProfit()  # return profit
+                if index.column() >= self.firstValueColumn:  # return CoinBalance and key
+                    keys = [*core.CoinValue().value]
+                    return self.coins[index.row()], keys[index.column() - self.firstValueColumn]
+            if role == qt.DecorationRole:
+                if index.column() == 0:
+                    coinIcon = self.coins[index.row()].coinIcon
+                    if coinIcon:
+                        return coinIcon
+                    else:
+                        return qtcore.QVariant()
         return qtcore.QVariant()
 
     def headerData(self, section, orientation, role):
@@ -94,19 +235,29 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         if cols == 3:
             self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' + \
                                         'invest price\t\tcurrent price\t\tchange/24h'
+            self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + \
+                          ['performance ' + key for key in self.keys]
         elif cols == 2:
             self.valueHeaderToolTip = 'current value\t\tperformance\n' + \
                                       'current price\t\tchange/24h'
+            self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + \
+                          ['performance ' + key for key in self.keys]
         else:
             self.valueHeaderToolTip = 'current price\nchange/24h'
-
-    def setData(self, index, value, role):
-        if role == qt.EditRole:
-            print('setData: ' + str(index.row()) + '; ' + str(index.column()))
-        return True
+            self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + \
+                          ['price ' + key for key in self.keys]
 
     def flags(self, index):
-        return qt.ItemIsSelectable | qt.ItemIsEditable | qt.ItemIsEnabled
+        if index.parent().isValid():  # child level
+            return qt.ItemIsEditable | qt.ItemIsEnabled
+        # top level
+        return qt.ItemIsEnabled
+
+    def setData(self, index, value, role):
+        if index.parent().isValid():  # child level
+            if role == qt.EditRole:
+                self.setNotes(index.parent().row(), value)
+        return True
 
     def histPricesChanged(self):
         super(QPortfolioTableModel, self).histPricesChanged()
@@ -117,8 +268,8 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         self.pricesUpdated()
 
     def pricesUpdated(self):
-        RowStartIndex = self.index(0, 2)
-        RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1)
+        RowStartIndex = self.index(0, 2, qtcore.QModelIndex())
+        RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, qtcore.QModelIndex())
         self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def setPrices(self, prices):
@@ -139,20 +290,32 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         self.beginResetModel()
         super(QPortfolioTableModel, self).addTrades(trades)
         self.endResetModel()
+        #  load prices and icons of all coins (not necessary but faster)
+        # todo: only pass new coins
         self.coinAdded.emit(self.getCoinNames())
+        self.saveCoins()
 
     def triggerPriceUpdate(self):
-        self.coinAdded.emit(self.getCoinNames())
+        self.PriceUpdateRequest.emit(self.getCoinNames())
 
     def addCoin(self, coinname):
-        retval = super(QPortfolioTableModel, self).addCoin(coinname)
-        # self.coinAdded.emit([coinname])
-        return retval
+        newCoin = super(QPortfolioTableModel, self).addCoin(coinname)
+        # coin update will be done for all coins at once since it is much faster
+        # self.coinAdded.emit([newCoin.coinname])
+        return newCoin
+
+    def setIcons(self, icons):
+        for coin in icons:
+            self.getCoinByName(coin).coinIcon = icons[coin]
+        RowStartIndex = self.index(0, 0, qtcore.QModelIndex())
+        RowEndIndex = self.index(len(self.coins) - 1, 0, qtcore.QModelIndex())
+        self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def deleteTrades(self, trades):
         self.beginResetModel()
         super(QPortfolioTableModel, self).deleteTrades(trades)
         self.endResetModel()
+
 
 
 class QTableSortingModel(qtcore.QSortFilterProxyModel):
@@ -176,7 +339,7 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
         if column >= self.sourceModel().firstValueColumn:
             coinBalance1, key1 = index1.data()
             coinBalance2, key2 = index2.data()
-            return coinBalance1.currentValue[key1] < coinBalance2.currentValue[key2]
+            return coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2]
         return index1.data() < index2.data()
 
 
@@ -192,7 +355,6 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
         self.marginH = 15  # horizontal margin
 
     def paint(self, painter, option, index):
-        painter.save()
         cellStartX = option.rect.x() + self.marginH
         cellStartY = option.rect.y() + self.marginV
         cellWidth = option.rect.width() - 2 * self.marginH
@@ -200,182 +362,220 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
         cellStopX = cellStartX + cellWidth
         cellStopY = cellStartY + cellHeight
 
+        painter.save()
+        myCol = style.myStyle.getQColor('BACKGROUND_BITDARK')
+        myBrush = qtgui.QBrush(myCol)
+        mypen = painter.pen()
+        mypen.setBrush(myBrush)
+        painter.setPen(mypen)
+        rect = option.rect
+        # draw right line
+        painter.drawLine(rect.x() + rect.width(), rect.y(), rect.x() + rect.width(), rect.y() + rect.height())
+        painter.restore()
+
         contentRect = qtcore.QRect(cellStartX, cellStartY, cellWidth, cellHeight)
+        painter.save()
+        if not index.parent().isValid():
+            if index.column() == 0:  # coin
+                super(QCoinTableDelegate, self).paint(painter, option, index)
+            elif index.column() == 1:  # balance
+                coinBalance = index.data(qt.DisplayRole)
+                balance = controls.floatToString(coinBalance.balance, 5)
+                if settings.mySettings.getTaxSetting('taxfreelimit'):
+                    taxFreeLimitYears = settings.mySettings.getTaxSetting('taxfreelimityears')
+                    freeBuyYears = '>' + str(taxFreeLimitYears) + 'y'
+                    buyAmountVal = coinBalance.tradeMatcher.getBuyAmountLeftTaxFree(taxFreeLimitYears)
+                    buyAmount = controls.floatToString(buyAmountVal, 4)
+                else:
+                    buyAmount = controls.floatToString(coinBalance.tradeMatcher.getBuyAmount(), 4)
+                    sellAmount = controls.floatToString(coinBalance.tradeMatcher.getSellAmount(), 4)
+                    firstBuyLeftDate = coinBalance.tradeMatcher.getFirstBuyLeftDate()
+                    if firstBuyLeftDate:
+                        now = datetime.datetime.now()
+                        yearDif = now.year - firstBuyLeftDate.year
+                        monthDif = now.month - firstBuyLeftDate.month
+                        dayDif = now.day - firstBuyLeftDate.day
+                        if monthDif < 0 or (monthDif == 0 and dayDif < 0):
+                            yearDif -= 1
+                        freeBuyYears = '>' + str(yearDif) + 'y'
 
-        if index.column() == 0:  # coin
-            super(QCoinTableDelegate, self).paint(painter, option, index)
-        elif index.column() == 1:  # balance
-            coinBalance = index.data(qt.DisplayRole)
-            balance = controls.floatToString(coinBalance.balance, 5)
-            if settings.mySettings.getTaxSetting('taxfreelimit'):
-                taxFreeLimitYears = settings.mySettings.getTaxSetting('taxfreelimityears')
-                freeBuyYears = '>' + str(taxFreeLimitYears) + 'y'
-                buyAmountVal = coinBalance.tradeMatcher.getBuyAmountLeftTaxFree(taxFreeLimitYears)
-                buyAmount = controls.floatToString(buyAmountVal, 4)
-            else:
-                buyAmount = controls.floatToString(coinBalance.tradeMatcher.getBuyAmount(), 4)
-                sellAmount = controls.floatToString(coinBalance.tradeMatcher.getSellAmount(), 4)
-                firstBuyLeftDate = coinBalance.tradeMatcher.getFirstBuyLeftDate()
-                if firstBuyLeftDate:
-                    now = datetime.datetime.now()
-                    yearDif = now.year - firstBuyLeftDate.year
-                    monthDif = now.month - firstBuyLeftDate.month
-                    dayDif = now.day - firstBuyLeftDate.day
-                    if monthDif < 0 or (monthDif == 0 and dayDif < 0):
-                        yearDif -= 1
-                    freeBuyYears = '>' + str(yearDif) + 'y'
+                defaultFont = painter.font()
+                # paint balance text
+                newFont = painter.font()
+                newFont.setPixelSize(15)
+                painter.setFont(newFont)
+                painter.drawText(contentRect, qt.AlignHCenter | qt.AlignTop, balance)
+                painter.setFont(defaultFont)
 
-            defaultFont = painter.font()
-            # paint balance text
-            newFont = painter.font()
-            newFont.setPixelSize(15)
-            painter.setFont(newFont)
-            painter.drawText(contentRect, qt.AlignHCenter | qt.AlignTop, balance)
-            painter.setFont(defaultFont)
-
-            if settings.mySettings.getTaxSetting('taxfreelimit'):
-                if buyAmountVal > 0:
-                    # paint buy that can be sold tax free
+                if settings.mySettings.getTaxSetting('taxfreelimit'):
+                    if buyAmountVal > 0:
+                        # paint buy that can be sold tax free
+                        buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
+                        buyBrush = qtgui.QBrush(buyColor)
+                        buyPen = painter.pen()
+                        buyPen.setBrush(buyBrush)
+                        painter.setPen(buyPen)
+                        painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
+                        painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
+                else:
+                    # paint buy
                     buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
                     buyBrush = qtgui.QBrush(buyColor)
                     buyPen = painter.pen()
                     buyPen.setBrush(buyBrush)
                     painter.setPen(buyPen)
                     painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
-                    painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
-            else:
-                # paint buy
-                buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
-                buyBrush = qtgui.QBrush(buyColor)
-                buyPen = painter.pen()
-                buyPen.setBrush(buyBrush)
-                painter.setPen(buyPen)
-                painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
-                if firstBuyLeftDate:
-                    painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
+                    if firstBuyLeftDate:
+                        painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
 
-                # paint sell
-                sellColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
-                sellBrush = qtgui.QBrush(sellColor)
-                sellPen = painter.pen()
-                sellPen.setBrush(sellBrush)
-                painter.setPen(sellPen)
-                painter.drawText(contentRect, qt.AlignRight | qt.AlignBottom, sellAmount)
+                    # paint sell
+                    sellColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
+                    sellBrush = qtgui.QBrush(sellColor)
+                    sellPen = painter.pen()
+                    sellPen.setBrush(sellBrush)
+                    painter.setPen(sellPen)
+                    painter.drawText(contentRect, qt.AlignRight | qt.AlignBottom, sellAmount)
 
-        elif index.column() == 2:
-            profit = index.data(qt.DisplayRole)
-            key = settings.mySettings['currency']['defaultreportcurrency']
-            # for key in profit:
-            # draw profit
-            if profit[key] >= 0:
-                drawColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
-            else:
-                drawColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
-            pen = painter.pen()
-            pen.setBrush(qtgui.QBrush(drawColor))
-            painter.setPen(pen)
-            defaultFont = painter.font()
-            newFont = painter.font()
-            newFont.setPixelSize(14)
-            painter.setFont(newFont)
-            profitString = controls.floatToString(profit[key], 4)
-            painter.drawText(contentRect, qt.AlignHCenter | qt.AlignVCenter, profitString)
-
-        elif index.column() >= index.model().sourceModel().firstValueColumn:
-            coinBalance, key = index.data(qt.DisplayRole)
-            boughtValue = coinBalance.initialValue[key]
-            boughtPrice = coinBalance.getInitialPrice()[key]
-            currentValue = coinBalance.currentValue[key]
-            currentPrice = coinBalance.getCurrentPrice()[key]
-            boughtValueStr = (controls.floatToString(boughtValue, 4))
-            boughtPriceStr = (controls.floatToString(boughtPrice, 4) + '/p')
-            currentValueStr = (controls.floatToString(currentValue, 4))
-            currentPriceStr = (controls.floatToString(currentPrice, 4) + '/p')
-            if boughtPrice == 0:
-                gain = 0
-            else:
-                gain = (currentPrice / boughtPrice - 1) * 100
-            gainStr = ("%.2f%%" % (gain))
-            gainDay = coinBalance.change24h[key]
-            gainDayStr = ("%.2f%%/24h" % (gainDay))
-
-            positivColor = style.myStyle.getQColor('POSITIV')
-            negativColor = style.myStyle.getQColor('NEGATIV')
-            neutralColor = style.myStyle.getQColor('TEXT_NORMAL')
-
-            def drawText(alignHorz, alignVert, fontSize, color, text):
-                newFont = painter.font()
-                newFont.setPixelSize(fontSize)
-                painter.setFont(newFont)
+            elif index.column() == 2:
+                profit = index.data(qt.DisplayRole)
+                key = settings.mySettings['currency']['defaultreportcurrency']
+                # for key in profit:
+                # draw profit
+                if profit[key] >= 0:
+                    drawColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
+                else:
+                    drawColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
                 pen = painter.pen()
-                pen.setColor(color)
+                pen.setBrush(qtgui.QBrush(drawColor))
                 painter.setPen(pen)
-                painter.drawText(contentRect, alignHorz | alignVert, text)
+                defaultFont = painter.font()
+                newFont = painter.font()
+                newFont.setPixelSize(14)
+                painter.setFont(newFont)
+                profitString = controls.floatToString(profit[key], 4)
+                painter.drawText(contentRect, qt.AlignHCenter | qt.AlignVCenter, profitString)
 
-            if contentRect.width() >= 200:  # draw all
-                drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, boughtValueStr)
-                drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, boughtPriceStr)
-                if gain >= 0:
-                    drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentValueStr)
-                    drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, currentPriceStr)
-                    drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
+            elif index.column() >= index.model().sourceModel().firstValueColumn:
+                coinBalance, key = index.data(qt.DisplayRole)
+                boughtValue = coinBalance.initialValue[key]
+                boughtPrice = coinBalance.getInitialPrice()[key]
+                currentValue = coinBalance.getCurrentValue()[key]
+                currentPrice = coinBalance.getCurrentPrice()[key]
+                boughtValueStr = (controls.floatToString(boughtValue, 4))
+                boughtPriceStr = (controls.floatToString(boughtPrice, 4) + '/p')
+                currentValueStr = (controls.floatToString(currentValue, 4))
+                currentPriceStr = (controls.floatToString(currentPrice, 4) + '/p')
+                if boughtPrice == 0:
+                    gain = 0
                 else:
-                    drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentValueStr)
-                    drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, currentPriceStr)
-                    drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
-                if gainDay >= 0:
-                    drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
-                else:
-                    drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
-                self.valueColumnWidthChanged.emit(3)
-            elif contentRect.width() >= 110:  # skip current value and price
-                if gain >= 0:
-                    drawText(qt.AlignLeft, qt.AlignTop, 14, positivColor, currentValueStr)
-                    drawText(qt.AlignLeft, qt.AlignBottom, 12, positivColor, currentPriceStr)
-                    drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
-                else:
-                    drawText(qt.AlignLeft, qt.AlignTop, 14, negativColor, currentValueStr)
-                    drawText(qt.AlignLeft, qt.AlignBottom, 12, negativColor, currentPriceStr)
-                    drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
-                if gainDay >= 0:
-                    drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
-                else:
-                    drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
-                self.valueColumnWidthChanged.emit(2)
-            else:  # draw value and daygain
-                if gain >= 0:
-                    drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
-                else:
-                    drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
-                if gainDay >= 0:
-                    drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, gainDayStr)
-                else:
-                    drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
-                self.valueColumnWidthChanged.emit(1)
+                    gain = (currentPrice / boughtPrice - 1) * 100
+                gainStr = ("%.2f%%" % (gain))
+                gainDay = coinBalance.change24h[key]
+                gainDayStr = ("%.2f%%/24h" % (gainDay))
+
+                positivColor = style.myStyle.getQColor('POSITIV')
+                negativColor = style.myStyle.getQColor('NEGATIV')
+                neutralColor = style.myStyle.getQColor('TEXT_NORMAL')
+
+                def drawText(alignHorz, alignVert, fontSize, color, text):
+                    newFont = painter.font()
+                    newFont.setPixelSize(fontSize)
+                    painter.setFont(newFont)
+                    pen = painter.pen()
+                    pen.setColor(color)
+                    painter.setPen(pen)
+                    painter.drawText(contentRect, alignHorz | alignVert, text)
+
+                if contentRect.width() >= 200:  # draw all
+                    drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, boughtValueStr)
+                    drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, boughtPriceStr)
+                    if gain > 0:
+                        drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentValueStr)
+                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, currentPriceStr)
+                        drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
+                    elif gain < 0:
+                        drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentValueStr)
+                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, currentPriceStr)
+                        drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                    else:
+                        drawText(qt.AlignHCenter, qt.AlignTop, 14, neutralColor, currentValueStr)
+                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, neutralColor, currentPriceStr)
+                        drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
+                    if gainDay >= 0:
+                        drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
+                    else:
+                        drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
+                    self.valueColumnWidthChanged.emit(3)
+                elif contentRect.width() >= 110:  # skip current value and price
+                    if gain > 0:
+                        drawText(qt.AlignLeft, qt.AlignTop, 14, positivColor, currentValueStr)
+                        drawText(qt.AlignLeft, qt.AlignBottom, 12, positivColor, currentPriceStr)
+                        drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
+                    elif gain < 0:
+                        drawText(qt.AlignLeft, qt.AlignTop, 14, negativColor, currentValueStr)
+                        drawText(qt.AlignLeft, qt.AlignBottom, 12, negativColor, currentPriceStr)
+                        drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                    else:
+                        drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, currentValueStr)
+                        drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, currentPriceStr)
+                        drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
+                    if gainDay >= 0:
+                        drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
+                    else:
+                        drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
+                    self.valueColumnWidthChanged.emit(2)
+                else:  # draw value and daygain
+                    # if gain > 0:
+                    #     drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
+                    # elif gain < 0:
+                    #     drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
+                    # else:
+                    #     drawText(qt.AlignHCenter, qt.AlignTop, 14, neutralColor, currentPriceStr)
+                    if gainDay >= 0:
+                        drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
+                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, gainDayStr)
+                    else:
+                        drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
+                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
+                    self.valueColumnWidthChanged.emit(1)
 
         painter.restore()
 
-    # def createEditor(self, parent, option, index):
-    #     # return QCoinBalanceTableWidgetItem(core.CoinBalance(), parent=parent)
-    #     pass
+    def createEditor(self, parent, option, index):
+        if int(index.flags()) & qt.ItemIsEditable:
+            textedit = qtwidgets.QTextEdit(parent)
+            textedit.setPlaceholderText('notes')
+            self.updateEditorGeometry(textedit, option, index)
+            return textedit
+        return None
 
-    # def setEditorData(self, editor, index):
-    #     # editor.setText(core.CoinBalance())
-    #     pass
+    def setEditorData(self, editor, index):
+        editor.setText(index.data())
 
-    # def updateEditorGeometry(self, editor, option, index):
-    #     pass
+    def updateEditorGeometry(self, editor, option, index):
+        if index.parent().isValid():  # child level
+            size = self.sizeHint(option, index)
+            rect = qtcore.QRect(editor.parent().x(), option.rect.y() + 5, editor.parent().width(), size.height() - 10)
+            editor.setGeometry(rect)
+        else:
+            raise TypeError
 
-    # def setModelData(self, editor, model, index):
-    #     pass
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.toPlainText(), qt.EditRole)
+        pass
 
     def sizeHint(self, option, index):
-        if index.column() == 0:
-            return qtcore.QSize(50, 40)
-        elif index.column() == 1:
-            return qtcore.QSize(100, 40)
-        elif index.column() >= 2:
-            return qtcore.QSize(200, 40)
+        if index.parent().isValid():  # child level
+            size = super(QCoinTableDelegate, self).sizeHint(option, index)
+            return qtcore.QSize(size.width(), 200)
+        else:
+            if index.column() == 0:
+                return qtcore.QSize(50, 40)
+            elif index.column() == 1:
+                return qtcore.QSize(100, 40)
+            elif index.column() >= 2:
+                return qtcore.QSize(200, 40)
+        return qtcore.QSize()
 
 
 class QArrowPainterPath(qtgui.QPainterPath):
@@ -477,6 +677,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.realizedProfitLabel = controls.StyledLabelCont(self, 'realized profit')
         # profit table
         self.profitTable = qtwidgets.QTableWidget()
+        self.profitTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
         self.profitTable.setColumnCount(1)
         self.profitTable.horizontalHeader().setVisible(False)
         self.profitTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
@@ -484,13 +685,14 @@ class PortfolioOverview(qtwidgets.QWidget):
         # paid fees
         self.paidFeesLabel = controls.StyledLabelCont(self, 'fees paid')
         self.feeTable = qtwidgets.QTableWidget()
+        self.feeTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
         self.feeTable.setColumnCount(1)
         self.feeTable.horizontalHeader().setVisible(False)
         self.feeTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
         self.paidFeesLabel.addWidget(self.feeTable)
 
 
-        # tax value char
+        # tax value chart
         self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
                                                           'crypto performance')
         self.currentValueChart.setHeadingToolTip('this chart shows\nthe performance of\n' +
@@ -669,21 +871,22 @@ class PortfolioOverview(qtwidgets.QWidget):
             if coin.isFiat():  # calculate invested and returned fiat
                 for trade in coin.trades:
                     if trade.amount < 0:
-                        totalInvestFiat.add(trade.value.mult(-1))
+                        totalInvestFiat.add(trade.getValue().mult(-1))
                     else:
-                        totalReturnFiat.add(trade.value)
+                        totalReturnFiat.add(trade.getValue())
             else:  # calculate value of portfolio
                 currentInvestNoFiat.add(coin.initialValue)
-                hypotheticalCoinValueNoFiat.add(coin.currentValue)
+                hypotheticalCoinValueNoFiat.add(coin.getCurrentValue())
                 realizedProfit.add(coin.tradeMatcher.getTotalProfit())
+            # calc fees per year
             for trade in coin.trades:
                 if trade.tradeType == "fee":
-                    paidFees.add(trade.value)
+                    paidFees.add(trade.getValue())
                     for year in range(startYear, stopYear + 1):
                         startDate = datetime.date(year=year, month=1, day=1)
                         endDate = datetime.date(year=year, month=12, day=31)
                         if trade.date.date() >= startDate and trade.date.date() <= endDate:
-                            paidFeesPerYear[str(year)].add(trade.value)
+                            paidFeesPerYear[str(year)].add(trade.getValue())
 
             realizedProfitPerYearCoinList[coin.coinname] = (coin.tradeMatcher.getTimeDeltaProfit(
                     datetime.date(year=2017, month=1, day=1), datetime.date(year=2019, month=12, day=31),
@@ -693,11 +896,9 @@ class PortfolioOverview(qtwidgets.QWidget):
                 endDate = datetime.date(year=year, month=12, day=31)
                 realizedProfitPerYear[str(year)].add(coin.tradeMatcher.getTimeDeltaProfit(startDate, endDate,
                     taxFreeTimeDelta=settings.mySettings.getTaxSetting('taxfreelimityears')))
-                if trade.tradeType == "fee" and trade.date.date() >= startDate and trade.date.date() <= endDate:
-                    paidFeesPerYear[str(year)].add(trade.value)
             # fiat and coins
             # currentInvestAll.add(coin.initialValue)
-            # hypotheticalValueAll.add(coin.currentValue)
+            # hypotheticalValueAll.add(coin.getCurrentValue())
             # realizedProfitAll.add(coin.tradeMatcher.getTotalProfit())
 
         realizedProfitPerYearCoinListSum = sum([realizedProfitPerYearCoinList[key] for key in realizedProfitPerYearCoinList])
@@ -831,19 +1032,20 @@ class PortfolioOverview(qtwidgets.QWidget):
 
         # pie chart
         pieSeries = qtchart.QPieSeries()
-        sortedModelIndex = sorted(range(len(self.model)), key=lambda x: self.model.coins[x].currentValue[taxCoinName], reverse=True)
+        sortedModelIndex = sorted(range(len(self.model)),
+                                  key=lambda x: self.model.coins[x].getCurrentValue()[taxCoinName], reverse=True)
         otherssum = core.CoinValue()
         try:
-            topvalue = self.model.coins[sortedModelIndex[0]].currentValue[taxCoinName]
+            topvalue = self.model.coins[sortedModelIndex[0]].getCurrentValue()[taxCoinName]
         except IndexError:
             topvalue = 0
         for index in sortedModelIndex:
             coin = self.model.coins[index]
-            if coin.currentValue[taxCoinName] > topvalue/40 and \
-                    coin.currentValue[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/75):
-                pieSeries.append(coin.coinname, coin.currentValue[taxCoinName])
-            elif coin.currentValue[taxCoinName] > 0:
-                otherssum.add(coin.currentValue)
+            if coin.getCurrentValue()[taxCoinName] > topvalue/40 and \
+                    coin.getCurrentValue()[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/75):
+                pieSeries.append(coin.coinname, coin.getCurrentValue()[taxCoinName])
+            elif coin.getCurrentValue()[taxCoinName] > 0:
+                otherssum.add(coin.getCurrentValue())
         if otherssum[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/100):
             slice = pieSeries.append("others", otherssum[taxCoinName])
             slice.setLabelVisible()
@@ -875,3 +1077,61 @@ class PortfolioOverview(qtwidgets.QWidget):
         # todo: update ui layout and trigger value update
         pass
 
+
+# coin info file
+class QCoinInfoDatabase(configparser.ConfigParser):
+    def __init__(self, path=None, *args, **kwargs):
+        super(QCoinInfoDatabase, self).__init__(*args, **kwargs)
+
+        self.filePath = None
+        if path:
+            self.setPath(path)
+
+
+    def setPath(self, path):
+        self.filePath = os.path.join(path, 'coininfo.txt')
+        # init settings
+        if not os.path.isfile(self.filePath):
+            self.saveCoins()
+        else:
+            self.readCoins()
+            self.saveCoins()
+        return self
+
+    def saveCoins(self):
+        try:
+            with open(self.filePath, 'w') as coinfile:
+                self.write(coinfile)
+            logger.globalLogger.info('coins saved')
+            return True
+        except Exception as ex:
+            logger.globalLogger.error('error in saveCoins: ' + str(ex))
+            return False
+
+    def readCoins(self):
+        try:
+            self.read(self.filePath)
+            logger.globalLogger.info('coin info loaded')
+        except Exception as ex:
+            logger.globalLogger.error('coin info can not be loaded: ' + str(ex))
+
+    def setCoinInfo(self, coinList):
+        for coin in coinList:
+            if not coin.coinname in self:
+                self[coin.coinname] = {}
+            self[coin.coinname]['notes'] = coin.notes
+        self.saveCoins()
+
+    def updateCoinInfo(self, coinList):
+        for coin in coinList:
+            try:
+                coin.notes = self[coin.coinname]['notes']
+            except KeyError:
+                coin.notes = ""
+
+    def getCoins(self):
+        coins = []
+        for key in self:
+            if key != 'DEFAULT':
+                coins.append(key)
+        return coins
