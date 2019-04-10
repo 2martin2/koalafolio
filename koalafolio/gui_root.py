@@ -191,7 +191,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.logList = logger.QLogModel()
         self.settingsModel = settings.SettingsModel(self.settings)
         self.tradeList = ttable.QTradeTableModel(self.dataPath)
-        self.coinList = ptable.QPortfolioTableModel()
+        self.coinList = ptable.QPortfolioTableModel(self.dataPath)
 
 
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))

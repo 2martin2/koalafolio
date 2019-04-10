@@ -667,6 +667,7 @@ class CoinBalance:
         self.trades = []
         self.tradeMatcher = TradeMatcher(self)
         self.coinIcon = None
+        self.notes = ""
 
     def __lt__(self, other):
         return self.balance < other.balance
@@ -799,7 +800,7 @@ class CoinList:
     def __getitem__(self, key):
         return self.getCoinByName(key)
 
-    def isMember(self, coinname):
+    def hasMember(self, coinname):
         for coin in self.coins:
             if coin.coinname == coinname.upper():
                 return True

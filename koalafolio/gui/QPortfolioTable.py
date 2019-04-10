@@ -19,6 +19,8 @@ import koalafolio.gui.QThreads as threads
 import datetime
 import koalafolio.gui.QLogger as logger
 from PIL.ImageQt import ImageQt
+import os
+import configparser
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -44,11 +46,48 @@ class QPortfolioTableView(qtwidgets.QTableView):
         self.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
 
 
-# %% portfolio table model
-class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
+# %% portfolio coin container
+class QCoinContainer(qtcore.QAbstractTableModel, core.CoinList):
     coinAdded = qtcore.pyqtSignal([list])
     PriceUpdateRequest = qtcore.pyqtSignal([list])
 
+    def __init__(self, dataPath=None, *args, **kwargs):
+        super(QCoinContainer, self).__init__(*args, **kwargs)
+
+        self.dataPath = dataPath
+        self.coinDatabase = QCoinInfoDatabase(path=dataPath)
+        # self.coinAdded.connect(self.saveCoins)
+
+    def setPath(self, path):
+        self.dataPath = path
+        self.coinDatabase.setPath(path)
+
+    def restoreCoins(self):
+        if self.dataPath:
+            # try to restore data from previous session
+            coins = self.coinDatabase.getCoins()
+            for coin in coins:
+                if not self.hasMember(coin):
+                    self.addCoin(coin)
+        self.coinAdded.emit(self)
+
+    def saveCoins(self):
+        if self.dataPath:
+            if os.path.isfile(os.path.join(self.dataPath, 'Coins.csv')):
+                if os.path.isfile(os.path.join(self.dataPath, 'Coins.csv.bak')):
+                    try:  # delete old backup
+                        os.remove(os.path.join(self.dataPath, 'Coins.csv.bak'))
+                    except Exception as ex:
+                        print('error deleting coin info backup in QCoinContainer: ' + str(ex))
+                try:  # create backup
+                    os.rename(os.path.join(self.dataPath, 'Coins.csv'),
+                              os.path.join(self.dataPath, 'Coins.csv.bak'))
+                except Exception as ex:
+                    print('error creating coin info backup in QCoinContainer: ' + str(ex))
+            self.coinDatabase.setCoinInfo(self)
+
+# %% portfolio table model
+class QPortfolioTableModel(QCoinContainer):
     def __init__(self, *args, **kwargs):
         super(QPortfolioTableModel, self).__init__(*args, **kwargs)
 
@@ -165,6 +204,7 @@ class QPortfolioTableModel(qtcore.QAbstractTableModel, core.CoinList):
         #  load prices and icons of all coins (not necessary but faster)
         # todo: only pass new coins
         self.coinAdded.emit(self.getCoinNames())
+        self.saveCoins()
 
     def triggerPriceUpdate(self):
         self.PriceUpdateRequest.emit(self.getCoinNames())
@@ -923,3 +963,59 @@ class PortfolioOverview(qtwidgets.QWidget):
         # todo: update ui layout and trigger value update
         pass
 
+
+# coin info file
+class QCoinInfoDatabase(configparser.ConfigParser):
+    def __init__(self, path=None, *args, **kwargs):
+        super(QCoinInfoDatabase, self).__init__(*args, **kwargs)
+
+        self.filePath = None
+        if path:
+            self.setPath(path)
+
+
+    def setPath(self, path):
+        self.filePath = os.path.join(path, 'coininfo.txt')
+        # init settings
+        if not os.path.isfile(self.filePath):
+            self.saveCoins()
+        else:
+            self.readCoins()
+            self.saveCoins()
+        return self
+
+    def saveCoins(self):
+        try:
+            with open(self.filePath, 'w') as coinfile:
+                self.write(coinfile)
+            logger.globalLogger.info('coins saved')
+            return True
+        except Exception as ex:
+            logger.globalLogger.error('error in saveCoins: ' + str(ex))
+            return False
+
+    def readCoins(self):
+        try:
+            self.read(self.filePath)
+            logger.globalLogger.info('coin info loaded')
+        except Exception as ex:
+            logger.globalLogger.error('coin info can not be loaded: ' + str(ex))
+
+    def setCoinInfo(self, coinList):
+        for coin in coinList:
+            if not coin.coinname in self:
+                self[coin.coinname] = {}
+            self[coin.coinname]['notes'] = coin.notes
+        self.saveCoins()
+
+    def updateCoinInfo(self, coinList):
+        self.readCoins()
+        for coin in coinList:
+            try:
+                coin.notes = self[coin.coinname]['notes']
+            except KeyError:
+                coin.notes = ""
+
+    def getCoins(self):
+        self.readCoins()
+        return [self]
