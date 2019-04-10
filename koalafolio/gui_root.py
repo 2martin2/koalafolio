@@ -71,7 +71,9 @@ class PortfolioApp(qtwidgets.QWidget):
 
         # start the background threads
         self.startThreads()
+        self.coinList.restoreCoins()
         self.tradeList.restoreTrades()
+
 
         self.logger.info('application initialized')
 

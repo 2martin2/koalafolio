@@ -162,32 +162,6 @@ class QSettings(settings.Settings):
 
 mySettings = QSettings()
 
-class SettingsIndex(qtcore.QModelIndex):
-    def __init__(self, model, row, column, key, parent=qtcore.QModelIndex(), *args, **kwargs):
-        super(SettingsIndex, self).__init__(*args, **kwargs)
-        self.myParent = parent
-        self.name = key
-        self.myRow = row
-        self.myColumn = column
-        self.myModel = model
-        self.myIsValid = True
-
-    def column(self):
-        return self.myColumn
-
-    def row(self):
-        return self.myRow
-
-    def model(self):
-        return self.myModel
-
-    def isValid(self):
-        return self.myIsValid
-
-    def parent(self):
-        return self.myParent()
-
-
 class SettingsModelItem():
     def __init__(self, key, parentkey, parent):
         self.key = key
@@ -316,7 +290,6 @@ class SettingsDelegate(qtwidgets.QStyledItemDelegate):
         editor.setGeometry(option.rect)
 
     def setModelData(self, editor, model, index):
-
         model.setData(index, editor.text(), qt.EditRole)
 
     def sizeHint(self, option, index):
