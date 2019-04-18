@@ -358,14 +358,18 @@ class QTradeTableModel(QTradeContainer):
         super(QTradeTableModel, self).__init__(*args, **kwargs)
 
         # link empty tradeList
-        self.keys = [*core.CoinValue().value]
-        self.header = ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange'] + ['value ' + key for key in
-                                                                                            self.keys]
-        self.headerLen = len(self.header)
+        self.initDisplayCurrencies()
+
         self.tradesLen = len(self.trades)
         self.showPrices(True)
         self.firstValueColumn = 7
         self.columnNotEditable = [0, 1, 3, 4]
+
+    def initDisplayCurrencies(self):
+        self.keys = [*core.CoinValue().value]
+        self.header = ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange'] + ['value ' + key for key in
+                                                                                            self.keys]
+        self.headerLen = len(self.header)
 
     def rowCount(self, parent):
         return self.tradesLen
@@ -517,6 +521,12 @@ class QTradeTableModel(QTradeContainer):
             RowStartIndex = self.index(0, self.firstValueColumn)
             RowEndIndex = self.index(len(self.trades) - 1, len(self.header) - 1)
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
+
+    def updateDisplayCurrencies(self, keys):
+        self.initDisplayCurrencies()
+        self.clearTrades()
+        self.restoreTrades()
+
 
 
 # %% import Trade table model

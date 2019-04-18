@@ -31,14 +31,6 @@ class QPortfolioTableView(qtwidgets.QTreeView):
         super(QPortfolioTableView, self).__init__(parent=parent, *args, **kwargs)
 
         self.setModel(QPortfolioTableModel())
-        self.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Stretch)
-        self.horizontalHeader().setSectionResizeMode(0, qtwidgets.QHeaderView.Interactive)
-        self.horizontalHeader().setSectionResizeMode(1, qtwidgets.QHeaderView.Interactive)
-        self.setColumnWidth(1, 160)
-        self.horizontalHeader().setSectionResizeMode(2, qtwidgets.QHeaderView.Interactive)
-        self.setColumnWidth(2, 100)
-        # self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
-        # self.verticalHeader().setVisible(False)
         self.setItemDelegate(QCoinTableDelegate())
         # self.setRootIsDecorated(False)
 
@@ -51,6 +43,24 @@ class QPortfolioTableView(qtwidgets.QTreeView):
         self.expanded.connect(self.expandedCallback)
 
         self.verticalScrollBar().setSingleStep(1)
+
+    def initView(self):
+        self.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(0, qtwidgets.QHeaderView.Interactive)
+        self.horizontalHeader().setSectionResizeMode(1, qtwidgets.QHeaderView.Interactive)
+        self.setColumnWidth(1, 160)
+        self.horizontalHeader().setSectionResizeMode(2, qtwidgets.QHeaderView.Interactive)
+        self.setColumnWidth(2, 100)
+        # self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
+        # self.verticalHeader().setVisible(False)
+
+    def reset(self):
+        super(QPortfolioTableView, self).reset()
+        self.initView()
+
+    def setModel(self, model):
+        super(QPortfolioTableView, self).setModel(model)
+        self.initView()
 
     def horizontalHeader(self):
         return self.header()
@@ -147,14 +157,17 @@ class QPortfolioTableModel(QCoinContainer):
         super(QPortfolioTableModel, self).__init__(*args, **kwargs)
 
         # init keys and header
-        self.keys = [*core.CoinValue().value]
-        self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] +\
-                      ['performance ' + key for key in self.keys]
+        self.initDisplayCurrencies()
         self.firstValueColumn = 3
         self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' +\
                                   'invest price\t\tcurrent price\t\tchange/24h'
 
         self.parents = []
+
+    def initDisplayCurrencies(self):
+        self.keys = [*core.CoinValue().value]
+        self.header = ['coin', 'balance', 'realized ' + settings.mySettings.reportCurrency()] + \
+                      ['performance ' + key for key in self.keys]
 
 
     def rowCount(self, parent):
@@ -235,16 +248,16 @@ class QPortfolioTableModel(QCoinContainer):
         if cols == 3:
             self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' + \
                                         'invest price\t\tcurrent price\t\tchange/24h'
-            self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + \
+            self.header = ['coin', 'balance', 'realized ' + settings.mySettings.reportCurrency()] + \
                           ['performance ' + key for key in self.keys]
         elif cols == 2:
             self.valueHeaderToolTip = 'current value\t\tperformance\n' + \
                                       'current price\t\tchange/24h'
-            self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + \
+            self.header = ['coin', 'balance', 'realized ' + settings.mySettings.reportCurrency()] + \
                           ['performance ' + key for key in self.keys]
         else:
             self.valueHeaderToolTip = 'current price\nchange/24h'
-            self.header = ['coin', 'balance', 'realized ' + settings.mySettings['currency']['defaultreportcurrency']] + \
+            self.header = ['coin', 'balance', 'realized ' + settings.mySettings.reportCurrency()] + \
                           ['price ' + key for key in self.keys]
 
     def flags(self, index):
@@ -316,6 +329,17 @@ class QPortfolioTableModel(QCoinContainer):
         super(QPortfolioTableModel, self).deleteTrades(trades)
         self.endResetModel()
 
+    def clearCoins(self):
+        self.beginResetModel()
+        self.coins = []
+        self.parents = []
+        self.endResetModel()
+
+    def updateDisplayCurrencies(self, keys):
+        self.initDisplayCurrencies()
+        self.clearCoins()
+        self.restoreCoins()
+
 
 
 class QTableSortingModel(qtcore.QSortFilterProxyModel):
@@ -333,8 +357,8 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
     def lessThan(self, index1, index2):
         column = index1.column()
         if column == 2:
-            profit1 = index1.data()[settings.mySettings['currency']['defaultreportcurrency']]
-            profit2 = index2.data()[settings.mySettings['currency']['defaultreportcurrency']]
+            profit1 = index1.data()[settings.mySettings.reportCurrency()]
+            profit2 = index2.data()[settings.mySettings.reportCurrency()]
             return profit1 < profit2
         if column >= self.sourceModel().firstValueColumn:
             coinBalance1, key1 = index1.data()
@@ -438,7 +462,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
             elif index.column() == 2:
                 profit = index.data(qt.DisplayRole)
-                key = settings.mySettings['currency']['defaultreportcurrency']
+                key = settings.mySettings.reportCurrency()
                 # for key in profit:
                 # draw profit
                 if profit[key] >= 0:
@@ -824,7 +848,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         # update new values
 
         # todo: display all displayCurrencies
-        taxCoinName = settings.mySettings['currency']['defaultReportCurrency']
+        taxCoinName = settings.mySettings.reportCurrency()
         numberOfDecimals = 4
 
         # initialize local vars

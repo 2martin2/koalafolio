@@ -59,6 +59,16 @@ def initCoinListComplete(data=None):
     else:
         return pandas.DataFrame(columns=myColumns)
 
+# for testing
+class myDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(myDict, self).__init__(self, *args, **kwargs)
+
+    def __getitem__(self, key):
+        return super(myDict, self).__getitem__(key)
+
+    def __setitem__(self, key, value):
+        super(myDict, self).__setitem__(key, value)
 
 # %% CoinValue
 class CoinValue():
@@ -235,11 +245,10 @@ class Trade:
 
     def toList(self):
         return [self.tradeID, self.date, self.tradeType, self.coin, self.amount] + \
-               [self.getValue().value[key] for key in self.getValue().value]
+               [self.getValue().value[key] for key in CoinValue().value]
 
     def getHeaderComplete(self):
-        myCoinValue = CoinValue()
-        return ['id', 'date', 'type', 'coin', 'amount'] + ['value' + key for key in myCoinValue.value] + \
+        return ['id', 'date', 'type', 'coin', 'amount'] + ['value' + key for key in CoinValue().value] + \
                ['valueLoaded', 'tradePartnerId', 'exchange', 'externId', 'wallet']
 
     def toListComplete(self):

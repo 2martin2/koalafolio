@@ -107,6 +107,16 @@ class Settings(configparser.ConfigParser):
     def setDisplayCurrencies(self, currencies):
         self['currency']['defaultDisplayCurrencies'] = ','.join(currencies)
 
+    def reportCurrency(self):
+        # report currency should be included in display currencies, otherwise prices are not available
+        if self['currency']['defaultReportCurrency'] in self.displayCurrencies():
+            return self['currency']['defaultReportCurrency']
+        return self.displayCurrencies()[0]
+
+    def setReportCurrency(self, cur):
+        if cur in self.displayCurrencies():
+            self['currency']['defaultReportCurrency'] = cur
+
     def fiatList(self):
         return self['currency']['isFiat'].split(',')
 

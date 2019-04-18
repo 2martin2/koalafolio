@@ -707,7 +707,7 @@ class ExportPage(Page):
         currencys = list(core.CoinValue())
         listModel.setStringList(currencys)
         self.currencyBox.setModel(listModel)
-        defaultCurrency = settings.mySettings['currency']['defaultReportCurrency']
+        defaultCurrency = settings.mySettings.reportCurrency()
         self.currencyBox.setCurrentIndex(currencys.index(defaultCurrency))
 
         # self.currencyLayout = qtwidgets.QHBoxLayout()

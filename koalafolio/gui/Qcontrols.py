@@ -326,7 +326,9 @@ class QFilterTableView(qtwidgets.QWidget):
         self.resetFilterButton.clicked.connect(self.clearFilter)
         self.resetFilterButton.move(0, 0)
 
+        self.filterBoxes = []
         self.initFilterBoxes()
+        self.proxyModel.modelReset.connect(self.initFilterBoxes)
 
         self.vertLayout = qtwidgets.QVBoxLayout(self)
         self.vertLayout.addWidget(self.filterLine)
@@ -347,6 +349,8 @@ class QFilterTableView(qtwidgets.QWidget):
             "QPushButton {border-image: url(./graphics/delete.png) " + str(margin) + " 0 " + str(margin) + " 0 stretch;}")
 
     def initFilterBoxes(self):
+        for filterBox in self.filterBoxes:
+            filterBox.setParent(None)
         self.filterBoxes = []
         for index in range(self.tableView.model().columnCount()):
             self.filterBoxes.append(qtwidgets.QLineEdit(self))
@@ -391,7 +395,6 @@ class QFilterTableView(qtwidgets.QWidget):
     def setModel(self, model):
         self.proxyModel.setSourceModel(model)
         self.initFilterBoxes()
-
 
     def filterColumns(self, text, col):
         self.tableView.model().setFilterByColumn(text, col)

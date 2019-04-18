@@ -174,6 +174,8 @@ class SettingsModelItem():
 
 # settings model
 class SettingsModel(qtcore.QAbstractItemModel):
+    displayCurrenciesChanged = qtcore.pyqtSignal([list])
+
     def __init__(self, settings, *args, **kwargs):
         super(SettingsModel, self).__init__(*args, **kwargs)
         self.settings = settings
@@ -244,10 +246,15 @@ class SettingsModel(qtcore.QAbstractItemModel):
                 item = self.getItemFromIndex(index)
                 self.settings[item.parentKey][item.key] = value
                 self.dataChanged.emit(index, index)
+                self.itemChanged(item)
                 return True
             except:
                 return False
         return False
+
+    def itemChanged(self, item):
+        if item.parentKey.lower() == 'currency' and item.key.lower() == 'defaultdisplaycurrencies':
+            self.displayCurrenciesChanged.emit(self.settings.displayCurrencies())
 
     def flags(self, index):
         column = index.column()
