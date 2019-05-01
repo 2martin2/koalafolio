@@ -81,6 +81,7 @@ class PortfolioPage(Page):
         # self.coinTableView.clicked.connect(self.tableClicked)
 
         self.coinTableView.show()
+        self.controller.coinList.triggerViewReset.connect(self.createNewView)
 
         # layout
         self.verticalLayout = qtwidgets.QVBoxLayout()
@@ -100,6 +101,23 @@ class PortfolioPage(Page):
         gui['portfolioFilterDir'] = str(self.coinProxyModel.sortedDir)
         gui['performanceChartIndex'] = self.coinDataFrame.perfChartCont.chartIndex
         return gui
+
+    def createNewView(self):
+        self.verticalLayout.removeWidget(self.coinTableView)
+        self.coinTableView.deleteLater()
+
+        self.coinTableView = ptable.QPortfolioTableView(self)
+        self.coinTableView.setModel(self.coinProxyModel)
+        self.coinTableView.itemDelegate().valueColumnWidthChanged.connect(
+            lambda cols: self.controller.coinList.changeValueColumnWidth(cols))
+        guiSettings = settings.mySettings.getGuiSettings()
+        self.coinTableView.sortByColumn(guiSettings['portfolioFilterRow'], guiSettings['portfolioFilterDir'])
+
+        self.coinTableView.show()
+
+        self.verticalLayout.addWidget(self.coinTableView)
+
+
 
     # def tableClicked(self, index):
     #     if index.column() == 0:

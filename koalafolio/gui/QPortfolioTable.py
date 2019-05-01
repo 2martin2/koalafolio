@@ -30,7 +30,6 @@ class QPortfolioTableView(qtwidgets.QTreeView):
     def __init__(self, parent, *args, **kwargs):
         super(QPortfolioTableView, self).__init__(parent=parent, *args, **kwargs)
 
-        self.setModel(QPortfolioTableModel())
         self.setItemDelegate(QCoinTableDelegate())
         # self.setRootIsDecorated(False)
 
@@ -153,6 +152,8 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
 
 # %% portfolio table model
 class QPortfolioTableModel(QCoinContainer):
+    triggerViewReset = qtcore.pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super(QPortfolioTableModel, self).__init__(*args, **kwargs)
 
@@ -339,6 +340,7 @@ class QPortfolioTableModel(QCoinContainer):
         self.initDisplayCurrencies()
         self.clearCoins()
         self.restoreCoins()
+        self.triggerViewReset.emit()
 
 
 
