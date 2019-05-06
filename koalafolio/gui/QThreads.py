@@ -11,6 +11,9 @@ import koalafolio.gui.QSettings as settings
 import koalafolio.web.cryptocompareApi as ccapi
 import koalafolio.PcpCore.core as core
 from PIL.ImageQt import ImageQt
+import koalafolio.gui.QLogger as logger
+
+localLogger = logger.globalLogger
 
 
 class CryptoCompare(qtcore.QObject):
@@ -33,13 +36,17 @@ class CryptoCompare(qtcore.QObject):
     def loadCoinIcons(self, coins):
         if coins:
             icons = ccapi.getIcons(coins)
-            for key in icons:  # convert images to QIcon
-                if icons[key]:
-                    im = icons[key].convert("RGBA")
-                    qim = ImageQt(im)
-                    qpix = qtgui.QPixmap.fromImage(qim)
-                    icons[key] = qtgui.QIcon(qpix)
-            self.coinIconsLoaded.emit(icons)
+            qicons = {}
+            for key in coins:  # convert images to QIcon
+                try:
+                    if icons[key]:
+                        im = icons[key].convert("RGBA")
+                        qim = ImageQt(im)
+                        qpix = qtgui.QPixmap.fromImage(qim)
+                        qicons[key] = qtgui.QIcon(qpix)
+                except:
+                    localLogger.warning('no icon available for ' + key)  # ignore invalid key
+            self.coinIconsLoaded.emit(qicons)
 
     def loadHistoricalPrices(self, tradeList):
         newTrades = False
