@@ -158,7 +158,7 @@ class QTradeTableView(qtwidgets.QTableView):
         self.setModel(QTradeTableModel())
         self.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Stretch)
         self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Fixed)
-        self.verticalHeader().setDefaultSectionSize(25)
+        self.verticalHeader().setDefaultSectionSize(30)
         self.setItemDelegate(QTradeTableDelegate())
 
         self.setSortingEnabled(True)
