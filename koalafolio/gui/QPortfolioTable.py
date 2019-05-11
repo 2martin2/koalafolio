@@ -700,22 +700,24 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.horzLayout.setContentsMargins(0, 0, 0, 0)
 
         # realized profit (relevant for tax)
-        self.realizedProfitLabel = controls.StyledLabelCont(self, 'realized profit')
+        # self.realizedProfitLabelCont = controls.StyledLabelCont(self, 'realized profit')
+        # self.realizedProfitLabelCont.setFixedWidth(200)
         # profit table
         self.profitTable = qtwidgets.QTableWidget()
         self.profitTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
-        self.profitTable.setColumnCount(1)
-        self.profitTable.horizontalHeader().setVisible(False)
+        self.profitTable.setColumnCount(2)
+        # self.profitTable.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
+        self.profitTable.horizontalHeader().setVisible(True)
         self.profitTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
-        self.realizedProfitLabel.addWidget(self.profitTable)
+        # self.realizedProfitLabelCont.addWidget(self.profitTable)
         # paid fees
-        self.paidFeesLabel = controls.StyledLabelCont(self, 'fees paid')
-        self.feeTable = qtwidgets.QTableWidget()
-        self.feeTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
-        self.feeTable.setColumnCount(1)
-        self.feeTable.horizontalHeader().setVisible(False)
-        self.feeTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
-        self.paidFeesLabel.addWidget(self.feeTable)
+        # self.paidFeesLabel = controls.StyledLabelCont(self, 'fees paid')
+        # self.feeTable = qtwidgets.QTableWidget()
+        # self.feeTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
+        # self.feeTable.setColumnCount(1)
+        # self.feeTable.horizontalHeader().setVisible(False)
+        # self.feeTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
+        # self.paidFeesLabel.addWidget(self.feeTable)
 
 
         # tax value chart
@@ -800,21 +802,21 @@ class PortfolioOverview(qtwidgets.QWidget):
 
 
         # labels
-        profitLabels = [self.realizedProfitLabel]
-        feeLabels = [self.paidFeesLabel]
+        profitLabels = [self.profitTable]
+        # feeLabels = [self.paidFeesLabel]
         # otherLabels = [None, self.paidFeesLabel]
-        labels = [None, profitLabels, feeLabels, None]
+        labels = [None, profitLabels, None]
 
         # self.labelGridLayout = qtwidgets.QGridLayout()
         # self.labelGridLayout.setContentsMargins(0, 0, 0, 0)
-        self.horzLayout.setContentsMargins(0, 0, 0, 0)
         self.labelVertLayouts = []
         row = 0
         column = 0
         for columnLabels in labels:
             if columnLabels:
                 self.labelVertLayouts.append(qtwidgets.QVBoxLayout())
-                self.labelVertLayouts[-1].setContentsMargins(0, 0, 0, 0)
+                self.labelVertLayouts[-1].setContentsMargins(10, 10, 10, 10)
+                # self.labelVertLayouts[-1].addStretch()
                 for rowLabel in columnLabels:
                     if rowLabel:
                         # self.labelGridLayout.addWidget(rowLabel, row, column)
@@ -1028,14 +1030,17 @@ class PortfolioOverview(qtwidgets.QWidget):
             years.append(year)
         self.profitTable.setRowCount(len(years))
         self.profitTable.setVerticalHeaderLabels(years)
+        self.profitTable.setHorizontalHeaderLabels(["profit", "fees"])
         for year, row in zip(realizedProfitPerYear, range(len(realizedProfitPerYear))):
             self.profitTable.setItem(row, 0, qtwidgets.QTableWidgetItem(controls.floatToString(realizedProfitPerYear[year][taxCoinName], 5)))
+            self.profitTable.setItem(row, 1, qtwidgets.QTableWidgetItem(
+                controls.floatToString(paidFeesPerYear[year][taxCoinName], 5)))
 
 
-        self.feeTable.setRowCount(len(years))
-        self.feeTable.setVerticalHeaderLabels(years)
-        for year, row in zip(paidFeesPerYear, range(len(paidFeesPerYear))):
-            self.feeTable.setItem(row, 0, qtwidgets.QTableWidgetItem(controls.floatToString(paidFeesPerYear[year][taxCoinName], 5)))
+        # self.feeTable.setRowCount(len(years))
+        # self.feeTable.setVerticalHeaderLabels(years)
+        # for year, row in zip(paidFeesPerYear, range(len(paidFeesPerYear))):
+        #     self.feeTable.setItem(row, 0, qtwidgets.QTableWidgetItem(controls.floatToString(paidFeesPerYear[year][taxCoinName], 5)))
 
         # profit chart
         # dicts = []
