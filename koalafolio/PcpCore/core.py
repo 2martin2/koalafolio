@@ -734,7 +734,7 @@ class CoinBalance:
             if trade in self.trades:
                 self.trades.remove(trade)
             # update balance (use current price)
-            self.balance -= trade.amount
+            self.updateBalance()
             return self
         else:
             return None
@@ -856,10 +856,10 @@ class CoinList:
         for trade in trades:
             self.removeTrade(trade)
         # remove all empty coins
-        indexes = [index for index in range(len(self.coins)) if not self.coins[index].trades]
-        indexes.sort(reverse=True)
-        for index in indexes:
-            self.coins.pop(index)
+        # indexes = [index for index in range(len(self.coins)) if not self.coins[index].trades]
+        # indexes.sort(reverse=True)
+        # for index in indexes:
+        #     self.coins.pop(index)
         self.matchTrades()
         return self
 
