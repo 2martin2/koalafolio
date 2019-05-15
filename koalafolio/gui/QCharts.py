@@ -177,15 +177,28 @@ class LabeledChartView(qtchart.QChartView):
         self.heading.setObjectName('heading')
         headingPos = qtcore.QPoint(self.width()/2 - self.heading.width()/2, 5)
         self.heading.move(headingPos)
-        self.labels = [qtwidgets.QLabel('', self) for num in range(numberLabels)]
+        # self.labels = [qtwidgets.QLabel('', self) for num in range(numberLabels)]
+        # for label in self.labels:
+        #     label.setFont(qtgui.QFont("Arial", 12))
+        #     label.setVisible(False)
+        #     label.setMargin(0)
+        #     label.adjustSize()
+        self.labels = []
+        self.setLabelCount(numberLabels)
+
+        self.setColor(qtgui.QColor(255, 255, 255))
+        self.labelAlignment = qt.AlignRight
+
+    def setLabelCount(self, numLabels):
+        if self.labels:
+            for label in self.labels:
+                label.deleteLater()
+        self.labels = [qtwidgets.QLabel('', self) for num in range(numLabels)]
         for label in self.labels:
             label.setFont(qtgui.QFont("Arial", 12))
             label.setVisible(False)
             label.setMargin(0)
             label.adjustSize()
-
-        self.setColor(qtgui.QColor(255, 255, 255))
-        self.labelAlignment = qt.AlignRight
 
     def setHeadingPos(self, pos):
         self.heading.move(pos)

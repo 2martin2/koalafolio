@@ -699,27 +699,17 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.horzLayout = qtwidgets.QHBoxLayout(self)
         self.horzLayout.setContentsMargins(0, 0, 0, 0)
 
-        # realized profit (relevant for tax)
-        # self.realizedProfitLabelCont = controls.StyledLabelCont(self, 'realized profit')
-        # self.realizedProfitLabelCont.setFixedWidth(200)
         # profit table
         self.profitTable = qtwidgets.QTableWidget()
         self.profitTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
         self.profitTable.setColumnCount(4)
         self.profitTable.setHorizontalHeaderLabels(["profit", "tax profit", "fees", "fiat profit"])
-        # self.profitTable.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
+        self.profitTable.horizontalHeaderItem(0).setToolTip("profit per year")
+        self.profitTable.horizontalHeaderItem(1).setToolTip("profit relevant for tax calculation")
+        self.profitTable.horizontalHeaderItem(2).setToolTip("fees per year")
+        self.profitTable.horizontalHeaderItem(3).setToolTip("fiat profit per year")
         self.profitTable.horizontalHeader().setVisible(True)
         self.profitTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
-        # self.realizedProfitLabelCont.addWidget(self.profitTable)
-        # paid fees
-        # self.paidFeesLabel = controls.StyledLabelCont(self, 'fees paid')
-        # self.feeTable = qtwidgets.QTableWidget()
-        # self.feeTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
-        # self.feeTable.setColumnCount(1)
-        # self.feeTable.horizontalHeader().setVisible(False)
-        # self.feeTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
-        # self.paidFeesLabel.addWidget(self.feeTable)
-
 
         # tax value chart
         self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
@@ -745,62 +735,6 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.perfChartCont.addChart(self.currentFiatValueChart)
         self.perfChartCont.setChartIndex(settings.mySettings.getGuiSetting('performanceChartIndex'))
         self.horzLayout.addWidget(self.perfChartCont)
-
-        # # profit table
-        # self.profitPerYearTable = charts.ProfitPerYearWidget(self.height*0.8, self.height, parent=self)
-        # self.horzLayout.addWidget(self.profitPerYearTable)
-
-        # # bar chart
-        # self.profitChart = charts.HorizontalStackedBarChart(self.height*1.5, self.height, parent=self)
-        # self.horzLayout.addWidget(self.profitChart)
-
-        # # bar chart
-        # self.fiatSet = qtchart.QBarSet("fiat")
-        # self.profitSet = qtchart.QBarSet("profit")
-        # self.investedSet = qtchart.QBarSet("invested")
-        # self.feeSet = qtchart.QBarSet("fees")
-        # sets = [self.fiatSet, self.profitSet, self.investedSet, self.feeSet]
-        # for set, label in zip(sets, ['fiat', 'profit', 'invested', 'fees']):
-        #     set.setLabel(label)
-        # # fiat, profit, invest, fees  (fiat, current)
-        # fiatvalues = [2000, 10000]
-        # profitvalues = [0, 5000]
-        # investedvalues = [12000, 0]
-        # feevalues = [1000, 0]
-        # values = [fiatvalues, profitvalues, investedvalues, feevalues]
-        #
-        # for set, valueRow in zip(sets, values):
-        #     for value in valueRow:
-        #         set.append(value)
-        #
-        # self.barSeries = qtchart.QHorizontalStackedBarSeries()
-        # for set in sets:
-        #     self.barSeries.append(set)
-        # self.barSeries.setLabelsVisible(True)
-        #
-        # self.barChart = qtchart.QChart()
-        # self.barChart.setBackgroundVisible(False)
-        # self.barChart.addSeries(self.barSeries)
-        # self.barChart.setAnimationOptions(qtchart.QChart.SeriesAnimations)
-        #
-        # categories = ['return', 'invest']
-        # barAxisY = qtchart.QBarCategoryAxis()
-        # barAxisY.append(categories)
-        # self.barChart.addAxis(barAxisY, qt.AlignLeft)
-        # self.barSeries.attachAxis(barAxisY)
-        # barAxisX = qtchart.QValueAxis()
-        # self.barChart.addAxis(barAxisX, qt.AlignBottom)
-        # self.barSeries.attachAxis(barAxisX)
-        #
-        # # self.barChart.legend().setVisible(False)
-        # self.barChart.setMinimumWidth(self.height*2)
-        # self.barChart.setMinimumHeight(self.height)
-        #
-        # self.barChartView = qtchart.QChartView(self.barChart)
-        # self.barChartView.setRenderHint(qtgui.QPainter.Antialiasing)
-        #
-        # self.horzLayout.addWidget(self.barChartView)
-
 
         # labels
         profitLabels = [self.profitTable]
@@ -833,7 +767,8 @@ class PortfolioOverview(qtwidgets.QWidget):
             column += 1
 
         # pie chart
-        self.portfolioChart = charts.LabeledDonatChart(self.height + 30, self.height, 1, parent=self)
+        numLabel = len(settings.mySettings.displayCurrencies())
+        self.portfolioChart = charts.LabeledDonatChart(self.height + 30, self.height, numLabel, parent=self)
         self.horzLayout.addWidget(self.portfolioChart)
 
         self.refresh()
@@ -1057,14 +992,17 @@ class PortfolioOverview(qtwidgets.QWidget):
 
         pieSeries.setHoleSize(0.6)
         self.portfolioChart.setSeries(pieSeries)
-        self.portfolioChart.chartView.setText([controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName],
-                                                            numberOfDecimals) + ' ' + taxCoinName])
+        portfolioChartLabels = []
+        for coin in hypotheticalCoinValueNoFiat:
+            portfolioChartLabels.append(controls.floatToString(hypotheticalCoinValueNoFiat[coin],
+                                                            numberOfDecimals) + ' ' + coin)
+        self.portfolioChart.chartView.setText(portfolioChartLabels, qt.AlignCenter)
         self.portfolioChart.chartView.setColor(self.neutrColor, False)
 
 
     def displayCurrenciesChangedSlot(self):
         # todo: update ui layout and trigger value update
-        pass
+        self.portfolioChart.chartView.setLabelCount(len(settings.mySettings.displayCurrencies()))
 
 
 # coin info file
