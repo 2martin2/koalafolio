@@ -320,7 +320,10 @@ class QPortfolioTableModel(QCoinContainer):
 
     def setIcons(self, icons):
         for coin in icons:
-            self.getCoinByName(coin).coinIcon = icons[coin]
+            try:
+                self.getCoinByName(coin).coinIcon = icons[coin]
+            except:
+                pass
         RowStartIndex = self.index(0, 0, qtcore.QModelIndex())
         RowEndIndex = self.index(len(self.coins) - 1, 0, qtcore.QModelIndex())
         self.dataChanged.emit(RowStartIndex, RowEndIndex)
