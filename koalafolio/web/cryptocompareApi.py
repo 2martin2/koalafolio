@@ -137,33 +137,40 @@ def update24hChange(coinList):
                     for key in core.CoinValue():
                         coin.change24h[key] = coindata[key]['CHANGEPCT24HOUR']
                 except Exception as ex:
-                    print('error in get24hChange: ' + str(ex))
+                    logger.globalLogger.warning('error in get24hChange: ' + str(ex))
             return True
         else:
             # if there is an error try again
             failedCounter += 1
             # wait some time until next try
             time.sleep(10)
-    print('price update failed')
+    logger.globalLogger.warning('24hChange update failed')
     return False
 
 
 def getIcon(coin, *args, **kwargs):
+    if settings.mySettings.proxies():
+        proxies = settings.mySettings.proxies()
+    else:
+        proxies = {}
     coinInfo = cryptcomp.get_coin_general_info(coin, *args, **kwargs)
     try:
-        imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'])
+        imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'], proxies=proxies)
     except:
         return None
     return Image.open(BytesIO(imageResponse.content))
 
 def getIcons(coins, *args, **kwargs):
+    if settings.mySettings.proxies():
+        proxies = settings.mySettings.proxies()
+    else:
+        proxies = {}
     coinInfo = cryptcomp.get_coin_general_info(coins, *args, **kwargs)
     icons = {}
     try:
         for data in coinInfo['Data']:
-            imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'])
+            imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'], proxies=proxies)
             icons[data['CoinInfo']['Name']] = Image.open(BytesIO(imageResponse.content))
     except Exception as ex:
-        print('error in getIcons: ' + str(ex))
-        # todo: create logging
+        logger.globalLogger.warning('error in getIcons: ' + str(ex))
     return icons
