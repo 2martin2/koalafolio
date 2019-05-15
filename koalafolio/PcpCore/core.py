@@ -79,7 +79,7 @@ class CoinValue():
                 self.value[currency] = 0
         except Exception as ex:
             logger.globalLogger.error('error initializing display currencies: ' + str(ex))
-            logger.globalLogger.info('using default display currencies')
+            logger.globalLogger.info('using default display currencies EUR, USD, BTC')
             self.value = {'EUR': 0, 'USD': 0, 'BTC': 0}
 
     # iterate values
@@ -130,7 +130,10 @@ class CoinValue():
     # add another CoinValue to the existing one
     def add(self, other):
         for key in self.value:
-            self.value[key] += other.value[key]
+            if key in other:
+                self.value[key] += other.value[key]
+            else:
+                logger.globalLogger.error('display currency mismatch in database. This should not happen. Please restart application!')
         return self
 
     # add another CoinValue and return a new object
@@ -140,7 +143,10 @@ class CoinValue():
     # substract another CoinValue from the existing one
     def sub(self, other):
         for key in self.value:
-            self.value[key] -= other.value[key]
+            if key in other:
+                self.value[key] -= other.value[key]
+            else:
+                logger.globalLogger.error('display currency mismatch in database. This should not happen. Please restart application!')
         return self
 
     # sub another CoinValue and return a new object
@@ -166,10 +172,14 @@ class CoinValue():
         coinValue = CoinValue()
         if isinstance(divider, CoinValue):
             for key in self.value:
-                if divider.value[key] != 0:
-                    coinValue.value[key] = self.value[key] / divider.value[key]
-                elif self.value[key] == 0:  # if both values are zero return 1
-                    coinValue.value[key] = 1
+                if key in divider:
+                    if divider.value[key] != 0:
+                        coinValue.value[key] = self.value[key] / divider.value[key]
+                    elif self.value[key] == 0:  # if both values are zero return 1
+                        coinValue.value[key] = 1
+                else:
+                    logger.globalLogger.error(
+                        'display currency mismatch in database. This should not happen. Please restart application!')
         else:
             if not divider == 0:
                 for key in self.value:
