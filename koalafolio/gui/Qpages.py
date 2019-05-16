@@ -108,8 +108,6 @@ class PortfolioPage(Page):
 
         self.coinTableView = ptable.QPortfolioTableView(self)
         self.coinTableView.setModel(self.coinProxyModel)
-        self.coinTableView.itemDelegate().valueColumnWidthChanged.connect(
-            lambda cols: self.controller.coinList.changeValueColumnWidth(cols))
         guiSettings = settings.mySettings.getGuiSettings()
         self.coinTableView.sortByColumn(guiSettings['portfolioFilterRow'], guiSettings['portfolioFilterDir'])
 

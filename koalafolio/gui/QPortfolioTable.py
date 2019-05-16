@@ -177,8 +177,7 @@ class QPortfolioTableModel(QCoinContainer):
 
     def initDisplayCurrencies(self):
         self.keys = [*core.CoinValue().value]
-        self.changeValueColumnWidth(self.valueCols)
-
+        self.setColumnHeader(self.valueCols)
 
     def rowCount(self, parent):
         if parent.isValid():
@@ -254,8 +253,7 @@ class QPortfolioTableModel(QCoinContainer):
                     return self.valueHeaderToolTip
         return qtcore.QVariant()
 
-    def changeValueColumnWidth(self, cols):
-        self.valueCols = cols
+    def setColumnHeader(self, cols):
         if cols == 3:
             self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' + \
                                         'invest price\t\tcurrent price\t\tchange/24h'
@@ -270,6 +268,10 @@ class QPortfolioTableModel(QCoinContainer):
             self.valueHeaderToolTip = 'current price\nchange/24h'
             self.header = ['coin', 'balance', 'realized ' + settings.mySettings.reportCurrency()] + \
                           ['price ' + key for key in self.keys]
+
+    def changeValueColumnWidth(self, cols):
+        self.valueCols = cols
+        self.setColumnHeader(cols)
         self.headerDataChanged.emit(qt.Horizontal, 0, len(self.header) - 1)
         RowStartIndex = self.index(0, self.firstValueColumn, qtcore.QModelIndex())
         RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, qtcore.QModelIndex())
