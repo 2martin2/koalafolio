@@ -43,6 +43,18 @@ class QPortfolioTableView(qtwidgets.QTreeView):
 
         self.verticalScrollBar().setSingleStep(1)
 
+        self.horizontalHeader().sectionResized.connect(lambda index, oldSize, newSize: self.sectionSizeChanged(index, oldSize, newSize))
+
+    def sectionSizeChanged(self, index, oldSize, newSize):
+        sourceModel = self.model().sourceModel()
+        if index >= sourceModel.firstValueColumn:
+            if oldSize < 220 and newSize >= 220:
+                sourceModel.changeValueColumnWidth(3)
+            if (oldSize < 150 or oldSize >= 220) and (newSize >= 150 and newSize < 220):
+                sourceModel.changeValueColumnWidth(2)
+            if oldSize >= 150 and newSize < 150:
+                sourceModel.changeValueColumnWidth(1)
+
     def initView(self):
         self.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Stretch)
         self.horizontalHeader().setSectionResizeMode(0, qtwidgets.QHeaderView.Interactive)
@@ -158,17 +170,14 @@ class QPortfolioTableModel(QCoinContainer):
         super(QPortfolioTableModel, self).__init__(*args, **kwargs)
 
         # init keys and header
-        self.initDisplayCurrencies()
+        self.valueCols = 3
         self.firstValueColumn = 3
-        self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' +\
-                                  'invest price\t\tcurrent price\t\tchange/24h'
-
         self.parents = []
+        self.initDisplayCurrencies()
 
     def initDisplayCurrencies(self):
         self.keys = [*core.CoinValue().value]
-        self.header = ['coin', 'balance', 'realized ' + settings.mySettings.reportCurrency()] + \
-                      ['performance ' + key for key in self.keys]
+        self.changeValueColumnWidth(self.valueCols)
 
 
     def rowCount(self, parent):
@@ -223,7 +232,7 @@ class QPortfolioTableModel(QCoinContainer):
                     return self.coins[index.row()].tradeMatcher.getTotalProfit()  # return profit
                 if index.column() >= self.firstValueColumn:  # return CoinBalance and key
                     keys = [*core.CoinValue().value]
-                    return self.coins[index.row()], keys[index.column() - self.firstValueColumn]
+                    return self.coins[index.row()], keys[index.column() - self.firstValueColumn], self.valueCols
             if role == qt.DecorationRole:
                 if index.column() == 0:
                     coinIcon = self.coins[index.row()].coinIcon
@@ -246,6 +255,7 @@ class QPortfolioTableModel(QCoinContainer):
         return qtcore.QVariant()
 
     def changeValueColumnWidth(self, cols):
+        self.valueCols = cols
         if cols == 3:
             self.valueHeaderToolTip = 'invest value\t\tcurrent value\t\tperformance\n' + \
                                         'invest price\t\tcurrent price\t\tchange/24h'
@@ -260,6 +270,10 @@ class QPortfolioTableModel(QCoinContainer):
             self.valueHeaderToolTip = 'current price\nchange/24h'
             self.header = ['coin', 'balance', 'realized ' + settings.mySettings.reportCurrency()] + \
                           ['price ' + key for key in self.keys]
+        self.headerDataChanged.emit(qt.Horizontal, 0, len(self.header) - 1)
+        RowStartIndex = self.index(0, self.firstValueColumn, qtcore.QModelIndex())
+        RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, qtcore.QModelIndex())
+        self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def flags(self, index):
         if index.parent().isValid():  # child level
@@ -366,22 +380,23 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
             profit2 = index2.data()[settings.mySettings.reportCurrency()]
             return profit1 < profit2
         if column >= self.sourceModel().firstValueColumn:
-            coinBalance1, key1 = index1.data()
-            coinBalance2, key2 = index2.data()
-            return coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2]
+            coinBalance1, key1, cols1 = index1.data()
+            coinBalance2, key2, cols2 = index2.data()
+            if cols1 >= 2:
+                return coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2]
+            else:
+                return coinBalance1.change24h[key1] < coinBalance2.change24h[key2]
         return index1.data() < index2.data()
-
 
 # %% portfolio table delegate
 # class QCoinBalanceDelegate(qtwidgets.QStyledItemDelegate):
 class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
-    valueColumnWidthChanged = qtcore.pyqtSignal(int)
-
     def __init__(self, *args, **kwargs):
         super(QCoinTableDelegate, self).__init__(*args, **kwargs)
 
         self.marginV = 4  # vertical margin
         self.marginH = 15  # horizontal margin
+        self.lastCols = 0
 
     def paint(self, painter, option, index):
         cellStartX = option.rect.x() + self.marginH
@@ -485,7 +500,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 painter.drawText(contentRect, qt.AlignHCenter | qt.AlignVCenter, profitString)
 
             elif index.column() >= index.model().sourceModel().firstValueColumn:
-                coinBalance, key = index.data(qt.DisplayRole)
+                coinBalance, key, cols = index.data(qt.DisplayRole)
                 boughtValue = coinBalance.initialValue[key]
                 boughtPrice = coinBalance.getInitialPrice()[key]
                 currentValue = coinBalance.getCurrentValue()[key]
@@ -515,7 +530,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     painter.setPen(pen)
                     painter.drawText(contentRect, alignHorz | alignVert, text)
 
-                if contentRect.width() >= 200:  # draw all
+                if cols == 3:  # draw all
                     drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, boughtValueStr)
                     drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, boughtPriceStr)
                     if gain > 0:
@@ -534,8 +549,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                         drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
                     else:
                         drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
-                    self.valueColumnWidthChanged.emit(3)
-                elif contentRect.width() >= 110:  # skip current value and price
+                elif cols == 2:  # skip current value and price
                     if gain > 0:
                         drawText(qt.AlignLeft, qt.AlignTop, 14, positivColor, currentValueStr)
                         drawText(qt.AlignLeft, qt.AlignBottom, 12, positivColor, currentPriceStr)
@@ -552,21 +566,13 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                         drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
                     else:
                         drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
-                    self.valueColumnWidthChanged.emit(2)
                 else:  # draw value and daygain
-                    # if gain > 0:
-                    #     drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
-                    # elif gain < 0:
-                    #     drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
-                    # else:
-                    #     drawText(qt.AlignHCenter, qt.AlignTop, 14, neutralColor, currentPriceStr)
                     if gainDay >= 0:
                         drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
                         drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, gainDayStr)
                     else:
                         drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
                         drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
-                    self.valueColumnWidthChanged.emit(1)
 
         painter.restore()
 
@@ -948,13 +954,13 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.profitTable.setVerticalHeaderLabels(years)
         for year, row in zip(realizedProfitPerYear, range(len(realizedProfitPerYear))):
             self.profitTable.setItem(row, 0, qtwidgets.QTableWidgetItem(
-                controls.floatToString(realizedProfitPerYear[year][taxCoinName], 5)))
+                controls.floatToString(realizedProfitPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
             self.profitTable.setItem(row, 1, qtwidgets.QTableWidgetItem(
-                controls.floatToString(taxProfitPerYear[year][taxCoinName], 5)))
+                controls.floatToString(taxProfitPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
             self.profitTable.setItem(row, 2, qtwidgets.QTableWidgetItem(
-                controls.floatToString(paidFeesPerYear[year][taxCoinName], 5)))
+                controls.floatToString(paidFeesPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
             self.profitTable.setItem(row, 3, qtwidgets.QTableWidgetItem(
-                controls.floatToString(fiatPerYear[year][taxCoinName], 5)))
+                controls.floatToString(fiatPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
 
 
         # pie chart
