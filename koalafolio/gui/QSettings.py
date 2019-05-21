@@ -53,6 +53,7 @@ class QSettings(settings.Settings):
         self['gui']['tradeFilterDir'] = str(qt.AscendingOrder)
         self['gui']['toolTipsEnabled'] = 'True'
         self['gui']['performanceChartIndex'] = '0'
+        self['gui']['tradesEditLock'] = 'True'
 
         super(QSettings, self).initSettings()
 
@@ -147,6 +148,10 @@ class QSettings(settings.Settings):
             gui['performanceChartIndex'] = self.getint('gui', 'performanceChartIndex')
         except ValueError:
             gui['performanceChartIndex'] = 0
+        try:
+            gui['tradesEditLock'] = self.getboolean('gui', 'tradesEditLock')
+        except ValueError:
+            gui['tradesEditLock'] = True
         return gui
 
     def getGuiSetting(self, key):

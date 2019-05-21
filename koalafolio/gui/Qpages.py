@@ -170,7 +170,7 @@ class TradesPage(Page):
         # refresh page
 
     def refresh(self):
-        pass
+        self.controller.tradeList.enableEditMode(not settings.mySettings.getGuiSetting('tradesEditLock'))
 
     def undoRemoveAddTrades(self):
         self.undoButton.clicked.disconnect(self.undoRemoveAddTrades)

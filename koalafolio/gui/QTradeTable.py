@@ -363,7 +363,13 @@ class QTradeTableModel(QTradeContainer):
         self.tradesLen = len(self.trades)
         self.showPrices(True)
         self.firstValueColumn = 7
-        self.columnNotEditable = [0, 1, 3, 4]
+        self.enableEditMode(True)
+
+    def enableEditMode(self, enable):
+        if enable:
+            self.columnNotEditable = [0, 1, 3, 4]
+        else:
+            self.columnNotEditable = list(range(self.headerLen))
 
     def initDisplayCurrencies(self):
         self.keys = [*core.CoinValue().value]
