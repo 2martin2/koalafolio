@@ -48,6 +48,18 @@ class QPortfolioTableView(qtwidgets.QTreeView):
     def sectionSizeChanged(self, index, oldSize, newSize):
         sourceModel = self.model().sourceModel()
         if index >= sourceModel.firstValueColumn:
+            self.updateValueColumnCount(oldSize, newSize)
+
+    def updateValueColumnCount(self, oldSize, newSize, forceUpdate=False):
+        sourceModel = self.model().sourceModel()
+        if forceUpdate:
+            if newSize >= 220:
+                sourceModel.changeValueColumnWidth(3)
+            if (newSize >= 150 and newSize < 220):
+                sourceModel.changeValueColumnWidth(2)
+            if newSize < 150:
+                sourceModel.changeValueColumnWidth(1)
+        else:
             if oldSize < 220 and newSize >= 220:
                 sourceModel.changeValueColumnWidth(3)
             if (oldSize < 150 or oldSize >= 220) and (newSize >= 150 and newSize < 220):
@@ -64,6 +76,8 @@ class QPortfolioTableView(qtwidgets.QTreeView):
         self.setColumnWidth(2, 100)
         # self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
         # self.verticalHeader().setVisible(False)
+        valueSectionSize = self.horizontalHeader().sectionSize(self.model().sourceModel().firstValueColumn)
+        self.updateValueColumnCount(valueSectionSize, valueSectionSize, forceUpdate=True)
 
     def reset(self):
         super(QPortfolioTableView, self).reset()
