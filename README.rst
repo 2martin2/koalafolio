@@ -51,7 +51,7 @@ portfolio
 export
 -------
   export profit made in a specific timeframe using FIFO-method (excel)
-   - (for now export is only in german)
+   - (english and german, others can be added in translation.txt)
 
 Credits
 *********
