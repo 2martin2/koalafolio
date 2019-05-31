@@ -125,6 +125,22 @@ POLONIEX_ORDERNUMBER_REGEX = re.compile(r'^Order Number$', re.IGNORECASE)
 POLONIEX_BASETOTALLESSFEE_REGEX = re.compile(r'^Base Total Less Fee$', re.IGNORECASE)
 POLONIEX_QUOTETOTALLESSFEE_REGEX = re.compile(r'^Quote Total Less Fee$', re.IGNORECASE)
 
+# model bittrex [Uuid	Exchange	TimeStamp	OrderType	Limit	Quantity	QuantityRemaining	Commission	Price	PricePerUnit	IsConditional	Condition	ConditionTarget	ImmediateOrCancel	Closed]
+BITTREX_UUID_REGEX = re.compile(r'^Uuid$', re.IGNORECASE)
+BITTREX_EXCHANGE_REGEX = re.compile(r'^Exchange$', re.IGNORECASE)
+BITTREX_TIMESTAMP_REGEX = re.compile(r'^TimeStamp$', re.IGNORECASE)
+BITTREX_ORDERTYPE_REGEX = re.compile(r'^OrderType$', re.IGNORECASE)
+BITTREX_LIMIT_REGEX = re.compile(r'^Limit$', re.IGNORECASE)
+BITTREX_QUANTITY_REGEX = re.compile(r'^Quantity$', re.IGNORECASE)
+BITTREX_QUANTITYREMAINING_REGEX = re.compile(r'^QuantityRemaining$', re.IGNORECASE)
+BITTREX_COMMISSION_REGEX = re.compile(r'^Commission$', re.IGNORECASE)
+BITTREX_PRICE_REGEX = re.compile(r'^Price$', re.IGNORECASE)
+BITTREX_PRICEPERUNIT_REGEX = re.compile(r'^PricePerUnit$', re.IGNORECASE)
+BITTREX_ISCONDITIONAL_REGEX = re.compile(r'^IsConditional$', re.IGNORECASE)
+BITTREX_CONDITION_REGEX = re.compile(r'^Condition$', re.IGNORECASE)
+BITTREX_CONDITIONTARGET_REGEX = re.compile(r'^ConditionTarget$', re.IGNORECASE)
+BITTREX_IMMEDIATEORCANCEL_REGEX = re.compile(r'^ImmediateOrCancel$', re.IGNORECASE)
+BITTREX_CLOSED_REGEX = re.compile(r'^Closed$', re.IGNORECASE)
 
 # general
 ID_REGEX = re.compile(ID_REGEX_PATTERN, re.IGNORECASE)

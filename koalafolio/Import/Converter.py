@@ -293,6 +293,36 @@ def modelCallback_poloniex(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
+# model bittrex [Uuid	Exchange	TimeStamp	OrderType	Limit	Quantity	QuantityRemaining
+# Commission	Price	PricePerUnit	IsConditional	Condition	ConditionTarget	ImmediateOrCancel	Closed]
+def modelCallback_bittrex(headernames, dataFrame):
+
+    for row in range(dataFrame.shape[0]):
+        dataFrame.at[row, headernames[5]] = dataFrame[headernames[5]][row] - dataFrame[headernames[6]][row]
+
+    # model 1: Date, Type, Exchange, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin)
+    headernames_m0 = []
+    headernames_m0.append(headernames[2])  # date
+    headernames_m0.append(headernames[3])  # type
+    headernames_m0.append(headernames[1])  # pair
+    headernames_m0.append(headernames[9])  # average price
+    headernames_m0.append(headernames[5])  # amount
+    headernames_m0.append(headernames[0])  # id
+    headernames_m0.append(headernames[8])  # total
+    headernames_m0.append(headernames[7])  # fee
+    headernames_m0.append('')  # feecoin
+    headernames_m0.append(headernames[14])  # state
+
+    tradeList, feeList, skippedRows = modelCallback_1(headernames_m0, dataFrame)
+
+    for trade in tradeList:
+        trade.exchange = 'bittrex'
+    for fee in feeList:
+        fee.exchange = 'bittrex'
+
+    return tradeList, feeList, skippedRows
+
+
 # %% model 0: Date, Type, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)
 def modelCallback_0(headernames, dataFrame):
     tradeList = core.TradeList()

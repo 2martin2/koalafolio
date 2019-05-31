@@ -108,6 +108,23 @@ IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.POLONIEX_DATE_REGEX, pat.POLON
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_poloniex
 
+# model bittrex [Uuid	Exchange	TimeStamp	OrderType	Limit	Quantity	QuantityRemaining	Commission	Price	PricePerUnit	IsConditional	Condition	ConditionTarget	ImmediateOrCancel	Closed]
+index = index + 1
+IMPORT_MODEL_LIST.append(Importmodel())
+IMPORT_MODEL_LIST[index].modelHeaders = ['Uuid','Exchange','TimeStamp','OrderType','Limit','Quantity',
+                                         'QuantityRemaining','Commission','Price','PricePerUnit','IsConditional',
+                                         'Condition','ConditionTarget','ImmediateOrCancel','Closed']
+IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.BITTREX_UUID_REGEX, pat.BITTREX_EXCHANGE_REGEX,
+                                              pat.BITTREX_TIMESTAMP_REGEX, pat.BITTREX_ORDERTYPE_REGEX,
+                                              pat.BITTREX_LIMIT_REGEX, pat.BITTREX_QUANTITY_REGEX,
+                                              pat.BITTREX_QUANTITYREMAINING_REGEX, pat.BITTREX_COMMISSION_REGEX,
+                                              pat.BITTREX_PRICE_REGEX, pat.BITTREX_PRICEPERUNIT_REGEX,
+                                              pat.BITTREX_ISCONDITIONAL_REGEX, pat.BITTREX_CONDITION_REGEX,
+                                              pat.BITTREX_CONDITIONTARGET_REGEX, pat.BITTREX_IMMEDIATEORCANCEL_REGEX,
+                                              pat.BITTREX_CLOSED_REGEX]
+IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
+IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_bittrex
+
 # %% model 0: Date, Type, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
