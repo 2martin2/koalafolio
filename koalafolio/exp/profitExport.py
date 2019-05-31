@@ -15,7 +15,13 @@ from openpyxl.styles import PatternFill, Alignment, Font
 
 
 # %% create excelfile
-def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearlimit=1, includeTaxFreeTrades = True):
+def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearlimit=1,
+                      includeTaxFreeTrades = True, lang="en", translator=None):
+
+    if translator:
+        def trans(text):
+            return translator.translate(text, lang)
+
     wb = openpyxl.Workbook(write_only=False)
     wb.remove(wb.active)
 
@@ -37,7 +43,10 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
 
                 # write top header 
                 # cell = WriteOnlyCell(ws)
-                ws.append(['', '', '', 'Ankauf', '', '', '', '', 'Verkauf', '', '', '', '', 'Profit', ''])
+                if translator:
+                    ws.append(['', '', '', trans('Buy'), '', '', '', '', trans('Sell'), '', '', '', '', trans('Profit'), ''])
+                else:
+                    ws.append(['', '', '', 'Ankauf', '', '', '', '', 'Verkauf', '', '', '', '', 'Profit', ''])
                 ws.merge_cells('A1:B1')
                 ws.merge_cells('D1:G1')
                 ws.merge_cells('I1:L1')
@@ -61,10 +70,20 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                 ws.append([])
 
                 # write sub header
-                ws.append(['', '', '', 'Datum', 'Anzahl', 'Preis', 'Wert', '', 'Datum', 'Anzahl', 'Preis', 'Wert', '',
-                           'Gewinn', 'zu versteuern'])
-                ws.append(['', '', '', '', 'in Stk', 'in ' + currency + '/Stk', 'in ' + currency, '', '', 'in Stk',
-                           'in ' + currency + '/Stk', 'in ' + currency, '', 'in ' + currency, 'in ' + currency])
+                if translator:
+                    ws.append(
+                        ['', '', '', trans('Date'), trans('Amount'), trans('Price'), trans('Value'), '', trans('Date'),
+                         trans('Amount'), trans('Price'), trans('Value'), '', trans('Profit'), trans('tax relevant')])
+                    ws.append(['', '', '', '', trans('in') + ' ' + trans('pc'),
+                               trans('in') + ' ' + currency + '/' + trans('pc'),
+                               trans('in') + ' ' + currency, '', '', trans('in') + ' ' + trans('pc'),
+                               trans('in') + ' ' + currency + '/' + trans('pc'), trans('in') + ' ' + currency, '',
+                               trans('in') + ' ' + currency, trans('in') + ' ' + currency])
+                else:
+                    ws.append(['', '', '', 'Datum', 'Anzahl', 'Preis', 'Wert', '', 'Datum', 'Anzahl', 'Preis', 'Wert', '',
+                               'Gewinn', 'zu versteuern'])
+                    ws.append(['', '', '', '', 'in Stk', 'in ' + currency + '/Stk', 'in ' + currency, '', '', 'in Stk',
+                               'in ' + currency + '/Stk', 'in ' + currency, '', 'in ' + currency, 'in ' + currency])
 
                 # coinname
                 ws.append([coin.coinname, ''])
@@ -132,7 +151,10 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
 
             # write top header
             # cell = WriteOnlyCell(ws)
-            ws.append(['', '', '', 'Gebühren', '', '', '', ''])
+            if translator:
+                ws.append(['', '', '', trans('Fees'), '', '', '', ''])
+            else:
+                ws.append(['', '', '', 'Gebühren', '', '', '', ''])
             ws.merge_cells('A1:B1')
             ws.merge_cells('D1:G1')
             headingFont = Font(size=12, bold=True)
@@ -154,9 +176,14 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
             ws.append([])
 
             # write sub header
-            ws.append(
-                ['', '', '', 'Datum', 'Gebühr', '', 'Gebühr', ''])
-            ws.append(['', '', '', '', 'in Stk', '', 'in ' + currency, ''])
+            if translator:
+                ws.append(
+                    ['', '', '', trans('Date'), trans('Fee'), '', trans('Fee'), ''])
+                ws.append(['', '', '', '', trans('in') + ' ' + trans('pc'), '', trans('in') + ' ' + currency, ''])
+            else:
+                ws.append(
+                    ['', '', '', 'Datum', 'Gebühr', '', 'Gebühr', ''])
+                ws.append(['', '', '', '', 'in Stk', '', 'in ' + currency, ''])
 
             # coinname
             ws.append([coin.coinname, ''])
@@ -196,8 +223,11 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
     # %% overview sheet
     ws = wb.create_sheet('Overview', 0)
 
-    # write top header 
-    ws.append(['', '', '', 'Profit', '', ''])
+    # write top header
+    if translator:
+        ws.append(['', '', '', trans('Profit'), '', ''])
+    else:
+        ws.append(['', '', '', 'Profit', '', ''])
     ws.merge_cells('A1:B1')
     ws.merge_cells('D1:E1')
     headingFont = Font(size=12, bold=True)
@@ -220,11 +250,14 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
     ws.append([])
 
     # write sub header
-    ws.append(['', '', '', 'Gruppe', 'Gewinn', ''])
-    ws.append(['', '', '', '', 'in ' + currency, ''])
-
-    # coinname
-    ws.append(['Zeitraum', str(minDate) + ' : ' + str(maxDate)])
+    if translator:
+        ws.append(['', '', '', trans('Group'), trans('Profit'), ''])
+        ws.append(['', '', '', '', trans('in') + ' ' + currency, ''])
+        ws.append([trans('Timeframe'), str(minDate) + ' : ' + str(maxDate)])
+    else:
+        ws.append(['', '', '', 'Gruppe', 'Gewinn', ''])
+        ws.append(['', '', '', '', 'in ' + currency, ''])
+        ws.append(['Zeitraum', str(minDate) + ' : ' + str(maxDate)])
 
     firstProfitRow = ws.max_row + 1
 

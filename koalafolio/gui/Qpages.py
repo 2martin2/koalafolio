@@ -726,12 +726,22 @@ class ExportPage(Page):
         defaultCurrency = settings.mySettings.reportCurrency()
         self.currencyBox.setCurrentIndex(currencys.index(defaultCurrency))
 
-        # self.currencyLayout = qtwidgets.QHBoxLayout()
         self.optionsLayout.addWidget(self.currencyLabel, 0, 1)
         self.optionsLayout.addWidget(self.currencyBox, 0, 2)
-        # self.currencyLayout.addStretch()
 
         # todo: export language
+        # language
+        self.languageLabel = qtwidgets.QLabel("language", self.exportProfitFrame)
+        self.languageBox = qtwidgets.QComboBox(self.exportProfitFrame)
+        lanListModel = qtcore.QStringListModel()
+        languages = self.controller.exportTranslator.getLanguages()
+        lanListModel.setStringList(languages)
+        self.languageBox.setModel(lanListModel)
+        defaultLanguage = settings.mySettings.getTaxSetting('exportLanguage')
+        self.languageBox.setCurrentIndex(languages.index(defaultLanguage))
+
+        self.optionsLayout.addWidget(self.languageLabel, 1, 1)
+        self.optionsLayout.addWidget(self.languageBox, 1, 2)
 
         # tax timelimit
         self.timeLimitLabel = qtwidgets.QLabel("tax year limit", self.exportProfitFrame)
@@ -741,11 +751,9 @@ class ExportPage(Page):
         self.timeLimitEdit.setMinimum(0)
         self.timeLimitBox.setCheckState(qt.Checked)
 
-        # self.timeLimitLayout = qtwidgets.QHBoxLayout()
-        self.optionsLayout.addWidget(self.timeLimitBox, 1, 0)
-        self.optionsLayout.addWidget(self.timeLimitLabel, 1, 1)
-        self.optionsLayout.addWidget(self.timeLimitEdit, 1, 2)
-        # self.timeLimitLayout.addStretch()
+        self.optionsLayout.addWidget(self.timeLimitBox, 2, 0)
+        self.optionsLayout.addWidget(self.timeLimitLabel, 2, 1)
+        self.optionsLayout.addWidget(self.timeLimitEdit, 2, 2)
 
         # include tax free trades
         self.taxFreeTradesLabel = qtwidgets.QLabel("include tax free trades", self.exportProfitFrame)
@@ -753,8 +761,8 @@ class ExportPage(Page):
         self.taxFreeTradesBox.setCheckState(qt.Checked)
 
         # self.taxFreeTradesLayout = qtwidgets.QHBoxLayout()
-        self.optionsLayout.addWidget(self.taxFreeTradesBox, 2, 0)
-        self.optionsLayout.addWidget(self.taxFreeTradesLabel, 2, 1)
+        self.optionsLayout.addWidget(self.taxFreeTradesBox, 3, 0)
+        self.optionsLayout.addWidget(self.taxFreeTradesLabel, 3, 1)
         # self.taxFreeTradesLayout.addStretch()
 
         # todo: add export checkboxes
@@ -831,11 +839,14 @@ class ExportPage(Page):
             minDate = self.fromDateEdit.date().toPyDate()
             maxDate = self.toDateEdit.date().toPyDate()
             currency = self.currencyBox.currentText()
+            language = self.languageBox.currentText()
             taxyearlimit = None
             if self.timeLimitBox.isChecked():
                 taxyearlimit = self.timeLimitEdit.value()
             includeTaxFreeTrades = self.taxFreeTradesBox.isChecked()
-            profex.createProfitExcel(self.controller.coinList, pathReturn[0], minDate, maxDate, currency=currency, taxyearlimit=taxyearlimit, includeTaxFreeTrades=includeTaxFreeTrades)
+            profex.createProfitExcel(self.controller.coinList, pathReturn[0], minDate, maxDate, currency=currency,
+                                     taxyearlimit=taxyearlimit, includeTaxFreeTrades=includeTaxFreeTrades,
+                                     lang=language, translator=self.controller.exportTranslator)
 
 
 
