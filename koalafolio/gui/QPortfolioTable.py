@@ -401,7 +401,7 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
             if cols1 >= 2:
                 return coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2]
             else:
-                return coinBalance1.change24h[key1] < coinBalance2.change24h[key2]
+                return coinBalance1.getChange24h[key1] < coinBalance2.getChange24h[key2]
         return index1.data() < index2.data()
 
 # %% portfolio table delegate
@@ -530,8 +530,9 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 else:
                     gain = (currentPrice / boughtPrice - 1) * 100
                 gainStr = ("%.2f%%" % (gain))
-                gainDay = coinBalance.change24h[key]
+                gainDay = coinBalance.getChange24h(key)
                 gainDayStr = ("%.2f%%/24h" % (gainDay))
+
 
                 positivColor = style.myStyle.getQColor('POSITIV')
                 negativColor = style.myStyle.getQColor('NEGATIV')

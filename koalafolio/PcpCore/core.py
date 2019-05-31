@@ -800,6 +800,12 @@ class CoinBalance:
         return [self.coinname, self.balance] + [self.initialValue.value[key] for key in self.initialValue.value] + \
                [self.getCurrentValue().value[key] for key in self.getCurrentValue().value]
 
+    def getChange24h(self, key):
+        if self.change24h[key]:
+            return self.change24h[key]
+        else:
+            return 0
+
 
 # %% CoinList
 class CoinList:
