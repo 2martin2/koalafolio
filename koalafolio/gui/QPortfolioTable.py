@@ -401,7 +401,7 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
             if cols1 >= 2:
                 return coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2]
             else:
-                return coinBalance1.getChange24h[key1] < coinBalance2.getChange24h[key2]
+                return coinBalance1.getChange24h(key1) < coinBalance2.getChange24h(key2)
         return index1.data() < index2.data()
 
 # %% portfolio table delegate
