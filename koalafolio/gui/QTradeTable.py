@@ -97,9 +97,6 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
         if self.dataPath:
             # try to restore data from previous session
             try:
-                # newTradeList = core.TradeList()
-                # newTradeList.fromCsv(os.path.join(self.dataPath, 'Trades.csv'))
-                # self.addTrades(newTradeList)
                 if os.path.isfile(os.path.join(self.dataPath, 'Trades.csv')):
                     content = importer.loadTradesFromFile(os.path.join(self.dataPath, 'Trades.csv'))
                     if not content.empty:

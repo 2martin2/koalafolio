@@ -370,9 +370,7 @@ def modelCallback_0(headernames, dataFrame):
         else:  # invalid type
             skippedRows += 1
             continue  # skip row
-        # set value to zero
-        #        tempTrade_sub = [0,0,0]
-        #        tempTrade_main = [0,0,0]
+
         # set id
         if not tempTrade_sub.tradeID:
             tempTrade_sub.generateID()
