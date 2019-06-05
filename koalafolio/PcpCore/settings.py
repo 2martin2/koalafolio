@@ -51,7 +51,7 @@ class Settings(configparser.ConfigParser):
         self['currency']['defaultReportCurrency'] = 'EUR'
         self['currency']['defaultDisplayCurrencies'] = 'EUR,USD,BTC'
         self['currency']['isFiat'] = 'EUR,USD,GBP,JPY,CNY,RUB,AUD,CAD,SGD,PLN,HKD,CHF,INR,BRL,KRW,NZD,ZAR'
-        self['currency']['coinswapdict'] = "{'HOT':'HOT*','XBT':'BTC','IOTA':'IOT'}"
+        self['currency']['coinswapdict'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
         # tax settings
         self['tax'] = {}
         self['tax']['taxfreelimit'] = 'True'
