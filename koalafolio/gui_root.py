@@ -22,6 +22,7 @@ import os
 import koalafolio.PcpCore.settings as coreSettings
 import koalafolio.gui.QSettings as settings
 import koalafolio.gui.QStyle as style
+import koalafolio.exp.QTranslate as translator
 
 qt = qtcore.Qt
 # %% constants
@@ -157,6 +158,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.settings = settings.mySettings.setPath(self.dataPath)
         self.styleSheetHandler = style.StyleSheetHandler(self)
         self.styleSheetHandler.setPath(self.userDataPath)
+        self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
         style.myStyle = self.styleSheetHandler
 
 

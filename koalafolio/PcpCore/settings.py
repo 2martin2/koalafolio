@@ -56,6 +56,7 @@ class Settings(configparser.ConfigParser):
         self['tax'] = {}
         self['tax']['taxfreelimit'] = 'True'
         self['tax']['taxfreelimityears'] = '1'
+        self['tax']['exportLanguage'] = 'en'
 
     def saveSettings(self):
         try:
@@ -143,6 +144,7 @@ class Settings(configparser.ConfigParser):
             tax['taxfreelimityears'] = self.getint('tax', 'taxfreelimityears')
         except ValueError:
             tax['taxfreelimityears'] = 1
+        tax['exportLanguage'] = self['tax']['exportLanguage']
         return tax
 
     def getTaxSetting(self, key):
