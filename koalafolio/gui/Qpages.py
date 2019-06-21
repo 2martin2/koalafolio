@@ -104,6 +104,7 @@ class PortfolioPage(Page):
 
     def createNewView(self):
         self.verticalLayout.removeWidget(self.coinTableView)
+        self.coinTableView.setStyleSheet("")
         self.coinTableView.deleteLater()
 
         self.coinTableView = ptable.QPortfolioTableView(self)
@@ -114,7 +115,6 @@ class PortfolioPage(Page):
         self.coinTableView.show()
 
         self.verticalLayout.addWidget(self.coinTableView)
-
 
 
     # def tableClicked(self, index):
@@ -892,11 +892,11 @@ class SettingsPage(Page):
         pass
 
     def resetDefaultSettings(self):
-        settings.mySettings.resetDefault()
+        self.controller.settingsModel.resetDefault()
         self.controller.reinit()
 
     def reloadSettings(self):
-        settings.mySettings.readSettings()
+        self.controller.settingsModel.restoreSettings()
         self.controller.reinit()
 
     def saveSettings(self):

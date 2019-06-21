@@ -376,7 +376,6 @@ class QPortfolioTableModel(QCoinContainer):
         self.triggerViewReset.emit()
 
 
-
 class QTableSortingModel(qtcore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
         super(QTableSortingModel, self).__init__(*args, **kwargs)
@@ -516,80 +515,83 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 painter.drawText(contentRect, qt.AlignHCenter | qt.AlignVCenter, profitString)
 
             elif index.column() >= index.model().sourceModel().firstValueColumn:
-                coinBalance, key, cols = index.data(qt.DisplayRole)
-                boughtValue = coinBalance.initialValue[key]
-                boughtPrice = coinBalance.getInitialPrice()[key]
-                currentValue = coinBalance.getCurrentValue()[key]
-                currentPrice = coinBalance.getCurrentPrice()[key]
-                boughtValueStr = (controls.floatToString(boughtValue, 4))
-                boughtPriceStr = (controls.floatToString(boughtPrice, 4) + '/p')
-                currentValueStr = (controls.floatToString(currentValue, 4))
-                currentPriceStr = (controls.floatToString(currentPrice, 4) + '/p')
-                if boughtPrice == 0:
-                    gain = 0
-                else:
-                    gain = (currentPrice / boughtPrice - 1) * 100
-                gainStr = ("%.2f%%" % (gain))
-                gainDay = coinBalance.getChange24h(key)
-                gainDayStr = ("%.2f%%/24h" % (gainDay))
+                try:  # catch key error if currency is not in database. Could happen during currency switch
+                    coinBalance, key, cols = index.data(qt.DisplayRole)
+                    boughtValue = coinBalance.initialValue[key]
+                    boughtPrice = coinBalance.getInitialPrice()[key]
+                    currentValue = coinBalance.getCurrentValue()[key]
+                    currentPrice = coinBalance.getCurrentPrice()[key]
+                    boughtValueStr = (controls.floatToString(boughtValue, 4))
+                    boughtPriceStr = (controls.floatToString(boughtPrice, 4) + '/p')
+                    currentValueStr = (controls.floatToString(currentValue, 4))
+                    currentPriceStr = (controls.floatToString(currentPrice, 4) + '/p')
+                    if boughtPrice == 0:
+                        gain = 0
+                    else:
+                        gain = (currentPrice / boughtPrice - 1) * 100
+                    gainStr = ("%.2f%%" % (gain))
+                    gainDay = coinBalance.getChange24h(key)
+                    gainDayStr = ("%.2f%%/24h" % (gainDay))
 
 
-                positivColor = style.myStyle.getQColor('POSITIV')
-                negativColor = style.myStyle.getQColor('NEGATIV')
-                neutralColor = style.myStyle.getQColor('TEXT_NORMAL')
+                    positivColor = style.myStyle.getQColor('POSITIV')
+                    negativColor = style.myStyle.getQColor('NEGATIV')
+                    neutralColor = style.myStyle.getQColor('TEXT_NORMAL')
 
-                def drawText(alignHorz, alignVert, fontSize, color, text):
-                    newFont = painter.font()
-                    newFont.setPixelSize(fontSize)
-                    painter.setFont(newFont)
-                    pen = painter.pen()
-                    pen.setColor(color)
-                    painter.setPen(pen)
-                    painter.drawText(contentRect, alignHorz | alignVert, text)
+                    def drawText(alignHorz, alignVert, fontSize, color, text):
+                        newFont = painter.font()
+                        newFont.setPixelSize(fontSize)
+                        painter.setFont(newFont)
+                        pen = painter.pen()
+                        pen.setColor(color)
+                        painter.setPen(pen)
+                        painter.drawText(contentRect, alignHorz | alignVert, text)
 
-                if cols == 3:  # draw all
-                    drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, boughtValueStr)
-                    drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, boughtPriceStr)
-                    if gain > 0:
-                        drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentValueStr)
-                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, currentPriceStr)
-                        drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
-                    elif gain < 0:
-                        drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentValueStr)
-                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, currentPriceStr)
-                        drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
-                    else:
-                        drawText(qt.AlignHCenter, qt.AlignTop, 14, neutralColor, currentValueStr)
-                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, neutralColor, currentPriceStr)
-                        drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
-                    if gainDay >= 0:
-                        drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
-                    else:
-                        drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
-                elif cols == 2:  # skip current value and price
-                    if gain > 0:
-                        drawText(qt.AlignLeft, qt.AlignTop, 14, positivColor, currentValueStr)
-                        drawText(qt.AlignLeft, qt.AlignBottom, 12, positivColor, currentPriceStr)
-                        drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
-                    elif gain < 0:
-                        drawText(qt.AlignLeft, qt.AlignTop, 14, negativColor, currentValueStr)
-                        drawText(qt.AlignLeft, qt.AlignBottom, 12, negativColor, currentPriceStr)
-                        drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
-                    else:
-                        drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, currentValueStr)
-                        drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, currentPriceStr)
-                        drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
-                    if gainDay >= 0:
-                        drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
-                    else:
-                        drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
-                else:  # draw value and daygain
-                    if gainDay >= 0:
-                        drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
-                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, gainDayStr)
-                    else:
-                        drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
-                        drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
+                    if cols == 3:  # draw all
+                        drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, boughtValueStr)
+                        drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, boughtPriceStr)
+                        if gain > 0:
+                            drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentValueStr)
+                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, currentPriceStr)
+                            drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
+                        elif gain < 0:
+                            drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentValueStr)
+                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, currentPriceStr)
+                            drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                        else:
+                            drawText(qt.AlignHCenter, qt.AlignTop, 14, neutralColor, currentValueStr)
+                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, neutralColor, currentPriceStr)
+                            drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
+                        if gainDay >= 0:
+                            drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
+                        else:
+                            drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
+                    elif cols == 2:  # skip current value and price
+                        if gain > 0:
+                            drawText(qt.AlignLeft, qt.AlignTop, 14, positivColor, currentValueStr)
+                            drawText(qt.AlignLeft, qt.AlignBottom, 12, positivColor, currentPriceStr)
+                            drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
+                        elif gain < 0:
+                            drawText(qt.AlignLeft, qt.AlignTop, 14, negativColor, currentValueStr)
+                            drawText(qt.AlignLeft, qt.AlignBottom, 12, negativColor, currentPriceStr)
+                            drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                        else:
+                            drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, currentValueStr)
+                            drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, currentPriceStr)
+                            drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
+                        if gainDay >= 0:
+                            drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
+                        else:
+                            drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
+                    else:  # draw value and daygain
+                        if gainDay >= 0:
+                            drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
+                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, gainDayStr)
+                        else:
+                            drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
+                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
+                except KeyError as ex:
+                    localLogger.warning("currency is missing in coindata: " + str(ex))
 
         painter.restore()
 
@@ -795,6 +797,8 @@ class PortfolioOverview(qtwidgets.QWidget):
         # pie chart
         numLabel = len(settings.mySettings.displayCurrencies())
         self.portfolioChart = charts.LabeledDonatChart(self.height + 30, self.height, numLabel, parent=self)
+        self.controller.startRefresh.connect(self.portfolioChart.chartView.clearStyleSheet)
+        # self.controller.endRefresh.connect(self.portfolioChart.chartView.setColor)
         self.horzLayout.addWidget(self.portfolioChart)
 
         self.refresh()

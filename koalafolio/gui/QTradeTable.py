@@ -220,6 +220,10 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
         self.saveTrades()
         self.pricesUpdated.emit()
         if tradesLeft == 0:
+            for trade in self.trades:
+                if not trade.valueLoaded:
+                    self.triggerHistPriceUpdate.emit(self)
+                    return
             localLogger.info('historical prices loaded')
             self.histPriceUpdateFinished.emit()
         else:

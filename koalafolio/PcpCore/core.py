@@ -133,7 +133,7 @@ class CoinValue():
             if key in other:
                 self.value[key] += other.value[key]
             else:
-                logger.globalLogger.error('display currency mismatch in database. This should not happen. Please restart application!')
+                logger.globalLogger.error('display currency mismatch in database (add). This should not happen. Please restart application!')
         return self
 
     # add another CoinValue and return a new object
@@ -146,7 +146,7 @@ class CoinValue():
             if key in other:
                 self.value[key] -= other.value[key]
             else:
-                logger.globalLogger.error('display currency mismatch in database. This should not happen. Please restart application!')
+                logger.globalLogger.error('display currency mismatch in database (sub). This should not happen. Please restart application!')
         return self
 
     # sub another CoinValue and return a new object
@@ -179,7 +179,7 @@ class CoinValue():
                         coinValue.value[key] = 1
                 else:
                     logger.globalLogger.error(
-                        'display currency mismatch in database. This should not happen. Please restart application!')
+                        'display currency mismatch in database (div). This should not happen. Please restart application!')
         else:
             if not divider == 0:
                 for key in self.value:
@@ -393,13 +393,23 @@ class TradeList:
 
     def setHistPrices(self, prices):
         for trade in self.trades:
-            try:
-                coinPrice = CoinValue()
-                coinPrice.fromDict(prices[trade.tradeID])
-                trade.value = coinPrice.mult(trade.amount)
-                trade.valueLoaded = True
-            except KeyError:
-                pass
+            if trade.tradeID in prices:
+                # check if all needed currencies are included in loaded price. Otherwise skip the trade
+                missingCoin = 0
+                for key in settings.mySettings.displayCurrencies():
+                    if key not in prices[trade.tradeID]:
+                        missingCoin = 1
+                        break
+                if missingCoin == 0:
+                    coinPrice = CoinValue()
+                    coinPrice.fromDict(prices[trade.tradeID])
+                    coinVal = coinPrice.mult(trade.amount)
+                    try:
+                        for key in settings.mySettings.displayCurrencies():
+                            trade.value[key] = coinVal[key]
+                        trade.valueLoaded = True
+                    except KeyError:
+                        trade.valueLoaded = False
 
         for trade in self.trades:
             # get partner trade

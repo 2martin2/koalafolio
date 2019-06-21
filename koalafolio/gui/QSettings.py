@@ -261,6 +261,18 @@ class SettingsModel(qtcore.QAbstractItemModel):
         if item.parentKey.lower() == 'currency' and item.key.lower() == 'defaultdisplaycurrencies':
             self.displayCurrenciesChanged.emit(self.settings.displayCurrencies())
 
+    def resetDefault(self):
+        oldCur = self.settings.displayCurrencies()
+        self.settings.resetDefault()
+        if oldCur != self.settings.displayCurrencies():
+            self.displayCurrenciesChanged.emit(self.settings.displayCurrencies())
+
+    def restoreSettings(self):
+        oldCur = self.settings.displayCurrencies()
+        self.settings.readSettings()
+        if oldCur != self.settings.displayCurrencies():
+            self.displayCurrenciesChanged.emit(self.settings.displayCurrencies())
+
     def flags(self, index):
         column = index.column()
         parent = self.getParentIndexFromIndex(index)

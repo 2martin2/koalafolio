@@ -191,14 +191,28 @@ class LabeledChartView(qtchart.QChartView):
 
     def setLabelCount(self, numLabels):
         if self.labels:
+            if len(self.labels) < numLabels:
+                for index in range(len(self.labels), numLabels):
+                    self.labels.append(qtwidgets.QLabel('', self))
+                    self.labels[-1].setFont(qtgui.QFont("Arial", 12))
+                    self.labels[-1].setVisible(False)
+                    self.labels[-1].setMargin(0)
+                    self.labels[-1].adjustSize()
+            elif len(self.labels) > numLabels:
+                while(len(self.labels) > numLabels):
+                # for index in range(numLabels, len(self.labels)):
+                    label = self.labels.pop()
+                    label.setText('')
+                    label.setVisible(False)
+                    label.setStyleSheet('')
+                    label.deleteLater()
+        else:
+            self.labels = [qtwidgets.QLabel('', self) for num in range(numLabels)]
             for label in self.labels:
-                label.deleteLater()
-        self.labels = [qtwidgets.QLabel('', self) for num in range(numLabels)]
-        for label in self.labels:
-            label.setFont(qtgui.QFont("Arial", 12))
-            label.setVisible(False)
-            label.setMargin(0)
-            label.adjustSize()
+                label.setFont(qtgui.QFont("Arial", 12))
+                label.setVisible(False)
+                label.setMargin(0)
+                label.adjustSize()
 
     def setHeadingPos(self, pos):
         self.heading.move(pos)
@@ -282,6 +296,10 @@ class LabeledChartView(qtchart.QChartView):
                 for label in self.labels:
                     label.setStyleSheet('QLabel{border-radius: 5px ; color:  ' + col.name() + ';}' +
                                         'QToolTip{border: 1px solid ' + col.name() + '}')
+
+    def clearStyleSheet(self):
+        for label in self.labels:
+            label.setStyleSheet("")
 
 
 class HorizontalStackedBarChart(qtwidgets.QWidget):

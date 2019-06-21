@@ -58,7 +58,7 @@ def getHistoricalPrice(trade):
         proxies = {}
     if trade.date:
         failedCounter = 0
-        response = cryptcomp.get_historical_price(trade.coin, [key for key in trade.getValue().value], trade.date,
+        response = cryptcomp.get_historical_price(trade.coin, [key for key in settings.mySettings.displayCurrencies()], trade.date,
                                                calculationType='Close', proxies=proxies, errorCheck=False)
         if response:
             # check if wrong symbol

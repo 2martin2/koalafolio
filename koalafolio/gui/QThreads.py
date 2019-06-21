@@ -51,12 +51,11 @@ class CryptoCompare(qtcore.QObject):
     def loadHistoricalPrices(self, tradeList):
         newTrades = False
         # copy trades to buffer
-        if self.tradeBuffer != tradeList:
-            for trade in tradeList:
-                if not trade.valueLoaded:
+        for trade in tradeList:
+            if not trade.valueLoaded:
+                if not trade in self.tradeBuffer:
                     self.tradeBuffer.addTrade(trade)
-            # self.tradeBuffer.trades += tradeList.trades[:]
-            newTrades = True
+                    newTrades = True
         histPrices = {}
         counter = 0
         while not self.tradeBuffer.isEmpty():
