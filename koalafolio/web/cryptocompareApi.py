@@ -18,39 +18,6 @@ import requests
 #
 # pricehist = cryptcomp.get_historical_price('ETH', ['USD','EUR','BTC'], datetime.datetime(2017,6,6))
 
-def updateTradeValue(trade):
-    if settings.mySettings.proxies():
-        proxies = settings.mySettings.proxies()
-    else:
-        proxies = {}
-    if trade.date:
-        failedCounter = 0
-        price = None
-        while (failedCounter <= 10):
-            price = cryptcomp.get_historical_price(trade.coin, [key for key in trade.getValue().value], trade.date,
-                                                   calculationType='Close', proxies=proxies, errorCheck=False)
-            if trade.coin in price:
-                coinPrice = core.CoinValue()
-                coinPrice.fromDict(price[trade.coin])
-                if 0 in coinPrice.value.values():
-                    print('price update failed for ' + str(trade.toList()))
-                    return False
-                trade.value = coinPrice.mult(trade.amount)
-                trade.valueLoaded = True
-                return True
-            else:
-                # check if wrong symbol
-                if 'Message' in price and 'no data for the symbol' in price['Message']:
-                    logger.globalLogger.warning('invalid coinName: ' + str(trade.coin))
-                    break
-                else:
-                    # if there is an error try again
-                    failedCounter += 1
-                    # wait some time until next try
-                    time.sleep(10)
-        print('price update failed for ' + str(trade.toList()))
-        return False
-
 def getHistoricalPrice(trade):
     if settings.mySettings.proxies():
         proxies = settings.mySettings.proxies()
@@ -59,7 +26,7 @@ def getHistoricalPrice(trade):
     if trade.date:
         failedCounter = 0
         response = cryptcomp.get_historical_price(trade.coin, [key for key in settings.mySettings.displayCurrencies()], trade.date,
-                                               calculationType='Close', proxies=proxies, errorCheck=False)
+                                               calculationType='Close', proxies=proxies, errorCheck=False, timeout=10)
         if response:
             # check if wrong symbol
             if 'Message' in response and 'no data for the symbol' in response['Message']:
@@ -71,35 +38,6 @@ def getHistoricalPrice(trade):
                 logger.globalLogger.warning('error loading historical price for ' + str(trade.coin))
     return {}
 
-
-def updateCurrentCoinValues(coinList):
-    if settings.mySettings.proxies():
-        proxies = settings.mySettings.proxies()
-    else:
-        proxies = {}
-    failedCounter = 0
-    prices = None
-    while (failedCounter <= 10):
-        # try to load price from cryptocompare
-        prices = cryptcomp.get_price(coinList.getCoinNames(), [key for key in core.CoinValue()],
-                                     proxies=proxies)
-        if prices:
-            for coin in coinList:
-                try:
-                    price = core.CoinValue().fromDict(prices[coin.coinname])
-                except Exception as ex:
-                    print('error in updateCurrentCoinValues: ' + str(ex) + '; ' + str(prices))
-                else:
-                    coin.currentPrice = price
-            return True
-        else:
-            # if there is an error try again
-            failedCounter += 1
-            # wait some time until next try
-            time.sleep(10)
-    print('price update failed')
-    return False
-
 def getCoinPrices(coins):
     if settings.mySettings.proxies():
         proxies = settings.mySettings.proxies()
@@ -107,7 +45,7 @@ def getCoinPrices(coins):
         proxies = {}
     # try to load price from cryptocompare
     try:
-        response = cryptcomp.get_price(coins, [key for key in core.CoinValue()], full=True, proxies=proxies)
+        response = cryptcomp.get_price(coins, [key for key in core.CoinValue()], full=True, proxies=proxies, timeout=10)
     except Exception as ex:
         logger.globalLogger.warning('error loading prices: ' + str(ex))
         return {}
@@ -120,34 +58,6 @@ def getCoinPrices(coins):
             logger.globalLogger.warning('error loading prices')
         return {}
 
-def update24hChange(coinList):
-    if settings.mySettings.proxies():
-        proxies = settings.mySettings.proxies()
-    else:
-        proxies = {}
-    failedCounter = 0
-    data = None
-    while (failedCounter <= 10):
-        # try to load price from cryptocompare
-        data = cryptcomp.get_price(coinList.getCoinNames(), [key for key in core.CoinValue()], full=True, proxies=proxies)
-        if data:
-            for coin in coinList:
-                try:
-                    coindata = data['RAW'][coin.coinname]
-                    for key in core.CoinValue():
-                        coin.change24h[key] = coindata[key]['CHANGEPCT24HOUR']
-                except Exception as ex:
-                    logger.globalLogger.warning('error in get24hChange: ' + str(ex))
-            return True
-        else:
-            # if there is an error try again
-            failedCounter += 1
-            # wait some time until next try
-            time.sleep(10)
-    logger.globalLogger.warning('24hChange update failed')
-    return False
-
-
 def getIcon(coin, *args, **kwargs):
     if settings.mySettings.proxies():
         proxies = settings.mySettings.proxies()
@@ -155,7 +65,7 @@ def getIcon(coin, *args, **kwargs):
         proxies = {}
     coinInfo = cryptcomp.get_coin_general_info(coin, *args, **kwargs)
     try:
-        imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'], proxies=proxies)
+        imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'], proxies=proxies, timeout=10)
     except:
         return None
     return Image.open(BytesIO(imageResponse.content))
@@ -169,7 +79,7 @@ def getIcons(coins, *args, **kwargs):
     icons = {}
     try:
         for data in coinInfo['Data']:
-            imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'], proxies=proxies)
+            imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'], proxies=proxies, timeout=10)
             icons[data['CoinInfo']['Name']] = Image.open(BytesIO(imageResponse.content))
     except Exception as ex:
         logger.globalLogger.warning('error in getIcons: ' + str(ex))
