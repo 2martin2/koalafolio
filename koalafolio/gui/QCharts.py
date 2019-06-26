@@ -427,6 +427,7 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         self.chart = qtchart.QChart()
         # self.chart.legend().hide()
         self.chart.legend().setAlignment(qt.AlignRight)
+        self.chart.legend().setLabelColor(style.myStyle.getQColor("TEXT_NORMAL"))
         self.chart.setBackgroundVisible(False)
 
         # date axis
@@ -435,6 +436,7 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         self.xAxis.setFormat("dd MM yy")
         self.xAxis.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.xAxis.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        self.xAxis.setLabelsColor(style.myStyle.getQColor("TEXT_NORMAL"))
         self.chart.addAxis(self.xAxis, qt.AlignBottom)
 
         # amount axis
@@ -443,13 +445,6 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         self.yAxis.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.yAxis.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.chart.addAxis(self.yAxis, qt.AlignLeft)
-
-        # # amount axis 2
-        # self.yAxis2 = qtchart.QValueAxis()
-        # self.yAxis2.setLabelFormat("%.2f")
-        # self.yAxis2.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
-        # self.yAxis2.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
-        # self.chart.addAxis(self.yAxis2, qt.AlignRight)
 
         # chartview
         self.chartView = qtchart.QChartView(self.chart)
@@ -462,7 +457,6 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
     # clear old series and add new one
     def setData(self, dates, vals, qColor, name, lineWidth, chartType="Line"):
         self.chart.removeAllSeries()
-        self.xAxis.setLabelsColor(qColor)
         self.yAxis.setLabelsColor(qColor)
         self.addData(dates, vals, qColor, name, lineWidth, chartType=chartType)
         self.yAxis.setRange(0, max(vals) * 1.1)
