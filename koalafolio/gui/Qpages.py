@@ -103,6 +103,8 @@ class PortfolioPage(Page):
         return gui
 
     def createNewView(self):
+        self.coinDataFrame.expandTable.disconnect(self.coinTableView.expandAll)
+        self.coinDataFrame.collapseTable.disconnect(self.coinTableView.collapseAll)
         self.verticalLayout.removeWidget(self.coinTableView)
         self.coinTableView.setStyleSheet("")
         self.coinTableView.deleteLater()
@@ -113,6 +115,9 @@ class PortfolioPage(Page):
         self.coinTableView.sortByColumn(guiSettings['portfolioFilterRow'], guiSettings['portfolioFilterDir'])
 
         self.coinTableView.show()
+
+        self.coinDataFrame.expandTable.connect(self.coinTableView.expandAll)
+        self.coinDataFrame.collapseTable.connect(self.coinTableView.collapseAll)
 
         self.verticalLayout.addWidget(self.coinTableView)
 
