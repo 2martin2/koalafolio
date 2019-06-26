@@ -484,7 +484,14 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         series.attachAxis(self.xAxis)
         if newAxis:
             yAxis2 = qtchart.QValueAxis()
-            yAxis2.setLabelFormat("%.4f")
+            if max(vals) > 100:
+                yAxis2.setLabelFormat("%i")
+            elif max(vals) > 1:
+                yAxis2.setLabelFormat("%.2f")
+            elif max(vals) > 0.001:
+                yAxis2.setLabelFormat("%.4f")
+            else:
+                yAxis2.setLabelFormat("%.6f")
             yAxis2.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
             yAxis2.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
             yAxis2.setLabelsColor(qColor)
