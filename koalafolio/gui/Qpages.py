@@ -78,10 +78,10 @@ class PortfolioPage(Page):
         guiSettings = settings.mySettings.getGuiSettings()
         self.coinTableView.sortByColumn(guiSettings['portfolioFilterRow'], guiSettings['portfolioFilterDir'])
 
-        # self.coinTableView.clicked.connect(self.tableClicked)
-
         self.coinTableView.show()
         self.controller.coinList.triggerViewReset.connect(self.createNewView)
+        self.coinDataFrame.expandTable.connect(self.coinTableView.expandAll)
+        self.coinDataFrame.collapseTable.connect(self.coinTableView.collapseAll)
 
         # layout
         self.verticalLayout = qtwidgets.QVBoxLayout()

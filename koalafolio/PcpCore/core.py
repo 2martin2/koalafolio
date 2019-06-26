@@ -509,17 +509,14 @@ class TradeMatcher:
                 else:  # trade.amount >= 0
                     # copy trade to buy list
                     self.buysBuffer.append(trade.copy())
-        if self.sellsBuffer and self.buysBuffer:
+        if self.sellsBuffer:
             # sort trades by date
             self.sellsBuffer.sort(key=lambda x: x.date, reverse=False)
-            self.buysBuffer.sort(key=lambda x: x.date, reverse=False)
             # check timemode
             if not timemode == EXACT:  # timemode == DAYWISE or other:
                 # revert all datetimes to dates
                 for sell in self.sellsBuffer:
                     sell.date = sell.date.date()
-                for buy in self.buysBuffer:
-                    buy.date = buy.date.date()
             # merge sells with same date
             sellsTemp = [self.sellsBuffer[0]]
             for sell in self.sellsBuffer[1:]:
@@ -528,6 +525,14 @@ class TradeMatcher:
                 else:
                     sellsTemp.append(sell)
             self.sellsBuffer = sellsTemp
+        if self.buysBuffer:
+            # sort trades by date
+            self.buysBuffer.sort(key=lambda x: x.date, reverse=False)
+            # check timemode
+            if not timemode == EXACT:  # timemode == DAYWISE or other:
+                # revert all datetimes to dates
+                for buy in self.buysBuffer:
+                    buy.date = buy.date.date()
             # merge buys with same date
             buysTemp = [self.buysBuffer[0]]
             for buy in self.buysBuffer[1:]:

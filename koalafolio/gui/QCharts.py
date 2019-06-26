@@ -419,3 +419,77 @@ class ProfitPerYearWidget(qtwidgets.QFrame):
             set.setLabelColor(color)
 
 
+class BuyTimelineChartCont(qtwidgets.QWidget):
+    def __init__(self, *args, **kwargs):
+        super(BuyTimelineChartCont, self).__init__(*args, **kwargs)
+
+        # chart
+        self.chart = qtchart.QChart()
+        # self.chart.legend().hide()
+        self.chart.legend().setAlignment(qt.AlignRight)
+        self.chart.setBackgroundVisible(False)
+
+        # date axis
+        self.xAxis = qtchart.QDateTimeAxis()
+        self.xAxis.setTickCount(10)
+        self.xAxis.setFormat("dd MM yy")
+        self.xAxis.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        self.xAxis.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        self.chart.addAxis(self.xAxis, qt.AlignBottom)
+
+        # amount axis
+        self.yAxis = qtchart.QValueAxis()
+        self.yAxis.setLabelFormat("%.2f")
+        self.yAxis.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        self.yAxis.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        self.chart.addAxis(self.yAxis, qt.AlignLeft)
+
+        # # amount axis 2
+        # self.yAxis2 = qtchart.QValueAxis()
+        # self.yAxis2.setLabelFormat("%.2f")
+        # self.yAxis2.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        # self.yAxis2.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        # self.chart.addAxis(self.yAxis2, qt.AlignRight)
+
+        # chartview
+        self.chartView = qtchart.QChartView(self.chart)
+        self.chartView.setRenderHint(qtgui.QPainter.Antialiasing)
+
+        self.layout = qtwidgets.QHBoxLayout(self)
+        self.layout.addWidget(self.chartView)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+    # clear old series and add new one
+    def setData(self, dates, vals, qColor, name, lineWidth, chartType="Line"):
+        self.chart.removeAllSeries()
+        self.xAxis.setLabelsColor(qColor)
+        self.yAxis.setLabelsColor(qColor)
+        self.addData(dates, vals, qColor, name, lineWidth, chartType=chartType)
+        self.yAxis.setRange(0, max(vals) * 1.1)
+
+    # add new series
+    def addData(self, dates, vals, qColor, name, lineWidth, chartType="Line", newAxis=False):
+        if chartType == "Line":
+            series = qtchart.QLineSeries()
+        elif chartType == "Scatter":
+            series = qtchart.QScatterSeries()
+            series.setMarkerSize(6)
+        series.setName(name)
+        for date, val in zip(dates, vals):
+            series.append(date.timestamp() * 1000, val)
+        pen = qtgui.QPen(qColor)
+        pen.setWidth(lineWidth)
+        series.setPen(pen)
+        self.chart.addSeries(series)
+        series.attachAxis(self.xAxis)
+        if newAxis:
+            yAxis2 = qtchart.QValueAxis()
+            yAxis2.setLabelFormat("%.4f")
+            yAxis2.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+            yAxis2.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+            yAxis2.setLabelsColor(qColor)
+            self.chart.addAxis(yAxis2, qt.AlignRight)
+            series.attachAxis(yAxis2)
+            yAxis2.setRange(0, max(vals) * 1.1)
+        else:
+            series.attachAxis(self.yAxis)

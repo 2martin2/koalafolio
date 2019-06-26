@@ -42,6 +42,7 @@ class QPortfolioTableView(qtwidgets.QTreeView):
         self.expanded.connect(self.expandedCallback)
 
         self.verticalScrollBar().setSingleStep(1)
+        self.verticalScrollBar().setPageStep(1)
 
         self.horizontalHeader().sectionResized.connect(lambda index, oldSize, newSize: self.sectionSizeChanged(index, oldSize, newSize))
 
@@ -92,17 +93,23 @@ class QPortfolioTableView(qtwidgets.QTreeView):
 
     def collapsedCallback(self, index):
         child = self.model().index(0, 0, index)
+        child2 = self.model().index(0, 1, index)
         self.closePersistentEditor(child)
+        self.closePersistentEditor(child2)
 
     def expandedCallback(self, index):
         child = self.model().index(0, 0, index)
+        child2 = self.model().index(0, 1, index)
         self.openPersistentEditor(child)
+        self.openPersistentEditor(child2)
 
     def drawRow(self, painter, options, index):
         if index.parent().isValid():
             firstSection = self.header().logicalIndex(0)
+            # midSection = self.header().logicalIndex(2)
             lastSection = self.header().logicalIndex(self.header().count() - 1)
             left = self.header().sectionViewportPosition(firstSection)
+            # mid = self.header().sectionViewportPosition(midSection) + self.header().sectionSize(midSection)
             right = self.header().sectionViewportPosition(lastSection) + self.header().sectionSize(lastSection)
             indent = 1 * self.indentation()
             left += indent
@@ -126,6 +133,9 @@ class QPortfolioTableView(qtwidgets.QTreeView):
             painter.drawLine(x, rect.y() + rect.height(), rect.x() + rect.width(), rect.y() + rect.height())
             # draw upper horz line
             painter.drawLine(x, rect.y(), rect.x() + rect.width(), rect.y())
+            # draw mid line
+            mid = rect.width() * 0.3 + 20
+            painter.drawLine(mid, rect.y(), mid, rect.y() + rect.height())
         else:
             # draw lower horz line
             painter.drawLine(rect.x(), rect.y() + rect.height(), rect.x() + rect.width(), rect.y() + rect.height())
@@ -205,7 +215,7 @@ class QPortfolioTableModel(QCoinContainer):
     def columnCount(self, parent):
         if parent.isValid():
             if not parent.parent().isValid():  # first child level
-                return 1
+                return 2
             else:
                 return 0  # only one child level
         else:  # top level
@@ -227,14 +237,17 @@ class QPortfolioTableModel(QCoinContainer):
         if not parent.isValid():  # top level
             return self.createIndex(row, column, parentId)
         if parent.isValid() and not parent.parent().isValid():  # first child level
-            return self.createIndex(row, 0, parentId)
+            return self.createIndex(row, column, parentId)
         # only one child level
         return qtcore.QModelIndex()
 
     def data(self, index, role=qt.DisplayRole):
         if index.parent().isValid():  # child level
             if role == qt.DisplayRole:
-                return self.coins[index.parent().row()].notes
+                if index.column() == 0:  # coin row
+                    return self.coins[index.parent().row()].notes
+                if index.column() == 1:
+                    return self.coins[index.parent().row()]
         else:  # top level
             if role == qt.DisplayRole:
                 if index.column() == 0:  # coin row
@@ -434,7 +447,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
         contentRect = qtcore.QRect(cellStartX, cellStartY, cellWidth, cellHeight)
         painter.save()
-        if not index.parent().isValid():
+        if not index.parent().isValid():  # top level
             if index.column() == 0:  # coin
                 super(QCoinTableDelegate, self).paint(painter, option, index)
             elif index.column() == 1:  # balance
@@ -592,31 +605,95 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                             drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
                 except KeyError as ex:
                     localLogger.warning("currency is missing in coindata: " + str(ex))
-
+        # else:  # child level
+        #     if index.column() == 1:  # trade hist chart
+        #         # draw chart
         painter.restore()
 
     def createEditor(self, parent, option, index):
-        if int(index.flags()) & qt.ItemIsEditable:
-            textedit = qtwidgets.QTextEdit(parent)
-            textedit.setPlaceholderText('notes')
-            self.updateEditorGeometry(textedit, option, index)
-            return textedit
+        if index.parent().isValid():  # child level
+            if index.column() == 0:
+                if int(index.flags()) & qt.ItemIsEditable:
+                    textedit = qtwidgets.QTextEdit(parent)
+                    textedit.setPlaceholderText('notes')
+                    self.updateEditorGeometry(textedit, option, index)
+                    return textedit
+            if index.column() == 1:
+                timelinechart = charts.BuyTimelineChartCont(parent)
+                return timelinechart
         return None
 
     def setEditorData(self, editor, index):
-        editor.setText(index.data())
+        if index.parent().isValid():
+            if index.column() == 0:
+                editor.setText(index.data())
+                return
+            if index.column() == 1:
+                data = index.data()
+                # draw buys left
+                dates = []
+                vals = []
+                oldSum = 0
+                # draw buy prices
+                priceDates = []
+                prices = []
+                for trade in data.tradeMatcher.buysLeft:
+                    date = datetime.datetime.combine(trade.date, datetime.time(0, 0, 0, 0))
+                    # buys left
+                    dates.append(date)
+                    vals.append(oldSum)
+                    dates.append(date)
+                    vals.append(oldSum + trade.amount)
+                    oldSum = vals[-1]
+                    # prices
+                    priceDates.append(date)
+                    prices.append(trade.getPrice()[settings.mySettings.reportCurrency()])
+                if dates:
+                    # buys left
+                    dates.append(datetime.datetime.now())
+                    vals.append(vals[-1])
+                    # prices
+                    priceDates.append(datetime.datetime.now())
+                    prices.append(data.getCurrentPrice()[settings.mySettings.reportCurrency()])
+                    # draw taxlimit
+                    limitDate = datetime.datetime.now().replace(year=datetime.datetime.now().year -
+                                                                     settings.mySettings.getTaxSetting("taxfreelimityears"))
+                    firstDate = datetime.datetime.combine(data.tradeMatcher.buysLeft[0].date, datetime.time(0, 0, 0, 0))
+                    limitDates = [limitDate, limitDate]
+                    limitAmount = data.tradeMatcher.getBuyAmountLeftTaxFree(settings.mySettings.getTaxSetting("taxfreelimityears"))
+                    limitVals = [limitAmount, 0]
+
+
+                    editor.setData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", 3)
+                    editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", 3)
+                    editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY_MIDLIGHT'), "price", 3,
+                                   chartType="Scatter", newAxis=True)
+                return
 
     def updateEditorGeometry(self, editor, option, index):
         if index.parent().isValid():  # child level
-            size = self.sizeHint(option, index)
-            rect = qtcore.QRect(editor.parent().x(), option.rect.y() + 5, editor.parent().width(), size.height() - 10)
-            editor.setGeometry(rect)
+
+            if index.column() == 0:
+                size = self.sizeHint(option, index)
+                # print("updateGeom width 0: " + str(size.width()) + "; " + str(option.rect.width()))
+                rect = qtcore.QRect(editor.parent().x(), option.rect.y() + 5, editor.parent().width() * 0.3,
+                                    size.height() - 10)
+                editor.setGeometry(rect)
+                return
+            if index.column() == 1:
+                size = self.sizeHint(option, index)
+                # print("updateGeom width 1: " + str(size.width()) + "; " + str(option.rect.width()))
+                rect = qtcore.QRect(editor.parent().x() + editor.parent().width() * 0.3 + 20, option.rect.y() + 5, editor.parent().width() * 0.7 - 20,
+                                    size.height() - 10)
+                editor.setGeometry(rect)
+                return
         else:
             raise TypeError
 
     def setModelData(self, editor, model, index):
-        model.setData(index, editor.toPlainText(), qt.EditRole)
-        pass
+        if index.parent().isValid():
+            if index.column() == 0:
+                model.setData(index, editor.toPlainText(), qt.EditRole)
 
     def sizeHint(self, option, index):
         if index.parent().isValid():  # child level
@@ -658,64 +735,12 @@ class QArrowPainterPath(qtgui.QPainterPath):
         self.closeSubpath()
 
 
-class ArcValueChart(qtchart.QChartView):
-    def __init__(self, width, height, *args, **kwargs):
-        super(ArcValueChart, self).__init__(*args, **kwargs)
-
-        self.setMinimumHeight(height)
-        self.setMinimumWidth(width)
-
-        self.heading = qtwidgets.QLabel('', self)
-        self.currentValueLabel = qtwidgets.QLabel('', self)
-        self.currentValueLabel.setFont(qtgui.QFont("Arial", 12))
-        self.currentPerfLabel = qtwidgets.QLabel('', self)
-        self.currentPerfLabel.setFont(qtgui.QFont("Arial", 11))
-        for label in [self.currentValueLabel, self.currentPerfLabel]:
-            label.setVisible(False)
-            self.setColor(qtgui.QColor(255, 255, 255))
-        self.currentValueLabel.setMargin(0)
-        self.currentPerfLabel.setMargin(0)
-        # self.updateLabelPos()
-
-    def updateLabelPos(self):
-        center = self.geometry().center()
-        pos1 = qtcore.QPoint()
-        pos2 = qtcore.QPoint()
-        pos1.setX(center.x() - self.currentValueLabel.width() / 2)
-        pos2.setX(pos1.x() + self.currentValueLabel.width() - self.currentPerfLabel.width())
-        pos1.setY(center.y() - self.currentValueLabel.height() / 2)
-        pos2.setY(center.y() + self.currentPerfLabel.height() / 2)
-        self.currentValueLabel.move(pos1)
-        self.currentPerfLabel.move(pos2)
-
-    def moveEvent(self, event):
-        super(ArcValueChart, self).moveEvent(event)
-        self.updateLabelPos()
-
-    def resizeEvent(self, event):
-        super(ArcValueChart, self).resizeEvent(event)
-        self.updateLabelPos()
-
-    def setText(self, text1, text2):
-        self.currentValueLabel.setText(text1)
-        self.currentPerfLabel.setText(text2)
-        self.currentValueLabel.adjustSize()
-        self.currentPerfLabel.adjustSize()
-        self.updateLabelPos()
-        self.currentValueLabel.setVisible(True)
-        self.currentPerfLabel.setVisible(True)
-
-    def setColor(self, col):
-        print('*{background-color: rgba(0, 0, 0, 0); color:  #000000;}')
-        print('*{background-color: rgba(0, 0, 0, 0); color:  ' + col.name() + ';}')
-        self.currentValueLabel.setStyleSheet('*{background-color: rgba(0, 0, 0, 0); color:  ' + col.name() + ';}')
-        self.currentPerfLabel.setStyleSheet('*{background-color: rgba(0, 0, 0, 0); color:  ' + col.name() + ';}')
-
-
-
-
 # %% portfolio overview
 class PortfolioOverview(qtwidgets.QWidget):
+    expandTable = qtcore.pyqtSignal()
+    collapseTable = qtcore.pyqtSignal()
+    filterSoldCoins = qtcore.pyqtSignal()
+
     def __init__(self, controller, height=200, *args, **kwargs):
         super(PortfolioOverview, self).__init__(*args, **kwargs)
 
@@ -764,35 +789,28 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.perfChartCont.setChartIndex(settings.mySettings.getGuiSetting('performanceChartIndex'))
         self.horzLayout.addWidget(self.perfChartCont)
 
-        # labels
-        profitLabels = [self.profitTable]
-        # feeLabels = [self.paidFeesLabel]
-        # otherLabels = [None, self.paidFeesLabel]
-        labels = [None, profitLabels, None]
+        # table controls
+        self.expandAllButton = qtwidgets.QPushButton("expand", self)
+        self.expandAllButton.clicked.connect(self.expandTable)
+        self.collapseAllButton = qtwidgets.QPushButton("collapse", self)
+        self.collapseAllButton.clicked.connect(self.collapseTable)
+        # self.filterSoldCoinsBox = qtwidgets.QCheckBox(self)
 
-        # self.labelGridLayout = qtwidgets.QGridLayout()
-        # self.labelGridLayout.setContentsMargins(0, 0, 0, 0)
-        self.labelVertLayouts = []
-        row = 0
-        column = 0
-        for columnLabels in labels:
-            if columnLabels:
-                self.labelVertLayouts.append(qtwidgets.QVBoxLayout())
-                self.labelVertLayouts[-1].setContentsMargins(10, 10, 10, 10)
-                # self.labelVertLayouts[-1].addStretch()
-                for rowLabel in columnLabels:
-                    if rowLabel:
-                        # self.labelGridLayout.addWidget(rowLabel, row, column)
-                        self.labelVertLayouts[-1].addWidget(rowLabel)
-                    # rowLabel.setParent(self.dragWidget)
-                    # rowLabel.move(qtcore.QPoint((column+0.5)*125, (row+0.2)*60))
-                    row += 1
-                self.labelVertLayouts[-1].addStretch()
-                self.horzLayout.addLayout(self.labelVertLayouts[-1])
-            else:
-                self.horzLayout.addStretch()
-            row = 0
-            column += 1
+        self.controlsLayout = qtwidgets.QHBoxLayout()
+        self.controlsLayout.addStretch()
+        self.controlsLayout.addWidget(self.expandAllButton)
+        self.controlsLayout.addWidget(self.collapseAllButton)
+        # self.controlsLayout.addWidget(self.filterSoldCoinsBox)
+        self.controlsLayout.addStretch()
+
+        self.centerVertLayout = qtwidgets.QVBoxLayout()
+        self.centerVertLayout.addWidget(self.profitTable)
+        self.centerVertLayout.addStretch()
+        self.centerVertLayout.addLayout(self.controlsLayout)
+
+        self.horzLayout.addStretch()
+        self.horzLayout.addLayout(self.centerVertLayout)
+        self.horzLayout.addStretch()
 
         # pie chart
         numLabel = len(settings.mySettings.displayCurrencies())
