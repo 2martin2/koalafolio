@@ -656,17 +656,18 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     priceDates.append(datetime.datetime.now())
                     prices.append(data.getCurrentPrice()[settings.mySettings.reportCurrency()])
                     # draw taxlimit
-                    limitDate = datetime.datetime.now().replace(year=datetime.datetime.now().year -
-                                                                     settings.mySettings.getTaxSetting("taxfreelimityears"))
-                    firstDate = datetime.datetime.combine(data.tradeMatcher.buysLeft[0].date, datetime.time(0, 0, 0, 0))
-                    limitDates = [limitDate, limitDate]
-                    limitAmount = data.tradeMatcher.getBuyAmountLeftTaxFree(settings.mySettings.getTaxSetting("taxfreelimityears"))
-                    limitVals = [limitAmount, 0]
-
-
+                    if settings.mySettings.getTaxSetting("taxfreelimit"):
+                        limitDate = datetime.datetime.now().replace(year=datetime.datetime.now().year -
+                                                                         settings.mySettings.getTaxSetting("taxfreelimityears"))
+                        firstDate = datetime.datetime.combine(data.tradeMatcher.buysLeft[0].date, datetime.time(0, 0, 0, 0))
+                        limitDates = [limitDate, limitDate]
+                        limitAmount = data.tradeMatcher.getBuyAmountLeftTaxFree(settings.mySettings.getTaxSetting("taxfreelimityears"))
+                        limitVals = [limitAmount, 0]
                     editor.setData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", 3)
-                    editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", 3)
-                    editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY_MIDLIGHT'), "price", 3,
+                    if settings.mySettings.getTaxSetting("taxfreelimit"):
+                        editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", 3)
+                    editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY_MIDLIGHT'),
+                                   "price " + settings.mySettings.reportCurrency(), 3,
                                    chartType="Scatter", newAxis=True)
                 return
 
