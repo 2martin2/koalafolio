@@ -857,6 +857,26 @@ class SettingsPage(Page):
 
         self.vertLayout = qtwidgets.QVBoxLayout(self)
 
+        # path label
+        self.appPathPreLabel = qtwidgets.QLabel("app path: ")
+        self.appPathLabel = qtwidgets.QLabel(controller.appPath)
+        self.dataPathPreLabel = qtwidgets.QLabel("data path: ")
+        self.dataPathLabel = qtwidgets.QLabel(controller.dataPath)
+        self.appPathLabel.setTextInteractionFlags(qt.TextSelectableByMouse)
+        self.dataPathLabel.setTextInteractionFlags(qt.TextSelectableByMouse)
+        self.appPathPreLabel.setContentsMargins(10, 0, 0, 0)
+        self.dataPathPreLabel.setContentsMargins(10, 0, 0, 0)
+        self.appPathLabel.setContentsMargins(0, 0, 10, 0)
+        self.dataPathLabel.setContentsMargins(0, 0, 10, 0)
+
+        self.labelLayout = qtwidgets.QHBoxLayout()
+        self.labelLayout.addWidget(self.appPathPreLabel)
+        self.labelLayout.addWidget(self.appPathLabel)
+        self.labelLayout.addWidget(self.dataPathPreLabel)
+        self.labelLayout.addWidget(self.dataPathLabel)
+        self.labelLayout.addStretch()
+        self.vertLayout.addLayout(self.labelLayout)
+
         # content
         self.settingsView = settings.SettingsTreeView(self)
         self.settingsView.setModel(self.controller.settingsModel)
@@ -886,7 +906,6 @@ class SettingsPage(Page):
         self.vertLayout.addWidget(self.settingsView)
         # self.vertLayout.addStretch()
         self.vertLayout.addLayout(self.horzButtonLayout)
-
 
     def refresh(self):
         pass
