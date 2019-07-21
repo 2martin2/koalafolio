@@ -3,7 +3,7 @@ Install Koalafolio on Linux Mint:
 1) install python3.7 (sudo apt-get install python3.7)
 2) install pip (sudo apt-get install python3-pip)
 3) install setuptools (sudo apt-get install python3-setuptools)
-4) install koalafolio (sudo python3.7 -m -pip install koalafolio)
+4) install koalafolio (sudo python3.7 -m pip install koalafolio)
 5) start koalafolio: koalafolio (terminal)
 6) create starter (optional)
 
