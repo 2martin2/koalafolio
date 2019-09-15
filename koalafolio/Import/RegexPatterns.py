@@ -102,6 +102,22 @@ KRAKEN_MARGIN_REGEX = re.compile(r'^margin$', re.IGNORECASE)
 KRAKEN_MISC_REGEX = re.compile(r'^misc$', re.IGNORECASE)
 KRAKEN_LEDGERS_REGEX = re.compile(r'^ledgers$', re.IGNORECASE)
 
+# model kraken api [dtime,txid,cost,fee,margin,misc,ordertxid,ordertype,pair,postxid,price,time,type,vol]
+KRAKENAPI_DTIME_REGEX = re.compile(r'^dtime$', re.IGNORECASE)
+KRAKENAPI_TXID_REGEX = re.compile(r'^txid$', re.IGNORECASE)
+KRAKENAPI_COST_REGEX = re.compile(r'^cost$', re.IGNORECASE)
+KRAKENAPI_FEE_REGEX = re.compile(r'^fee$', re.IGNORECASE)
+KRAKENAPI_MARGIN_REGEX = re.compile(r'^margin$', re.IGNORECASE)
+KRAKENAPI_MISC_REGEX = re.compile(r'^misc$', re.IGNORECASE)
+KRAKENAPI_ORDERTXID_REGEX = re.compile(r'^ordertxid$', re.IGNORECASE)
+KRAKENAPI_ORDERTYPE_REGEX = re.compile(r'^ordertype$', re.IGNORECASE)
+KRAKENAPI_PAIR_REGEX = re.compile(r'^pair$', re.IGNORECASE)
+KRAKENAPI_POSTXID_REGEX = re.compile(r'^postxid$', re.IGNORECASE)
+KRAKENAPI_PRICE_REGEX = re.compile(r'^price$', re.IGNORECASE)
+KRAKENAPI_TIME_REGEX = re.compile(r'^time$', re.IGNORECASE)
+KRAKENAPI_TYPE_REGEX = re.compile(r'^type$', re.IGNORECASE)
+KRAKENAPI_VOL_REGEX = re.compile(r'^vol$', re.IGNORECASE)
+
 # model binance ['Date(UTC)', 'Market', 'Type', 'Price', 'Amount', 'Total', 'Fee', 'Fee Coin']
 BINANCE_DATE_REGEX = re.compile(r'^Date\(\w*\)$', re.IGNORECASE)
 BINANCE_MARKET_REGEX = re.compile(r'^Market$', re.IGNORECASE)

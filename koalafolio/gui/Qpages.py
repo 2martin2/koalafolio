@@ -23,6 +23,7 @@ import datetime
 from pathlib import Path
 import koalafolio.gui.QLogger as logger
 import koalafolio.exp.profitExport as profex
+import koalafolio.Import.apiImport as apiImport
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -293,15 +294,19 @@ class ImportSelectPage(SubPage):
         filetypes = settings.mySettings['import']['importFileTypes']
         self.filePattern = re.compile("^.*\." + filetypes + "$", re.IGNORECASE)
 
+        # Left Frame
+        self.fileFrame = controls.StyledFrame(self)
+        self.fileImportLabel = qtwidgets.QLabel('File import', self.fileFrame)
+
         # enter path
-        self.pathEntry = controls.PathInput(self)
+        self.pathEntry = controls.PathInput(self.fileFrame)
         self.pathEntry.textChanged.connect(self.pathChanged)
 
         # file system view
         self.fileSystemModel = qtwidgets.QFileSystemModel()
         self.fileSystemModel.setRootPath(qtcore.QDir.currentPath())
 
-        self.treeView = qtwidgets.QTreeView(self)
+        self.treeView = qtwidgets.QTreeView(self.fileFrame)
         self.treeView.setModel(self.fileSystemModel)
         self.treeView.setSelectionMode(qtwidgets.QAbstractItemView.ExtendedSelection)
         self.treeView.header().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
@@ -309,20 +314,15 @@ class ImportSelectPage(SubPage):
 
         self.treeView.setRootIndex(self.fileSystemModel.index(qtcore.QDir.currentPath()))
 
-        # display path details
-        self.feedBackFrame = controls.StyledFrame(self)
-        self.feedBackLabel = qtwidgets.QLabel('selected Files: ', self.feedBackFrame)
-        self.fileTextBox = qtwidgets.QTextEdit(self.feedBackFrame)
-        self.fileTextBox.setReadOnly(True)
-
-        self.templateFileDialog = qtwidgets.QFileDialog(self)
-        self.templateButton = qtwidgets.QPushButton("create template", self)
+        # controls
+        self.templateFileDialog = qtwidgets.QFileDialog(self.fileFrame)
+        self.templateButton = qtwidgets.QPushButton("create template", self.fileFrame)
         self.templateButton.clicked.connect(self.createTemplate)
 
-        self.previewButton = qtwidgets.QPushButton("preview", self)
+        self.previewButton = qtwidgets.QPushButton("preview", self.fileFrame)
         self.previewButton.clicked.connect(self.showPreviewFrame)
 
-        self.fastImportButton = qtwidgets.QPushButton("fast import", self)
+        self.fastImportButton = qtwidgets.QPushButton("fast import", self.fileFrame)
         self.fastImportButton.clicked.connect(self.showImportFinishedFrame)
 
         self.horzButtonLayout = qtwidgets.QHBoxLayout()
@@ -332,19 +332,61 @@ class ImportSelectPage(SubPage):
         self.horzButtonLayout.addWidget(self.fastImportButton)
         self.horzButtonLayout.addStretch()
 
+        # api import
+        self.apiFrame = controls.StyledFrame(self)
+        self.apiLabel = qtwidgets.QLabel('API import: ', self.apiFrame)
+
+        self.apiSelectLabel = qtwidgets.QLabel("API: ", self.apiFrame)
+        self.apiSelectDropdown = qtwidgets.QComboBox(self.apiFrame)
+        apiSelectModel = qtcore.QStringListModel()
+        apiSelectModel.setStringList(apiImport.apiNames)
+        self.apiSelectDropdown.setModel(apiSelectModel)
+        # self.languageBox.setCurrentIndex(languages.index(defaultLanguage))
+        self.keyLabel = qtwidgets.QLabel('key: ', self.apiFrame)
+        self.keyInput = qtwidgets.QLineEdit(self.apiFrame)
+        self.secretLabel = qtwidgets.QLabel('secret: ', self.apiFrame)
+        self.secretInput = qtwidgets.QLineEdit(self.apiFrame)
+
+        self.apiGridLayout = qtwidgets.QGridLayout()
+        self.apiGridLayout.addWidget(self.apiSelectLabel, 0, 0)
+        self.apiGridLayout.addWidget(self.apiSelectDropdown, 0, 1)
+        self.apiGridLayout.addWidget(self.keyLabel, 1, 0)
+        self.apiGridLayout.addWidget(self.keyInput, 1, 1)
+        self.apiGridLayout.addWidget(self.secretLabel, 2, 0)
+        self.apiGridLayout.addWidget(self.secretInput, 2, 1)
+
+        self.apiImportButton = qtwidgets.QPushButton('import', self.apiFrame)
+        self.apiImportButton.clicked.connect(self.importFromApi)
+        self.apiSaveButton = qtwidgets.QPushButton('save as csv', self.apiFrame)
+        self.apiSaveButton.clicked.connect(self.saveFromApi)
+        self.saveCsvFileDialog = qtwidgets.QFileDialog(self.apiFrame)
+
+        self.apiHorzButtonLayout = qtwidgets.QHBoxLayout()
+        self.apiHorzButtonLayout.addStretch()
+        self.apiHorzButtonLayout.addWidget(self.apiSaveButton)
+        self.apiHorzButtonLayout.addWidget(self.apiImportButton)
+        self.apiHorzButtonLayout.addStretch()
+
+        # api controls
+
         # layout
-        self.feedbackLayout = qtwidgets.QVBoxLayout(self.feedBackFrame)
-        self.feedbackLayout.addWidget(self.feedBackLabel)
-        self.feedbackLayout.addWidget(self.fileTextBox)
-        self.verticalLayout = qtwidgets.QVBoxLayout(self)
-        self.verticalLayout.addWidget(self.pathEntry)
+        self.apiLayout = qtwidgets.QVBoxLayout(self.apiFrame)
+        self.apiLayout.addWidget(self.apiLabel)
+        self.apiLayout.addLayout(self.apiGridLayout)
+        self.apiLayout.addStretch()
+        self.apiLayout.addLayout(self.apiHorzButtonLayout)
 
-        self.horzLayout = qtwidgets.QHBoxLayout()
-        self.horzLayout.addWidget(self.treeView)
-        self.horzLayout.addWidget(self.feedBackFrame)
+        self.fileLayout = qtwidgets.QVBoxLayout(self.fileFrame)
+        self.fileLayout.addWidget(self.fileImportLabel)
+        self.fileLayout.addWidget(self.pathEntry)
+        self.fileLayout.addWidget(self.treeView)
+        self.fileLayout.addLayout(self.horzButtonLayout)
 
-        self.verticalLayout.addLayout(self.horzLayout)
-        self.verticalLayout.addLayout(self.horzButtonLayout)
+        # self.vertLayoutRight =qtwidgets.QVBoxLayout()
+
+        self.horzLayout = qtwidgets.QHBoxLayout(self)
+        self.horzLayout.addWidget(self.fileFrame)
+        self.horzLayout.addWidget(self.apiFrame)
 
         self.pathEntry.setPath(qtcore.QDir.currentPath())
 
@@ -383,7 +425,6 @@ class ImportSelectPage(SubPage):
                 print("pathChanged callback failed: " + str(ex))
 
     def selectionChangedCallback(self):
-        self.fileTextBox.clear()
         self.controller.allFilesPath = []
         indexes = self.treeView.selectionModel().selectedIndexes()
         self.filePaths = []
@@ -392,12 +433,9 @@ class ImportSelectPage(SubPage):
                 path = Path(self.fileSystemModel.filePath(index))
                 if path.is_file():
                     self.controller.allFilesPath.append(str(path))
-                    self.fileTextBox.insertPlainText(os.path.basename(path) + '\n')
                 if path.is_dir():
                     files = [os.path.join(str(path), str(f)) for f in path.iterdir() if self.filePattern.match(str(f))]
                     self.controller.allFilesPath += files
-                    for file in files:
-                        self.fileTextBox.insertPlainText(os.path.basename(file) + '\n')
 
     # show preview frame and refresh data
     def showPreviewFrame(self):
@@ -406,7 +444,45 @@ class ImportSelectPage(SubPage):
         else:
             localLogger.info('please select at least one valid file')
 
-    # skip preview and shoe import finished page
+    def importFromApi(self):
+        self.controller.skippedRows = 0
+        self.controller.importedRows = 0
+        self.controller.filesNotImported = 0
+        self.controller.filesImported = 0
+        self.controller.clearNewTrades()
+        content = apiImport.getApiHistory(self.apiSelectDropdown.currentText(), self.keyInput.text(), self.secretInput.text())
+        if not content.empty:
+            tradeListTemp, feeListTemp, match, skippedRows = importer.convertTradesSingle(
+                models.IMPORT_MODEL_LIST, content, self.apiSelectDropdown.currentText())
+            # check import
+            if match:
+                self.controller.newTradesBuffer.mergeTradeList(tradeListTemp)
+                self.controller.newFeesBuffer.mergeTradeList(feeListTemp)
+                self.controller.importedRows += len(tradeListTemp.trades) + len(feeListTemp.trades)
+                self.controller.skippedRows += skippedRows
+                self.controller.filesImported += 1
+
+                if not (self.controller.getNewTrades().isEmpty() and self.controller.getNewFees().isEmpty()):
+                    self.controller.showFrame(self.controller.IMPORTFINISHPAGEINDEX)
+                else:
+                    localLogger.info('no valid data could be loaded from API')
+            else:
+                localLogger.info("data from API could not be converted")
+        else:
+            localLogger.info("no valid data could be loaded from API")
+
+
+    def saveFromApi(self):
+        self.saveCsvFileDialog.setDefaultSuffix("csv")
+        filename = self.apiSelectDropdown.currentText() + '_api.csv'
+        pathReturn = self.saveCsvFileDialog.getSaveFileName(self, "save file", filename, "CSV (*.csv *.txt)")
+        if pathReturn[0]:
+            content = apiImport.getApiHistory(self.apiSelectDropdown.currentText(), self.keyInput.text(), self.secretInput.text())
+            content.to_csv(pathReturn[0])
+        else:
+            localLogger.warning("invalid path: " + str(pathReturn[0]))
+
+    # skip preview and show import finished page
     def showImportFinishedFrame(self):
         self.controller.skippedRows = 0
         self.controller.importedRows = 0

@@ -124,7 +124,7 @@ def convertTradesSingle(modelList, frame, filename):  # convert one row of read 
                 if not (trades.isEmpty() and fees.isEmpty()):
                     break
             except Exception as ex:
-                # if exception occurs, try other models
+                #if exception occurs, try other models
                 print('converting ' + str(filename) + ' failed with model :' + str(model.modelCallback) + '; ' + str(ex))
 
     return trades, fees, frameMatched, skippedRows
