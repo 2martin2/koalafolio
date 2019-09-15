@@ -18,7 +18,13 @@ def initApi(key, secret):
 def getTradeHistory(key, secret):
     k = initApi(key, secret)
     tradeHistory = k.get_trades_history()[0]
-    return tradeHistory.reset_index()
+    newTradeHistory = tradeHistory.reset_index()
+    def removeNs(date):
+        return str(date)[:-3]
+    newTradeHistory['dtime'] = newTradeHistory['dtime'].apply(removeNs)
+    return newTradeHistory
+
+
 
 
 # k = initApi(apiKey, privateKey)
