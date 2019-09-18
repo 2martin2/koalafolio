@@ -13,6 +13,8 @@ from pathlib import Path
 import koalafolio.gui.QLogger as logger
 import koalafolio.gui.QSettings as settings
 
+localLogger = logger.globalLogger
+
 qt = qtcore.Qt
 # %% constants
 PATHREGEX = r"^\w:((\\|/)\w+)*(|.\w+)$"
@@ -30,6 +32,22 @@ class StyledFrame(qtwidgets.QFrame):
 
         self.setFrameShape(qtwidgets.QFrame.StyledPanel)
         self.setFrameShadow(qtwidgets.QFrame.Raised)
+
+
+# %% Headings
+class Heading(qtwidgets.QLabel):
+    def __init__(self, *args, **kwargs):
+        super(Heading, self).__init__(*args, **kwargs)
+
+        self.setObjectName("QHeading")
+
+
+# %% SubHeadings
+class SubHeading(qtwidgets.QLabel):
+    def __init__(self, *args, **kwargs):
+        super(SubHeading, self).__init__(*args, **kwargs)
+
+        self.setObjectName("QSubHeading")
 
 
 # status bar for printing logging entries
@@ -446,6 +464,192 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
                 except Exception as ex:  # skip column if regex error
                     pass
         return True
+
+
+class ApiKeyView(qtwidgets.QWidget):
+    importFromApi = qtcore.pyqtSignal([str, str, str])
+    saveFromApi = qtcore.pyqtSignal([str, str, str])
+
+    def __init__(self, *args, **kwargs):
+        super(ApiKeyView, self).__init__(*args, **kwargs)
+
+        self.apiLabel = Heading('API import: ', self)
+
+        frame1 = self.initNewDbUI()
+        frame2 = self.initReadDbUI()
+
+        self.stackedContentLayout = qtwidgets.QStackedLayout()
+        self.stackedContentLayout.addWidget(frame1)
+        self.stackedContentLayout.addWidget(frame2)
+
+        self.stackedContentLayout.setCurrentIndex(1)
+
+        # direct api call
+        self.directApiLabel = SubHeading("enter api keys", self.newDbFrame)
+
+        self.directApiSelectLabel = qtwidgets.QLabel("API: ", self.newDbFrame)
+        self.directApiSelectDropdown = qtwidgets.QComboBox(self.newDbFrame)
+        self.keyLabel = qtwidgets.QLabel('key: ', self.newDbFrame)
+        self.keyInput = qtwidgets.QLineEdit(self.newDbFrame)
+        self.secretLabel = qtwidgets.QLabel('secret: ', self.newDbFrame)
+        self.secretInput = qtwidgets.QLineEdit(self.newDbFrame)
+
+        self.directApiGridLayout = qtwidgets.QGridLayout()
+        self.directApiGridLayout.addWidget(self.directApiSelectLabel, 0, 0)
+        self.directApiGridLayout.addWidget(self.directApiSelectDropdown, 0, 1)
+        self.directApiGridLayout.addWidget(self.keyLabel, 1, 0)
+        self.directApiGridLayout.addWidget(self.keyInput, 1, 1)
+        self.directApiGridLayout.addWidget(self.secretLabel, 2, 0)
+        self.directApiGridLayout.addWidget(self.secretInput, 2, 1)
+
+        self.directApiImportButton = qtwidgets.QPushButton('import', self.newDbFrame)
+        self.directApiImportButton.clicked.connect(self.directImportFromApi)
+        self.directApiSaveButton = qtwidgets.QPushButton('save as csv', self.newDbFrame)
+        self.directApiSaveButton.clicked.connect(self.directSaveFromApi)
+
+        self.directApiHorzButtonLayout = qtwidgets.QHBoxLayout()
+        self.directApiHorzButtonLayout.addStretch()
+        self.directApiHorzButtonLayout.addWidget(self.directApiSaveButton)
+        self.directApiHorzButtonLayout.addWidget(self.directApiImportButton)
+        self.directApiHorzButtonLayout.addStretch()
+
+        self.vLayout = qtwidgets.QVBoxLayout(self)
+        self.vLayout.addWidget(self.apiLabel)
+        self.vLayout.addLayout(self.stackedContentLayout)
+        self.vLayout.addWidget(self.directApiLabel)
+        self.vLayout.addLayout(self.directApiGridLayout)
+        self.vLayout.addLayout(self.directApiHorzButtonLayout)
+
+    def initNewDbUI(self):
+        self.newDbFrame = StyledFrame(self)
+
+        # create new db
+        self.newDbLabel = SubHeading("create a new password to store the api keys encrypted on disk")
+
+        self.newKeyLabel = qtwidgets.QLabel("new password: ", self.newDbFrame)
+        self.newKeyLabel2 = qtwidgets.QLabel("repeat password: ", self.newDbFrame)
+
+        self.newKeyEdit = qtwidgets.QLineEdit(self.newDbFrame)
+        self.newKeyEdit2 = qtwidgets.QLineEdit(self.newDbFrame)
+
+        self.createButton = qtwidgets.QPushButton("create", self.newDbFrame)
+        self.clearButton = qtwidgets.QPushButton("clear", self.newDbFrame)
+        # self.createButton.clicked.connect(self.createNewDb)
+        # self.clearButton.clicked.connect(self.clearNewKeys)
+
+        self.newDbGridLayout = qtwidgets.QGridLayout()
+        self.newDbGridLayout.addWidget(self.newKeyLabel, 0, 0)
+        self.newDbGridLayout.addWidget(self.newKeyEdit, 0, 1)
+        self.newDbGridLayout.addWidget(self.newKeyLabel2, 1, 0)
+        self.newDbGridLayout.addWidget(self.newKeyEdit2, 1, 1)
+
+        self.newDbButtonLayout = qtwidgets.QHBoxLayout()
+        self.newDbButtonLayout.addStretch()
+        self.newDbButtonLayout.addWidget(self.createButton)
+        self.newDbButtonLayout.addWidget(self.clearButton)
+        self.newDbButtonLayout.addStretch()
+
+        self.newDbVLayout = qtwidgets.QVBoxLayout(self.newDbFrame)
+        self.newDbVLayout.addWidget(self.newDbLabel)
+        self.newDbVLayout.addLayout(self.newDbGridLayout)
+        self.newDbVLayout.addLayout(self.newDbButtonLayout)
+        self.newDbVLayout.addStretch()
+
+        # return base frame
+        return self.newDbFrame
+
+    def initReadDbUI(self):
+        # api import
+        self.apiFrame = StyledFrame(self)
+
+        self.pwLabel = qtwidgets.QLabel('password: ', self.apiFrame)
+        self.pwInput = qtwidgets.QLineEdit(self.apiFrame)
+
+        self.pwLayout = qtwidgets.QGridLayout()
+        self.pwLayout.addWidget(self.pwLabel, 0, 0)
+        self.pwLayout.addWidget(self.pwInput, 0, 1)
+
+        self.unlockDbButton = qtwidgets.QPushButton("unlock db", self.apiFrame)
+        self.unlockDbButton.clicked.connect(self.unlockDb)
+        self.lockDbButton = qtwidgets.QPushButton("lock db", self.apiFrame)
+        self.lockDbButton.clicked.connect(self.lockDb)
+
+        self.dbButtonLayout = qtwidgets.QHBoxLayout()
+        self.dbButtonLayout.addStretch()
+        self.dbButtonLayout.addWidget(self.unlockDbButton)
+        self.dbButtonLayout.addWidget(self.lockDbButton)
+        self.dbButtonLayout.addStretch()
+
+        self.lockedStateLabel = qtwidgets.QLabel("db is locked", self.apiFrame)
+
+        self.lockedStateLayout = qtwidgets.QHBoxLayout()
+        self.lockedStateLayout.addStretch()
+        self.lockedStateLayout.addWidget(self.lockedStateLabel)
+        self.lockedStateLayout.addStretch()
+
+        self.apiSelectLabel = qtwidgets.QLabel("API: ", self.apiFrame)
+        self.apiSelectDropdown = qtwidgets.QComboBox(self.apiFrame)
+
+        self.apiGridLayout = qtwidgets.QGridLayout()
+        self.apiGridLayout.addWidget(self.apiSelectLabel, 0, 0)
+        self.apiGridLayout.addWidget(self.apiSelectDropdown, 0, 1)
+        self.apiGridLayout.setColumnStretch(1, 1)
+
+        self.loadKeysButton = qtwidgets.QPushButton("load keys", self.apiFrame)
+        self.loadKeysButton.clicked.connect(self.loadKeys)
+        self.saveKeysButton = qtwidgets.QPushButton("save keys", self.apiFrame)
+        self.saveKeysButton.clicked.connect(self.saveKeys)
+        self.deleteKeysButton = qtwidgets.QPushButton("delete keys", self.apiFrame)
+        self.deleteKeysButton.clicked.connect(self.deleteKeys)
+
+        self.dbButtonLayout2 = qtwidgets.QHBoxLayout()
+        self.dbButtonLayout2.addStretch()
+        self.dbButtonLayout2.addWidget(self.loadKeysButton)
+        self.dbButtonLayout2.addWidget(self.saveKeysButton)
+        self.dbButtonLayout2.addWidget(self.deleteKeysButton)
+        self.dbButtonLayout2.addStretch()
+
+        # layout
+        self.apiLayout = qtwidgets.QVBoxLayout(self.apiFrame)
+        self.apiLayout.addLayout(self.pwLayout)
+        self.apiLayout.addLayout(self.dbButtonLayout)
+        self.apiLayout.addStretch()
+        self.apiLayout.addLayout(self.lockedStateLayout)
+        self.apiLayout.addLayout(self.apiGridLayout)
+        self.apiLayout.addLayout(self.dbButtonLayout2)
+        self.apiLayout.addStretch()
+
+        return self.apiFrame
+
+    def directImportFromApi(self):
+        self.importFromApi.emit(self.directApiSelectDropdown.currentText(), self.keyInput.text(),
+                                self.secretInput.text())
+
+    def directSaveFromApi(self):
+        self.saveFromApi.emit(self.directApiSelectDropdown.currentText(), self.keyInput.text(),
+                              self.secretInput.text())
+
+    def unlockDb(self):
+        print("unlock db")
+
+    def lockDb(self):
+        print("lock db")
+
+    def loadKeys(self):
+        pass
+
+    def saveKeys(self):
+        pass
+
+    def deleteKeys(self):
+        pass
+
+    def setImplementedExchangeListModel(self, model):
+        self.directApiSelectDropdown.setModel(model)
+
+    def setImplementedExchangeListCurrentIndex(self, index):
+        self.directApiSelectDropdown.setCurrentIndex(index)
+
 
 
 # %% functions

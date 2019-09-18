@@ -296,7 +296,7 @@ class ImportSelectPage(SubPage):
 
         # Left Frame
         self.fileFrame = controls.StyledFrame(self)
-        self.fileImportLabel = qtwidgets.QLabel('File import', self.fileFrame)
+        self.fileImportLabel = controls.Heading('File import', self.fileFrame)
 
         # enter path
         self.pathEntry = controls.PathInput(self.fileFrame)
@@ -332,61 +332,28 @@ class ImportSelectPage(SubPage):
         self.horzButtonLayout.addWidget(self.fastImportButton)
         self.horzButtonLayout.addStretch()
 
-        # api import
-        self.apiFrame = controls.StyledFrame(self)
-        self.apiLabel = qtwidgets.QLabel('API import: ', self.apiFrame)
-
-        self.apiSelectLabel = qtwidgets.QLabel("API: ", self.apiFrame)
-        self.apiSelectDropdown = qtwidgets.QComboBox(self.apiFrame)
-        apiSelectModel = qtcore.QStringListModel()
-        apiSelectModel.setStringList(apiImport.apiNames)
-        self.apiSelectDropdown.setModel(apiSelectModel)
-        # self.languageBox.setCurrentIndex(languages.index(defaultLanguage))
-        self.keyLabel = qtwidgets.QLabel('key: ', self.apiFrame)
-        self.keyInput = qtwidgets.QLineEdit(self.apiFrame)
-        self.secretLabel = qtwidgets.QLabel('secret: ', self.apiFrame)
-        self.secretInput = qtwidgets.QLineEdit(self.apiFrame)
-
-        self.apiGridLayout = qtwidgets.QGridLayout()
-        self.apiGridLayout.addWidget(self.apiSelectLabel, 0, 0)
-        self.apiGridLayout.addWidget(self.apiSelectDropdown, 0, 1)
-        self.apiGridLayout.addWidget(self.keyLabel, 1, 0)
-        self.apiGridLayout.addWidget(self.keyInput, 1, 1)
-        self.apiGridLayout.addWidget(self.secretLabel, 2, 0)
-        self.apiGridLayout.addWidget(self.secretInput, 2, 1)
-
-        self.apiImportButton = qtwidgets.QPushButton('import', self.apiFrame)
-        self.apiImportButton.clicked.connect(self.importFromApi)
-        self.apiSaveButton = qtwidgets.QPushButton('save as csv', self.apiFrame)
-        self.apiSaveButton.clicked.connect(self.saveFromApi)
-        self.saveCsvFileDialog = qtwidgets.QFileDialog(self.apiFrame)
-
-        self.apiHorzButtonLayout = qtwidgets.QHBoxLayout()
-        self.apiHorzButtonLayout.addStretch()
-        self.apiHorzButtonLayout.addWidget(self.apiSaveButton)
-        self.apiHorzButtonLayout.addWidget(self.apiImportButton)
-        self.apiHorzButtonLayout.addStretch()
-
-        # api controls
-
-        # layout
-        self.apiLayout = qtwidgets.QVBoxLayout(self.apiFrame)
-        self.apiLayout.addWidget(self.apiLabel)
-        self.apiLayout.addLayout(self.apiGridLayout)
-        self.apiLayout.addStretch()
-        self.apiLayout.addLayout(self.apiHorzButtonLayout)
-
+        # file import layout
         self.fileLayout = qtwidgets.QVBoxLayout(self.fileFrame)
         self.fileLayout.addWidget(self.fileImportLabel)
         self.fileLayout.addWidget(self.pathEntry)
         self.fileLayout.addWidget(self.treeView)
         self.fileLayout.addLayout(self.horzButtonLayout)
 
-        # self.vertLayoutRight =qtwidgets.QVBoxLayout()
+        # api import
+        self.apiView = controls.ApiKeyView(self)
+        self.apiSelectModel = qtcore.QStringListModel()
+        self.apiSelectModel.setStringList(apiImport.apiNames)
+        self.apiView.setImplementedExchangeListModel(self.apiSelectModel)
+        self.apiView.setImplementedExchangeListCurrentIndex(0)
+        self.apiView.importFromApi.connect(self.importFromApi)
+        self.apiView.saveFromApi.connect(self.saveFromApi)
 
+        self.saveCsvFileDialog = qtwidgets.QFileDialog(self)
+
+        # page layout
         self.horzLayout = qtwidgets.QHBoxLayout(self)
         self.horzLayout.addWidget(self.fileFrame)
-        self.horzLayout.addWidget(self.apiFrame)
+        self.horzLayout.addWidget(self.apiView)
 
         self.pathEntry.setPath(qtcore.QDir.currentPath())
 
@@ -394,6 +361,9 @@ class ImportSelectPage(SubPage):
         # file types
         filetypes = settings.mySettings['import']['importFileTypes']
         self.filePattern = re.compile("^.*\." + filetypes + "$", re.IGNORECASE)
+
+        # self.apiSelectModel.setStringList(apiImport.apiNames)
+        # self.apiView.setImplementedExchangeListCurrentIndex(0)
 
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
@@ -444,16 +414,16 @@ class ImportSelectPage(SubPage):
         else:
             localLogger.info('please select at least one valid file')
 
-    def importFromApi(self):
+    def importFromApi(self, api, key, secret):
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
         self.controller.filesNotImported = 0
         self.controller.filesImported = 0
         self.controller.clearNewTrades()
-        content = apiImport.getApiHistory(self.apiSelectDropdown.currentText(), self.keyInput.text(), self.secretInput.text())
+        content = apiImport.getApiHistory(api, key, secret)
         if not content.empty:
             tradeListTemp, feeListTemp, match, skippedRows = importer.convertTradesSingle(
-                models.IMPORT_MODEL_LIST, content, self.apiSelectDropdown.currentText())
+                models.IMPORT_MODEL_LIST, content, api)
             # check import
             if match:
                 self.controller.newTradesBuffer.mergeTradeList(tradeListTemp)
@@ -465,22 +435,25 @@ class ImportSelectPage(SubPage):
                 if not (self.controller.getNewTrades().isEmpty() and self.controller.getNewFees().isEmpty()):
                     self.controller.showFrame(self.controller.IMPORTFINISHPAGEINDEX)
                 else:
-                    localLogger.info('no valid data could be loaded from API')
+                    localLogger.info("no valid data received from api")
             else:
                 localLogger.info("data from API could not be converted")
         else:
-            localLogger.info("no valid data could be loaded from API")
+            localLogger.info("no data received from api")
 
 
-    def saveFromApi(self):
-        self.saveCsvFileDialog.setDefaultSuffix("csv")
-        filename = self.apiSelectDropdown.currentText() + '_api.csv'
-        pathReturn = self.saveCsvFileDialog.getSaveFileName(self, "save file", filename, "CSV (*.csv *.txt)")
-        if pathReturn[0]:
-            content = apiImport.getApiHistory(self.apiSelectDropdown.currentText(), self.keyInput.text(), self.secretInput.text())
-            content.to_csv(pathReturn[0])
+    def saveFromApi(self, api, key, secret):
+        content = apiImport.getApiHistory(api, key, secret)
+        if not content.empty:
+            self.saveCsvFileDialog.setDefaultSuffix("csv")
+            filename = self.directApiSelectDropdown.currentText() + '_api.csv'
+            pathReturn = self.saveCsvFileDialog.getSaveFileName(self, "save file", filename, "CSV (*.csv *.txt)")
+            if pathReturn[0]:
+                content.to_csv(pathReturn[0])
+            else:
+                localLogger.warning("invalid path: " + str(pathReturn[0]))
         else:
-            localLogger.warning("invalid path: " + str(pathReturn[0]))
+            localLogger.info("no data received from api")
 
     # skip preview and show import finished page
     def showImportFinishedFrame(self):
