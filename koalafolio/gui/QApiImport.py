@@ -100,7 +100,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.databaseLocked()
 
         # direct api call
-        self.directApiLabel = controls.SubHeading("enter api keys", self.newDbFrame)
+        self.directApiLabel = controls.SubHeading("enter api keys, always use read only keys for this application!!", self.newDbFrame)
 
         self.directApiSelectLabel = qtwidgets.QLabel("API: ", self.newDbFrame)
         self.directApiSelectDropdown = qtwidgets.QComboBox(self.newDbFrame)
