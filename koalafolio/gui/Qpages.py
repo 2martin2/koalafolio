@@ -442,7 +442,7 @@ class ImportSelectPage(SubPage):
         content = apiImport.getApiHistory(api, key, secret)
         if not content.empty:
             self.saveCsvFileDialog.setDefaultSuffix("csv")
-            filename = self.directApiSelectDropdown.currentText() + '_api.csv'
+            filename = api + '_api.csv'
             pathReturn = self.saveCsvFileDialog.getSaveFileName(self, "save file", filename, "CSV (*.csv *.txt)")
             if pathReturn[0]:
                 content.to_csv(pathReturn[0])
