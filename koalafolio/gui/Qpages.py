@@ -24,6 +24,7 @@ from pathlib import Path
 import koalafolio.gui.QLogger as logger
 import koalafolio.exp.profitExport as profex
 import koalafolio.Import.apiImport as apiImport
+import koalafolio.gui.QApiImport as qApiImport
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -340,11 +341,9 @@ class ImportSelectPage(SubPage):
         self.fileLayout.addLayout(self.horzButtonLayout)
 
         # api import
-        self.apiView = controls.ApiKeyView(self)
-        self.apiSelectModel = qtcore.QStringListModel()
-        self.apiSelectModel.setStringList(apiImport.apiNames)
-        self.apiView.setImplementedExchangeListModel(self.apiSelectModel)
-        self.apiView.setImplementedExchangeListCurrentIndex(0)
+        self.apiModel = qApiImport.ApiKeyModel(controller.controller.apiDatabase)
+        self.apiView = qApiImport.ApiKeyView(parent=self)
+        self.apiView.setModel(self.apiModel)
         self.apiView.importFromApi.connect(self.importFromApi)
         self.apiView.saveFromApi.connect(self.saveFromApi)
 
@@ -361,9 +360,6 @@ class ImportSelectPage(SubPage):
         # file types
         filetypes = settings.mySettings['import']['importFileTypes']
         self.filePattern = re.compile("^.*\." + filetypes + "$", re.IGNORECASE)
-
-        # self.apiSelectModel.setStringList(apiImport.apiNames)
-        # self.apiView.setImplementedExchangeListCurrentIndex(0)
 
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
