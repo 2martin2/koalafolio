@@ -711,7 +711,7 @@ class ImportFinishPage(SubPage):
         self.horzButtonLayout.addStretch()
 
         self.legendWhiteLabel = qtwidgets.QLabel("white: new trades", self)
-        self.legendGrayLabel = qtwidgets.QLabel("gray: trades that are already existent", self)
+        self.legendGrayLabel = qtwidgets.QLabel("gray: trades that are already existent (will not be imported)", self)
         color = style.myStyle.getQColor('TEXT_HIGHLIGHTED_MIDLIGHT')
         self.legendGrayLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
         self.legendRedLabel = qtwidgets.QLabel("red: new trades that are very similar to existent trades (make sure you really want to import them!)", self)
