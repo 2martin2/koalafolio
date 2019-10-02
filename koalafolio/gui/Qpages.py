@@ -25,6 +25,7 @@ import koalafolio.gui.QLogger as logger
 import koalafolio.exp.profitExport as profex
 import koalafolio.Import.apiImport as apiImport
 import koalafolio.gui.QApiImport as qApiImport
+import koalafolio.gui.QStyle as style
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -522,9 +523,26 @@ class ImportPreviewPage(SubPage):
         self.fileNameLabel = qtwidgets.QLabel("FileName", self.infoFrame)
         self.infoLabel = qtwidgets.QLabel("", self.infoFrame)
 
-        self.infoLayout = qtwidgets.QVBoxLayout(self.infoFrame)
+        self.infoLayout = qtwidgets.QHBoxLayout(self.infoFrame)
         self.infoLayout.addWidget(self.fileNameLabel)
+        self.infoLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
         self.infoLayout.addWidget(self.infoLabel)
+
+        self.legendWhiteLabel = qtwidgets.QLabel("white: new trades", self)
+        self.legendGrayLabel = qtwidgets.QLabel("gray: trades that are already existent", self)
+        color = style.myStyle.getQColor('TEXT_HIGHLIGHTED_MIDLIGHT')
+        self.legendGrayLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
+        self.legendRedLabel = qtwidgets.QLabel("red: new trades that are very similar to existent trades (make sure you really want to import them!)", self)
+        color = style.myStyle.getQColor('NEGATIV')
+        self.legendRedLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
+
+        self.legendLayout = qtwidgets.QHBoxLayout()
+        self.legendLayout.addWidget(self.legendWhiteLabel)
+        self.legendLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
+        self.legendLayout.addWidget(self.legendGrayLabel)
+        self.legendLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
+        self.legendLayout.addWidget(self.legendRedLabel)
+        self.legendLayout.addStretch()
 
         # create options frame
         self.optionsFrame = controls.StyledFrame(self, height=20)
@@ -574,6 +592,7 @@ class ImportPreviewPage(SubPage):
 
         self.verticalLayout = qtwidgets.QVBoxLayout(self)
         self.verticalLayout.addLayout(self.headerHorzLayout)
+        self.verticalLayout.addLayout(self.legendLayout)
         self.verticalLayout.addWidget(self.tableView)
         self.verticalLayout.addWidget(self.feeTableView)
         self.verticalLayout.addLayout(self.horzButtonLayout)
@@ -667,28 +686,53 @@ class ImportFinishPage(SubPage):
         self.tableView = ttable.QTradeTableView(self)
         self.tradeProxyModel = qtcore.QSortFilterProxyModel()
         self.tableView.setModel(self.tradeProxyModel)
+        self.tableView.focusInSignal.connect(self.focusChanged)
 
         # fee table view
         self.feeTableView = ttable.QTradeTableView(self)
         self.feeProxyModel = qtcore.QSortFilterProxyModel()
         self.feeTableView.setModel(self.feeProxyModel)
+        self.feeTableView.focusInSignal.connect(self.focusChanged)
 
-        self.cancelButton = qtwidgets.QPushButton("Cancel", self)
-        self.cancelButton.clicked.connect(lambda: self.cancelTrades())
-        self.acceptButton = qtwidgets.QPushButton("Accept", self)
-        self.acceptButton.clicked.connect(lambda: self.acceptTrades())
+        self.lastFocusTable = self.tableView
+
+        self.cancelButton = qtwidgets.QPushButton("cancel", self)
+        self.cancelButton.clicked.connect(self.cancelTrades)
+        self.acceptButton = qtwidgets.QPushButton("accept", self)
+        self.acceptButton.clicked.connect(self.acceptTrades)
+        self.removeSelectButton = qtwidgets.QPushButton("remove selected", self)
+        self.removeSelectButton.clicked.connect(self.deleteSelectedTrades)
 
         self.horzButtonLayout = qtwidgets.QHBoxLayout()
         self.horzButtonLayout.addStretch()
         self.horzButtonLayout.addWidget(self.cancelButton)
+        self.horzButtonLayout.addWidget(self.removeSelectButton)
         self.horzButtonLayout.addWidget(self.acceptButton)
         self.horzButtonLayout.addStretch()
 
+        self.legendWhiteLabel = qtwidgets.QLabel("white: new trades", self)
+        self.legendGrayLabel = qtwidgets.QLabel("gray: trades that are already existent", self)
+        color = style.myStyle.getQColor('TEXT_HIGHLIGHTED_MIDLIGHT')
+        self.legendGrayLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
+        self.legendRedLabel = qtwidgets.QLabel("red: new trades that are very similar to existent trades (make sure you really want to import them!)", self)
+        color = style.myStyle.getQColor('NEGATIV')
+        self.legendRedLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
+
+        self.legendLayout = qtwidgets.QHBoxLayout()
+        self.legendLayout.addWidget(self.legendWhiteLabel)
+        self.legendLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
+        self.legendLayout.addWidget(self.legendGrayLabel)
+        self.legendLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
+        self.legendLayout.addWidget(self.legendRedLabel)
+        self.legendLayout.addStretch()
+
         self.verticalLayout = qtwidgets.QVBoxLayout(self)
         self.verticalLayout.addWidget(self.statusLabel)
+        self.verticalLayout.addLayout(self.legendLayout)
         self.verticalLayout.addWidget(self.tableView)
         self.verticalLayout.addWidget(self.feeTableView)
         self.verticalLayout.addLayout(self.horzButtonLayout)
+
 
     def refresh(self):
         self.tradeProxyModel.setSourceModel(self.controller.getNewTrades())
@@ -703,9 +747,20 @@ class ImportFinishPage(SubPage):
             status += 'importedRows: ' + str(self.controller.importedRows)
             self.statusLabel.setText(status)
 
+    def focusChanged(self):
+        if self.tableView.hasFocus():
+            self.lastFocusTable = self.tableView
+        if self.feeTableView.hasFocus():
+            self.lastFocusTable = self.feeTableView
+
     def acceptTrades(self):
         # merge trades with database
         self.controller.finishImport()
+
+    def deleteSelectedTrades(self):
+        # remove all trades that are not selected
+        self.lastFocusTable.deleteSelectedTrades()
+
 
     def cancelTrades(self):
         # delete trades and go back to file selection

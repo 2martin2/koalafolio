@@ -948,9 +948,20 @@ def convertDate(dateString, useLocalTime=True):
         raise SyntaxError("date format not supported")
     return timestamp
 
-
-# dateString = 'Wed Jun 27 17:16:39 CST 2018'
-# date = convertDate(dateString)
+def roundTime(dt=None, roundToS=60):
+    if dt == None: dt = datetime.datetime.now()
+    if roundToS > 1:
+        if roundToS < 10:
+            dt = roundTime(dt, roundToS=1)
+        seconds = (dt.replace(tzinfo=None) - dt.min).seconds
+        rounding = (seconds+roundToS/2) // roundToS * roundToS
+        return dt + datetime.timedelta(0, rounding-seconds, -dt.microsecond)
+    else:
+        roundTo = roundToS*1000000
+        if dt == None : dt = datetime.datetime.now()
+        microseconds = (dt.replace(tzinfo=None) - dt.min).microseconds
+        rounding = (microseconds+roundTo/2) // roundTo * roundTo
+        return dt + datetime.timedelta(0, 0, rounding-microseconds)
 
 
 def swapCoinName(trade):

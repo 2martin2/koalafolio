@@ -7,6 +7,7 @@ import koalafolio.Import.Converter as converter
 import koalafolio.PcpCore.logger as logger
 import datetime
 from dateutil.relativedelta import relativedelta
+import math
 
 # constants
 EXACT = 0
@@ -221,6 +222,15 @@ class Trade:
         self.tradeID = hashlib.sha1(tradeString.encode()).hexdigest()
         return self.tradeID
 
+    def checkApproximateEquality(self, trade):
+        return self.generateApproximateID() == trade.generateApproximateID()
+
+    def generateApproximateID(self):
+        myDate = converter.roundTime(self.date, roundToS=60)
+        myAmount = round(self.amount, -int( math.floor(math.log10(abs(self.amount)))) + 5)
+        tradeString = str(str(myDate) + str(self.tradeType) + str(self.externId) + str(self.coin) + str(myAmount))
+        return hashlib.sha1(tradeString.encode()).hexdigest()
+
     def __eq__(self, other):
         return self.tradeID == other.tradeID
 
@@ -229,6 +239,7 @@ class Trade:
 
     def __hash__(self):
         return hash(self.tradeID)
+
 
     def copy(self):
         trade = Trade()
@@ -475,6 +486,12 @@ class TradeList:
     def clearPriceFlag(self):
         for trade in self.trades:
             trade.valueLoaded = False
+
+    def checkApproximateEquality(self, trade):
+        for t in self.trades:
+            if trade.generateApproximateID() == t.generateApproximateID():
+                return True
+        return False
 
 
 # %% TradeMatcher

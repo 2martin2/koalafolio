@@ -33,6 +33,7 @@ qt = qtcore.Qt
 class QTradeTableView(qtwidgets.QTableView):
     viewResized = qtcore.pyqtSignal()
     viewUpdated = qtcore.pyqtSignal()
+    focusInSignal = qtcore.pyqtSignal()
 
     def __init__(self, parent, *args, **kwargs):
         super(QTradeTableView, self).__init__(parent=parent, *args, **kwargs)
@@ -44,6 +45,15 @@ class QTradeTableView(qtwidgets.QTableView):
         self.setItemDelegate(QTradeTableDelegate())
 
         self.setSortingEnabled(True)
+
+    def keyPressEvent(self, event):
+        if event.key() == qt.Key_Delete:
+            self.deleteSelectedTrades()
+        else:
+            super(QTradeTableView, self).keyPressEvent(event)
+
+    def focusInEvent(self, event):
+        self.focusInSignal.emit()
 
     def deleteSelectedTrades(self):
         if self.selectionModel().hasSelection():
@@ -429,6 +439,8 @@ class QImportTradeTableModel(QTradeTableModel):
         if role == qt.ForegroundRole:
             if self.trades[index.row()] in self.baseModel.trades:
                 return style.myStyle.getQColor('text_highlighted_midlight'.upper())
+            if self.baseModel.checkApproximateEquality(self.trades[index.row()]):
+                return style.myStyle.getQColor('NEGATIV')
         return super(QImportTradeTableModel, self).data(index, role)
 
 
