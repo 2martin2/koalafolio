@@ -422,7 +422,7 @@ QWidget#StyledLabelTitle:checked:hover {
 }
 
 /* buttons*/
-QPushButton {
+QPushButton:enabled {
     border: 2px solid PRIMARY;
     border-radius: 6px;
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
@@ -441,6 +441,14 @@ QPushButton:hover {
                                       stop: 0 PRIMARY, stop: 1 PRIMARY_LIGHT);
     border: 2px solid PRIMARY_MIDLIGHT;
     border-radius: 6px;
+}
+QPushButton:disabled {
+    border: 2px solid BACKGROUND_MIDLIGHT;
+    border-radius: 6px;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 BACKGROUND_MIDLIGHT, stop: 1 BACKGROUND_LIGHT);
+    padding: 4px 7px 4px 7px;
+    color: TEXT_HIGHLIGHTED;
 }
 
 

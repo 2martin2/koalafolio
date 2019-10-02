@@ -83,6 +83,21 @@ IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.KRAKEN_TXID_REGEX, pat.KRAKEN_
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_kraken
 
+# %% krakenapi [txid,ordertxid,pair,dtime,type,ordertype,price,cost,fee,vol,margin,misc,postxid,time]
+index = index + 1
+IMPORT_MODEL_LIST.append(Importmodel())
+IMPORT_MODEL_LIST[index].modelHeaders = ['txid', 'ordertxid', 'pair', 'dtime', 'type', 'ordertype', 'price', 'cost',
+                                         'fee', 'vol', 'margin', 'misc', 'postxid', 'time']
+IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.KRAKENAPI_TXID_REGEX, pat.KRAKENAPI_ORDERTXID_REGEX,
+                                              pat.KRAKENAPI_PAIR_REGEX, pat.KRAKENAPI_DTIME_REGEX,
+                                              pat.KRAKENAPI_TYPE_REGEX, pat.KRAKENAPI_ORDERTYPE_REGEX,
+                                              pat.KRAKENAPI_PRICE_REGEX, pat.KRAKENAPI_COST_REGEX,
+                                              pat.KRAKENAPI_FEE_REGEX, pat.KRAKENAPI_VOL_REGEX,
+                                              pat.KRAKENAPI_MARGIN_REGEX, pat.KRAKENAPI_MISC_REGEX,
+                                              pat.KRAKENAPI_POSTXID_REGEX, pat.KRAKENAPI_TIME_REGEX]
+IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
+IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_krakenapi
+
 # %% binance ['Date(UTC)', 'Market', 'Type', 'Price', 'Amount', 'Total', 'Fee', 'Fee Coin']
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())

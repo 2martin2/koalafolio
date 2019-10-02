@@ -13,6 +13,8 @@ from pathlib import Path
 import koalafolio.gui.QLogger as logger
 import koalafolio.gui.QSettings as settings
 
+localLogger = logger.globalLogger
+
 qt = qtcore.Qt
 # %% constants
 PATHREGEX = r"^\w:((\\|/)\w+)*(|.\w+)$"
@@ -30,6 +32,22 @@ class StyledFrame(qtwidgets.QFrame):
 
         self.setFrameShape(qtwidgets.QFrame.StyledPanel)
         self.setFrameShadow(qtwidgets.QFrame.Raised)
+
+
+# %% Headings
+class Heading(qtwidgets.QLabel):
+    def __init__(self, *args, **kwargs):
+        super(Heading, self).__init__(*args, **kwargs)
+
+        self.setObjectName("QHeading")
+
+
+# %% SubHeadings
+class SubHeading(qtwidgets.QLabel):
+    def __init__(self, *args, **kwargs):
+        super(SubHeading, self).__init__(*args, **kwargs)
+
+        self.setObjectName("QSubHeading")
 
 
 # status bar for printing logging entries

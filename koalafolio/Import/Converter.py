@@ -134,13 +134,17 @@ def modelCallback_exodus(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
+# %% krakenapi model: "txid","ordertxid","pair","dtime","type","ordertype","price","cost","fee","vol","margin","misc","postxid","time"
+def modelCallback_krakenapi(headernames, dataFrame):
+    return modelCallback_kraken(headernames, dataFrame) # call kraken callback since difference in header is not relevant for parsing
+
 # %% kraken model: ["txid","ordertxid","pair","time","type","ordertype","price","cost","fee","vol","margin","misc","ledgers"]
 def modelCallback_kraken(headernames, dataFrame):
     # seperate coin pair
     # "txid"	"ordertxid"	"pair"		"time"	"type"	"ordertype"	"price"		"cost"		"fee"	"vol"		"margin"	"misc"	"ledgers"
-    # "x"	"x"			"XETHZEUR"	"x"		"buy"	"limit"		170.25000	851.25000	1.36200	5.00000000	0.00000		""		"x"
-    # "x"	"x"			"XXBTZEUR"	"x"		"buy"	"limit"		5220.00000	3839.00171	6.14240	0.73544094	0.00000		""		"x"
-    # "x"	"x"			"ADAEUR"	"x"		"buy"	"limit"		0.0400000	1000.00171	1.14240	0.73544094	0.00000		""		"x"
+    # "x"	    "x"			"XETHZEUR"	"x"		"buy"	"limit"		170.25000	851.25000	1.36200	5.00000000	0.00000		""		"x"
+    # "x"	    "x"			"XXBTZEUR"	"x"		"buy"	"limit"		5220.00000	3839.00171	6.14240	0.73544094	0.00000		""		"x"
+    # "x"	    "x"			"ADAEUR"	"x"		"buy"	"limit"		0.0400000	1000.00171	1.14240	0.73544094	0.00000		""		"x"
 
     COIN_PAIR_REGEX = re.compile('^X([a-z|A-Z]*)Z([a-z|A-Z]*)$')
     COIN_PAIR_REGEX_2 = re.compile('^([a-z|A-Z]{3})([a-z|A-Z]{3})$')
@@ -871,55 +875,58 @@ def convertDate(dateString, useLocalTime=True):
     # check if pandas time pattern fits
     #    match = pat.Pandas_TIME_REGEX.match(dateString)
     timestamp = None
-    try:  # try dateutil parser
-        timestamp = dateutil.parser.parse(dateString)
-    except ValueError:  # manuel parsing
-        print('manuel parsing')
-        if pat.Pandas_TIME_REGEX.match(dateString):
-            timestamp = pandas.to_datetime(dateString, utc=True)
-        for i in range(len(pat.TIME_REGEX)):
-            tempMatch = pat.TIME_REGEX[i].match(dateString)
-            if tempMatch:
-                # correct wrong formats
-                if i == pat.TIME_SPECIAL_PATTERN_INDEX[0]:
-                    groups = tempMatch.group
-                    dateString = groups(1) + '0' + groups(2)
-                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[1]:
-                    groups = tempMatch.group
-                    hour = groups(5)
-                    if groups(7).upper() == 'PM':
-                        hour = str(int(groups(5))+12)
-                        if hour == '24':
-                            hour = '00'
-                    dateString = ""
-                    if len(groups(1)) == 1:
-                        dateString += '0' + groups(1) + groups(2)
-                    else:
-                        dateString += groups(1) + groups(2)
-                    if len(groups(3)) == 1:
-                        dateString += '0' + groups(3) + groups(4)
-                    else:
-                        dateString += groups(3) + groups(4)
-                    if len(hour) == 1:
-                        dateString += '0' + hour + groups(6)
-                    else:
-                        dateString += hour + groups(6)
+    if isinstance(dateString, datetime.date):
+        timestamp = dateString
+    else:
+        try:  # try dateutil parser
+            timestamp = dateutil.parser.parse(dateString)
+        except ValueError:  # manuel parsing
+            print('manuel parsing')
+            if pat.Pandas_TIME_REGEX.match(dateString):
+                timestamp = pandas.to_datetime(dateString, utc=True)
+            for i in range(len(pat.TIME_REGEX)):
+                tempMatch = pat.TIME_REGEX[i].match(dateString)
+                if tempMatch:
+                    # correct wrong formats
+                    if i == pat.TIME_SPECIAL_PATTERN_INDEX[0]:
+                        groups = tempMatch.group
+                        dateString = groups(1) + '0' + groups(2)
+                    elif i == pat.TIME_SPECIAL_PATTERN_INDEX[1]:
+                        groups = tempMatch.group
+                        hour = groups(5)
+                        if groups(7).upper() == 'PM':
+                            hour = str(int(groups(5))+12)
+                            if hour == '24':
+                                hour = '00'
+                        dateString = ""
+                        if len(groups(1)) == 1:
+                            dateString += '0' + groups(1) + groups(2)
+                        else:
+                            dateString += groups(1) + groups(2)
+                        if len(groups(3)) == 1:
+                            dateString += '0' + groups(3) + groups(4)
+                        else:
+                            dateString += groups(3) + groups(4)
+                        if len(hour) == 1:
+                            dateString += '0' + hour + groups(6)
+                        else:
+                            dateString += hour + groups(6)
 
-                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[2]:
-                    groups = tempMatch.group
-                    dateString = groups(1) + groups(3)
-                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[3]:
-                    groups = tempMatch.group
-                    dateString = groups(1)
-                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[4]:
-                    groups = tempMatch.group
-                    dateString = groups(1) + groups(3) + groups(2) + ' ' + groups(5)
-                elif i == pat.TIME_SPECIAL_PATTERN_INDEX[5]:
-                    groups = tempMatch.group
-                    dateString = groups(1) + ' ' + groups(2) + ' +0000'
-                # convert to datetime
-                timestamp = datetime.datetime.strptime(dateString, pat.TIME_FORMAT[i])
-                break
+                    elif i == pat.TIME_SPECIAL_PATTERN_INDEX[2]:
+                        groups = tempMatch.group
+                        dateString = groups(1) + groups(3)
+                    elif i == pat.TIME_SPECIAL_PATTERN_INDEX[3]:
+                        groups = tempMatch.group
+                        dateString = groups(1)
+                    elif i == pat.TIME_SPECIAL_PATTERN_INDEX[4]:
+                        groups = tempMatch.group
+                        dateString = groups(1) + groups(3) + groups(2) + ' ' + groups(5)
+                    elif i == pat.TIME_SPECIAL_PATTERN_INDEX[5]:
+                        groups = tempMatch.group
+                        dateString = groups(1) + ' ' + groups(2) + ' +0000'
+                    # convert to datetime
+                    timestamp = datetime.datetime.strptime(dateString, pat.TIME_FORMAT[i])
+                    break
     if timestamp:
         # if no info about timezone included
         if not timestamp.tzinfo:

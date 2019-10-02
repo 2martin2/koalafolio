@@ -2,7 +2,7 @@
 """
 Created on Thu Oct  4 15:15:19 2018
 
-@author: VOL4ABT
+@author: Martin
 """
 
 # todo: check why default section is written to file ?!
