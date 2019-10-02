@@ -41,8 +41,8 @@ trade import
    - exodus (v1/txs/.json)
    - others could work as well but not tested
    
-  import trades from exchanges using der API:
-   supported exchanges (so far):
+ import trades from exchanges using der API:
+  supported exchanges (so far):
    - kraken
 
 portfolio
