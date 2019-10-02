@@ -227,7 +227,10 @@ class Trade:
 
     def generateApproximateID(self):
         myDate = converter.roundTime(self.date, roundToS=60)
-        myAmount = round(self.amount, -int( math.floor(math.log10(abs(self.amount)))) + 5)
+        try:
+            myAmount = round(self.amount, -int( math.floor(math.log10(abs(self.amount)))) + 5)
+        except ValueError:
+            myAmount = self.amount
         tradeString = str(str(myDate) + str(self.tradeType) + str(self.externId) + str(self.coin) + str(myAmount))
         return hashlib.sha1(tradeString.encode()).hexdigest()
 
