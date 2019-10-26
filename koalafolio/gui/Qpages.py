@@ -26,6 +26,7 @@ import koalafolio.exp.profitExport as profex
 import koalafolio.Import.apiImport as apiImport
 import koalafolio.gui.QApiImport as qApiImport
 import koalafolio.gui.QStyle as style
+import webbrowser
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -963,21 +964,23 @@ class SettingsPage(Page):
         self.vertLayout = qtwidgets.QVBoxLayout(self)
 
         # path label
-        self.appPathPreLabel = qtwidgets.QLabel("app path: ")
+        self.appPathPreButton = qtwidgets.QPushButton("app path: ")
+        self.appPathPreButton.clicked.connect(lambda: webbrowser.open('file:///' + controller.appPath))
         self.appPathLabel = qtwidgets.QLabel(controller.appPath)
-        self.dataPathPreLabel = qtwidgets.QLabel("data path: ")
+        self.dataPathPreButton = qtwidgets.QPushButton("data path: ")
+        self.dataPathPreButton.clicked.connect(lambda: webbrowser.open('file:///' + controller.dataPath))
         self.dataPathLabel = qtwidgets.QLabel(controller.dataPath)
         self.appPathLabel.setTextInteractionFlags(qt.TextSelectableByMouse)
         self.dataPathLabel.setTextInteractionFlags(qt.TextSelectableByMouse)
-        self.appPathPreLabel.setContentsMargins(10, 0, 0, 0)
-        self.dataPathPreLabel.setContentsMargins(10, 0, 0, 0)
+        self.appPathPreButton.setContentsMargins(10, 0, 0, 0)
+        self.dataPathPreButton.setContentsMargins(10, 0, 0, 0)
         self.appPathLabel.setContentsMargins(0, 0, 10, 0)
         self.dataPathLabel.setContentsMargins(0, 0, 10, 0)
 
         self.labelLayout = qtwidgets.QHBoxLayout()
-        self.labelLayout.addWidget(self.appPathPreLabel)
+        self.labelLayout.addWidget(self.appPathPreButton)
         self.labelLayout.addWidget(self.appPathLabel)
-        self.labelLayout.addWidget(self.dataPathPreLabel)
+        self.labelLayout.addWidget(self.dataPathPreButton)
         self.labelLayout.addWidget(self.dataPathLabel)
         self.labelLayout.addStretch()
         self.vertLayout.addLayout(self.labelLayout)
