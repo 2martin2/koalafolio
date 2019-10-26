@@ -339,10 +339,15 @@ class ApiKeyView(qtwidgets.QWidget):
     def loadKeys(self):
         apiname = self.apiSelectDropdown.currentText()
         key, secret = self.model.getApiKeys(apiname)
-        index = self.directApiSelectDropdown.model().stringList().index(apiname)
-        self.directApiSelectDropdown.setCurrentText(self.apiSelectDropdown.setCurrentIndex(index))
-        self.keyInput.setText(key)
-        self.secretInput.setText(secret)
+        if not key is None:
+            try:
+                index = self.directApiSelectDropdown.model().stringList().index(apiname)
+            except ValueError:
+                pass
+            else:
+                self.directApiSelectDropdown.setCurrentText(self.apiSelectDropdown.setCurrentIndex(index))
+                self.keyInput.setText(key)
+                self.secretInput.setText(secret)
 
     def saveKeys(self):
         apiname = self.directApiSelectDropdown.currentText()
