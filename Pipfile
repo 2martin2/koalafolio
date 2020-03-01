@@ -1,24 +1,26 @@
 [[source]]
+name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
-name = "pypi"
 
 [packages]
 pandas = "*"
-"pyqt5" = "*"
+pyqt5 = "*"
 pyqtchart = "*"
 tzlocal = "*"
-pyinstaller = "*"
 xlrd = "*"
 requests = "*"
-ipython = "*"
-pyqtdeploy = "*"
 openpyxl = "*"
 pillow = "*"
 pycryptodomex = "*"
-"pyqt5-stubs" = "*"
+krakenex = "*"
+pykrakenapi = "*"
 
 [dev-packages]
+pyinstaller = "*"
+setuptools = "*"
+ipython = "*"
+pyqtdeploy = "*"
 
 [requires]
 python_version = "3.7"
