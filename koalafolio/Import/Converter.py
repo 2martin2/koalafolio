@@ -148,6 +148,7 @@ def modelCallback_kraken(headernames, dataFrame):
 
     COIN_PAIR_REGEX = re.compile('^X([a-z|A-Z]*)Z([a-z|A-Z]*)$')
     COIN_PAIR_REGEX_2 = re.compile('^([a-z|A-Z]{3})([a-z|A-Z]{3})$')
+    COIN_PAIR_REGEX_3 = re.compile('^([a-z|A-Z]{4})([a-z|A-Z]{3})$')
 
     for row in range(dataFrame.shape[0]):
 
@@ -163,7 +164,13 @@ def modelCallback_kraken(headernames, dataFrame):
                 maincoin = coinPairMatch.group(2)
                 dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
             else:
-                raise ValueError('kraken market pair does not fit the expected pattern')
+                coinPairMatch = COIN_PAIR_REGEX_3.match(dataFrame[headernames[2]][row])
+                if coinPairMatch:
+                    subcoin = coinPairMatch.group(1)
+                    maincoin = coinPairMatch.group(2)
+                    dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
+                else:
+                    raise ValueError('kraken market pair does not fit the expected pattern')
 
     headernames_m0 = []
     headernames_m0.append(headernames[3])  # date
