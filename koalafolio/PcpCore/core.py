@@ -206,6 +206,7 @@ class CoinValue():
 class Trade:
     def __init__(self):
         self.tradeID = ''
+        self.approxID = ''
         self.externId = ''
         self.date = None
         self.tradeType = ''
@@ -232,7 +233,14 @@ class Trade:
         except ValueError:
             myAmount = self.amount
         tradeString = str(str(myDate) + str(self.tradeType) + str(self.externId) + str(self.coin) + str(myAmount))
-        return hashlib.sha1(tradeString.encode()).hexdigest()
+        self.approxID = hashlib.sha1(tradeString.encode()).hexdigest()
+        return self.approxID
+
+    def getApproximateID(self):
+        if self.approxID:
+            return self.approxID
+        else:
+            return self.generateApproximateID()
 
     def __eq__(self, other):
         return self.tradeID == other.tradeID
@@ -492,7 +500,7 @@ class TradeList:
 
     def checkApproximateEquality(self, trade):
         for t in self.trades:
-            if trade.generateApproximateID() == t.generateApproximateID():
+            if trade.getApproximateID() == t.getApproximateID():
                 return True
         return False
 
