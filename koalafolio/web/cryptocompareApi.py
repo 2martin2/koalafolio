@@ -10,6 +10,7 @@ import koalafolio.PcpCore.logger as logger
 from PIL import Image
 from io import BytesIO
 import requests
+import koalafolio.web.coingeckoApi as coinGecko
 
 
 # coinList = cryptcomp.get_coin_list(format=True)
@@ -65,8 +66,9 @@ def getIcon(coin, *args, **kwargs):
         proxies = {}
     coinInfo = cryptcomp.get_coin_general_info(coin, *args, **kwargs)
     try:
-        imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'], proxies=proxies, timeout=10)
-    except:
+        imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'], proxies=proxies, timeout=100)
+    except Exception as ex:
+        logger.globalLogger.warning('error in getIcon: ' + str(ex))
         return None
     return Image.open(BytesIO(imageResponse.content))
 
@@ -76,11 +78,16 @@ def getIcons(coins, *args, **kwargs):
     else:
         proxies = {}
     coinInfo = cryptcomp.get_coin_general_info(coins, *args, **kwargs)
-    icons = {}
+    if settings.mySettings.priceApiSwitch() == 'mixed':
+        icons = coinGecko.getIcons(coins)
+    else:
+        icons = {}
     try:
         for data in coinInfo['Data']:
-            imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'], proxies=proxies, timeout=10)
-            icons[data['CoinInfo']['Name']] = Image.open(BytesIO(imageResponse.content))
+            coin = data['CoinInfo']['Name']
+            if coin not in icons:
+                imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'], proxies=proxies, timeout=100)
+                icons[data['CoinInfo']['Name']] = Image.open(BytesIO(imageResponse.content))
     except Exception as ex:
         logger.globalLogger.warning('error in getIcons: ' + str(ex))
     return icons
