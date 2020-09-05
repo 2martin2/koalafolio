@@ -9,6 +9,7 @@ import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import koalafolio.gui.QSettings as settings
 import koalafolio.web.cryptocompareApi as ccapi
+import koalafolio.web.coingeckoApi as coinGecko
 import koalafolio.PcpCore.core as core
 from PIL.ImageQt import ImageQt
 import koalafolio.gui.QLogger as logger
@@ -30,12 +31,19 @@ class CryptoCompare(qtcore.QObject):
 
     def loadPrices(self, coins):
         if coins:
-            prices = ccapi.getCoinPrices(coins)
+            if settings.mySettings.priceApiSwitch() == 'coinGecko':
+                prices = coinGecko.getCoinPrices(coins)
+            else:
+                prices = ccapi.getCoinPrices(coins)
+
             self.coinPricesLoaded.emit(prices)
 
     def loadCoinIcons(self, coins):
         if coins:
-            icons = ccapi.getIcons(coins)
+            if settings.mySettings.priceApiSwitch() == 'coinGecko':
+                icons = coinGecko.getIcons(coins)
+            else:
+                icons = ccapi.getIcons(coins)
             qicons = {}
             for key in coins:  # convert images to QIcon
                 try:
@@ -44,8 +52,10 @@ class CryptoCompare(qtcore.QObject):
                         qim = ImageQt(im)
                         qpix = qtgui.QPixmap.fromImage(qim)
                         qicons[key] = qtgui.QIcon(qpix)
-                except:
+                except KeyError:
                     localLogger.warning('no icon available for ' + key)  # ignore invalid key
+                except Exception as ex:
+                    localLogger.error('error converting icon: ' + str(ex))
             self.coinIconsLoaded.emit(qicons)
 
     def loadHistoricalPrices(self, tradeList):
@@ -62,7 +72,10 @@ class CryptoCompare(qtcore.QObject):
             trade = self.tradeBuffer.trades.pop()
             try:
                 if not trade.valueLoaded:
-                    histPrices[trade.tradeID] = ccapi.getHistoricalPrice(trade)
+                    if settings.mySettings.priceApiSwitch() == 'coinGecko':
+                        histPrices[trade.tradeID] = coinGecko.getHistoricalPrice(trade)
+                    else:
+                        histPrices[trade.tradeID] = ccapi.getHistoricalPrice(trade)
                     counter += 1
             except ConnectionRefusedError:
                 # save failed trade for next time
