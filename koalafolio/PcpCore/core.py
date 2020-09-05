@@ -93,10 +93,10 @@ class CoinValue():
 
     # get item using []
     def __getitem__(self, key):
-        return self.value[key]
+        return self.value[key.upper()]
 
     def __setitem__(self, key, value):
-        self.value[key] = value
+        self.value[key.upper()] = value
 
     def __lt__(self, other):
         val = 1
@@ -157,9 +157,14 @@ class CoinValue():
     def fromDict(self, dictionary):
         for key in self.value:
             try:
-                self.value[key] = dictionary[key]
+                self.value[key] = dictionary[key.upper()]
             except KeyError:
                 pass
+            try:
+                self.value[key] = dictionary[key.lower()]
+            except KeyError:
+                pass
+
         return self
 
     # set value of all CoinValues
