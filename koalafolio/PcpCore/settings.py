@@ -118,6 +118,7 @@ class Settings(configparser.ConfigParser):
         # report currency should be included in display currencies, otherwise prices are not available
         if self['currency']['defaultReportCurrency'] in self.displayCurrencies():
             return self['currency']['defaultReportCurrency']
+        logger.globalLogger.warning('defaultReportCurrency is not part of defaultDisplayCurrencies. First displayCurrency will be used for reports.')
         return self.displayCurrencies()[0]
 
     def setReportCurrency(self, cur):
