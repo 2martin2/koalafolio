@@ -5,7 +5,7 @@ with open('README.rst', encoding="utf-8") as f:
 
 setuptools.setup(
     name='koalafolio',
-    version='0.9.2',
+    version='0.9.3',
     description='portfolio app for crypto trading and tax reporting',
     long_description=readme,
     long_description_content_type='text/x-rst',
@@ -17,7 +17,7 @@ setuptools.setup(
     python_requires='>=3.7',
     packages=setuptools.find_packages(),
     classifiers=['Programming Language :: Python :: 3'],
-    install_requires=['pandas', 'pyqt5', 'pyqtchart', 'tzlocal', 'xlrd', 'requests', 'openpyxl', 'pillow>=6.2.0', 'pycryptodomex', 'urllib3>=1.24.2', 'pykrakenapi', 'krakenex'],
+    install_requires=['pandas', 'pyqt5', 'pyqtchart', 'tzlocal', 'xlrd', 'requests', 'openpyxl', 'pillow>=6.2.0', 'pycryptodomex', 'urllib3>=1.24.2', 'pykrakenapi', 'krakenex', 'pycoingecko'],
     include_package_data=True,
     entry_points={
             'console_scripts': [
