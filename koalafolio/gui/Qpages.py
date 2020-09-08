@@ -221,7 +221,11 @@ class ImportPage(Page):
         # %%  stacked Layout for import pages
         self.importSelectPage = ImportSelectPage(parent=self, controller=self)
         self.importPreviewPage = ImportPreviewPage(parent=self, controller=self)
+        self.controller.startRefresh.connect(self.importPreviewPage.clearLabelStyle)
+        self.controller.endRefresh.connect(self.importPreviewPage.setLabelStyle)
         self.importFinishPage = ImportFinishPage(parent=self, controller=self)
+        self.controller.startRefresh.connect(self.importFinishPage.clearLabelStyle)
+        self.controller.endRefresh.connect(self.importFinishPage.setLabelStyle)
         self.pages = [self.importSelectPage, self.importPreviewPage, self.importFinishPage]
         self.stackedContentLayout = qtwidgets.QStackedLayout(self)
         for page in self.pages:
@@ -528,14 +532,10 @@ class ImportPreviewPage(SubPage):
         self.infoLayout.addWidget(self.fileNameLabel)
         self.infoLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
         self.infoLayout.addWidget(self.infoLabel)
-
         self.legendWhiteLabel = qtwidgets.QLabel("white: new trades", self)
         self.legendGrayLabel = qtwidgets.QLabel("gray: trades that are already existent", self)
-        color = style.myStyle.getQColor('TEXT_HIGHLIGHTED_MIDLIGHT')
-        self.legendGrayLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
         self.legendRedLabel = qtwidgets.QLabel("red: new trades that are very similar to existent trades (make sure you really want to import them!)", self)
-        color = style.myStyle.getQColor('NEGATIV')
-        self.legendRedLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
+        self.setLabelStyle()
 
         self.legendLayout = qtwidgets.QHBoxLayout()
         self.legendLayout.addWidget(self.legendWhiteLabel)
@@ -676,6 +676,16 @@ class ImportPreviewPage(SubPage):
         self.tradeListTemp.setExchange(self.exchangeInput.text())
         self.feeListTemp.setExchange(self.exchangeInput.text())
 
+    def clearLabelStyle(self):
+        self.legendGrayLabel.setStyleSheet("")
+        self.legendRedLabel.setStyleSheet("")
+
+    def setLabelStyle(self):
+        color = style.myStyle.getQColor('TEXT_HIGHLIGHTED_MIDLIGHT')
+        self.legendGrayLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
+        color = style.myStyle.getQColor('NEGATIV')
+        self.legendRedLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
+
 
 class ImportFinishPage(SubPage):
     def __init__(self, parent, controller):
@@ -713,11 +723,8 @@ class ImportFinishPage(SubPage):
 
         self.legendWhiteLabel = qtwidgets.QLabel("white: new trades", self)
         self.legendGrayLabel = qtwidgets.QLabel("gray: trades that are already existent (will not be imported)", self)
-        color = style.myStyle.getQColor('TEXT_HIGHLIGHTED_MIDLIGHT')
-        self.legendGrayLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
         self.legendRedLabel = qtwidgets.QLabel("red: new trades that are very similar to existent trades (make sure you really want to import them!)", self)
-        color = style.myStyle.getQColor('NEGATIV')
-        self.legendRedLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
+        self.setLabelStyle()
 
         self.legendLayout = qtwidgets.QHBoxLayout()
         self.legendLayout.addWidget(self.legendWhiteLabel)
@@ -762,10 +769,19 @@ class ImportFinishPage(SubPage):
         # remove all trades that are not selected
         self.lastFocusTable.deleteSelectedTrades()
 
-
     def cancelTrades(self):
         # delete trades and go back to file selection
         self.controller.showFrame(self.controller.IMPORTSELECTPAGEINDEX)
+
+    def clearLabelStyle(self):
+        self.legendGrayLabel.setStyleSheet("")
+        self.legendRedLabel.setStyleSheet("")
+
+    def setLabelStyle(self):
+        color = style.myStyle.getQColor('TEXT_HIGHLIGHTED_MIDLIGHT')
+        self.legendGrayLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
+        color = style.myStyle.getQColor('NEGATIV')
+        self.legendRedLabel.setStyleSheet('QLabel {color: ' + color.name() + '}')
 
 
 # %% export page for exporting csv, txt, xls ...

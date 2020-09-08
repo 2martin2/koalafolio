@@ -416,6 +416,19 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
                 return coinBalance1.getChange24h(key1) < coinBalance2.getChange24h(key2)
         return index1.data() < index2.data()
 
+    def filterAcceptsRow(self, source_row, source_parent):
+        if settings.mySettings.getGuiSetting('hideLowBalanceCoins'):
+            index = self.sourceModel().index(source_row, 1, source_parent)
+            data = self.sourceModel().data(index)
+            if data.balance <= 0:
+                return False
+        if settings.mySettings.getGuiSetting('hideLowValueCoins'):
+            index = self.sourceModel().index(source_row, 1, source_parent)
+            data = self.sourceModel().data(index)
+            if data.getCurrentValue()[settings.mySettings.reportCurrency()] <= settings.mySettings.getGuiSetting('lowValueFilterLimit(reportCurrency)'):
+                return False
+        return True
+
 # %% portfolio table delegate
 # class QCoinBalanceDelegate(qtwidgets.QStyledItemDelegate):
 class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):

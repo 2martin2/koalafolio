@@ -54,6 +54,9 @@ class QSettings(settings.Settings):
         self['gui']['toolTipsEnabled'] = 'True'
         self['gui']['performanceChartIndex'] = '0'
         self['gui']['tradesEditLock'] = 'True'
+        self['gui']['hideLowBalanceCoins'] = 'True'
+        self['gui']['hideLowValueCoins'] = 'False'
+        self['gui']['lowValueFilterLimit(reportCurrency)'] = '50'
 
         super(QSettings, self).initSettings()
 
@@ -152,6 +155,18 @@ class QSettings(settings.Settings):
             gui['tradesEditLock'] = self.getboolean('gui', 'tradesEditLock')
         except ValueError:
             gui['tradesEditLock'] = True
+        try:
+            gui['hideLowBalanceCoins'] = self.getboolean('gui', 'hideLowBalanceCoins')
+        except ValueError:
+            gui['hideLowBalanceCoins'] = True
+        try:
+            gui['hideLowValueCoins'] = self.getboolean('gui', 'hideLowValueCoins')
+        except ValueError:
+            gui['hideLowValueCoins'] = False
+        try:
+            gui['lowValueFilterLimit(reportCurrency)'] = self.getfloat('gui', 'lowValueFilterLimit(reportCurrency)')
+        except ValueError:
+            gui['lowValueFilterLimit(reportCurrency)'] = 50
         return gui
 
     def getGuiSetting(self, key):

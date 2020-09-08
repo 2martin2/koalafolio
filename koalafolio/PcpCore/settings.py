@@ -35,9 +35,10 @@ class Settings(configparser.ConfigParser):
         # set default settings
         # general settings
         self['general'] = {}
-        self['general']['version'] = '0.9.2'
+        self['general']['version'] = '0.9.3'
         self['general']['timeModeDaywise'] = 'True'
         self['general']['priceUpdateInterval(s)'] = '100'
+        self['general']['priceApiSwitch(cryptocompare/coingecko/mixed)'] = 'mixed'
         # proxy settings
         self['proxies'] = {}
         self['proxies']['http'] = ''
@@ -52,6 +53,8 @@ class Settings(configparser.ConfigParser):
         self['currency']['defaultDisplayCurrencies'] = 'EUR,USD,BTC'
         self['currency']['isFiat'] = 'EUR,USD,GBP,JPY,CNY,RUB,AUD,CAD,SGD,PLN,HKD,CHF,INR,BRL,KRW,NZD,ZAR'
         self['currency']['coinswapdict'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
+        self['currency']['coinswapdictcryptocompareapi'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
+        self['currency']['coinswapdictcoingeckoapi'] = "{'HOLO':'HOT','HOT*':'HOT','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA','SAFEX':'SFT'}"
         # tax settings
         self['tax'] = {}
         self['tax']['taxfreelimit'] = 'True'
@@ -71,7 +74,7 @@ class Settings(configparser.ConfigParser):
     def readSettings(self):
         try:
             self.read(self.filePath)
-            self['general']['version'] = '0.9.2'
+            self['general']['version'] = '0.9.3'
             logger.globalLogger.info('settings loaded')
         except Exception as ex:
             logger.globalLogger.error('settings can not be loaded: ' + str(ex))
@@ -94,6 +97,9 @@ class Settings(configparser.ConfigParser):
         priceUpdateInterval = self.getfloat('general', 'priceUpdateInterval(s)')
         return 2 if priceUpdateInterval <= 2 else priceUpdateInterval
 
+    def priceApiSwitch(self):
+        return self['general']['priceApiSwitch(cryptocompare/coingecko/mixed)']
+
     def proxies(self):
         if self['proxies']['http'] and self['proxies']['https']:
             return {'http': self['proxies']['http'], 'https': self['proxies']['https']}
@@ -103,7 +109,7 @@ class Settings(configparser.ConfigParser):
         return self.getboolean('import', 'ignoreTradeIDs')
 
     def displayCurrencies(self):
-        return self['currency']['defaultDisplayCurrencies'].split(',')
+        return self['currency']['defaultDisplayCurrencies'].upper().split(',')
     
     def setDisplayCurrencies(self, currencies):
         self['currency']['defaultDisplayCurrencies'] = ','.join(currencies)
@@ -112,6 +118,7 @@ class Settings(configparser.ConfigParser):
         # report currency should be included in display currencies, otherwise prices are not available
         if self['currency']['defaultReportCurrency'] in self.displayCurrencies():
             return self['currency']['defaultReportCurrency']
+        logger.globalLogger.warning('defaultReportCurrency is not part of defaultDisplayCurrencies. First displayCurrency will be used for reports.')
         return self.displayCurrencies()[0]
 
     def setReportCurrency(self, cur):
@@ -129,10 +136,30 @@ class Settings(configparser.ConfigParser):
             if dictRegex.match(self['currency']['coinswapdict']):
                 return ast.literal_eval(self['currency']['coinswapdict'])
             else:
-                raise SyntaxError('coinSwapList in settings.txt has invalid Syntax')
+                raise SyntaxError('coinswapdict in settings.txt has invalid Syntax')
         except Exception as ex:
-            return dict()
             logger.globalLogger.warning('error while parsing coinswapdict from settings: ' + str(ex))
+        return dict()
+
+    def coinSwapDictCryptocompare(self):
+        try:
+            if dictRegex.match(self['currency']['coinswapdictcryptocompareapi']):
+                return ast.literal_eval(self['currency']['coinswapdictcryptocompareapi'])
+            else:
+                raise SyntaxError('coinswapdictcryptocompareapi in settings.txt has invalid Syntax')
+        except Exception as ex:
+            logger.globalLogger.warning('error while parsing coinswapdictcryptocompareapi from settings: ' + str(ex))
+        return dict()
+
+    def coinSwapDictCoinGecko(self):
+        try:
+            if dictRegex.match(self['currency']['coinswapdictcoingeckoapi']):
+                return ast.literal_eval(self['currency']['coinswapdictcoingeckoapi'])
+            else:
+                raise SyntaxError('coinswapdictcoingeckoapi in settings.txt has invalid Syntax')
+        except Exception as ex:
+            logger.globalLogger.warning('error while parsing coinswapdictcoingeckoapi from settings: ' + str(ex))
+        return dict()
 
     def taxSettings(self):
         tax = {}
