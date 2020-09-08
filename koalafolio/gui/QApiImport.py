@@ -329,6 +329,9 @@ class ApiKeyView(qtwidgets.QWidget):
 
     def lockDb(self):
         self.pwInput.clear()
+        self.keyInput.clear()
+        self.secretInput.clear()
+        self.apiSelectDropdown.clear()
         self.model.lockDatabase()
 
     def deleteDatabase(self):
@@ -353,7 +356,8 @@ class ApiKeyView(qtwidgets.QWidget):
         apiname = self.directApiSelectDropdown.currentText()
         key = self.keyInput.text()
         secret = self.secretInput.text()
-        self.model.addKeys(self.pwInput.text(), apiname, key, secret)
+        if key and secret:
+            self.model.addKeys(self.pwInput.text(), apiname, key, secret)
 
     def deleteKeys(self):
         apiname = self.apiSelectDropdown.currentText()
