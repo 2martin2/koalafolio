@@ -87,7 +87,7 @@ class Settings(configparser.ConfigParser):
             self.saveSettings()
             logger.globalLogger.info('settings reset to default')
         except Exception as ex:
-            print('error resetting settings: ' + str(ex))
+            logger.globalLogger.error('error resetting settings: ' + str(ex))
 
 # get/set methods
     def timeModeDaywise(self):

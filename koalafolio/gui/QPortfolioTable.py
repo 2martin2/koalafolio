@@ -174,12 +174,12 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
                     try:  # delete old backup
                         os.remove(os.path.join(self.dataPath, 'Coins.csv.bak'))
                     except Exception as ex:
-                        print('error deleting coin info backup in QCoinContainer: ' + str(ex))
+                        localLogger.warning('error deleting coin info backup in QCoinContainer: ' + str(ex))
                 try:  # create backup
                     os.rename(os.path.join(self.dataPath, 'Coins.csv'),
                               os.path.join(self.dataPath, 'Coins.csv.bak'))
                 except Exception as ex:
-                    print('error creating coin info backup in QCoinContainer: ' + str(ex))
+                    localLogger.warning('error creating coin info backup in QCoinContainer: ' + str(ex))
             self.coinDatabase.setCoinInfo(self)
 
     def setNotes(self, index, notes):
@@ -689,14 +689,12 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
             if index.column() == 0:
                 size = self.sizeHint(option, index)
-                # print("updateGeom width 0: " + str(size.width()) + "; " + str(option.rect.width()))
                 rect = qtcore.QRect(editor.parent().x(), option.rect.y() + 5, editor.parent().width() * 0.3,
                                     size.height() - 10)
                 editor.setGeometry(rect)
                 return
             if index.column() == 1:
                 size = self.sizeHint(option, index)
-                # print("updateGeom width 1: " + str(size.width()) + "; " + str(option.rect.width()))
                 rect = qtcore.QRect(editor.parent().x() + editor.parent().width() * 0.3 + 20, option.rect.y() + 5, editor.parent().width() * 0.7 - 20,
                                     size.height() - 10)
                 editor.setGeometry(rect)

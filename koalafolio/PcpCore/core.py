@@ -926,7 +926,7 @@ class CoinList:
             coin = self.getCoinByName(trade.coin)
         except KeyError as ex:
             # unknowen coin; ignore trade
-            print(str(ex) + ' for coin ' + str(trade.coin))
+            # print(str(ex) + ' for coin ' + str(trade.coin))
             return None
         coin.matchTrades()
         return coin

@@ -6,6 +6,9 @@ import re, numbers, pandas
 import koalafolio.Import.RegexPatterns as pat
 import datetime, tzlocal, pytz
 import dateutil
+import koalafolio.PcpCore.logger as logger
+
+localLogger = logger.globalLogger
 
 def exodusJsonToDataFrame(data):
     # txId, error, date, confirmations, meta, token, coinAmount, coinName, feeAmount, to, toCoin
@@ -407,7 +410,7 @@ def modelCallback_0(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('fee error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -492,7 +495,7 @@ def modelCallback_2(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -540,7 +543,7 @@ def modelCallback_3(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -653,7 +656,7 @@ def modelCallback_4(headernames, dataFrame):
                 feeList.addTrade(feeMain)
                 feeList.addTrade(feeSub)
             except Exception as ex:  # do not skip line if error, just ignore fee
-                print('error in Converter: ' + str(ex))
+                localLogger.warning('error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -722,7 +725,7 @@ def modelCallback_5(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -772,7 +775,7 @@ def modelCallback_Template1(headernames, dataFrame):
                 if not tradeList.addTradePair(tempTrade_sell, tempTrade_buy):
                     skippedRows += 1
         except Exception as ex:
-            print('error in Converter Template1: ' + str(ex))
+            localLogger.warning('error in Converter Template1: ' + str(ex))
             skippedRows += 1
 
         # fees
@@ -791,7 +794,7 @@ def modelCallback_Template1(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter Template1: ' + str(ex))
+            localLogger.warning('error in Converter Template1: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -870,7 +873,7 @@ def modelCallback_TradeList(headernames, dataFrame):
             else:
                 tradeList.addTrade(trade)
         except Exception as ex:
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('error in Converter: ' + str(ex))
             skippedRows += 1
 
     return tradeList, feeList, skippedRows
@@ -888,7 +891,7 @@ def convertDate(dateString, useLocalTime=True):
         try:  # try dateutil parser
             timestamp = dateutil.parser.parse(dateString)
         except ValueError:  # manuel parsing
-            print('manuel parsing')
+            localLogger.info('autoparsing date failed. try extended date parsing: ' + str(dateString))
             if pat.Pandas_TIME_REGEX.match(dateString):
                 timestamp = pandas.to_datetime(dateString, utc=True)
             for i in range(len(pat.TIME_REGEX)):
@@ -976,7 +979,7 @@ def swapCoinName(trade):
         if trade.coin in settings.mySettings.coinSwapDict():
             trade.coin = settings.mySettings.coinSwapDict()[trade.coin]
     except Exception as ex:
-        print('error in Converter: ' + str(ex))
+        localLogger.warning('error in Converter: ' + str(ex))
 
 
 def createTrades(tradeId='', externId=''):

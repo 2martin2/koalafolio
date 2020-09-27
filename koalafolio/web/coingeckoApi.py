@@ -21,7 +21,6 @@ class CoinGeckoAPIProxy(pycoingecko.CoinGeckoAPI):
         self.proxies = proxies
 
     def __request(self, url):
-        # print(url)
         try:
             response = self.session.get(url, timeout=self.request_timeout, proxies=self.proxies)
             response.raise_for_status()

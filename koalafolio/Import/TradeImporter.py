@@ -89,19 +89,19 @@ def convertTrades(modelList, data, files):  # convert all read csv data to trade
     matches = []
     i = 0
     for frame in data:  # convert every DataFrame
-        print('convert ' + files[i])
+        localLogger.info('convert ' + files[i])
         heading = frame.columns.tolist()
         trades, fees, frameMatched, skippedRows = convertTradesSingle(modelList, frame, files[i])
         if skippedRows > 0:
-            print(str(skippedRows) + ' skiped in ' + str(heading))
+            localLogger.info(str(skippedRows) + ' skiped in ' + str(heading))
         if frameMatched == False:
-            print('no match for ' + str(heading))
+            localLogger.info('no match for ' + str(heading))
         elif trades.isEmpty():
-            print('no trades converted for ' + str(heading))
+            localLogger.info('no trades converted for ' + str(heading))
         else:
             tradeList.mergeTradeList(trades)
         if fees.isEmpty():
-            print('no fees converted for ' + str(heading))
+            localLogger.info('no fees converted for ' + str(heading))
         else:
             feeList.mergeTradeList(fees)
         matches.append(frameMatched)
@@ -125,6 +125,6 @@ def convertTradesSingle(modelList, frame, filename):  # convert one row of read 
                     break
             except Exception as ex:
                 #if exception occurs, try other models
-                print('converting ' + str(filename) + ' failed with model :' + str(model.modelCallback) + '; ' + str(ex))
+                localLogger.warning('converting ' + str(filename) + ' failed with model :' + str(model.modelCallback) + '; ' + str(ex))
 
     return trades, fees, frameMatched, skippedRows

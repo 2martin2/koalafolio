@@ -130,12 +130,12 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                     try:  # delete old backup
                         os.remove(os.path.join(self.dataPath, 'Trades.csv.bak'))
                     except Exception as ex:
-                        print('error deleting trades backup in QTradeContainer: ' + str(ex))
+                        localLogger.warning('error deleting trades backup in QTradeContainer: ' + str(ex))
                 try:  # create backup
                     os.rename(os.path.join(self.dataPath, 'Trades.csv'),
                               os.path.join(self.dataPath, 'Trades.csv.bak'))
                 except Exception as ex:
-                    print('error creating trades backup in QTradeContainer: ' + str(ex))
+                    localLogger.warning('error creating trades backup in QTradeContainer: ' + str(ex))
             try:  # save trades
                 self.toCsv(os.path.join(self.dataPath, 'Trades.csv'))
             except Exception as ex:

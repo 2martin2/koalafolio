@@ -130,7 +130,7 @@ class PathInput(qtwidgets.QWidget):
         self.horizontalLayout.addWidget(self.fileDialog)
 
     def getPath(self):
-        # return only vaild path, otherwise return None
+        # return only valid path, otherwise return None
         try:
             path = Path(self.lineEdit.text())
             if ((path.is_file() | path.is_dir())):
@@ -138,7 +138,7 @@ class PathInput(qtwidgets.QWidget):
             else:
                 return None
         except Exception as ex:
-            print("converting path -" + self.lineEdit.text() + "- failed: " + str(ex))
+            localLogger.warning("converting path -" + self.lineEdit.text() + "- failed: " + str(ex))
             return None
 
     def setPath(self, path):
@@ -503,7 +503,7 @@ def floatToString(f, n):
         zeroMatch = re.match("^(0*)(\d*?)$", sMatch[4])
         return sMatch[1] + sMatch[2] + '.' + zeroMatch[1] + zeroMatch[2][0:n].rstrip('0') + sMatch[5]  # 0.000000001234
     except Exception as ex:
-        print(str(ex) + ', string is ' + s)
+        localLogger.warning('error converting float to string: ' + str(ex) + ', string is ' + s)
     return s
 
 

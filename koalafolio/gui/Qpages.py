@@ -126,10 +126,6 @@ class PortfolioPage(Page):
         self.verticalLayout.addWidget(self.coinTableView)
 
 
-    # def tableClicked(self, index):
-    #     if index.column() == 0:
-    #         print(str(index.data()))
-
 # %% trades page showing all the imported trades
 class TradesPage(Page):
     def __init__(self, parent, controller):
@@ -394,7 +390,7 @@ class ImportSelectPage(SubPage):
                 else:
                     self.controller.setFilesPath([])
             except Exception as ex:
-                print("pathChanged callback failed: " + str(ex))
+                localLogger.warning("pathChanged callback failed: " + str(ex))
 
     def selectionChangedCallback(self):
         self.controller.allFilesPath = []
