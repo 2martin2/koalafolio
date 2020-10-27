@@ -301,6 +301,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.priceThread = threads.UpdatePriceThread(self.coinList, self.tradeList)
         self.priceThread.coinPricesLoaded.connect(lambda prices: self.coinList.setPrices(prices))
         self.priceThread.coinIconsLoaded.connect(lambda icons: self.coinList.setIcons(icons))
+        self.priceThread.coinPriceChartsLoaded.connect(lambda priceChartData: self.coinList.setPriceChartData(priceChartData))
         self.priceThread.historicalPricesLoaded.connect(lambda prices, tradesLeft:
                                                         self.tradeList.setHistPrices(prices, tradesLeft))
         self.priceThread.start()

@@ -55,6 +55,7 @@ class Settings(configparser.ConfigParser):
         self['currency']['coinswapdict'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
         self['currency']['coinswapdictcryptocompareapi'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
         self['currency']['coinswapdictcoingeckoapi'] = "{'HOLO':'HOT','HOT*':'HOT','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA','SAFEX':'SFT'}"
+        self['currency']['coinSwapDictCoinGeckoSymbolToId'] = "{'HOLO':'holotoken'}"
         # tax settings
         self['tax'] = {}
         self['tax']['taxfreelimit'] = 'True'
@@ -159,6 +160,16 @@ class Settings(configparser.ConfigParser):
                 raise SyntaxError('coinswapdictcoingeckoapi in settings.txt has invalid Syntax')
         except Exception as ex:
             logger.globalLogger.warning('error while parsing coinswapdictcoingeckoapi from settings: ' + str(ex))
+        return dict()
+
+    def coinSwapDictCoinGeckoSymbolToId(self):
+        try:
+            if dictRegex.match(self['currency']['coinSwapDictCoinGeckoSymbolToId']):
+                return ast.literal_eval(self['currency']['coinSwapDictCoinGeckoSymbolToId'])
+            else:
+                raise SyntaxError('coinSwapDictCoinGeckoSymbolToId in settings.txt has invalid Syntax')
+        except Exception as ex:
+            logger.globalLogger.warning('error while parsing coinSwapDictCoinGeckoSymbolToId from settings: ' + str(ex))
         return dict()
 
     def taxSettings(self):

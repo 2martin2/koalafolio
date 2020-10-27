@@ -357,6 +357,9 @@ class QPortfolioTableModel(QCoinContainer):
         super(QPortfolioTableModel, self).setPrices(prices)
         self.pricesUpdated()
 
+    def setPriceChartData(self, priceChartData):
+        super(QPortfolioTableModel, self).setPriceChartData(priceChartData)
+
     # emit dataChanged when trade is updated
     def tradeChanged(self, trade):
         coin = super(QPortfolioTableModel, self).tradeChanged(trade)
@@ -690,8 +693,8 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     dates.append(datetime.datetime.now())
                     vals.append(vals[-1])
                     # prices
-                    priceDates.append(datetime.datetime.now())
-                    prices.append(data.getCurrentPrice()[settings.mySettings.reportCurrency()])
+                    # priceDates.append(datetime.datetime.now())
+                    # prices.append(data.getCurrentPrice()[settings.mySettings.reportCurrency()])
                     # draw taxlimit
                     if settings.mySettings.getTaxSetting("taxfreelimit"):
                         limitDate = datetime.datetime.now().replace(year=datetime.datetime.now().year -
@@ -700,12 +703,18 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                         limitDates = [limitDate, limitDate]
                         limitAmount = data.tradeMatcher.getBuyAmountLeftTaxFree(settings.mySettings.getTaxSetting("taxfreelimityears"))
                         limitVals = [limitAmount, 0]
-                    editor.setData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", 3)
+                    # addData(self, dates, vals, qColor, name, lineWidth, chartType="line", axis='balance', updateAxis=True)
+                    editor.addData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", 3)
                     if settings.mySettings.getTaxSetting("taxfreelimit"):
-                        editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", 3)
-                    editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY_MIDLIGHT'),
-                                   "price " + settings.mySettings.reportCurrency(), 3,
-                                   chartType="Scatter", newAxis=True)
+                        editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", 3, updateAxis=False)
+                    editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY'),
+                                   "buyPrice " + settings.mySettings.reportCurrency(), 3,
+                                   chartType="scatter", axis='price')
+                    if data.priceChartData:
+                        dates, prices = map(list, zip(*data.priceChartData))
+                        editor.addData(dates, prices, style.myStyle.getQColor('SECONDARY_MIDLIGHT'),
+                                       "price " + settings.mySettings.reportCurrency(), 1,
+                                       chartType="line", axis='price')
                 return
 
     def updateEditorGeometry(self, editor, option, index):

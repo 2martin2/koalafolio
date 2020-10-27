@@ -735,6 +735,7 @@ class CoinBalance:
         self.tradeMatcher = TradeMatcher(self)
         self.coinIcon = None
         self.notes = ""
+        self.priceChartData = []
 
     def __lt__(self, other):
         return self.balance < other.balance
@@ -947,13 +948,13 @@ class CoinList:
             coinList.append(coin.toListComplete())
         return initCoinListComplete(coinList)
 
-    def isEmpty(self):
+    def isEmpty(self) -> bool:
         if self.coins:
             return False
         else:
             return True
 
-    def getCoinByName(self, name):
+    def getCoinByName(self, name: str) -> CoinBalance:
         for coin in self:
             if coin.coinname == name:
                 return coin
@@ -972,6 +973,14 @@ class CoinList:
                         coin.change24h[key] = prices[coin.coinname][key]['CHANGEPCT24HOUR']
                     except KeyError:
                         pass
+
+    def setPriceChartData(self, priceChartData: dict):
+        for coin in self.coins:
+            try:
+                coin.priceChartData = priceChartData[coin.coinname]
+            except KeyError:
+                pass
+
 
     def histPricesChanged(self):
         pass
