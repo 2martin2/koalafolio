@@ -25,6 +25,29 @@ import configparser
 qt = qtcore.Qt
 localLogger = logger.globalLogger
 
+class MinWheelScrollingScrollbar(qtwidgets.QScrollBar):
+    def __init__(self, orientation, parent):
+        super(MinWheelScrollingScrollbar, self).__init__(orientation=orientation, parent=parent)
+
+    def wheelEvent(self, event: qtgui.QWheelEvent):
+        numPixels = event.pixelDelta()
+        numDegrees = event.angleDelta() / 8
+
+        if numPixels:
+            self.scrollWithPixels(numPixels)
+        elif numDegrees:
+            numSteps = numDegrees / 15
+            self.scrollWithDegrees(numSteps.y())
+
+        event.accept()
+
+    def scrollWithPixels(self, numPixels):
+        self.setValue(self.value() - numPixels)
+
+    def scrollWithDegrees(self, numSteps):
+        self.setValue(self.value() - self.singleStep() * numSteps)
+
+
 # %% portfolio table view
 class QPortfolioTableView(qtwidgets.QTreeView):
     def __init__(self, parent, *args, **kwargs):
@@ -41,6 +64,7 @@ class QPortfolioTableView(qtwidgets.QTreeView):
         self.collapsed.connect(self.collapsedCallback)
         self.expanded.connect(self.expandedCallback)
 
+        self.setVerticalScrollBar(MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
         self.verticalScrollBar().setSingleStep(1)
         self.verticalScrollBar().setPageStep(1)
 
