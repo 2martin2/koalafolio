@@ -202,6 +202,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                 self.removeTrades(tradeList)
 
     def deleteTrades(self, rows):
+        self.beginResetModel()
         rows.sort(reverse=True)
         self.changedNumberStack.append(-len(rows))
         tradeList = core.TradeList()
@@ -217,6 +218,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
         self.saveTrades()
         # emit trades added
         self.tradesRemoved.emit(tradeList)
+        self.endResetModel()
         return True
 
     def deleteAllTrades(self):
@@ -253,7 +255,7 @@ class QTradeTableModel(QTradeContainer):
         # link empty tradeList
         self.initDisplayCurrencies()
 
-        self.tradesLen = len(self.trades)
+        #self.tradesLen = len(self.trades)
         self.showPrices(True)
         self.firstValueColumn = 7
         self.enableEditMode(True)
@@ -271,7 +273,7 @@ class QTradeTableModel(QTradeContainer):
         self.headerLen = len(self.header)
 
     def rowCount(self, parent):
-        return self.tradesLen
+        return len(self.trades)
 
     def columnCount(self, parent):
         return self.headerLen
@@ -381,12 +383,12 @@ class QTradeTableModel(QTradeContainer):
     def copyFromTradeList(self, tradeList):
         self.beginResetModel()
         self.trades = tradeList.trades
-        self.tradesLen = len(self.trades)
+        # self.tradesLen = len(self.trades)
         self.endResetModel()
 
     def clearTrades(self):
         self.beginResetModel()
-        self.tradesLen = 0
+        # self.tradesLen = 0
         self.trades = []
         self.endResetModel()
 
@@ -394,13 +396,13 @@ class QTradeTableModel(QTradeContainer):
     def addTrades(self, trades):
         self.beginResetModel()
         super(QTradeTableModel, self).addTrades(trades)
-        self.tradesLen = len(self.trades)
+        # self.tradesLen = len(self.trades)
         self.endResetModel()
 
     def mergeTradeList(self, tradeList):
         self.beginResetModel()
         addedTrades = super(QTradeTableModel, self).mergeTradeList(tradeList)
-        self.tradesLen = len(self.trades)
+        # self.tradesLen = len(self.trades)
         self.endResetModel()
         return addedTrades
 
@@ -437,6 +439,9 @@ class QImportTradeTableModel(QTradeTableModel):
 
     def data(self, index, role=qt.DisplayRole):
         if role == qt.ForegroundRole:
+            if index.row() >= len(self.trades):
+                print('error ' + str(index.row()) + ' ' + str(len(self.trades)))
+                return qtcore.QVariant()
             if self.trades[index.row()] in self.baseModel.trades:
                 return style.myStyle.getQColor('text_highlighted_midlight'.upper())
             if self.baseModel.checkApproximateEquality(self.trades[index.row()]):
