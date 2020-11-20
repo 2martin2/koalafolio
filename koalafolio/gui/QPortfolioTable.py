@@ -693,8 +693,9 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     dates.append(datetime.datetime.now())
                     vals.append(vals[-1])
                     # prices
-                    # priceDates.append(datetime.datetime.now())
-                    # prices.append(data.getCurrentPrice()[settings.mySettings.reportCurrency()])
+                    if not data.priceChartData: # if not price chart data available add at least current value
+                        priceDates.append(datetime.datetime.now())
+                        prices.append(data.getCurrentPrice()[settings.mySettings.reportCurrency()])
                     # draw taxlimit
                     if settings.mySettings.getTaxSetting("taxfreelimit"):
                         limitDate = datetime.datetime.now().replace(year=datetime.datetime.now().year -
