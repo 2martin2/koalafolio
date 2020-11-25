@@ -36,6 +36,7 @@ class Settings(configparser.ConfigParser):
         # general settings
         self['general'] = {}
         self['general']['version'] = '0.9.4'
+        self['general']['initversion'] = '0.9.4'
         self['general']['timeModeDaywise'] = 'True'
         self['general']['priceUpdateInterval(s)'] = '100'
         self['general']['priceApiSwitch(cryptocompare/coingecko/mixed)'] = 'mixed'
@@ -53,8 +54,8 @@ class Settings(configparser.ConfigParser):
         self['currency']['defaultDisplayCurrencies'] = 'EUR,USD,BTC'
         self['currency']['isFiat'] = 'EUR,USD,GBP,JPY,CNY,RUB,AUD,CAD,SGD,PLN,HKD,CHF,INR,BRL,KRW,NZD,ZAR'
         self['currency']['coinswapdict'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
-        self['currency']['coinswapdictcryptocompareapi'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
-        self['currency']['coinswapdictcoingeckoapi'] = "{'HOLO':'HOT','HOT*':'HOT','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA','SAFEX':'SFT'}"
+        self['currency']['coinswapdictcryptocompareapi'] = "{}"
+        self['currency']['coinswapdictcoingeckoapi'] = "{}"
         self['currency']['coinSwapDictCoinGeckoSymbolToId'] = "{'HOLO':'holotoken'}"
         # tax settings
         self['tax'] = {}
