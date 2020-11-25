@@ -18,17 +18,14 @@ def initApi(key, secret):
 
 def getTradeHistory(key, secret):
     k = initApi(key, secret)
-    today = datetime.datetime.now()
     trades = []
-    # get last 5 years
-    for year in range(today.year-5, today.year):
-        tradeHistory = k.get_trades_history(start=datetime.datetime(year=year, month=1, day=1).timestamp(),
-                                            end=datetime.datetime(year=year+1, month=1, day=1).timestamp())[0]
-        trades.append(tradeHistory)
-
-    tradeHistory = k.get_trades_history(start=datetime.datetime(year=today.year, month=1, day=1).timestamp(),
-                                        end=datetime.datetime.now().timestamp())[0]
-    trades.append(tradeHistory)
+    tradeHistory = k.get_trades_history()
+    trades.append(tradeHistory[0])
+    numTrades = len(trades[0])
+    while(numTrades < tradeHistory[1]):
+        tradeHistory = k.get_trades_history(ofs=numTrades)
+        trades.append(tradeHistory[0])
+        numTrades += len(trades[-1])
     newTradeHistory = pd.concat(trades).reset_index()
 
     def removeNs(date):
