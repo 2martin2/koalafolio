@@ -68,10 +68,10 @@ def getCoinPrices(coins):
         logger.globalLogger.warning('error loading prices: ' + str(ex))
         return {}
     if response and 'RAW' in response:
-        # todo: swap back coin name
         prices = {}
         for ccCoin in response['RAW']:
             coin = coinSwapFromCryptoCompare(ccCoin)
+            prices[ccCoin] = response['RAW'][ccCoin]
             prices[coin] = response['RAW'][ccCoin]
         return prices
     else:
