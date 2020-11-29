@@ -15,7 +15,6 @@ import rotkehlchen.exchanges.poloniex as poloniex
 import rotkehlchen.exchanges.kraken as kraken
 import rotkehlchen.user_messages as user_messages
 import pandas
-import core
 import datetime
 
 def getTradeHistoryBinance(key, secret, start, end):
