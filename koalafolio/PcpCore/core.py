@@ -237,7 +237,7 @@ class Trade:
             myAmount = round(self.amount, -int( math.floor(math.log10(abs(self.amount)))) + 5)
         except ValueError:
             myAmount = self.amount
-        tradeString = str(str(myDate) + str(self.tradeType) + str(self.externId) + str(self.coin) + str(myAmount))
+        tradeString = str(str(myDate) + str(self.tradeType) + str(self.coin) + str(myAmount))
         self.approxID = hashlib.sha1(tradeString.encode()).hexdigest()
         return self.approxID
 
