@@ -186,8 +186,9 @@ def modelCallback_kraken(headernames, dataFrame):
     headernames_m0.append(headernames[8])  # fee
     headernames_m0.append('')  # no feecoin
     headernames_m0.append('')  # state
+    headernames_m0.append('')  # exchange
 
-    tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame)
+    tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame, useLocalTime=False)
 
     for trade in tradeList:
         trade.exchange = 'kraken'
@@ -211,7 +212,7 @@ def modelCallback_binance(headernames, dataFrame):
 
         usdtMatch = USDT_REGEX.match(dataFrame[headernames[1]][row])
         if usdtMatch:
-            dataFrame[headernames[1]][row] = usdtMatch.group(1) + '/' + usdtMatch.group(2)
+            dataFrame.at[row, headernames[1]] = usdtMatch.group(1) + '/' + usdtMatch.group(2)
         else:
             coinPairMatch = COIN_PAIR_REGEX.match(dataFrame[headernames[1]][row])
             if coinPairMatch:
@@ -230,6 +231,7 @@ def modelCallback_binance(headernames, dataFrame):
     headernames_m0.append(headernames[6])  # fee
     headernames_m0.append(headernames[7])  # feecoin
     headernames_m0.append('')  # state
+    headernames_m0.append('')  # exchange
 
     tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame)
 
@@ -252,7 +254,7 @@ def modelCallback_binance(headernames, dataFrame):
         timestamp = timestamp.astimezone(myTimezone)
         fee.date = timestamp
         # update id
-        trade.generateID()
+        fee.generateID()
 
     return tradeList, feeList, skippedRows
 
@@ -296,6 +298,7 @@ def modelCallback_poloniex(headernames, dataFrame):
     headernames_m0.append(headernames[7])  # fee
     headernames_m0.append(headernames[11])  # no feecoin
     headernames_m0.append('')  # state
+    headernames_m0.append('')  # exchange
 
     tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame)
 
@@ -337,8 +340,8 @@ def modelCallback_bittrex(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% model 0: Date, Type, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)
-def modelCallback_0(headernames, dataFrame):
+# %% model 0: Date, Type, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State), (ExchangeName)
+def modelCallback_0(headernames, dataFrame, useLocalTime=True):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
@@ -353,15 +356,19 @@ def modelCallback_0(headernames, dataFrame):
         if headernames[5]:
             tempTrade_sub.externId = str(dataFrame[headernames[5]][row])
             tempTrade_main.externId = str(dataFrame[headernames[5]][row])
+        # if exchange name
+        if headernames[10]:
+            tempTrade_sub.exchange = str(dataFrame[headernames[10]][row])
+            tempTrade_main.exchange = str(dataFrame[headernames[10]][row])
         # get date
-        tempTrade_sub.date = convertDate(dataFrame[headernames[0]][row])
-        tempTrade_main.date = convertDate(dataFrame[headernames[0]][row])
+        tempTrade_sub.date = convertDate(dataFrame[headernames[0]][row], useLocalTime=useLocalTime)
+        tempTrade_main.date = convertDate(dataFrame[headernames[0]][row], useLocalTime=useLocalTime)
         # get type
         tempTrade_sub.tradeType = 'trade'
         tempTrade_main.tradeType = 'trade'
         # get coin
-        tempTrade_sub.coin = re.match(r'^(.*)(/|-).*$', dataFrame[headernames[2]][row]).group(1).upper()
-        tempTrade_main.coin = re.match(r'^.*(/|-)(.*)$', dataFrame[headernames[2]][row]).group(2).upper()
+        tempTrade_sub.coin = re.match(r'^(.*)(/|-|_).*$', dataFrame[headernames[2]][row]).group(1).upper()
+        tempTrade_main.coin = re.match(r'^.*(/|-|_)(.*)$', dataFrame[headernames[2]][row]).group(2).upper()
         # swap Coin Name
         swapCoinName(tempTrade_sub)
         swapCoinName(tempTrade_main)
@@ -422,6 +429,8 @@ def modelCallback_1(headernames, dataFrame):
         coin_sub = re.match(r'^.*-(.*)$', dataFrame[headernames[2]][row]).group(1).upper()
         coin_main = re.match(r'^(.*)-.*$', dataFrame[headernames[2]][row]).group(1).upper()
         dataFrame.at[row, headernames[2]] = coin_sub + r'/' + coin_main
+
+    headernames.append('')  # exchange
 
     return modelCallback_0(headernames, dataFrame)
 
@@ -878,6 +887,28 @@ def modelCallback_TradeList(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
+# %% model rotki:
+#   timestamp,  location,   pair,   trade_type, amount, rate,   fee,    fee_currency,   link
+#       0           1        2          3           4     5       6            7          8
+def modelCallback_Rotki(headernames, dataFrame):
+    # seperate coin pair
+
+    headernames_m0 = []
+    headernames_m0.append(headernames[0])  # date
+    headernames_m0.append(headernames[3])  # type
+    headernames_m0.append(headernames[2])  # pair
+    headernames_m0.append(headernames[5])  # average price
+    headernames_m0.append(headernames[4])  # amount
+    headernames_m0.append(headernames[8])  # id
+    headernames_m0.append('')  # no total
+    headernames_m0.append(headernames[6])  # fee
+    headernames_m0.append(headernames[7])  # feecoin
+    headernames_m0.append('')  # state
+    headernames_m0.append(headernames[1])  # exchange
+
+    tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame)
+
+    return tradeList, feeList, skippedRows
 
 
 # %% functions
@@ -956,6 +987,7 @@ def convertDate(dateString, useLocalTime=True):
             timestamp = timestamp.astimezone(myTimezone)
     else:
         raise SyntaxError("date format not supported")
+    timestamp = timestamp.replace(microsecond=0)
     return timestamp
 
 def roundTime(dt=None, roundToS=60):

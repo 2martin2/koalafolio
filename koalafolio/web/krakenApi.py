@@ -13,24 +13,27 @@ import datetime
 
 def initApi(key, secret):
     api = krakenex.API(key=key, secret=secret)
-    k = pykrakenapi.KrakenAPI(api)
+    k = pykrakenapi.KrakenAPI(api, retry=0, crl_sleep=0)
     return k
 
-def getTradeHistory(key, secret):
+def getTradeHistory(key, secret, start, end):
     k = initApi(key, secret)
     trades = []
-    tradeHistory = k.get_trades_history()
+    tradeHistory = k.get_trades_history(start=start, end=end)
     trades.append(tradeHistory[0])
     numTrades = len(trades[0])
     while(numTrades < tradeHistory[1]):
-        tradeHistory = k.get_trades_history(ofs=numTrades)
+        tradeHistory = k.get_trades_history(start=start, end=end, ofs=numTrades)
         trades.append(tradeHistory[0])
         numTrades += len(trades[-1])
     newTradeHistory = pd.concat(trades).reset_index()
 
     def removeNs(date):
         return str(date)[:-3]
-    newTradeHistory['dtime'] = newTradeHistory['dtime'].apply(removeNs)
+    try:
+        newTradeHistory['dtime'] = newTradeHistory['dtime'].apply(removeNs)
+    except KeyError:  # ignore key error, nothing to do in this case
+        pass
     return newTradeHistory
 
 

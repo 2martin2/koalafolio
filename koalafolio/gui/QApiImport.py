@@ -14,6 +14,7 @@ import koalafolio.gui.QLogger as logger
 import koalafolio.gui.QSettings as settings
 import koalafolio.gui.Qcontrols as controls
 import koalafolio.Import.apiImport as apiImport
+import datetime
 
 localLogger = logger.globalLogger
 
@@ -82,8 +83,8 @@ class ApiKeyModel(qtcore.QObject):
             return None, None
 
 class ApiKeyView(qtwidgets.QWidget):
-    importFromApi = qtcore.pyqtSignal([str, str, str])
-    saveFromApi = qtcore.pyqtSignal([str, str, str])
+    importFromApi = qtcore.pyqtSignal([str, str, str, int, int])
+    saveFromApi = qtcore.pyqtSignal([str, str, str, int, int])
 
     def __init__(self, *args, **kwargs):
         super(ApiKeyView, self).__init__(*args, **kwargs)
@@ -102,14 +103,20 @@ class ApiKeyView(qtwidgets.QWidget):
         # direct api call
         self.directApiLabel = controls.SubHeading("enter api keys, always use read only keys for this application!!", self.newDbFrame)
 
-        self.directApiSelectLabel = qtwidgets.QLabel("API: ", self.newDbFrame)
-        self.directApiSelectDropdown = qtwidgets.QComboBox(self.newDbFrame)
-        self.keyLabel = qtwidgets.QLabel('key: ', self.newDbFrame)
-        self.keyInput = qtwidgets.QLineEdit(self.newDbFrame)
+        self.directApiSelectLabel = qtwidgets.QLabel("API: ", self)
+        self.directApiSelectDropdown = qtwidgets.QComboBox(self)
+        self.directApiSelectDropdown.currentTextChanged.connect(self.updateExchangeNote)
+        self.keyLabel = qtwidgets.QLabel('key: ', self)
+        self.keyInput = qtwidgets.QLineEdit(self)
         self.keyInput.setEchoMode(qtwidgets.QLineEdit.Password)
-        self.secretLabel = qtwidgets.QLabel('secret: ', self.newDbFrame)
-        self.secretInput = qtwidgets.QLineEdit(self.newDbFrame)
+        self.secretLabel = qtwidgets.QLabel('secret: ', self)
+        self.secretInput = qtwidgets.QLineEdit(self)
         self.secretInput.setEchoMode(qtwidgets.QLineEdit.Password)
+        today = datetime.datetime.now()
+        self.startDateLabel = qtwidgets.QLabel('start: ', self)
+        self.startDateInput = qtwidgets.QDateTimeEdit(datetime.datetime(year=today.year-1, month=1, day=1), self)
+        self.endDateLabel = qtwidgets.QLabel('end: ', self)
+        self.endDateInput = qtwidgets.QDateTimeEdit(today, self)
 
         self.directApiGridLayout = qtwidgets.QGridLayout()
         self.directApiGridLayout.addWidget(self.directApiSelectLabel, 0, 0)
@@ -118,11 +125,17 @@ class ApiKeyView(qtwidgets.QWidget):
         self.directApiGridLayout.addWidget(self.keyInput, 1, 1)
         self.directApiGridLayout.addWidget(self.secretLabel, 2, 0)
         self.directApiGridLayout.addWidget(self.secretInput, 2, 1)
+        self.directApiGridLayout.addWidget(self.startDateLabel, 3, 0)
+        self.directApiGridLayout.addWidget(self.startDateInput, 3, 1)
+        self.directApiGridLayout.addWidget(self.endDateLabel, 4, 0)
+        self.directApiGridLayout.addWidget(self.endDateInput, 4, 1)
 
-        self.directApiImportButton = qtwidgets.QPushButton('import', self.newDbFrame)
+        self.directApiNote = qtwidgets.QLabel('select api from dropdown', self)
+        self.directApiImportButton = qtwidgets.QPushButton('import', self)
         self.directApiImportButton.clicked.connect(self.directImportFromApi)
-        self.directApiSaveButton = qtwidgets.QPushButton('save as csv', self.newDbFrame)
+        self.directApiSaveButton = qtwidgets.QPushButton('save as csv', self)
         self.directApiSaveButton.clicked.connect(self.directSaveFromApi)
+
 
         self.directApiHorzButtonLayout = qtwidgets.QHBoxLayout()
         self.directApiHorzButtonLayout.addStretch()
@@ -135,6 +148,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.vLayout.addLayout(self.stackedContentLayout)
         self.vLayout.addWidget(self.directApiLabel)
         self.vLayout.addLayout(self.directApiGridLayout)
+        self.vLayout.addWidget(self.directApiNote)
         self.vLayout.addLayout(self.directApiHorzButtonLayout)
 
 
@@ -317,11 +331,15 @@ class ApiKeyView(qtwidgets.QWidget):
 
     def directImportFromApi(self):
         self.importFromApi.emit(self.directApiSelectDropdown.currentText(), self.keyInput.text(),
-                                self.secretInput.text())
+                                self.secretInput.text(),
+                                self.startDateInput.dateTime().toSecsSinceEpoch(),
+                                self.endDateInput.dateTime().toSecsSinceEpoch())
 
     def directSaveFromApi(self):
         self.saveFromApi.emit(self.directApiSelectDropdown.currentText(), self.keyInput.text(),
-                              self.secretInput.text())
+                              self.secretInput.text(),
+                              self.startDateInput.dateTime().toSecsSinceEpoch(),
+                              self.endDateInput.dateTime().toSecsSinceEpoch())
 
     def unlockDb(self):
         pw = self.pwInput.text()
@@ -348,7 +366,7 @@ class ApiKeyView(qtwidgets.QWidget):
             except ValueError:
                 pass
             else:
-                self.directApiSelectDropdown.setCurrentText(self.apiSelectDropdown.setCurrentIndex(index))
+                self.directApiSelectDropdown.setCurrentIndex(index)
                 self.keyInput.setText(key)
                 self.secretInput.setText(secret)
 
@@ -368,3 +386,6 @@ class ApiKeyView(qtwidgets.QWidget):
             self.deleteDbButton.setEnabled(True)
         else:
             self.deleteDbButton.setDisabled(True)
+
+    def updateExchangeNote(self):
+        self.directApiNote.setText(apiImport.apiNotes[self.directApiSelectDropdown.currentText()])
