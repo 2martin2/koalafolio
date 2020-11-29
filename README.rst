@@ -43,7 +43,15 @@ trade import
    
  import trades from exchanges using their API:
   supported exchanges (so far):
+   - binance
+   - bittrex
+   - bitmex
+   - coinbase
+   - coinbasepro
+   - gemini
+   - poloniex
    - kraken
+
 
 portfolio
 ----------
