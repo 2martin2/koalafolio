@@ -3,25 +3,15 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
-[packages]
-pandas = "*"
-pyqt5 = "*"
-pyqtchart = "*"
-tzlocal = "*"
-xlrd = "*"
-requests = "*"
-openpyxl = "*"
-pillow = "*"
-pycryptodomex = "*"
-krakenex = "*"
-pykrakenapi = "*"
-pycoingecko = "*"
-
 [dev-packages]
+PyQt5-stubs = "*"
 pyinstaller = "*"
 setuptools = "*"
 ipython = "*"
 pyqtdeploy = "*"
+
+[packages]
+koalafolio = {editable = true,path = "."}
 
 [requires]
 python_version = "3.7"
