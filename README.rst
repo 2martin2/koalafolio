@@ -70,3 +70,7 @@ Powered by CoinGecko_ API
 Gui based on Qt_
 
 .. _Qt: https://www.qt.io/
+
+Thanks to Rotki_
+
+.. _Rotki: https://github.com/rotki
