@@ -6,10 +6,9 @@ import gevent
 
 from rotkehlchen.accounting.events import TaxableEvents
 from rotkehlchen.accounting.structures import DefiEvent
-from rotkehlchen.assets.asset import Asset
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.assets.unknown_asset import UnknownEthereumToken
 from rotkehlchen.chain.ethereum.trades import AMMTrade
-from rotkehlchen.constants.assets import A_BTC, A_ETH
 from rotkehlchen.csv_exporter import CSVExporter
 from rotkehlchen.db.dbhandler import DBHandler
 from rotkehlchen.db.settings import DBSettings
@@ -182,7 +181,7 @@ class Accountant():
             gas_price = transaction.gas_price
             self.last_gas_price = transaction.gas_price
 
-        rate = self.events.get_rate_in_profit_currency(A_ETH, transaction.timestamp)
+        rate = self.events.get_rate_in_profit_currency(Asset('ETH'), transaction.timestamp)
         eth_burned_as_gas = FVal(transaction.gas_used * gas_price) / FVal(10 ** 18)
         cost = eth_burned_as_gas * rate
         self.eth_transactions_gas_costs += cost
@@ -524,7 +523,7 @@ class Accountant():
         elif trade.trade_type == TradeType.SETTLEMENT_BUY:
             # in poloniex settlements you buy some asset with BTC to repay a loan
             # so in essense you sell BTC to repay the loan
-            selling_asset = A_BTC
+            selling_asset = Asset('BTC')
             selling_asset_rate = self.events.get_rate_in_profit_currency(
                 selling_asset,
                 trade.timestamp,

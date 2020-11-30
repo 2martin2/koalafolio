@@ -3,7 +3,7 @@ from typing import Optional, Tuple, Union
 from rotkehlchen.accounting.structures import DefiEvent
 from rotkehlchen.assets.asset import Asset
 from rotkehlchen.chain.ethereum.trades import AMMTrade
-from rotkehlchen.constants.assets import A_ETH
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.exchanges.data_structures import (
     AssetMovement,
     Loan,
@@ -63,7 +63,7 @@ def action_get_assets(
     elif isinstance(action, (AssetMovement, DefiEvent)):
         return action.asset, None
     elif isinstance(action, EthereumTransaction):
-        return A_ETH, None
+        return Asset('ETH'), None
     elif isinstance(action, MarginPosition):
         return action.pl_currency, None
     elif isinstance(action, Loan):

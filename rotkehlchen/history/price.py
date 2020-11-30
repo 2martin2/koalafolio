@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 from rotkehlchen.assets.asset import Asset
-from rotkehlchen.constants.assets import A_USD
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.constants.misc import ZERO
 from rotkehlchen.errors import NoPriceForGivenTimestamp, RemoteError
 from rotkehlchen.fval import FVal
@@ -29,7 +29,7 @@ def query_usd_price_or_use_default(
     try:
         usd_price = PriceHistorian().query_historical_price(
             from_asset=asset,
-            to_asset=A_USD,
+            to_asset=Asset('USD'),
             timestamp=time,
         )
     except (RemoteError, NoPriceForGivenTimestamp):
@@ -51,7 +51,7 @@ def query_usd_price_zero_if_error(
     try:
         usd_price = PriceHistorian().query_historical_price(
             from_asset=asset,
-            to_asset=A_USD,
+            to_asset=Asset('USD'),
             timestamp=time,
         )
     except (RemoteError, NoPriceForGivenTimestamp):

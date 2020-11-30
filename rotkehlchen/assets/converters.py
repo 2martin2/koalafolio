@@ -7,7 +7,7 @@ from rotkehlchen.assets.asset import (
     WORLD_TO_POLONIEX,
     Asset,
 )
-from rotkehlchen.constants.assets import A_DAI, A_SAI
+from rotkehlchen.assets.asset import EthereumToken
 from rotkehlchen.db.upgrades.v7_v8 import COINBASE_DAI_UPGRADE_END_TS
 from rotkehlchen.errors import DeserializationError, UnsupportedAsset
 from rotkehlchen.typing import Timestamp
@@ -527,16 +527,16 @@ def asset_from_coinbase(cb_name: str, time: Optional[Timestamp] = None) -> Asset
     # wallet for the new DAI during the transition period. We should be able to handle this
     # https://support.coinbase.com/customer/portal/articles/2982947
     if cb_name == 'MCDAI':
-        return A_DAI
+        return EthereumToken('DAI')
     elif cb_name == 'DAI':
         # If it's dai and it's queried from the exchange before the end of the upgrade
         if not time:
             time = ts_now()
         if time < COINBASE_DAI_UPGRADE_END_TS:
             # Then it should be the single collateral version
-            return A_SAI
+            return EthereumToken('SAI')
         else:
-            return A_DAI
+            return EthereumToken('DAI')
 
     # else
     return Asset(cb_name)

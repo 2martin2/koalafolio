@@ -7,7 +7,7 @@ from eth_utils.address import to_checksum_address
 from gevent.lock import Semaphore
 
 from rotkehlchen.accounting.structures import Balance, BalanceSheet
-from rotkehlchen.assets.asset import Asset
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.chain.ethereum.makerdao.common import (
     MAKERDAO_REQUERY_PERIOD,
     RAY,
@@ -17,24 +17,6 @@ from rotkehlchen.chain.ethereum.makerdao.common import (
 )
 from rotkehlchen.chain.ethereum.utils import asset_normalized_value, token_normalized_value
 from rotkehlchen.constants import ZERO
-from rotkehlchen.constants.assets import (
-    A_BAL,
-    A_BAT,
-    A_COMP,
-    A_DAI,
-    A_ETH,
-    A_KNC,
-    A_LINK,
-    A_LRC,
-    A_MANA,
-    A_PAX,
-    A_TUSD,
-    A_USDC,
-    A_USDT,
-    A_WBTC,
-    A_YFI,
-    A_ZRX,
-)
 from rotkehlchen.constants.ethereum import (
     MAKERDAO_BAL_A_JOIN,
     MAKERDAO_BAT_A_JOIN,
@@ -97,23 +79,23 @@ GEMJOIN_MAPPING = {
     'YFI-A': MAKERDAO_YFI_A_JOIN,
 }
 COLLATERAL_TYPE_MAPPING = {
-    'BAT-A': A_BAT,
-    'ETH-A': A_ETH,
-    'ETH-B': A_ETH,
-    'KNC-A': A_KNC,
-    'TUSD-A': A_TUSD,
-    'USDC-A': A_USDC,
-    'USDC-B': A_USDC,
-    'USDT-A': A_USDT,
-    'WBTC-A': A_WBTC,
-    'ZRX-A': A_ZRX,
-    'MANA-A': A_MANA,
-    'PAXUSD-A': A_PAX,
-    'COMP-A': A_COMP,
-    'LRC-A': A_LRC,
-    'LINK-A': A_LINK,
-    'BAL-A': A_BAL,
-    'YFI-A': A_YFI,
+    'BAT-A': EthereumToken('BAT'),
+    'ETH-A': Asset('ETH'),
+    'ETH-B': Asset('ETH'),
+    'KNC-A': EthereumToken('KNC'),
+    'TUSD-A': EthereumToken('TUSD'),
+    'USDC-A': EthereumToken('USDC'),
+    'USDC-B': EthereumToken('USDC'),
+    'USDT-A': EthereumToken('USDT'),
+    'WBTC-A': EthereumToken('WBTC'),
+    'ZRX-A': EthereumToken('ZRX'),
+    'MANA-A': EthereumToken('MANA'),
+    'PAXUSD-A': EthereumToken('PAX'),
+    'COMP-A': EthereumToken('COMP'),
+    'LRC-A': EthereumToken('LRC'),
+    'LINK-A': EthereumToken('LINK'),
+    'BAL-A': Asset('BAL'),
+    'YFI-A': EthereumToken('YFI'),
 }
 
 
@@ -200,7 +182,7 @@ class MakerDAOVault(NamedTuple):
     def get_balance(self) -> BalanceSheet:
         return BalanceSheet(
             assets=defaultdict(Balance, {self.collateral_asset: self.collateral}),
-            liabilities=defaultdict(Balance, {A_DAI: self.debt}),
+            liabilities=defaultdict(Balance, {EthereumToken('DAI'): self.debt}),
         )
 
 
@@ -297,7 +279,7 @@ class MakerDAOVaults(MakerDAOCommon):
         else:
             liquidation_price = (debt_value * liquidation_ratio) / collateral_amount
 
-        dai_usd_price = Inquirer().find_usd_price(A_DAI)
+        dai_usd_price = Inquirer().find_usd_price(EthereumToken('DAI'))
         return MakerDAOVault(
             identifier=identifier,
             owner=owner,
@@ -490,11 +472,11 @@ class MakerDAOVaults(MakerDAOCommon):
             total_dai_wei += given_amount
             amount = token_normalized_value(
                 token_amount=given_amount,
-                token=A_DAI,
+                token=EthereumToken('DAI'),
             )
             timestamp = self.ethereum.get_event_timestamp(event)
             usd_price = query_usd_price_or_use_default(
-                asset=A_DAI,
+                asset=EthereumToken('DAI'),
                 time=timestamp,
                 default_value=FVal(1),
                 location='vault debt generation',
@@ -524,7 +506,7 @@ class MakerDAOVaults(MakerDAOCommon):
             total_dai_wei -= given_amount
             amount = token_normalized_value(
                 token_amount=given_amount,
-                token=A_DAI,
+                token=EthereumToken('DAI'),
             )
             if amount == ZERO:
                 # it seems there is a zero DAI value transfer from the urn when
@@ -533,7 +515,7 @@ class MakerDAOVaults(MakerDAOCommon):
 
             timestamp = self.ethereum.get_event_timestamp(event)
             usd_price = query_usd_price_or_use_default(
-                asset=A_DAI,
+                asset=EthereumToken('DAI'),
                 time=timestamp,
                 default_value=FVal(1),
                 location='vault debt payback',
@@ -585,7 +567,7 @@ class MakerDAOVaults(MakerDAOCommon):
 
         total_interest_owed = vault.debt.amount - token_normalized_value(
             token_amount=total_dai_wei,
-            token=A_DAI,
+            token=EthereumToken('DAI'),
         )
         # sort vault events by timestamp
         vault_events.sort(key=lambda event: event.timestamp)

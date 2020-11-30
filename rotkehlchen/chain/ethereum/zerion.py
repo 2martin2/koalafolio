@@ -5,11 +5,10 @@ from eth_utils.address import to_checksum_address
 from typing_extensions import Literal
 
 from rotkehlchen.accounting.structures import Balance
-from rotkehlchen.assets.asset import Asset
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.chain.ethereum.contracts import EthereumContract
 from rotkehlchen.chain.ethereum.defi import handle_defi_price_query
 from rotkehlchen.chain.ethereum.utils import token_normalized_value_decimals
-from rotkehlchen.constants.assets import A_DAI, A_USDC
 from rotkehlchen.constants.ethereum import ZERION_ABI
 from rotkehlchen.constants.misc import ZERO
 from rotkehlchen.errors import UnknownAsset, UnsupportedAsset
@@ -73,7 +72,7 @@ def _handle_pooltogether(normalized_balance: FVal, token_name: str) -> Optional[
     https://github.com/rotki/rotki/issues/1429
     """
     if 'DAI' in token_name:
-        dai_price = Inquirer.find_usd_price(A_DAI)
+        dai_price = Inquirer.find_usd_price(EthereumToken('DAI'))
         return DefiBalance(
             token_address=to_checksum_address('0x49d716DFe60b37379010A75329ae09428f17118d'),
             token_name='Pool Together DAI token',
@@ -84,7 +83,7 @@ def _handle_pooltogether(normalized_balance: FVal, token_name: str) -> Optional[
             ),
         )
     elif 'USDC' in token_name:
-        usdc_price = Inquirer.find_usd_price(A_USDC)
+        usdc_price = Inquirer.find_usd_price(EthereumToken('USDC'))
         return DefiBalance(
             token_address=to_checksum_address('0xBD87447F48ad729C5c4b8bcb503e1395F62e8B98'),
             token_name='Pool Together USDC token',

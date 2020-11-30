@@ -34,7 +34,7 @@ from rotkehlchen.chain.ethereum.uniswap import (
     UNISWAP_TRADES_PREFIX,
     UniswapPoolEvent,
 )
-from rotkehlchen.constants.assets import A_USD, S_BTC, S_ETH
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.constants.ethereum import YEARN_VAULTS_PREFIX
 from rotkehlchen.db.schema import DB_SCRIPT_CREATE_TABLES
 from rotkehlchen.db.settings import (
@@ -551,7 +551,7 @@ class DBHandler:
         )
         query = query.fetchall()
         if len(query) == 0:
-            return A_USD
+            return Asset('USD')
 
         result = query[0][0]
         return Asset(result)

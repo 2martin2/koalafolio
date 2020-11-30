@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from rotkehlchen.accounting.structures import DefiEvent, DefiEventType
 from rotkehlchen.assets.asset import Asset
 from rotkehlchen.chain.ethereum.trades import AMMTrade
-from rotkehlchen.constants.assets import A_DAI, A_USD
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.constants.misc import ZERO
 from rotkehlchen.errors import RemoteError
 from rotkehlchen.exchanges.data_structures import AssetMovement, Loan, MarginPosition, Trade
@@ -179,7 +179,7 @@ class TradesHistorian():
                     defi_events.append(DefiEvent(
                         timestamp=timestamp,
                         event_type=DefiEventType.DSR_LOAN_GAIN,
-                        asset=A_DAI,
+                        asset=EthereumToken('DAI'),
                         amount=gain,
                     ))
 
@@ -196,7 +196,7 @@ class TradesHistorian():
                     defi_events.append(DefiEvent(
                         timestamp=last_event_ts,
                         event_type=DefiEventType.MAKERDAO_VAULT_LOSS,
-                        asset=A_USD,
+                        asset=Asset('USD'),
                         amount=detail.total_liquidated.usd_value + detail.total_interest_owed,
                     ))
 
@@ -216,7 +216,7 @@ class TradesHistorian():
                     defi_events.append(DefiEvent(
                         timestamp=Timestamp(end_ts - 1),
                         event_type=DefiEventType.YEARN_VAULTS_PNL,
-                        asset=A_USD,
+                        asset=Asset('USD'),
                         amount=vault_history.profit_loss.usd_value,
                     ))
 

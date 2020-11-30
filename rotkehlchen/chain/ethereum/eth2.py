@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, Dict, List, NamedTuple, Tuple
 
 from rotkehlchen.accounting.structures import Balance
 from rotkehlchen.chain.ethereum.utils import decode_event_data
-from rotkehlchen.constants.assets import A_ETH
 from rotkehlchen.constants.ethereum import EthereumConstants
 from rotkehlchen.constants.misc import ZERO
 from rotkehlchen.fval import FVal
@@ -135,7 +134,7 @@ def _get_eth2_staked_amount_onchain(
                 usd_price = ZERO
                 if has_premium:  # won't show this to non-premium so don't bother
                     usd_price = query_usd_price_zero_if_error(
-                        asset=A_ETH,
+                        asset=Asset('ETH'),
                         time=transaction.timestamp,
                         location='Eth2 staking query',
                         msg_aggregator=msg_aggregator,
@@ -235,7 +234,7 @@ def get_eth2_staked_amount(
     if new_deposits:
         database.add_eth2_deposits(new_deposits)
 
-    current_usd_price = Inquirer().find_usd_price(A_ETH)
+    current_usd_price = Inquirer().find_usd_price(Asset('ETH'))
 
     # Fetch all DB deposits for the given addresses
     deposits: List[Eth2Deposit] = []

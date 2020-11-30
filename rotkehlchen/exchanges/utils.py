@@ -3,7 +3,6 @@ from typing import Any, Dict, Optional
 from eth_utils.address import to_checksum_address
 
 from rotkehlchen.assets.asset import Asset
-from rotkehlchen.constants.assets import A_ETH
 
 
 def get_key_if_has_val(mapping: Dict[str, Any], key: str) -> Optional[str]:
@@ -21,7 +20,7 @@ def deserialize_asset_movement_address(
     """Gets the address from an asset movement mapping making sure that if it's
     an ethereum deposit/withdrawal the address is returned checksummed"""
     value = get_key_if_has_val(mapping, key)
-    if value and asset == A_ETH:
+    if value and asset == Asset('ETH'):
         try:
             value = to_checksum_address(value)
         except ValueError:

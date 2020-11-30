@@ -13,8 +13,8 @@ from rotkehlchen.chain.ethereum.makerdao.common import (
     RAY,
     MakerDAOCommon,
 )
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.constants import ZERO
-from rotkehlchen.constants.assets import A_DAI
 from rotkehlchen.constants.ethereum import MAKERDAO_DAI_JOIN, MAKERDAO_POT
 from rotkehlchen.db.dbhandler import DBHandler
 from rotkehlchen.errors import BlockchainQueryError, ConversionError, RemoteError
@@ -166,7 +166,7 @@ class MakerDAODSR(MakerDAOCommon):
             proxy_mappings = self._get_accounts_having_maker_proxy()
             balances = {}
             try:
-                current_dai_price = Inquirer().find_usd_price(A_DAI)
+                current_dai_price = Inquirer().find_usd_price(EthereumToken('DAI'))
             except RemoteError:
                 current_dai_price = Price(FVal(1))
             for account, proxy in proxy_mappings.items():
@@ -289,7 +289,7 @@ class MakerDAODSR(MakerDAOCommon):
 
             timestamp = self.ethereum.get_event_timestamp(join_event)
             usd_price = query_usd_price_or_use_default(
-                asset=A_DAI,
+                asset=EthereumToken('DAI'),
                 time=timestamp,
                 default_value=FVal(1),
                 location='DSR deposit',
@@ -343,7 +343,7 @@ class MakerDAODSR(MakerDAOCommon):
 
             timestamp = self.ethereum.get_event_timestamp(exit_event)
             usd_price = query_usd_price_or_use_default(
-                asset=A_DAI,
+                asset=EthereumToken('DAI'),
                 time=timestamp,
                 default_value=FVal(1),
                 location='DSR withdrawal',
@@ -384,7 +384,7 @@ class MakerDAODSR(MakerDAOCommon):
                 m.gain_so_far = gain_so_far.to_int(exact=False)
 
             usd_price = query_usd_price_or_use_default(
-                asset=A_DAI,
+                asset=EthereumToken('DAI'),
                 time=m.timestamp,
                 default_value=FVal(1),
                 location='DSR movement',
@@ -401,7 +401,7 @@ class MakerDAODSR(MakerDAOCommon):
         normalized_balance = normalized_balance * chi
         gain = normalized_balance - amount_in_dsr
         try:
-            current_dai_price = Inquirer().find_usd_price(A_DAI)
+            current_dai_price = Inquirer().find_usd_price(EthereumToken('DAI'))
         except RemoteError:
             current_dai_price = Price(FVal(1))
 

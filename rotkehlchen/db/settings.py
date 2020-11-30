@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 from rotkehlchen.assets.asset import Asset
-from rotkehlchen.constants.assets import A_USD
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.constants.timing import YEAR_IN_SECONDS
 from rotkehlchen.db.utils import str_to_bool
 from rotkehlchen.errors import DeserializationError
@@ -19,7 +19,7 @@ DEFAULT_PREMIUM_SHOULD_SYNC = False
 DEFAULT_START_DATE = '01/08/2015'
 DEFAULT_UI_FLOATING_PRECISION = 2
 DEFAULT_BALANCE_SAVE_FREQUENCY = 24
-DEFAULT_MAIN_CURRENCY = A_USD
+DEFAULT_MAIN_CURRENCY = Asset('USD')
 DEFAULT_DATE_DISPLAY_FORMAT = '%d/%m/%Y %H:%M:%S %Z'
 DEFAULT_THOUSAND_SEPARATOR = ','
 DEFAULT_DECIMAL_SEPARATOR = '.'

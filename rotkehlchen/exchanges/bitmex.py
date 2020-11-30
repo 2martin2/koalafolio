@@ -9,7 +9,6 @@ from urllib.parse import urlencode
 import requests
 
 from rotkehlchen.assets.asset import Asset
-from rotkehlchen.constants.assets import A_BTC
 from rotkehlchen.errors import DeserializationError, RemoteError, UnknownAsset
 from rotkehlchen.exchanges.data_structures import AssetMovement, Location, MarginPosition
 from rotkehlchen.exchanges.exchange import ExchangeInterface
@@ -49,7 +48,7 @@ BITMEX_PRIVATE_ENDPOINTS = (
 
 def bitmex_to_world(symbol: str) -> Asset:
     if symbol == 'XBt':
-        return A_BTC
+        return Asset('BTC')
     return Asset(symbol)
 
 
@@ -62,7 +61,7 @@ def trade_from_bitmex(bitmex_trade: Dict) -> MarginPosition:
     currency = bitmex_to_world(bitmex_trade['currency'])
     fee = deserialize_fee(bitmex_trade['fee'])
     notes = bitmex_trade['address']
-    assert currency == A_BTC, 'Bitmex trade should only deal in BTC'
+    assert currency == Asset('BTC'), 'Bitmex trade should only deal in BTC'
 
     log.debug(
         'Processing Bitmex Trade',
@@ -81,7 +80,7 @@ def trade_from_bitmex(bitmex_trade: Dict) -> MarginPosition:
         profit_loss=profit_loss,
         pl_currency=currency,
         fee=fee,
-        fee_currency=A_BTC,
+        fee_currency=Asset('BTC'),
         notes=notes,
         link=str(bitmex_trade['transactID']),
     )
@@ -221,7 +220,7 @@ class Bitmex(ExchangeInterface):
             resp = self._api_query_dict('get', 'user/wallet', {'currency': 'XBt'})
             # Bitmex shows only BTC balance
             returned_balances = {}
-            usd_price = Inquirer().find_usd_price(A_BTC)
+            usd_price = Inquirer().find_usd_price(Asset('BTC'))
         except RemoteError as e:
             msg = f'Bitmex API request failed due to: {str(e)}'
             log.error(msg)
@@ -231,7 +230,7 @@ class Bitmex(ExchangeInterface):
         amount = satoshis_to_btc(FVal(resp['amount']))
         usd_value = amount * usd_price
 
-        returned_balances[A_BTC] = {
+        returned_balances[Asset('BTC')] = {
             'amount': amount,
             'usd_value': usd_value,
         }
@@ -301,7 +300,7 @@ class Bitmex(ExchangeInterface):
                 amount = deserialize_asset_amount_force_positive(movement['amount'])
                 fee = deserialize_fee(movement['fee'])
 
-                if asset == A_BTC:
+                if asset == Asset('BTC'):
                     # bitmex stores amounts in satoshis
                     amount = AssetAmount(satoshis_to_btc(amount))
                     fee = Fee(satoshis_to_btc(fee))

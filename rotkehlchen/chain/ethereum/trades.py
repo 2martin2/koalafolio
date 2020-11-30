@@ -2,7 +2,6 @@ from typing import Any, Dict, List, NamedTuple, Tuple, Union
 
 from rotkehlchen.assets.asset import EthereumToken
 from rotkehlchen.assets.unknown_asset import UNKNOWN_TOKEN_KEYS, UnknownEthereumToken
-from rotkehlchen.constants.assets import A_DAI
 from rotkehlchen.constants.misc import ZERO
 from rotkehlchen.serialization.deserialize import (
     deserialize_asset_amount,
@@ -262,7 +261,7 @@ class AMMTrade(NamedTuple):
     def fee_currency(self) -> EthereumToken:
         # always 0 DAI, super hacky -- just to satisfy the "Trade" interface for
         # use in accounting module. We need to fix these stuff ...
-        return A_DAI
+        return EthereumToken('DAI')
 
     @property
     def fee(self) -> Fee:

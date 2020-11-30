@@ -7,22 +7,11 @@ from typing import TYPE_CHECKING, Dict, Iterable, Optional
 
 import requests
 
-from rotkehlchen.assets.asset import Asset
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.chain.ethereum.defi import handle_defi_price_query
 from rotkehlchen.constants import ZERO
-from rotkehlchen.constants.assets import (
-    A_ALINK,
-    A_BTC,
-    A_DAI,
-    A_ETH,
-    A_GUSD,
-    A_TUSD,
-    A_USD,
-    A_USDC,
-    A_USDT,
-    A_YFI,
-    FIAT_CURRENCIES,
-)
+import rotkehlchen.constants.assets as assets
+
 from rotkehlchen.errors import PriceQueryUnsupportedAsset, RemoteError, UnableToDecryptRemoteData
 from rotkehlchen.fval import FVal
 from rotkehlchen.logging import RotkehlchenLogsAdapter
@@ -89,23 +78,23 @@ def get_underlying_asset_price(token_symbol: str) -> Optional[Price]:
     """
     price = None
     if token_symbol == 'yaLINK':
-        price = Inquirer().find_usd_price(A_ALINK)
+        price = Inquirer().find_usd_price(EthereumToken('aLINK'))
     elif token_symbol == 'yGUSD':
-        price = Inquirer().find_usd_price(A_GUSD)
+        price = Inquirer().find_usd_price(EthereumToken('GUSD'))
     elif token_symbol in ('yDAI', 'fDAI'):
-        price = Inquirer().find_usd_price(A_DAI)
+        price = Inquirer().find_usd_price(EthereumToken('DAI'))
     elif token_symbol in ('fWETH', 'yWETH'):
-        price = Inquirer().find_usd_price(A_ETH)
+        price = Inquirer().find_usd_price(Asset('ETH'))
     elif token_symbol == 'yYFI':
-        price = Inquirer().find_usd_price(A_YFI)
+        price = Inquirer().find_usd_price(EthereumToken('YFI'))
     elif token_symbol in ('fUSDT', 'yUSDT'):
-        price = Inquirer().find_usd_price(A_USDT)
+        price = Inquirer().find_usd_price(EthereumToken('USDT'))
     elif token_symbol in ('fUSDC', 'yUSDC'):
-        price = Inquirer().find_usd_price(A_USDC)
+        price = Inquirer().find_usd_price(EthereumToken('USDC'))
     elif token_symbol in ('fTUSD', 'yTUSD'):
-        price = Inquirer().find_usd_price(A_TUSD)
+        price = Inquirer().find_usd_price(EthereumToken('TUSD'))
     elif token_symbol in ASSETS_UNDERLYING_BTC:
-        price = Inquirer().find_usd_price(A_BTC)
+        price = Inquirer().find_usd_price(Asset('BTC'))
 
     return price
 
@@ -191,7 +180,7 @@ class Inquirer():
         try:
             result = Inquirer()._cryptocompare.query_endpoint_price(
                 from_asset=asset,
-                to_asset=A_USD,
+                to_asset=Asset('USD'),
             )
         except PriceQueryUnsupportedAsset:
             log.error(
@@ -234,7 +223,7 @@ class Inquirer():
 
         if price == Price(ZERO):
             try:
-                price = Inquirer()._coingecko.simple_price(from_asset=asset, to_asset=A_USD)
+                price = Inquirer()._coingecko.simple_price(from_asset=asset, to_asset=Asset('USD'))
             except RemoteError as e:
                 log.error(
                     f'Coingecko usd price query for {asset.identifier} failed due to {str(e)}',
@@ -246,11 +235,11 @@ class Inquirer():
     def get_fiat_usd_exchange_rates(
             currencies: Optional[Iterable[Asset]] = None,
     ) -> Dict[Asset, FVal]:
-        rates = {A_USD: FVal(1)}
+        rates = {Asset('USD'): FVal(1)}
         if not currencies:
-            currencies = FIAT_CURRENCIES[1:]
+            currencies = assets.getFiatCurrencies(start=1)
         for currency in currencies:
-            rates[currency] = Inquirer().query_fiat_pair(A_USD, currency)
+            rates[currency] = Inquirer().query_fiat_pair(Asset('USD'), currency)
         return rates
 
     @staticmethod

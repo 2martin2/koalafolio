@@ -107,17 +107,17 @@ def _attempt_initialization(
     Returns a tuple of the most recent assets mapping it can get and a boolean denoting
     if the remote check happened or not. If it did then we havethe most recent assets.
     """
-    if not data_directory:
-        if saved_assets is not None:
-            # Do not read the all_assets file again if it has been already read
-            return saved_assets, False
-
-        # First initialization. Read the builtin all_assets.json
-        root_dir = Path(__file__).resolve().parent.parent
-        with open(root_dir / 'data' / 'all_assets.json', 'r') as f:
-            assets = json.loads(f.read())
-
-        return assets, False
+    # if not data_directory:
+    #     if saved_assets is not None:
+    #         # Do not read the all_assets file again if it has been already read
+    #         return saved_assets, False
+    #
+    #     # First initialization. Read the builtin all_assets.json
+    #     root_dir = Path(__file__).resolve().parent.parent
+    #     with open(root_dir / 'data' / 'all_assets.json', 'r') as f:
+    #         assets = json.loads(f.read())
+    #
+    #     return assets, False
 
     # else we got the data directory so we can finally do the remote check
     assets = _get_latest_assets(data_directory)

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from rotkehlchen.accounting.structures import DefiEvent
-from rotkehlchen.assets.asset import Asset
+from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.constants import (
     EV_ASSET_MOVE,
     EV_BUY,
@@ -17,7 +17,6 @@ from rotkehlchen.constants import (
     S_EMPTYSTR,
     ZERO,
 )
-from rotkehlchen.constants.assets import A_ETH
 from rotkehlchen.fval import FVal
 from rotkehlchen.logging import RotkehlchenLogsAdapter, make_sensitive
 from rotkehlchen.typing import AssetMovementCategory, EmptyStr, EventType, Fee, Location, Timestamp
@@ -417,7 +416,7 @@ class CSVExporter():
             location=Location.BLOCKCHAIN,
             event_type=EV_TX_GAS_COST,
             paid_in_profit_currency=eth_burned_as_gas * rate,
-            paid_asset=A_ETH,
+            paid_asset=Asset('ETH'),
             paid_in_asset=eth_burned_as_gas,
             received_asset=S_EMPTYSTR,
             received_in_asset=FVal(0),

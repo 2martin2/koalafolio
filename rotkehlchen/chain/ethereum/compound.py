@@ -30,7 +30,6 @@ ADDRESS_TO_ASSETS = Dict[ChecksumEthAddress, Dict[Asset, Balance]]
 BLOCKS_PER_DAY = 4 * 60 * 24
 DAYS_PER_YEAR = 365
 ETH_MANTISSA = 10**18
-A_COMP = EthereumToken('COMP')
 
 COMPTROLLER_PROXY = EthereumConstants().contract('COMPTROLLER_PROXY')
 COMP_DEPLOYED_BLOCK = 9601359
@@ -188,8 +187,8 @@ class Compound(EthereumModule):
                     )
                     continue
 
-                if entry.token_address == A_COMP.ethereum_address:
-                    rewards_map[A_COMP] = CompoundBalance(
+                if entry.token_address == EthereumToken('COMP').ethereum_address:
+                    rewards_map[EthereumToken('COMP')] = CompoundBalance(
                         balance_type=BalanceType.ASSET,
                         balance=entry.balance,
                         apy=None,
@@ -493,7 +492,7 @@ class Compound(EthereumModule):
             'to': address,
         }
         comp_events = self.ethereum.get_logs(
-            contract_address=A_COMP.ethereum_address,
+            contract_address=EthereumToken('COMP').ethereum_address,
             abi=ERC20TOKEN_ABI,
             event_name='Transfer',
             argument_filters=argument_filters,
@@ -504,9 +503,9 @@ class Compound(EthereumModule):
         events = []
         for event in comp_events:
             timestamp = self.ethereum.get_event_timestamp(event)
-            amount = token_normalized_value(hexstr_to_int(event['data']), A_COMP)
+            amount = token_normalized_value(hexstr_to_int(event['data']), EthereumToken('COMP'))
             usd_price = query_usd_price_zero_if_error(
-                asset=A_COMP,
+                asset=EthereumToken('COMP'),
                 time=timestamp,
                 location='comp_claim',
                 msg_aggregator=self.msg_aggregator,
@@ -517,7 +516,7 @@ class Compound(EthereumModule):
                 address=address,
                 block_number=event['blockNumber'],
                 timestamp=timestamp,
-                asset=A_COMP,
+                asset=EthereumToken('COMP'),
                 value=value,
                 to_asset=None,
                 to_value=None,
@@ -603,7 +602,7 @@ class Compound(EthereumModule):
                 loss_assets[event.address][event.to_asset] += event.to_value
                 loss_so_far[event.address][event.to_asset] += event.to_value
             elif event.event_type == 'comp':
-                rewards_assets[event.address][A_COMP] += event.value
+                rewards_assets[event.address][EthereumToken('COMP')] += event.value
 
         for address, bentry in balances.items():
             for asset, entry in bentry['lending'].items():
