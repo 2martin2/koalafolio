@@ -24,6 +24,8 @@ import koalafolio.gui.QSettings as settings
 import koalafolio.gui.QStyle as style
 import koalafolio.exp.QTranslate as translator
 import koalafolio.Import.apiImport as apiImport
+from pathlib import Path
+import rotkehlchen.assets.resolver as resolver
 
 qt = qtcore.Qt
 # %% constants
@@ -162,6 +164,8 @@ class PortfolioApp(qtwidgets.QWidget):
         self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
         style.myStyle = self.styleSheetHandler
         self.apiDatabase = apiImport.ApiDatabase(path=self.dataPath)
+        # Initialize the AssetResolver singleton
+        resolver.AssetResolver(data_directory=Path(self.dataPath))
 
 
     # setup window style
