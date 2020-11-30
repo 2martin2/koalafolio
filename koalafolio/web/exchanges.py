@@ -88,13 +88,13 @@ def tradesToDataframe(rotkiTrades):
     for rotkiTrade in rotkiTrades:
         trade = {}
         trade['timestamp'] = datetime.datetime.fromtimestamp(rotkiTrade.timestamp)
-        trade['location'] = rotkiTrade.location
-        trade['pair'] = rotkiTrade.pair
-        trade['trade_type'] = rotkiTrade.trade_type
-        trade['amount'] = rotkiTrade.amount
-        trade['rate'] = rotkiTrade.rate
-        trade['fee'] = rotkiTrade.fee
-        trade['fee_currency'] = rotkiTrade.fee_currency.symbol
-        trade['link'] = rotkiTrade.link
+        trade['location'] = str(rotkiTrade.location)
+        trade['pair'] = str(rotkiTrade.pair)
+        trade['trade_type'] = str(rotkiTrade.trade_type)
+        trade['amount'] = float(rotkiTrade.amount)
+        trade['rate'] = float(rotkiTrade.rate)
+        trade['fee'] = float(rotkiTrade.fee)
+        trade['fee_currency'] = str(rotkiTrade.fee_currency.symbol)
+        trade['link'] = str(rotkiTrade.link)
         trades.append(trade)
     return pandas.DataFrame(trades)
