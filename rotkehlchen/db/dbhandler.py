@@ -71,7 +71,6 @@ from rotkehlchen.exchanges.data_structures import AssetMovement, MarginPosition,
 from rotkehlchen.exchanges.manager import SUPPORTED_EXCHANGES
 from rotkehlchen.fval import FVal
 from rotkehlchen.logging import RotkehlchenLogsAdapter
-from rotkehlchen.premium.premium import PremiumCredentials
 from rotkehlchen.serialization.deserialize import (
     deserialize_asset_amount,
     deserialize_asset_movement_category_from_db,
@@ -527,7 +526,7 @@ class DBHandler:
             return DEFAULT_PREMIUM_SHOULD_SYNC
         return str_to_bool(query[0][0])
 
-    def get_settings(self, have_premium: bool = False) -> DBSettings:
+    def get_settings(self, have_premium: bool = True) -> DBSettings:
         """Aggregates settings from DB and from the given args and returns the settings object"""
         cursor = self.conn.cursor()
         query = cursor.execute(
@@ -2409,14 +2408,14 @@ class DBHandler:
 
         return [Eth2Deposit.deserialize_from_db(deposit_tuple) for deposit_tuple in results]
 
-    def set_rotkehlchen_premium(self, credentials: PremiumCredentials) -> None:
+    def set_rotkehlchen_premium(self) -> None:
         """Save the rotki premium credentials in the DB"""
         cursor = self.conn.cursor()
         # We don't care about previous value so simple insert or replace should work
         cursor.execute(
             'INSERT OR REPLACE INTO user_credentials'
             '(name, api_key, api_secret, passphrase) VALUES (?, ?, ?, ?)',
-            ('rotkehlchen', credentials.serialize_key(), credentials.serialize_secret(), None),
+            ('rotkehlchen', None, None, None),
         )
         self.conn.commit()
         # Do not update the last write here. If we are starting in a new machine
@@ -2437,27 +2436,8 @@ class DBHandler:
             return False
         return True
 
-    def get_rotkehlchen_premium(self) -> Optional[PremiumCredentials]:
-        cursor = self.conn.cursor()
-        result = cursor.execute(
-            'SELECT api_key, api_secret FROM user_credentials where name="rotkehlchen";',
-        )
-        result = result.fetchall()
-        if len(result) == 1:
-            try:
-                credentials = PremiumCredentials(
-                    given_api_key=result[0][0],
-                    given_api_secret=result[0][1],
-                )
-            except IncorrectApiKeyFormat:
-                self.msg_aggregator.add_error(
-                    'Incorrect Rotki API Key/Secret format found in the DB. Skipping ...',
-                )
-                return None
-
-            return credentials
-        else:
-            return None
+    def get_rotkehlchen_premium(self) -> None:
+        return None
 
     def get_netvalue_data(self, from_ts: Timestamp) -> Tuple[List[str], List[str]]:
         """Get all entries of net value data from the DB"""

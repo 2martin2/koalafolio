@@ -42,7 +42,6 @@ from rotkehlchen.fval import FVal
 from rotkehlchen.greenlets import GreenletManager
 from rotkehlchen.inquirer import Inquirer
 from rotkehlchen.logging import RotkehlchenLogsAdapter
-from rotkehlchen.premium.premium import Premium
 from rotkehlchen.serialization.deserialize import deserialize_ethereum_address
 from rotkehlchen.typing import (
     AssetType,
@@ -175,7 +174,6 @@ class ChainManager(CacheableObject, LockableQueryObject):
             msg_aggregator: MessagesAggregator,
             database: DBHandler,
             greenlet_manager: GreenletManager,
-            premium: Optional[Premium],
             data_directory: Path,
             eth_modules: Optional[List[str]] = None,
     ):
@@ -204,21 +202,18 @@ class ChainManager(CacheableObject, LockableQueryObject):
                     self.eth_modules['makerdao_dsr'] = MakerDAODSR(
                         ethereum_manager=ethereum_manager,
                         database=self.database,
-                        premium=premium,
                         msg_aggregator=msg_aggregator,
                     )
                 elif given_module == 'makerdao_vaults':
                     self.eth_modules['makerdao_vaults'] = MakerDAOVaults(
                         ethereum_manager=ethereum_manager,
                         database=self.database,
-                        premium=premium,
                         msg_aggregator=msg_aggregator,
                     )
                 elif given_module == 'aave':
                     self.eth_modules['aave'] = Aave(
                         ethereum_manager=ethereum_manager,
                         database=self.database,
-                        premium=premium,
                         msg_aggregator=msg_aggregator,
                     )
                 elif given_module == 'compound':
@@ -228,13 +223,11 @@ class ChainManager(CacheableObject, LockableQueryObject):
                         after_seconds=None,
                         task_name='Initialize Compound object',
                         method=self._initialize_compound,
-                        premium=premium,
                     )
                 elif given_module == 'uniswap':
                     self.eth_modules['uniswap'] = Uniswap(
                         ethereum_manager=ethereum_manager,
                         database=self.database,
-                        premium=premium,
                         msg_aggregator=msg_aggregator,
                         data_directory=self.data_directory,
                     )
@@ -242,13 +235,11 @@ class ChainManager(CacheableObject, LockableQueryObject):
                     self.eth_modules['yearn_vaults'] = YearnVaults(
                         ethereum_manager=ethereum_manager,
                         database=self.database,
-                        premium=premium,
                         msg_aggregator=msg_aggregator,
                     )
                 else:
                     log.error(f'Unrecognized module value {given_module} given. Skipping...')
 
-        self.premium = premium
         self.greenlet_manager = greenlet_manager
         self.zerion = Zerion(ethereum_manager=self.ethereum, msg_aggregator=self.msg_aggregator)
 
@@ -259,11 +250,10 @@ class ChainManager(CacheableObject, LockableQueryObject):
                 method=module.on_startup,
             )
 
-    def _initialize_compound(self, premium: Optional[Premium]) -> None:
+    def _initialize_compound(self) -> None:
         self.eth_modules['compound'] = Compound(
             ethereum_manager=self.ethereum,
             database=self.database,
-            premium=premium,
             msg_aggregator=self.msg_aggregator,
         )
 
@@ -274,12 +264,7 @@ class ChainManager(CacheableObject, LockableQueryObject):
         return self.ethereum.set_rpc_endpoint(endpoint)
 
     def deactivate_premium_status(self) -> None:
-        dsr = self.makerdao_dsr
-        if dsr:
-            dsr.premium = None
-        vaults = self.makerdao_vaults
-        if vaults:
-            vaults.premium = None
+        pass
 
     def iterate_modules(self) -> Iterator[Tuple[str, EthereumModule]]:
         for name, module in self.eth_modules.items():
@@ -948,7 +933,7 @@ class ChainManager(CacheableObject, LockableQueryObject):
             result = get_eth2_staked_amount(
                 ethereum=self.ethereum,
                 addresses=list(self.balances.eth.keys()),
-                has_premium=self.premium is not None,
+                has_premium=True,
                 msg_aggregator=self.msg_aggregator,
                 database=self.database,
             )
@@ -970,7 +955,7 @@ class ChainManager(CacheableObject, LockableQueryObject):
             result = get_eth2_staked_amount(
                 ethereum=self.ethereum,
                 addresses=list(self.balances.eth.keys()),
-                has_premium=self.premium is not None,
+                has_premium=True,
                 msg_aggregator=self.msg_aggregator,
                 database=self.database,
             )

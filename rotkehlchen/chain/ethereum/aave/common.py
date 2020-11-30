@@ -3,10 +3,8 @@ from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Tuple, Union
 from rotkehlchen.accounting.structures import Balance
 from rotkehlchen.assets.asset import Asset, EthereumToken
 from rotkehlchen.chain.ethereum.structures import AaveEvent
-from rotkehlchen.constants.assets import A_ETH
 from rotkehlchen.constants.ethereum import AAVE_ETH_RESERVE_ADDRESS
 from rotkehlchen.fval import FVal
-from rotkehlchen.premium.premium import Premium
 from rotkehlchen.typing import ChecksumEthAddress, Timestamp
 from rotkehlchen.user_messages import MessagesAggregator
 
@@ -135,13 +133,11 @@ class AaveInquirer():
             self,
             ethereum_manager: 'EthereumManager',
             database: 'DBHandler',
-            premium: Optional[Premium],
             msg_aggregator: MessagesAggregator,
     ) -> None:
         self.ethereum = ethereum_manager
         self.database = database
         self.msg_aggregator = msg_aggregator
-        self.premium = premium
 
     def get_history_for_addresses(
             self,

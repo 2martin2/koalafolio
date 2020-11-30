@@ -48,7 +48,6 @@ from rotkehlchen.db.dbhandler import DBHandler
 from rotkehlchen.fval import FVal
 from rotkehlchen.history.price import query_usd_price_or_use_default
 from rotkehlchen.inquirer import Inquirer
-from rotkehlchen.premium.premium import Premium
 from rotkehlchen.typing import ChecksumEthAddress, Timestamp
 from rotkehlchen.user_messages import MessagesAggregator
 from rotkehlchen.utils.misc import address_to_bytes32, hexstr_to_int, ts_now
@@ -204,14 +203,12 @@ class MakerDAOVaults(MakerDAOCommon):
             self,
             ethereum_manager: 'EthereumManager',
             database: DBHandler,
-            premium: Optional[Premium],
             msg_aggregator: MessagesAggregator,
     ) -> None:
 
         super().__init__(
             ethereum_manager=ethereum_manager,
             database=database,
-            premium=premium,
             msg_aggregator=msg_aggregator,
         )
         self.reset_last_query_ts()

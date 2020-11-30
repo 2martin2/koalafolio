@@ -13,7 +13,6 @@ from rotkehlchen.constants.ethereum import (
 from rotkehlchen.fval import FVal
 from rotkehlchen.history.price import query_usd_price_zero_if_error
 from rotkehlchen.inquirer import Inquirer
-from rotkehlchen.premium.premium import Premium
 from rotkehlchen.typing import ChecksumEthAddress, Timestamp
 from rotkehlchen.user_messages import MessagesAggregator
 from rotkehlchen.utils.misc import hex_or_bytes_to_address, hexstr_to_int
@@ -47,13 +46,11 @@ class AaveBlockchainInquirer(AaveInquirer):
             self,
             ethereum_manager: 'EthereumManager',
             database: 'DBHandler',
-            premium: Optional[Premium],
             msg_aggregator: MessagesAggregator,
     ) -> None:
         super().__init__(
             ethereum_manager=ethereum_manager,
             database=database,
-            premium=premium,
             msg_aggregator=msg_aggregator,
         )
 

@@ -17,7 +17,6 @@ from rotkehlchen.constants import ZERO
 from rotkehlchen.errors import RemoteError
 from rotkehlchen.fval import FVal
 from rotkehlchen.inquirer import Inquirer
-from rotkehlchen.premium.premium import Premium
 from rotkehlchen.typing import (
     AssetAmount,
     ChecksumEthAddress,
@@ -102,13 +101,11 @@ class Uniswap(EthereumModule):
             self,
             ethereum_manager: 'EthereumManager',
             database: 'DBHandler',
-            premium: Optional[Premium],
             msg_aggregator: MessagesAggregator,
             data_directory: Path,
     ) -> None:
         self.ethereum = ethereum_manager
         self.database = database
-        self.premium = premium
         self.msg_aggregator = msg_aggregator
         self.data_directory = data_directory
         self.trades_lock = Semaphore()
@@ -933,7 +930,7 @@ class Uniswap(EthereumModule):
         Premium users can request balances either via the Uniswap subgraph or
         on-chain.
         """
-        is_graph_mode = self.graph and self.premium
+        is_graph_mode = self.graph
 
         if is_graph_mode:
             protocol_balance = self._get_balances_graph(

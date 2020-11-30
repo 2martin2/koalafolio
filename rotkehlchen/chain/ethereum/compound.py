@@ -17,7 +17,6 @@ from rotkehlchen.errors import BlockchainQueryError, RemoteError, UnknownAsset
 from rotkehlchen.fval import FVal
 from rotkehlchen.history.price import query_usd_price_zero_if_error
 from rotkehlchen.inquirer import Inquirer
-from rotkehlchen.premium.premium import Premium
 from rotkehlchen.typing import ChecksumEthAddress, Timestamp
 from rotkehlchen.user_messages import MessagesAggregator
 from rotkehlchen.utils.interfaces import EthereumModule
@@ -120,12 +119,10 @@ class Compound(EthereumModule):
             self,
             ethereum_manager: 'EthereumManager',
             database: DBHandler,
-            premium: Optional[Premium],
             msg_aggregator: MessagesAggregator,
     ):
         self.ethereum = ethereum_manager
         self.database = database
-        self.premium = premium
         self.msg_aggregator = msg_aggregator
         try:
             self.graph: Optional[Graph] = Graph(

@@ -28,7 +28,6 @@ from rotkehlchen.errors import UnknownAsset
 from rotkehlchen.fval import FVal
 from rotkehlchen.history.price import query_usd_price_zero_if_error
 from rotkehlchen.inquirer import SPECIAL_SYMBOLS, Inquirer
-from rotkehlchen.premium.premium import Premium
 from rotkehlchen.typing import ChecksumEthAddress, Price, Timestamp
 from rotkehlchen.user_messages import MessagesAggregator
 from rotkehlchen.utils.interfaces import EthereumModule
@@ -162,13 +161,11 @@ class YearnVaults(EthereumModule):
             self,
             ethereum_manager: 'EthereumManager',
             database: 'DBHandler',
-            premium: Optional[Premium],
             msg_aggregator: MessagesAggregator,
     ) -> None:
         self.ethereum = ethereum_manager
         self.database = database
         self.msg_aggregator = msg_aggregator
-        self.premium = premium
         self.history_lock = Semaphore()
 
     def _calculate_vault_roi(self, vault: YearnVault) -> FVal:

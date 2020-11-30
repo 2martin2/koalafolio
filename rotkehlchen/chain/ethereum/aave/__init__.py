@@ -10,7 +10,6 @@ from rotkehlchen.constants.ethereum import AAVE_LENDING_POOL
 from rotkehlchen.db.dbhandler import DBHandler
 from rotkehlchen.errors import RemoteError
 from rotkehlchen.fval import FVal
-from rotkehlchen.premium.premium import Premium
 from rotkehlchen.typing import ChecksumEthAddress, Timestamp
 from rotkehlchen.user_messages import MessagesAggregator
 from rotkehlchen.utils.interfaces import EthereumModule
@@ -48,25 +47,21 @@ class Aave(EthereumModule):
             self,
             ethereum_manager: 'EthereumManager',
             database: DBHandler,
-            premium: Optional[Premium],
             msg_aggregator: MessagesAggregator,
             use_graph: bool = True,  # by default use graph
     ) -> None:
         self.ethereum = ethereum_manager
         self.database = database
         self.msg_aggregator = msg_aggregator
-        self.premium = premium
         self.blockchain_inquirer = AaveBlockchainInquirer(
             ethereum_manager=ethereum_manager,
             database=database,
-            premium=premium,
             msg_aggregator=msg_aggregator,
         )
         try:
             self.graph_inquirer: Optional[AaveGraphInquirer] = AaveGraphInquirer(
                 ethereum_manager=ethereum_manager,
                 database=database,
-                premium=premium,
                 msg_aggregator=msg_aggregator,
             )
         except RemoteError as e:

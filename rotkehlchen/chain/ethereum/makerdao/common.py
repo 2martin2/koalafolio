@@ -4,7 +4,6 @@ from eth_utils.address import to_checksum_address
 
 from rotkehlchen.constants.ethereum import MAKERDAO_PROXY_REGISTRY
 from rotkehlchen.db.dbhandler import DBHandler
-from rotkehlchen.premium.premium import Premium
 from rotkehlchen.typing import ChecksumEthAddress
 from rotkehlchen.user_messages import MessagesAggregator
 from rotkehlchen.utils.interfaces import EthereumModule
@@ -30,10 +29,8 @@ class MakerDAOCommon(EthereumModule):
             self,
             ethereum_manager: 'EthereumManager',
             database: DBHandler,
-            premium: Optional[Premium],
             msg_aggregator: MessagesAggregator,
     ) -> None:
-        self.premium = premium
         self.ethereum = ethereum_manager
         self.database = database
         self.msg_aggregator = msg_aggregator
