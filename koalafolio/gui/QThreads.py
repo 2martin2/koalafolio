@@ -32,6 +32,7 @@ class WebApiInterface(qtcore.QObject):
         self.tradeBuffer = core.TradeList()
 
     def loadPrices(self, coins: list):
+        print('loading new prices')
         if coins:
             if settings.mySettings.priceApiSwitch() == 'coinGecko':
                 prices = coinGecko.getCoinPrices(coins)
@@ -90,6 +91,7 @@ class WebApiInterface(qtcore.QObject):
             self.historicalPricesLoaded.emit(histPrices, len(self.tradeBuffer))
 
     def loadcoinPriceCharts(self, coins: list, coinList: core.CoinList):
+        print('loading chartdata')
         if coins:
             coinPriceCharts = {}
             for coin in coins:
@@ -144,7 +146,7 @@ class UpdatePriceThread(qtcore.QThread):
         self.priceChartTimer.timeout.connect(lambda: self.webApiInterface.loadcoinPriceCharts(self.coinList.getCoinNames(), self.coinList))
         self.histTimer.timeout.connect(lambda: self.webApiInterface.loadHistoricalPrices(self.webApiInterface.tradeBuffer))
         self.priceTimer.start(settings.mySettings.priceUpdateInterval()*1000)
-        self.priceChartTimer.start(settings.mySettings.priceUpdateInterval() * 10000)
+        self.priceChartTimer.start(settings.mySettings.priceUpdateInterval() * 1000)
         self.histTimer.start(100)
         self.exec()
         self.deleteLater()
