@@ -165,10 +165,13 @@ class PortfolioApp(qtwidgets.QWidget):
         self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
         style.myStyle = self.styleSheetHandler
         self.apiDatabase = apiImport.ApiDatabase(path=self.dataPath)
-        # Initialize the AssetResolver singleton
-        resolver.AssetResolver(data_directory=Path(self.dataPath))
-        # init eth data
-        ethereum.EthereumConstants(data_directory=Path(self.dataPath))
+        try:
+            # Initialize the AssetResolver singleton
+            resolver.AssetResolver(data_directory=Path(self.dataPath))
+            # init eth data
+            ethereum.EthereumConstants(data_directory=Path(self.dataPath))
+        except Exception as ex:
+            logger.globalLogger.error('could not initialize api backend: ' + str(ex))
 
 
     # setup window style
