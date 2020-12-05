@@ -704,17 +704,17 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                         limitDates = [limitDate, limitDate]
                         limitAmount = data.tradeMatcher.getBuyAmountLeftTaxFree(settings.mySettings.getTaxSetting("taxfreelimityears"))
                         limitVals = [limitAmount, 0]
-                    # addData(self, dates, vals, qColor, name, lineWidth, chartType="line", axis='balance', updateAxis=True)
-                    editor.addData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", 3)
+                    # addData(self, dates, vals, qColor, name, lineWidth=1, chartType="line", axis='balance', updateAxis=True)
+                    editor.addData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", lineWidth=3)
                     if settings.mySettings.getTaxSetting("taxfreelimit"):
-                        editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", 3, updateAxis=False)
+                        editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", lineWidth=3, updateAxis=False)
                     editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY'),
-                                   "buyPrice " + settings.mySettings.reportCurrency(), 3,
+                                   "buyPrice " + settings.mySettings.reportCurrency(), lineWidth=3,
                                    chartType="scatter", axis='price')
                     if data.priceChartData:
                         dates, prices = map(list, zip(*data.priceChartData))
                         editor.addData(dates, prices, style.myStyle.getQColor('SECONDARY_MIDLIGHT'),
-                                       "price " + settings.mySettings.reportCurrency(), 1,
+                                       "price " + settings.mySettings.reportCurrency(), lineWidth=1,
                                        chartType="line", axis='price')
                 return
 
