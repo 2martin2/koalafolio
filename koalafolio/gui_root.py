@@ -26,6 +26,7 @@ import koalafolio.exp.QTranslate as translator
 import koalafolio.Import.apiImport as apiImport
 from pathlib import Path
 import rotkehlchen.assets.resolver as resolver
+import rotkehlchen.constants.ethereum as ethereum
 
 qt = qtcore.Qt
 # %% constants
@@ -166,6 +167,8 @@ class PortfolioApp(qtwidgets.QWidget):
         self.apiDatabase = apiImport.ApiDatabase(path=self.dataPath)
         # Initialize the AssetResolver singleton
         resolver.AssetResolver(data_directory=Path(self.dataPath))
+        # init eth data
+        ethereum.EthereumConstants(data_directory=Path(self.dataPath))
 
 
     # setup window style

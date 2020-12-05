@@ -26,15 +26,15 @@ if TYPE_CHECKING:
     from rotkehlchen.chain.ethereum.manager import EthereumManager
 
 
-CURVEFI_YSWAP = EthereumConstants().contract('CURVEFI_YSWAP')
-CURVEFI_PAXSWAP = EthereumConstants().contract('CURVEFI_PAXSWAP')
-CURVEFI_BUSDSWAP = EthereumConstants().contract('CURVEFI_BUSDSWAP')
-CURVEFI_RENSWAP = EthereumConstants().contract('CURVEFI_RENSWAP')
-CURVEFI_SRENSWAP = EthereumConstants().contract('CURVEFI_SRENSWAP')
-CURVEFI_SUSDV2SWAP = EthereumConstants().contract('CURVEFI_SUSDV2SWAP')
-CURVEFI_3POOLSWAP = EthereumConstants().contract('CURVEFI_3POOLSWAP')
-CURVEFI_GUSDC3CRVSWAP = EthereumConstants().contract('CURVEFI_GUSDC3CRVSWAP')
-YEARN_CONTROLLER = EthereumConstants().contract('YEARN_CONTROLLER')
+CURVEFI_YSWAP = lambda: EthereumConstants().contract('CURVEFI_YSWAP')
+CURVEFI_PAXSWAP = lambda: EthereumConstants().contract('CURVEFI_PAXSWAP')
+CURVEFI_BUSDSWAP = lambda: EthereumConstants().contract('CURVEFI_BUSDSWAP')
+CURVEFI_RENSWAP = lambda: EthereumConstants().contract('CURVEFI_RENSWAP')
+CURVEFI_SRENSWAP = lambda: EthereumConstants().contract('CURVEFI_SRENSWAP')
+CURVEFI_SUSDV2SWAP = lambda: EthereumConstants().contract('CURVEFI_SUSDV2SWAP')
+CURVEFI_3POOLSWAP = lambda: EthereumConstants().contract('CURVEFI_3POOLSWAP')
+CURVEFI_GUSDC3CRVSWAP = lambda: EthereumConstants().contract('CURVEFI_GUSDC3CRVSWAP')
+YEARN_CONTROLLER = lambda: EthereumConstants().contract('YEARN_CONTROLLER')
 
 HARVEST_VAULTS = ('fUSDC', 'fUSDT', 'fDAI', 'fWETH', 'fTUSD', 'fWBTC', 'frenBTC', 'fcrvRenWBTC')
 
