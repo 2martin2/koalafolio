@@ -466,7 +466,7 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         self.chart.removeAllSeries()
 
     # add new series
-    def addData(self, dates, vals, qColor, name, lineWidth, chartType="line", axis='balance', updateAxis=True):
+    def addData(self, dates, vals, qColor, name, lineWidth=1, chartType="line", axis='balance', updateAxis=True):
         # check chart type
         if chartType == "line":
             series = qtchart.QLineSeries()
