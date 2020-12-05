@@ -24,12 +24,6 @@ def _get_latest_data(data_directory: Path) -> Tuple[Dict[str, Any], Dict[str, An
     """
     our_downloaded_contracts = data_directory / 'assets' / 'eth_contracts.json'
     our_downloaded_abi_entries = data_directory / 'assets' / 'eth_abi.json'
-    if our_downloaded_contracts.is_file() and our_downloaded_abi_entries.is_file():
-        with open(our_downloaded_contracts, 'r') as f:
-            remote_contract_data = f.read()
-        with open(our_downloaded_abi_entries, 'r') as f:
-            remote_abi_data = f.read()
-        return json.loads(remote_contract_data), json.loads(remote_abi_data)
     try:
         # we need to download and save the contracts from github
         response = requests.get(
@@ -50,9 +44,19 @@ def _get_latest_data(data_directory: Path) -> Tuple[Dict[str, Any], Dict[str, An
 
         return json.loads(remote_contract_data), json.loads(remote_abi_data)
 
-        # else, return None
+        # else, continue without new data
     except (requests.exceptions.ConnectionError, KeyError, json.decoder.JSONDecodeError):
-        return None, None
+        pass
+
+    if our_downloaded_contracts.is_file() and our_downloaded_abi_entries.is_file():
+        with open(our_downloaded_contracts, 'r') as f:
+            remote_contract_data = f.read()
+        with open(our_downloaded_abi_entries, 'r') as f:
+            remote_abi_data = f.read()
+        return json.loads(remote_contract_data), json.loads(remote_abi_data)
+
+    # no local data and no remote data available
+    return None, None
 
 
 def _attempt_initialization(
