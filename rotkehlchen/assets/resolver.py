@@ -46,21 +46,19 @@ def _get_latest_assets(data_directory: Path) -> Dict[str, Any]:
     If there is no new file (same hash) or if there is any problem contacting the remote
     then the builtin assets file is used.
     """
-    root_dir = Path(__file__).resolve().parent.parent
+
     our_downloaded_meta = data_directory / 'assets' / 'all_assets.meta'
-    our_builtin_meta = root_dir / 'data' / 'all_assets.meta'
     try:
         response = requests.get('https://raw.githubusercontent.com/rotki/rotki/develop/rotkehlchen/data/all_assets.meta')  # noqa: E501
         remote_meta = response.json()
         if our_downloaded_meta.is_file():
             local_meta_file = our_downloaded_meta
+            with open(local_meta_file, 'r') as f:
+                local_meta = json.loads(f.read())
         else:
-            local_meta_file = our_builtin_meta
+            local_meta = None
 
-        with open(local_meta_file, 'r') as f:
-            local_meta = json.loads(f.read())
-
-        if local_meta['version'] < remote_meta['version']:
+        if not local_meta or local_meta['version'] < remote_meta['version']:
             # we need to download and save the new assets from github
             response = requests.get('https://raw.githubusercontent.com/rotki/rotki/develop/rotkehlchen/data/all_assets.json')  # noqa: E501
             remote_asset_data = response.text
@@ -85,18 +83,19 @@ def _get_latest_assets(data_directory: Path) -> Dict[str, Any]:
 
     if our_downloaded_meta.is_file():
         assets_file = data_directory / 'assets' / 'all_assets.json'
+        with open(assets_file, 'r') as f:
+            return json.loads(f.read())
     else:
-        assets_file = root_dir / 'data' / 'all_assets.json'
+        return None
 
-    with open(assets_file, 'r') as f:
-        return json.loads(f.read())
+
 
 
 def _attempt_initialization(
         data_directory: Optional[Path],
         saved_assets: Optional[Dict[str, Any]],
 ) -> Tuple[Dict[str, Any], bool]:
-    """Reads the asset data either from builtin data or from the remote
+    """Reads the asset data from the remote
 
     1. If it's the very first time data is initialized (and data directory is not given)
     then just get assets from the builtin file
@@ -107,21 +106,11 @@ def _attempt_initialization(
     Returns a tuple of the most recent assets mapping it can get and a boolean denoting
     if the remote check happened or not. If it did then we havethe most recent assets.
     """
-    # if not data_directory:
-    #     if saved_assets is not None:
-    #         # Do not read the all_assets file again if it has been already read
-    #         return saved_assets, False
-    #
-    #     # First initialization. Read the builtin all_assets.json
-    #     root_dir = Path(__file__).resolve().parent.parent
-    #     with open(root_dir / 'data' / 'all_assets.json', 'r') as f:
-    #         assets = json.loads(f.read())
-    #
-    #     return assets, False
-
-    # else we got the data directory so we can finally do the remote check
-    assets = _get_latest_assets(data_directory)
-    return assets, True
+    if data_directory:
+        # we got the data directory so we can finally do the remote check
+        assets = _get_latest_assets(data_directory)
+        return assets, True
+    return None, False
 
 
 class AssetResolver():
