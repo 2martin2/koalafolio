@@ -82,7 +82,7 @@ class WebApiInterface(qtcore.QObject):
                     counter += 1
             except ConnectionRefusedError:
                 # save failed trade for next time
-                trade.tradeBuffer.append(trade)
+                self.tradeBuffer.trades.append(trade)
                 # stop here and retry next time
                 break
             if counter >= 100:
