@@ -50,6 +50,16 @@ def getHistoricalPrice(trade):
             try:
                 return response[coin]
             except KeyError:
+                if 'Message' in response and'rate limit' in response['Message']:
+                    calls = response['RateLimit']['calls_made']
+                    max_calls = response['RateLimit']['max_calls']
+                    dif = {}
+                    rateString = ""
+                    for key in max_calls:
+                        dif[key] = max_calls[key] - calls[key]
+                        rateString += str(key) + " " + str(dif[key]) + ', '
+                    logger.globalLogger.warning('cryptocompare rate limit exceeded. calls left: ' + rateString)
+                    raise ConnectionRefusedError
                 logger.globalLogger.warning('error loading historical price for ' + str(coin))
     return {}
 
