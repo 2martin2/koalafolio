@@ -109,14 +109,24 @@ class CoinValue():
         val = 1
         for key in self.value:
             if key in other.value:
-                val *= self.value[key] / other.value[key]
+                if other.value[key] != 0:
+                    val *= self.value[key] / other.value[key]
+                else:
+                    if self.value[key] < 0:
+                        return True
+                    if self.value[key] > 0:
+                        return False
         return val <= 1
 
     def __eq__(self, other):
         val = 1
         for key in self.value:
             if key in other.value:
-                val *= self.value[key] / other.value[key]
+                if other.value[key] != 0:
+                    val *= self.value[key] / other.value[key]
+                else:
+                    if self.value[key] != 0:
+                        return False
         return val == 1
 
     def __ne__(self, other):
@@ -449,6 +459,9 @@ class TradeList:
                     if (not trade.valueLoaded) or partner.isFiat():
                         trade.setValueAll(partner.getValue().mult(-1))
                         trade.valueLoaded = True
+                    # if value is 0 and partner value not
+                    elif trade.getValue() == CoinValue() and partner.getValue() != CoinValue():
+                        trade.setValueAll(partner.getValue().mult(-1))
                     # if both values loaded and both trades are crypto use the same value
                     elif not trade.isFiat():
                         if trade.getValue() < partner.getValue():  # use smaller value (tax will be paid later)
