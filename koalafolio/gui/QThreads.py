@@ -91,21 +91,21 @@ class WebApiInterface(qtcore.QObject):
             self.historicalPricesLoaded.emit(histPrices, len(self.tradeBuffer))
 
     def loadcoinPriceCharts(self, coins: list, coinList: core.CoinList):
-        print('loading chartdata')
-        if coins:
-            coinPriceCharts = {}
-            for coin in coins:
-                try:
-                    trades = coinList.getCoinByName(coin).tradeMatcher.buysLeft
-                    if trades:
-                        minDate = datetime.datetime.combine(min([trade.date for trade in trades]), datetime.datetime.min.time())
-                        coinPriceCharts[coin] = coinGecko.getPriceChartData(coin, startTime=minDate)
-                except KeyError:
-                    localLogger.warning('no priceChartData available for ' + coin)  # ignore invalid key
-                except Exception as ex:
-                    localLogger.error('error converting priceChartData: ' + str(ex))
+        if settings.mySettings.getGuiSetting(key='loadPriceHistoryChart'):
+            if coins:
+                coinPriceCharts = {}
+                for coin in coins:
+                    try:
+                        trades = coinList.getCoinByName(coin).tradeMatcher.buysLeft
+                        if trades:
+                            minDate = datetime.datetime.combine(min([trade.date for trade in trades]), datetime.datetime.min.time())
+                            coinPriceCharts[coin] = coinGecko.getPriceChartData(coin, startTime=minDate)
+                    except KeyError:
+                        localLogger.warning('no priceChartData available for ' + coin)  # ignore invalid key
+                    except Exception as ex:
+                        localLogger.error('error converting priceChartData: ' + str(ex))
 
-            self.coinPriceChartsLoaded.emit(coinPriceCharts)
+                self.coinPriceChartsLoaded.emit(coinPriceCharts)
 
 
 # %% threads
@@ -145,7 +145,7 @@ class UpdatePriceThread(qtcore.QThread):
         self.priceTimer.timeout.connect(lambda: self.webApiInterface.loadPrices(self.coinList.getCoinNames()))
         self.priceChartTimer.timeout.connect(lambda: self.webApiInterface.loadcoinPriceCharts(self.coinList.getCoinNames(), self.coinList))
         self.histTimer.timeout.connect(lambda: self.webApiInterface.loadHistoricalPrices(self.webApiInterface.tradeBuffer))
-        self.priceTimer.start(settings.mySettings.priceUpdateInterval()*1000)
+        self.priceTimer.start(settings.mySettings.priceUpdateInterval() * 1000)
         self.priceChartTimer.start(settings.mySettings.priceUpdateInterval() * 1000)
         self.histTimer.start(100)
         self.exec()

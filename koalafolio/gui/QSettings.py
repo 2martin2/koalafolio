@@ -57,6 +57,7 @@ class QSettings(settings.Settings):
         self['gui']['hideLowBalanceCoins'] = 'True'
         self['gui']['hideLowValueCoins'] = 'False'
         self['gui']['lowValueFilterLimit(reportCurrency)'] = '50'
+        self['gui']['loadPriceHistoryChart'] = 'False'
 
         super(QSettings, self).initSettings()
 
@@ -167,6 +168,10 @@ class QSettings(settings.Settings):
             gui['lowValueFilterLimit(reportCurrency)'] = self.getfloat('gui', 'lowValueFilterLimit(reportCurrency)')
         except ValueError:
             gui['lowValueFilterLimit(reportCurrency)'] = 50
+        try:
+            gui['loadPriceHistoryChart'] = self.getboolean('gui', 'loadPriceHistoryChart')
+        except ValueError:
+            gui['loadPriceHistoryChart'] = False
         return gui
 
     def getGuiSetting(self, key):
