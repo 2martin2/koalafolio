@@ -1005,6 +1005,13 @@ def roundTime(dt=None, roundToS=60):
         rounding = (microseconds+roundTo/2) // roundTo * roundTo
         return dt + datetime.timedelta(0, 0, rounding-microseconds)
 
+def roundTimeMin(dt=None):
+    if dt == None: dt = datetime.datetime.now()
+    dt = dt.replace(microsecond=0)
+    dt = dt + datetime.timedelta(seconds=30)
+    dt = dt.replace(second=0)
+    return dt
+
 
 def swapCoinName(trade):
     try:

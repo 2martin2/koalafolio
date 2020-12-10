@@ -232,7 +232,7 @@ class Trade:
         return self.generateApproximateID() == trade.generateApproximateID()
 
     def generateApproximateID(self):
-        myDate = converter.roundTime(self.date, roundToS=60)
+        myDate = converter.roundTimeMin(self.date)
         try:
             myAmount = round(self.amount, -int( math.floor(math.log10(abs(self.amount)))) + 5)
         except ValueError:
