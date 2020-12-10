@@ -436,6 +436,7 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
         super(SortFilterProxyModel, self).__init__(*args, **kwargs)
         self.filters = {}
         self.setFilterCaseSensitivity(qt.CaseInsensitive)
+        self.firstValueColumn = 7
 
         self.sortedRow = 0
         self.sortedDir = 0
@@ -448,6 +449,15 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
     def setFilterByColumn(self, regex, column):
         self.filters[column] = regex
         self.invalidateFilter()
+
+    def lessThan(self, index1, index2):
+        column = index1.column()
+        if column >= self.sourceModel().firstValueColumn:
+            str1 = index1.data()
+            str2 = index2.data()
+            return float(str1) < float(str2)
+
+        return index1.data() < index2.data()
 
     def filterAcceptsRow(self, source_row, source_parent):
         for key, regex in self.filters.items():

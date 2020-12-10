@@ -459,7 +459,7 @@ class QTradeTableDelegate(qtwidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         if int(index.flags()) & qt.ItemIsEditable:
             return qtwidgets.QLineEdit(parent)
-        return 0
+        return None
 
     def setEditorData(self, editor, index):
         editor.setText(index.data())
