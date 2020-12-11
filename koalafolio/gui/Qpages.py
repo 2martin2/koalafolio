@@ -715,11 +715,14 @@ class ImportFinishPage(SubPage):
         self.acceptButton.clicked.connect(self.acceptTrades)
         self.removeSelectButton = qtwidgets.QPushButton("remove selected", self)
         self.removeSelectButton.clicked.connect(self.deleteSelectedTrades)
+        self.removeSimilarButton = qtwidgets.QPushButton("remove similar", self)
+        self.removeSimilarButton.clicked.connect(self.deleteSimilarTrades)
 
         self.horzButtonLayout = qtwidgets.QHBoxLayout()
         self.horzButtonLayout.addStretch()
         self.horzButtonLayout.addWidget(self.cancelButton)
         self.horzButtonLayout.addWidget(self.removeSelectButton)
+        self.horzButtonLayout.addWidget(self.removeSimilarButton)
         self.horzButtonLayout.addWidget(self.acceptButton)
         self.horzButtonLayout.addStretch()
 
@@ -770,6 +773,10 @@ class ImportFinishPage(SubPage):
     def deleteSelectedTrades(self):
         # remove all trades that are not selected
         self.lastFocusTable.deleteSelectedTrades()
+
+    def deleteSimilarTrades(self):
+        self.tableView.deleteSimilarTrades()
+        self.feeTableView.deleteSimilarTrades()
 
     def cancelTrades(self):
         # delete trades and go back to file selection

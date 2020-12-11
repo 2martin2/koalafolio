@@ -65,6 +65,9 @@ class QTradeTableView(qtwidgets.QTableView):
                     rows.append(sourceInd.row())
             self.model().sourceModel().deleteTrades(rows)
 
+    def deleteSimilarTrades(self):
+        self.model().sourceModel().deleteSimilarTrades()
+
     def update(self, index):
         super(QTradeTableView, self).update(index)
         self.viewUpdated.emit()
@@ -456,6 +459,15 @@ class QImportTradeTableModel(QTradeTableModel):
             if self.baseModel.checkApproximateEquality(self.trades[index.row()]):
                 return style.myStyle.getQColor('NEGATIV')
         return super(QImportTradeTableModel, self).data(index, role)
+
+    def deleteSimilarTrades(self):
+        row = 0
+        deleteRows = []
+        for trade in self.trades:
+            if trade in self.baseModel.trades or self.baseModel.checkApproximateEquality(trade):
+                deleteRows.append(row)
+            row += 1
+        self.deleteTrades(deleteRows)
 
 
 
