@@ -341,7 +341,7 @@ def modelCallback_bittrex(headernames, dataFrame):
 
 
 # %% model 0: Date, Type, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State), (ExchangeName)
-def modelCallback_0(headernames, dataFrame, useLocalTime=True):
+def modelCallback_0(headernames, dataFrame, useLocalTime=False):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
@@ -906,13 +906,13 @@ def modelCallback_Rotki(headernames, dataFrame):
     headernames_m0.append('')  # state
     headernames_m0.append(headernames[1])  # exchange
 
-    tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame)
+    tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame, useLocalTime=True)
 
     return tradeList, feeList, skippedRows
 
 
 # %% functions
-def convertDate(dateString, useLocalTime=True):
+def convertDate(dateString, useLocalTime=False):
     # check if pandas time pattern fits
     #    match = pat.Pandas_TIME_REGEX.match(dateString)
     timestamp = None
