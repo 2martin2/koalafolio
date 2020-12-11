@@ -155,6 +155,8 @@ class TradesPage(Page):
         self.undoButton.clicked.connect(self.undoRemoveAddTrades)
         self.reloadPricesButton = qtwidgets.QPushButton('reload prices', self)
         self.reloadPricesButton.clicked.connect(self.reloadPrices)
+        self.recalculateIdsButton = qtwidgets.QPushButton('recalculate Ids', self)
+        self.recalculateIdsButton.clicked.connect(self.recalcIds)
 
         self.hButtonLayout = qtwidgets.QHBoxLayout()
         self.hButtonLayout.addStretch()
@@ -163,6 +165,7 @@ class TradesPage(Page):
         self.hButtonLayout.addWidget(self.undoButton)
         self.hButtonLayout.addStretch()
         self.hButtonLayout.addWidget(self.reloadPricesButton)
+        self.hButtonLayout.addWidget(self.recalculateIdsButton)
         self.hButtonLayout.addStretch()
 
         # layout
@@ -195,6 +198,9 @@ class TradesPage(Page):
     def reloadPrices(self):
         self.controller.tradeList.clearPriceFlag()
         self.controller.tradeList.updatePrices(self.controller.tradeList)
+
+    def recalcIds(self):
+        self.controller.tradeList.recalcIds()
 
     def getGuiProps(self):
         gui = {}

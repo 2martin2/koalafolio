@@ -235,7 +235,7 @@ class Trade:
 
     def generateID(self):
         tradeString = str(self.date) + str(self.tradeType) + str(self.externId) + str(self.coin) + str(self.amount)
-        self.tradeID = hashlib.sha1(tradeString.encode()).hexdigest()
+        self.tradeID = hashlib.sha1(tradeString.encode()).hexdigest()[0:16]
         return self.tradeID
 
     def checkApproximateEquality(self, trade):
@@ -521,6 +521,15 @@ class TradeList:
             if trade.getApproximateID() == t.getApproximateID():
                 return True
         return False
+
+    def recalcIds(self):
+        for trade in self.trades:
+            trade.generateID()
+            trade.generateApproximateID()
+            if trade.tradePartnerId:
+                partner = self.getTradeById(trade.tradePartnerId)
+                if partner:
+                    partner.tradePartnerId = trade.tradeID
 
 
 # %% TradeMatcher

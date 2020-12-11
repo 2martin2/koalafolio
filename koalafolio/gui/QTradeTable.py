@@ -372,13 +372,6 @@ class QTradeTableModel(QTradeContainer):
         for trade in self.trades:
             trade.exchange = exchange
         self.endResetModel()
-        # RowStartIndex = self.index(0, 6)
-        # RowEndIndex = self.index(len(self.trades), 6)
-        # self.dataChanged.emit(RowStartIndex, RowEndIndex)
-        # for row in range(0, len(self.trades)):
-        #     index = self.index(row, 6)
-        #     self.dataChanged.emit(index, index)
-            # self.setData(index, exchange, qt.EditRole)
 
     def copyFromTradeList(self, tradeList):
         self.beginResetModel()
@@ -427,6 +420,22 @@ class QTradeTableModel(QTradeContainer):
         self.initDisplayCurrencies()
         self.clearTrades()
         self.restoreTrades()
+
+    def recalcIds(self):
+        super(QTradeTableModel, self).recalcIds()
+        self.saveTrades()
+        self.updateColumn(0)
+        self.updateColumn(1)
+
+    def updateRow(self, row):
+        StartIndex = self.index(row, 0)
+        EndIndex = self.index(row, len(self.header) - 1)
+        self.dataChanged.emit(StartIndex, EndIndex)
+
+    def updateColumn(self, col):
+        StartIndex = self.index(0, col)
+        EndIndex = self.index(len(self.trades) - 1, col)
+        self.dataChanged.emit(StartIndex, EndIndex)
 
 
 
