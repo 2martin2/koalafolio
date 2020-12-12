@@ -1014,7 +1014,7 @@ class SettingsPage(Page):
         self.settingsView = settings.SettingsTreeView(self)
         self.settingsView.setModel(self.controller.settingsModel)
         self.settingsView.expandAll()
-        self.settingsView.setColumnWidth(0, 200)
+        self.settingsView.setColumnWidth(0, 350)
         self.settingsView.header().setStretchLastSection(True)
 
         # buttons
