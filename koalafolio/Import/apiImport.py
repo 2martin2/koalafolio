@@ -6,6 +6,7 @@ Created on Sun Sep  15 15:15:19 2019
 """
 import koalafolio.gui.QLogger as logger
 import koalafolio.web.krakenApi as krakenApi
+import koalafolio.web.exchanges as exchanges
 import pandas
 from Cryptodome.Cipher import AES
 import os
@@ -14,18 +15,31 @@ import json
 
 localLogger = logger.globalLogger
 
-apiNames = ["kraken"]
+apiNames = ["binance", "bittrex", "bitmex", "coinbase", "coinbasepro", "gemini", "poloniex", "kraken", ]
 apiHandle = {}
-apiHandle["kraken"] = lambda key, secret: krakenApi.getTradeHistory(key, secret)
 
-def getApiHistory(apiname, key, secret):
+apiHandle["binance"] = lambda key, secret, start, end: exchanges.getTradeHistoryBinance(key, secret, start, end)
+apiHandle["bittrex"] = lambda key, secret, start, end: exchanges.getTradeHistoryBittrex(key, secret, start, end)
+apiHandle["bitmex"] = lambda key, secret, start, end: exchanges.getTradeHistoryBitmex(key, secret, start, end)
+apiHandle["coinbase"] = lambda key, secret, start, end: exchanges.getTradeHistoryCoinbase(key, secret, start, end)
+apiHandle["coinbasepro"] = lambda key, secret, start, end: exchanges.getTradeHistoryCoinbasepro(key, secret, start, end)
+apiHandle["gemini"] = lambda key, secret, start, end: exchanges.getTradeHistoryGemini(key, secret, start, end)
+apiHandle["poloniex"] = lambda key, secret, start, end: exchanges.getTradeHistoryPoloniex(key, secret, start, end)
+apiHandle["kraken"] = lambda key, secret, start, end: exchanges.getTradeHistoryKraken(key, secret, start, end)
+
+apiNotes = {}
+for key in apiNames:
+    apiNotes[key] = "get trades from " + str(key)
+apiNotes["binance"] = "get trades from binance. Can take very long due to stupid api implementation of binance"
+
+def getApiHistory(apiname, key, secret, start, end):
     if apiname not in apiNames:
         raise KeyError("invalid api name")
     else:
         try:
-            return apiHandle[apiname](key, secret)
+            return apiHandle[apiname](key, secret, start, end)
         except Exception as ex:
-            localLogger.warning("could not load data from api " + str(apiname) + "): " + str(ex))
+            localLogger.warning("could not load data from api (" + str(apiname) + "): " + str(ex))
             return pandas.DataFrame()
 
 # database

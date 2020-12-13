@@ -12,6 +12,7 @@ import koalafolio.PcpCore.logger as logger
 from PIL import Image
 from io import BytesIO
 import requests
+import datetime
 
 
 class CoinGeckoAPIProxy(pycoingecko.CoinGeckoAPI):
@@ -21,7 +22,6 @@ class CoinGeckoAPIProxy(pycoingecko.CoinGeckoAPI):
         self.proxies = proxies
 
     def __request(self, url):
-        # print(url)
         try:
             response = self.session.get(url, timeout=self.request_timeout, proxies=self.proxies)
             response.raise_for_status()
@@ -50,12 +50,16 @@ for coin in coinsList:
     coinIdToSymbolDict[coin['id']] = coin['symbol'].upper()
 
 def coinSymbolToId(coinSymbol):
+    if coinSymbol in settings.mySettings.coinSwapDictCoinGeckoSymbolToId():
+        return settings.mySettings.coinSwapDictCoinGeckoSymbolToId()[coinSymbol]
     if coinSymbol in settings.mySettings.coinSwapDictCoinGecko():
-        coinSymbol = settings.mySettings.coinSwapDictCoinGecko()[coinSymbol]
+        coinSymbolSwap = settings.mySettings.coinSwapDictCoinGecko()[coinSymbol]
+    else:
+        coinSymbolSwap = coinSymbol
     try:
-        return coinSymbolToIdDict[coinSymbol]
+        return coinSymbolToIdDict[coinSymbolSwap]
     except KeyError:
-        logger.globalLogger.warning('error loading coinGecko data for ' + str(coinSymbol))
+        logger.globalLogger.warning('error loading coinGecko data for ' + str(coinSymbolSwap))
     return None
 
 def coinSymbolsToIds(coinSymbols):
@@ -68,9 +72,12 @@ def coinSymbolsToIds(coinSymbols):
 
 
 def coinIdToSymbol(coinId):
+    coinSwapDictCoinGeckoSymbolToId = {v: k for k, v in settings.mySettings.coinSwapDictCoinGeckoSymbolToId().items()}
+    if coinId in coinSwapDictCoinGeckoSymbolToId:
+        return coinSwapDictCoinGeckoSymbolToId[coinId]
     invCoinSwapDictCoinGecko = {v: k for k, v in settings.mySettings.coinSwapDictCoinGecko().items()}
     if coinId in invCoinSwapDictCoinGecko:
-        mappedCoinId = invCoinSwapDictCoinGecko(coinId)
+        mappedCoinId = invCoinSwapDictCoinGecko[coinId]
     else:
         mappedCoinId = coinId
     try:
@@ -130,6 +137,23 @@ def getCoinPrices(coins):
     except Exception as ex:
         logger.globalLogger.warning('error loading prices: ' + str(ex))
     return {}
+
+def getPriceChartData(coin, startTime: datetime.datetime) -> list:
+    if settings.mySettings.proxies():
+        cg.proxies = settings.mySettings.proxies()
+    else:
+        cg.proxies = {}
+    # try to load price from coingecko
+    coinId = coinSymbolToId(coin)
+    if coinId:
+        try:
+            response = cg.get_coin_market_chart_range_by_id(id=coinId, vs_currency=settings.mySettings.reportCurrency(),
+                                                                   from_timestamp=startTime.timestamp(),
+                                                                   to_timestamp=datetime.datetime.now().timestamp())
+            return response['prices']
+        except Exception as ex:
+            logger.globalLogger.warning('error loading priceChartData: ' + str(ex) + '; id: ' + str(coinId))
+    return []
 
 def getImage(url):
     try:

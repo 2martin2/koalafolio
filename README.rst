@@ -43,7 +43,15 @@ trade import
    
  import trades from exchanges using their API:
   supported exchanges (so far):
+   - binance
+   - bittrex
+   - bitmex
+   - coinbase
+   - coinbasepro
+   - gemini
+   - poloniex
    - kraken
+
 
 portfolio
 ----------
@@ -63,6 +71,14 @@ Thanks to CryptoCompare_
 
 .. _Cryptocompare: https://min-api.cryptocompare.com/
 
+Powered by CoinGecko_ API
+
+.. _CoinGecko: https://www.coingecko.com/en
+
 Gui based on Qt_
 
 .. _Qt: https://www.qt.io/
+
+Thanks to Rotki_
+
+.. _Rotki: https://github.com/rotki

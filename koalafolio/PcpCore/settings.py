@@ -35,7 +35,8 @@ class Settings(configparser.ConfigParser):
         # set default settings
         # general settings
         self['general'] = {}
-        self['general']['version'] = '0.9.3'
+        self['general']['version'] = '0.10.0'
+        self['general']['initversion'] = '0.10.0'
         self['general']['timeModeDaywise'] = 'True'
         self['general']['priceUpdateInterval(s)'] = '100'
         self['general']['priceApiSwitch(cryptocompare/coingecko/mixed)'] = 'mixed'
@@ -53,8 +54,9 @@ class Settings(configparser.ConfigParser):
         self['currency']['defaultDisplayCurrencies'] = 'EUR,USD,BTC'
         self['currency']['isFiat'] = 'EUR,USD,GBP,JPY,CNY,RUB,AUD,CAD,SGD,PLN,HKD,CHF,INR,BRL,KRW,NZD,ZAR'
         self['currency']['coinswapdict'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
-        self['currency']['coinswapdictcryptocompareapi'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
-        self['currency']['coinswapdictcoingeckoapi'] = "{'HOLO':'HOT','HOT*':'HOT','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA','SAFEX':'SFT'}"
+        self['currency']['coinswapdictcryptocompareapi'] = "{'dummy':'dummy'}"
+        self['currency']['coinswapdictcoingeckoapi'] = "{'dummy':'dummy'}"
+        self['currency']['coinSwapDictCoinGeckoSymbolToId'] = "{'HOLO':'holotoken'}"
         # tax settings
         self['tax'] = {}
         self['tax']['taxfreelimit'] = 'True'
@@ -74,7 +76,7 @@ class Settings(configparser.ConfigParser):
     def readSettings(self):
         try:
             self.read(self.filePath)
-            self['general']['version'] = '0.9.3'
+            self['general']['version'] = '0.10.0'
             logger.globalLogger.info('settings loaded')
         except Exception as ex:
             logger.globalLogger.error('settings can not be loaded: ' + str(ex))
@@ -87,7 +89,7 @@ class Settings(configparser.ConfigParser):
             self.saveSettings()
             logger.globalLogger.info('settings reset to default')
         except Exception as ex:
-            print('error resetting settings: ' + str(ex))
+            logger.globalLogger.error('error resetting settings: ' + str(ex))
 
 # get/set methods
     def timeModeDaywise(self):
@@ -159,6 +161,16 @@ class Settings(configparser.ConfigParser):
                 raise SyntaxError('coinswapdictcoingeckoapi in settings.txt has invalid Syntax')
         except Exception as ex:
             logger.globalLogger.warning('error while parsing coinswapdictcoingeckoapi from settings: ' + str(ex))
+        return dict()
+
+    def coinSwapDictCoinGeckoSymbolToId(self):
+        try:
+            if dictRegex.match(self['currency']['coinSwapDictCoinGeckoSymbolToId']):
+                return ast.literal_eval(self['currency']['coinSwapDictCoinGeckoSymbolToId'])
+            else:
+                raise SyntaxError('coinSwapDictCoinGeckoSymbolToId in settings.txt has invalid Syntax')
+        except Exception as ex:
+            logger.globalLogger.warning('error while parsing coinSwapDictCoinGeckoSymbolToId from settings: ' + str(ex))
         return dict()
 
     def taxSettings(self):

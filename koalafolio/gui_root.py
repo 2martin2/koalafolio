@@ -24,6 +24,9 @@ import koalafolio.gui.QSettings as settings
 import koalafolio.gui.QStyle as style
 import koalafolio.exp.QTranslate as translator
 import koalafolio.Import.apiImport as apiImport
+from pathlib import Path
+import rotkehlchen.assets.resolver as resolver
+import rotkehlchen.constants.ethereum as ethereum
 
 qt = qtcore.Qt
 # %% constants
@@ -162,6 +165,13 @@ class PortfolioApp(qtwidgets.QWidget):
         self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
         style.myStyle = self.styleSheetHandler
         self.apiDatabase = apiImport.ApiDatabase(path=self.dataPath)
+        try:
+            # Initialize the AssetResolver singleton
+            resolver.AssetResolver(data_directory=Path(self.dataPath))
+            # init eth data
+            ethereum.EthereumConstants(data_directory=Path(self.dataPath))
+        except Exception as ex:
+            logger.globalLogger.error('could not initialize api backend: ' + str(ex))
 
 
     # setup window style
@@ -301,6 +311,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.priceThread = threads.UpdatePriceThread(self.coinList, self.tradeList)
         self.priceThread.coinPricesLoaded.connect(lambda prices: self.coinList.setPrices(prices))
         self.priceThread.coinIconsLoaded.connect(lambda icons: self.coinList.setIcons(icons))
+        self.priceThread.coinPriceChartsLoaded.connect(lambda priceChartData: self.coinList.setPriceChartData(priceChartData))
         self.priceThread.historicalPricesLoaded.connect(lambda prices, tradesLeft:
                                                         self.tradeList.setHistPrices(prices, tradesLeft))
         self.priceThread.start()

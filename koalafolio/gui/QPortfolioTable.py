@@ -25,6 +25,29 @@ import configparser
 qt = qtcore.Qt
 localLogger = logger.globalLogger
 
+class MinWheelScrollingScrollbar(qtwidgets.QScrollBar):
+    def __init__(self, orientation, parent):
+        super(MinWheelScrollingScrollbar, self).__init__(orientation=orientation, parent=parent)
+
+    def wheelEvent(self, event: qtgui.QWheelEvent):
+        numPixels = event.pixelDelta()
+        numDegrees = event.angleDelta() / 8
+
+        if numPixels:
+            self.scrollWithPixels(numPixels)
+        elif numDegrees:
+            numSteps = numDegrees / 15
+            self.scrollWithDegrees(numSteps.y())
+
+        event.accept()
+
+    def scrollWithPixels(self, numPixels):
+        self.setValue(self.value() - numPixels)
+
+    def scrollWithDegrees(self, numSteps):
+        self.setValue(self.value() - self.singleStep() * numSteps)
+
+
 # %% portfolio table view
 class QPortfolioTableView(qtwidgets.QTreeView):
     def __init__(self, parent, *args, **kwargs):
@@ -41,6 +64,7 @@ class QPortfolioTableView(qtwidgets.QTreeView):
         self.collapsed.connect(self.collapsedCallback)
         self.expanded.connect(self.expandedCallback)
 
+        self.setVerticalScrollBar(MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
         self.verticalScrollBar().setSingleStep(1)
         self.verticalScrollBar().setPageStep(1)
 
@@ -174,12 +198,12 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
                     try:  # delete old backup
                         os.remove(os.path.join(self.dataPath, 'Coins.csv.bak'))
                     except Exception as ex:
-                        print('error deleting coin info backup in QCoinContainer: ' + str(ex))
+                        localLogger.warning('error deleting coin info backup in QCoinContainer: ' + str(ex))
                 try:  # create backup
                     os.rename(os.path.join(self.dataPath, 'Coins.csv'),
                               os.path.join(self.dataPath, 'Coins.csv.bak'))
                 except Exception as ex:
-                    print('error creating coin info backup in QCoinContainer: ' + str(ex))
+                    localLogger.warning('error creating coin info backup in QCoinContainer: ' + str(ex))
             self.coinDatabase.setCoinInfo(self)
 
     def setNotes(self, index, notes):
@@ -332,6 +356,9 @@ class QPortfolioTableModel(QCoinContainer):
     def setPrices(self, prices):
         super(QPortfolioTableModel, self).setPrices(prices)
         self.pricesUpdated()
+
+    def setPriceChartData(self, priceChartData):
+        super(QPortfolioTableModel, self).setPriceChartData(priceChartData)
 
     # emit dataChanged when trade is updated
     def tradeChanged(self, trade):
@@ -666,8 +693,9 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     dates.append(datetime.datetime.now())
                     vals.append(vals[-1])
                     # prices
-                    priceDates.append(datetime.datetime.now())
-                    prices.append(data.getCurrentPrice()[settings.mySettings.reportCurrency()])
+                    if not data.priceChartData: # if not price chart data available add at least current value
+                        priceDates.append(datetime.datetime.now())
+                        prices.append(data.getCurrentPrice()[settings.mySettings.reportCurrency()])
                     # draw taxlimit
                     if settings.mySettings.getTaxSetting("taxfreelimit"):
                         limitDate = datetime.datetime.now().replace(year=datetime.datetime.now().year -
@@ -676,12 +704,18 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                         limitDates = [limitDate, limitDate]
                         limitAmount = data.tradeMatcher.getBuyAmountLeftTaxFree(settings.mySettings.getTaxSetting("taxfreelimityears"))
                         limitVals = [limitAmount, 0]
-                    editor.setData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", 3)
+                    # addData(self, dates, vals, qColor, name, lineWidth=1, chartType="line", axis='balance', updateAxis=True)
+                    editor.addData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", lineWidth=3)
                     if settings.mySettings.getTaxSetting("taxfreelimit"):
-                        editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", 3)
-                    editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY_MIDLIGHT'),
-                                   "price " + settings.mySettings.reportCurrency(), 3,
-                                   chartType="Scatter", newAxis=True)
+                        editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", lineWidth=3, updateAxis=False)
+                    editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY'),
+                                   "buyPrice " + settings.mySettings.reportCurrency(), lineWidth=3,
+                                   chartType="scatter", axis='price')
+                    if data.priceChartData:
+                        dates, prices = map(list, zip(*data.priceChartData))
+                        editor.addData(dates, prices, style.myStyle.getQColor('SECONDARY_MIDLIGHT'),
+                                       "price " + settings.mySettings.reportCurrency(), lineWidth=1,
+                                       chartType="line", axis='price')
                 return
 
     def updateEditorGeometry(self, editor, option, index):
@@ -689,14 +723,12 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
             if index.column() == 0:
                 size = self.sizeHint(option, index)
-                # print("updateGeom width 0: " + str(size.width()) + "; " + str(option.rect.width()))
                 rect = qtcore.QRect(editor.parent().x(), option.rect.y() + 5, editor.parent().width() * 0.3,
                                     size.height() - 10)
                 editor.setGeometry(rect)
                 return
             if index.column() == 1:
                 size = self.sizeHint(option, index)
-                # print("updateGeom width 1: " + str(size.width()) + "; " + str(option.rect.width()))
                 rect = qtcore.QRect(editor.parent().x() + editor.parent().width() * 0.3 + 20, option.rect.y() + 5, editor.parent().width() * 0.7 - 20,
                                     size.height() - 10)
                 editor.setGeometry(rect)

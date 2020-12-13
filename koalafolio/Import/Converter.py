@@ -6,6 +6,9 @@ import re, numbers, pandas
 import koalafolio.Import.RegexPatterns as pat
 import datetime, tzlocal, pytz
 import dateutil
+import koalafolio.PcpCore.logger as logger
+
+localLogger = logger.globalLogger
 
 def exodusJsonToDataFrame(data):
     # txId, error, date, confirmations, meta, token, coinAmount, coinName, feeAmount, to, toCoin
@@ -183,8 +186,9 @@ def modelCallback_kraken(headernames, dataFrame):
     headernames_m0.append(headernames[8])  # fee
     headernames_m0.append('')  # no feecoin
     headernames_m0.append('')  # state
+    headernames_m0.append('')  # exchange
 
-    tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame)
+    tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame, useLocalTime=False)
 
     for trade in tradeList:
         trade.exchange = 'kraken'
@@ -208,7 +212,7 @@ def modelCallback_binance(headernames, dataFrame):
 
         usdtMatch = USDT_REGEX.match(dataFrame[headernames[1]][row])
         if usdtMatch:
-            dataFrame[headernames[1]][row] = usdtMatch.group(1) + '/' + usdtMatch.group(2)
+            dataFrame.at[row, headernames[1]] = usdtMatch.group(1) + '/' + usdtMatch.group(2)
         else:
             coinPairMatch = COIN_PAIR_REGEX.match(dataFrame[headernames[1]][row])
             if coinPairMatch:
@@ -227,6 +231,7 @@ def modelCallback_binance(headernames, dataFrame):
     headernames_m0.append(headernames[6])  # fee
     headernames_m0.append(headernames[7])  # feecoin
     headernames_m0.append('')  # state
+    headernames_m0.append('')  # exchange
 
     tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame)
 
@@ -249,7 +254,7 @@ def modelCallback_binance(headernames, dataFrame):
         timestamp = timestamp.astimezone(myTimezone)
         fee.date = timestamp
         # update id
-        trade.generateID()
+        fee.generateID()
 
     return tradeList, feeList, skippedRows
 
@@ -293,6 +298,7 @@ def modelCallback_poloniex(headernames, dataFrame):
     headernames_m0.append(headernames[7])  # fee
     headernames_m0.append(headernames[11])  # no feecoin
     headernames_m0.append('')  # state
+    headernames_m0.append('')  # exchange
 
     tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame)
 
@@ -334,8 +340,8 @@ def modelCallback_bittrex(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% model 0: Date, Type, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)
-def modelCallback_0(headernames, dataFrame):
+# %% model 0: Date, Type, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State), (ExchangeName)
+def modelCallback_0(headernames, dataFrame, useLocalTime=False):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
@@ -350,15 +356,19 @@ def modelCallback_0(headernames, dataFrame):
         if headernames[5]:
             tempTrade_sub.externId = str(dataFrame[headernames[5]][row])
             tempTrade_main.externId = str(dataFrame[headernames[5]][row])
+        # if exchange name
+        if headernames[10]:
+            tempTrade_sub.exchange = str(dataFrame[headernames[10]][row])
+            tempTrade_main.exchange = str(dataFrame[headernames[10]][row])
         # get date
-        tempTrade_sub.date = convertDate(dataFrame[headernames[0]][row])
-        tempTrade_main.date = convertDate(dataFrame[headernames[0]][row])
+        tempTrade_sub.date = convertDate(dataFrame[headernames[0]][row], useLocalTime=useLocalTime)
+        tempTrade_main.date = convertDate(dataFrame[headernames[0]][row], useLocalTime=useLocalTime)
         # get type
         tempTrade_sub.tradeType = 'trade'
         tempTrade_main.tradeType = 'trade'
         # get coin
-        tempTrade_sub.coin = re.match(r'^(.*)(/|-).*$', dataFrame[headernames[2]][row]).group(1).upper()
-        tempTrade_main.coin = re.match(r'^.*(/|-)(.*)$', dataFrame[headernames[2]][row]).group(2).upper()
+        tempTrade_sub.coin = re.match(r'^(.*)(/|-|_).*$', dataFrame[headernames[2]][row]).group(1).upper()
+        tempTrade_main.coin = re.match(r'^.*(/|-|_)(.*)$', dataFrame[headernames[2]][row]).group(2).upper()
         # swap Coin Name
         swapCoinName(tempTrade_sub)
         swapCoinName(tempTrade_main)
@@ -407,7 +417,7 @@ def modelCallback_0(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('fee error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -419,6 +429,8 @@ def modelCallback_1(headernames, dataFrame):
         coin_sub = re.match(r'^.*-(.*)$', dataFrame[headernames[2]][row]).group(1).upper()
         coin_main = re.match(r'^(.*)-.*$', dataFrame[headernames[2]][row]).group(1).upper()
         dataFrame.at[row, headernames[2]] = coin_sub + r'/' + coin_main
+
+    headernames.append('')  # exchange
 
     return modelCallback_0(headernames, dataFrame)
 
@@ -492,7 +504,7 @@ def modelCallback_2(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -540,7 +552,7 @@ def modelCallback_3(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -653,7 +665,7 @@ def modelCallback_4(headernames, dataFrame):
                 feeList.addTrade(feeMain)
                 feeList.addTrade(feeSub)
             except Exception as ex:  # do not skip line if error, just ignore fee
-                print('error in Converter: ' + str(ex))
+                localLogger.warning('error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -722,7 +734,7 @@ def modelCallback_5(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -772,7 +784,7 @@ def modelCallback_Template1(headernames, dataFrame):
                 if not tradeList.addTradePair(tempTrade_sell, tempTrade_buy):
                     skippedRows += 1
         except Exception as ex:
-            print('error in Converter Template1: ' + str(ex))
+            localLogger.warning('error in Converter Template1: ' + str(ex))
             skippedRows += 1
 
         # fees
@@ -791,7 +803,7 @@ def modelCallback_Template1(headernames, dataFrame):
                 fee.generateID()
                 feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
-            print('error in Converter Template1: ' + str(ex))
+            localLogger.warning('error in Converter Template1: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -870,15 +882,37 @@ def modelCallback_TradeList(headernames, dataFrame):
             else:
                 tradeList.addTrade(trade)
         except Exception as ex:
-            print('error in Converter: ' + str(ex))
+            localLogger.warning('error in Converter: ' + str(ex))
             skippedRows += 1
 
     return tradeList, feeList, skippedRows
 
+# %% model rotki:
+#   timestamp,  location,   pair,   trade_type, amount, rate,   fee,    fee_currency,   link
+#       0           1        2          3           4     5       6            7          8
+def modelCallback_Rotki(headernames, dataFrame):
+    # seperate coin pair
+
+    headernames_m0 = []
+    headernames_m0.append(headernames[0])  # date
+    headernames_m0.append(headernames[3])  # type
+    headernames_m0.append(headernames[2])  # pair
+    headernames_m0.append(headernames[5])  # average price
+    headernames_m0.append(headernames[4])  # amount
+    headernames_m0.append(headernames[8])  # id
+    headernames_m0.append('')  # no total
+    headernames_m0.append(headernames[6])  # fee
+    headernames_m0.append(headernames[7])  # feecoin
+    headernames_m0.append('')  # state
+    headernames_m0.append(headernames[1])  # exchange
+
+    tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame, useLocalTime=True)
+
+    return tradeList, feeList, skippedRows
 
 
 # %% functions
-def convertDate(dateString, useLocalTime=True):
+def convertDate(dateString, useLocalTime=False):
     # check if pandas time pattern fits
     #    match = pat.Pandas_TIME_REGEX.match(dateString)
     timestamp = None
@@ -888,7 +922,7 @@ def convertDate(dateString, useLocalTime=True):
         try:  # try dateutil parser
             timestamp = dateutil.parser.parse(dateString)
         except ValueError:  # manuel parsing
-            print('manuel parsing')
+            localLogger.info('autoparsing date failed. try extended date parsing: ' + str(dateString))
             if pat.Pandas_TIME_REGEX.match(dateString):
                 timestamp = pandas.to_datetime(dateString, utc=True)
             for i in range(len(pat.TIME_REGEX)):
@@ -953,6 +987,7 @@ def convertDate(dateString, useLocalTime=True):
             timestamp = timestamp.astimezone(myTimezone)
     else:
         raise SyntaxError("date format not supported")
+    timestamp = timestamp.replace(microsecond=0)
     return timestamp
 
 def roundTime(dt=None, roundToS=60):
@@ -970,13 +1005,20 @@ def roundTime(dt=None, roundToS=60):
         rounding = (microseconds+roundTo/2) // roundTo * roundTo
         return dt + datetime.timedelta(0, 0, rounding-microseconds)
 
+def roundTimeMin(dt=None):
+    if dt == None: dt = datetime.datetime.now()
+    dt = dt.replace(microsecond=0)
+    dt = dt + datetime.timedelta(seconds=30)
+    dt = dt.replace(second=0)
+    return dt
+
 
 def swapCoinName(trade):
     try:
         if trade.coin in settings.mySettings.coinSwapDict():
             trade.coin = settings.mySettings.coinSwapDict()[trade.coin]
     except Exception as ex:
-        print('error in Converter: ' + str(ex))
+        localLogger.warning('error in Converter: ' + str(ex))
 
 
 def createTrades(tradeId='', externId=''):

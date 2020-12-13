@@ -126,10 +126,6 @@ class PortfolioPage(Page):
         self.verticalLayout.addWidget(self.coinTableView)
 
 
-    # def tableClicked(self, index):
-    #     if index.column() == 0:
-    #         print(str(index.data()))
-
 # %% trades page showing all the imported trades
 class TradesPage(Page):
     def __init__(self, parent, controller):
@@ -159,6 +155,8 @@ class TradesPage(Page):
         self.undoButton.clicked.connect(self.undoRemoveAddTrades)
         self.reloadPricesButton = qtwidgets.QPushButton('reload prices', self)
         self.reloadPricesButton.clicked.connect(self.reloadPrices)
+        self.recalculateIdsButton = qtwidgets.QPushButton('recalculate Ids', self)
+        self.recalculateIdsButton.clicked.connect(self.recalcIds)
 
         self.hButtonLayout = qtwidgets.QHBoxLayout()
         self.hButtonLayout.addStretch()
@@ -167,6 +165,7 @@ class TradesPage(Page):
         self.hButtonLayout.addWidget(self.undoButton)
         self.hButtonLayout.addStretch()
         self.hButtonLayout.addWidget(self.reloadPricesButton)
+        self.hButtonLayout.addWidget(self.recalculateIdsButton)
         self.hButtonLayout.addStretch()
 
         # layout
@@ -199,6 +198,9 @@ class TradesPage(Page):
     def reloadPrices(self):
         self.controller.tradeList.clearPriceFlag()
         self.controller.tradeList.updatePrices(self.controller.tradeList)
+
+    def recalcIds(self):
+        self.controller.tradeList.recalcIds()
 
     def getGuiProps(self):
         gui = {}
@@ -394,7 +396,7 @@ class ImportSelectPage(SubPage):
                 else:
                     self.controller.setFilesPath([])
             except Exception as ex:
-                print("pathChanged callback failed: " + str(ex))
+                localLogger.warning("pathChanged callback failed: " + str(ex))
 
     def selectionChangedCallback(self):
         self.controller.allFilesPath = []
@@ -416,13 +418,13 @@ class ImportSelectPage(SubPage):
         else:
             localLogger.info('please select at least one valid file')
 
-    def importFromApi(self, api, key, secret):
+    def importFromApi(self, api, key, secret, start, end):
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
         self.controller.filesNotImported = 0
         self.controller.filesImported = 0
         self.controller.clearNewTrades()
-        content = apiImport.getApiHistory(api, key, secret)
+        content = apiImport.getApiHistory(api, key, secret, start, end)
         if not content.empty:
             tradeListTemp, feeListTemp, match, skippedRows = importer.convertTradesSingle(
                 models.IMPORT_MODEL_LIST, content, api)
@@ -444,8 +446,8 @@ class ImportSelectPage(SubPage):
             localLogger.info("no data received from api")
 
 
-    def saveFromApi(self, api, key, secret):
-        content = apiImport.getApiHistory(api, key, secret)
+    def saveFromApi(self, api, key, secret, start, end):
+        content = apiImport.getApiHistory(api, key, secret, start, end)
         if not content.empty:
             self.saveCsvFileDialog.setDefaultSuffix("csv")
             filename = api + '_api.csv'
@@ -713,11 +715,14 @@ class ImportFinishPage(SubPage):
         self.acceptButton.clicked.connect(self.acceptTrades)
         self.removeSelectButton = qtwidgets.QPushButton("remove selected", self)
         self.removeSelectButton.clicked.connect(self.deleteSelectedTrades)
+        self.removeSimilarButton = qtwidgets.QPushButton("remove similar", self)
+        self.removeSimilarButton.clicked.connect(self.deleteSimilarTrades)
 
         self.horzButtonLayout = qtwidgets.QHBoxLayout()
         self.horzButtonLayout.addStretch()
         self.horzButtonLayout.addWidget(self.cancelButton)
         self.horzButtonLayout.addWidget(self.removeSelectButton)
+        self.horzButtonLayout.addWidget(self.removeSimilarButton)
         self.horzButtonLayout.addWidget(self.acceptButton)
         self.horzButtonLayout.addStretch()
 
@@ -768,6 +773,10 @@ class ImportFinishPage(SubPage):
     def deleteSelectedTrades(self):
         # remove all trades that are not selected
         self.lastFocusTable.deleteSelectedTrades()
+
+    def deleteSimilarTrades(self):
+        self.tableView.deleteSimilarTrades()
+        self.feeTableView.deleteSimilarTrades()
 
     def cancelTrades(self):
         # delete trades and go back to file selection
@@ -1005,7 +1014,7 @@ class SettingsPage(Page):
         self.settingsView = settings.SettingsTreeView(self)
         self.settingsView.setModel(self.controller.settingsModel)
         self.settingsView.expandAll()
-        self.settingsView.setColumnWidth(0, 200)
+        self.settingsView.setColumnWidth(0, 350)
         self.settingsView.header().setStretchLastSection(True)
 
         # buttons

@@ -65,6 +65,9 @@ class QTradeTableView(qtwidgets.QTableView):
                     rows.append(sourceInd.row())
             self.model().sourceModel().deleteTrades(rows)
 
+    def deleteSimilarTrades(self):
+        self.model().sourceModel().deleteSimilarTrades()
+
     def update(self, index):
         super(QTradeTableView, self).update(index)
         self.viewUpdated.emit()
@@ -130,12 +133,12 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                     try:  # delete old backup
                         os.remove(os.path.join(self.dataPath, 'Trades.csv.bak'))
                     except Exception as ex:
-                        print('error deleting trades backup in QTradeContainer: ' + str(ex))
+                        localLogger.warning('error deleting trades backup in QTradeContainer: ' + str(ex))
                 try:  # create backup
                     os.rename(os.path.join(self.dataPath, 'Trades.csv'),
                               os.path.join(self.dataPath, 'Trades.csv.bak'))
                 except Exception as ex:
-                    print('error creating trades backup in QTradeContainer: ' + str(ex))
+                    localLogger.warning('error creating trades backup in QTradeContainer: ' + str(ex))
             try:  # save trades
                 self.toCsv(os.path.join(self.dataPath, 'Trades.csv'))
             except Exception as ex:
@@ -202,6 +205,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                 self.removeTrades(tradeList)
 
     def deleteTrades(self, rows):
+        self.beginResetModel()
         rows.sort(reverse=True)
         self.changedNumberStack.append(-len(rows))
         tradeList = core.TradeList()
@@ -217,6 +221,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
         self.saveTrades()
         # emit trades added
         self.tradesRemoved.emit(tradeList)
+        self.endResetModel()
         return True
 
     def deleteAllTrades(self):
@@ -253,7 +258,7 @@ class QTradeTableModel(QTradeContainer):
         # link empty tradeList
         self.initDisplayCurrencies()
 
-        self.tradesLen = len(self.trades)
+        #self.tradesLen = len(self.trades)
         self.showPrices(True)
         self.firstValueColumn = 7
         self.enableEditMode(True)
@@ -271,7 +276,7 @@ class QTradeTableModel(QTradeContainer):
         self.headerLen = len(self.header)
 
     def rowCount(self, parent):
-        return self.tradesLen
+        return len(self.trades)
 
     def columnCount(self, parent):
         return self.headerLen
@@ -370,23 +375,16 @@ class QTradeTableModel(QTradeContainer):
         for trade in self.trades:
             trade.exchange = exchange
         self.endResetModel()
-        # RowStartIndex = self.index(0, 6)
-        # RowEndIndex = self.index(len(self.trades), 6)
-        # self.dataChanged.emit(RowStartIndex, RowEndIndex)
-        # for row in range(0, len(self.trades)):
-        #     index = self.index(row, 6)
-        #     self.dataChanged.emit(index, index)
-            # self.setData(index, exchange, qt.EditRole)
 
     def copyFromTradeList(self, tradeList):
         self.beginResetModel()
         self.trades = tradeList.trades
-        self.tradesLen = len(self.trades)
+        # self.tradesLen = len(self.trades)
         self.endResetModel()
 
     def clearTrades(self):
         self.beginResetModel()
-        self.tradesLen = 0
+        # self.tradesLen = 0
         self.trades = []
         self.endResetModel()
 
@@ -394,13 +392,13 @@ class QTradeTableModel(QTradeContainer):
     def addTrades(self, trades):
         self.beginResetModel()
         super(QTradeTableModel, self).addTrades(trades)
-        self.tradesLen = len(self.trades)
+        # self.tradesLen = len(self.trades)
         self.endResetModel()
 
     def mergeTradeList(self, tradeList):
         self.beginResetModel()
         addedTrades = super(QTradeTableModel, self).mergeTradeList(tradeList)
-        self.tradesLen = len(self.trades)
+        # self.tradesLen = len(self.trades)
         self.endResetModel()
         return addedTrades
 
@@ -426,6 +424,22 @@ class QTradeTableModel(QTradeContainer):
         self.clearTrades()
         self.restoreTrades()
 
+    def recalcIds(self):
+        super(QTradeTableModel, self).recalcIds()
+        self.saveTrades()
+        self.updateColumn(0)
+        self.updateColumn(1)
+
+    def updateRow(self, row):
+        StartIndex = self.index(row, 0)
+        EndIndex = self.index(row, len(self.header) - 1)
+        self.dataChanged.emit(StartIndex, EndIndex)
+
+    def updateColumn(self, col):
+        StartIndex = self.index(0, col)
+        EndIndex = self.index(len(self.trades) - 1, col)
+        self.dataChanged.emit(StartIndex, EndIndex)
+
 
 
 # %% import Trade table model
@@ -437,11 +451,23 @@ class QImportTradeTableModel(QTradeTableModel):
 
     def data(self, index, role=qt.DisplayRole):
         if role == qt.ForegroundRole:
+            if index.row() >= len(self.trades):
+                print('error ' + str(index.row()) + ' ' + str(len(self.trades)))
+                return qtcore.QVariant()
             if self.trades[index.row()] in self.baseModel.trades:
                 return style.myStyle.getQColor('text_highlighted_midlight'.upper())
             if self.baseModel.checkApproximateEquality(self.trades[index.row()]):
                 return style.myStyle.getQColor('NEGATIV')
         return super(QImportTradeTableModel, self).data(index, role)
+
+    def deleteSimilarTrades(self):
+        row = 0
+        deleteRows = []
+        for trade in self.trades:
+            if trade in self.baseModel.trades or self.baseModel.checkApproximateEquality(trade):
+                deleteRows.append(row)
+            row += 1
+        self.deleteTrades(deleteRows)
 
 
 
@@ -454,7 +480,7 @@ class QTradeTableDelegate(qtwidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         if int(index.flags()) & qt.ItemIsEditable:
             return qtwidgets.QLineEdit(parent)
-        return 0
+        return None
 
     def setEditorData(self, editor, index):
         editor.setText(index.data())

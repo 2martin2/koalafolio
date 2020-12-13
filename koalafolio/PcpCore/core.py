@@ -109,14 +109,24 @@ class CoinValue():
         val = 1
         for key in self.value:
             if key in other.value:
-                val *= self.value[key] / other.value[key]
+                if other.value[key] != 0:
+                    val *= self.value[key] / other.value[key]
+                else:
+                    if self.value[key] < 0:
+                        return True
+                    if self.value[key] > 0:
+                        return False
         return val <= 1
 
     def __eq__(self, other):
         val = 1
         for key in self.value:
             if key in other.value:
-                val *= self.value[key] / other.value[key]
+                if other.value[key] != 0:
+                    val *= self.value[key] / other.value[key]
+                else:
+                    if self.value[key] != 0:
+                        return False
         return val == 1
 
     def __ne__(self, other):
@@ -225,19 +235,19 @@ class Trade:
 
     def generateID(self):
         tradeString = str(self.date) + str(self.tradeType) + str(self.externId) + str(self.coin) + str(self.amount)
-        self.tradeID = hashlib.sha1(tradeString.encode()).hexdigest()
+        self.tradeID = hashlib.sha1(tradeString.encode()).hexdigest()[0:16]
         return self.tradeID
 
     def checkApproximateEquality(self, trade):
         return self.generateApproximateID() == trade.generateApproximateID()
 
     def generateApproximateID(self):
-        myDate = converter.roundTime(self.date, roundToS=60)
+        myDate = converter.roundTimeMin(self.date)
         try:
             myAmount = round(self.amount, -int( math.floor(math.log10(abs(self.amount)))) + 5)
         except ValueError:
             myAmount = self.amount
-        tradeString = str(str(myDate) + str(self.tradeType) + str(self.externId) + str(self.coin) + str(myAmount))
+        tradeString = str(str(myDate) + str(self.tradeType) + str(self.coin) + str(myAmount))
         self.approxID = hashlib.sha1(tradeString.encode()).hexdigest()
         return self.approxID
 
@@ -449,6 +459,9 @@ class TradeList:
                     if (not trade.valueLoaded) or partner.isFiat():
                         trade.setValueAll(partner.getValue().mult(-1))
                         trade.valueLoaded = True
+                    # if value is 0 and partner value not
+                    elif trade.getValue() == CoinValue() and partner.getValue() != CoinValue():
+                        trade.setValueAll(partner.getValue().mult(-1))
                     # if both values loaded and both trades are crypto use the same value
                     elif not trade.isFiat():
                         if trade.getValue() < partner.getValue():  # use smaller value (tax will be paid later)
@@ -508,6 +521,15 @@ class TradeList:
             if trade.getApproximateID() == t.getApproximateID():
                 return True
         return False
+
+    def recalcIds(self):
+        for trade in self.trades:
+            trade.generateID()
+            trade.generateApproximateID()
+            if trade.tradePartnerId:
+                partner = self.getTradeById(trade.tradePartnerId)
+                if partner:
+                    partner.tradePartnerId = trade.tradeID
 
 
 # %% TradeMatcher
@@ -735,6 +757,7 @@ class CoinBalance:
         self.tradeMatcher = TradeMatcher(self)
         self.coinIcon = None
         self.notes = ""
+        self.priceChartData = []
 
     def __lt__(self, other):
         return self.balance < other.balance
@@ -926,7 +949,7 @@ class CoinList:
             coin = self.getCoinByName(trade.coin)
         except KeyError as ex:
             # unknowen coin; ignore trade
-            print(str(ex) + ' for coin ' + str(trade.coin))
+            # print(str(ex) + ' for coin ' + str(trade.coin))
             return None
         coin.matchTrades()
         return coin
@@ -947,13 +970,13 @@ class CoinList:
             coinList.append(coin.toListComplete())
         return initCoinListComplete(coinList)
 
-    def isEmpty(self):
+    def isEmpty(self) -> bool:
         if self.coins:
             return False
         else:
             return True
 
-    def getCoinByName(self, name):
+    def getCoinByName(self, name: str) -> CoinBalance:
         for coin in self:
             if coin.coinname == name:
                 return coin
@@ -972,6 +995,14 @@ class CoinList:
                         coin.change24h[key] = prices[coin.coinname][key]['CHANGEPCT24HOUR']
                     except KeyError:
                         pass
+
+    def setPriceChartData(self, priceChartData: dict):
+        for coin in self.coins:
+            try:
+                coin.priceChartData = priceChartData[coin.coinname]
+            except KeyError:
+                pass
+
 
     def histPricesChanged(self):
         pass

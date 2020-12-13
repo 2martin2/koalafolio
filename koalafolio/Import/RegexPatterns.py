@@ -70,6 +70,18 @@ TRADELIST_EXCHANGE_REGEX = re.compile(r'^exchange$', re.IGNORECASE)
 TRADELIST_EXTERNID_REGEX = re.compile(r'^externId$', re.IGNORECASE)
 TRADELIST_WALLET_REGEX = re.compile(r'^wallet$', re.IGNORECASE)
 
+# %% model rotki: ,timestamp,location,pair,trade_type,amount,rate,fee,fee_currency,link,notes
+ROTKI_TIMESTAMP_REGEX = re.compile(r'^timestamp$', re.IGNORECASE)
+ROTKI_LOCATION_REGEX = re.compile(r'^location$', re.IGNORECASE)
+ROTKI_PAIR_REGEX = re.compile(r'^pair$', re.IGNORECASE)
+ROTKI_TRADE_TYPE_REGEX = re.compile(r'^trade_type$', re.IGNORECASE)
+ROTKI_AMOUNT_REGEX = re.compile(r'^amount$', re.IGNORECASE)
+ROTKI_RATE_REGEX = re.compile(r'^rate$', re.IGNORECASE)
+ROTKI_FEE_REGEX = re.compile(r'^fee$', re.IGNORECASE)
+ROTKI_FEE_CURRENCY_REGEX = re.compile(r'^fee_currency$', re.IGNORECASE)
+ROTKI_LINK_REGEX = re.compile(r'^link$', re.IGNORECASE)
+ROTKI_NOTES_REGEX = re.compile(r'^notes$', re.IGNORECASE)
+
 # %% regex # XXX_$1_REGEX = re.compile\(r\'\^$1\$\'\)
 
 # model exodus DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID

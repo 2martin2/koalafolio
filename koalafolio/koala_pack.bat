@@ -1,1 +1,1 @@
-pipenv run pyinstaller --onefile --windowed --icon=KoalaIcon.ico gui_root.py --name=koalafolio
+pipenv run pyinstaller --onefile --windowed --icon=KoalaIcon.ico gui_root.py --name=koalafolio --add-binary %LocalAppData%\Programs\Python\Python37\Lib\site-packages\coincurve\libsecp256k1.dll;coincurve

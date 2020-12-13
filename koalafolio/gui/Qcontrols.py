@@ -130,7 +130,7 @@ class PathInput(qtwidgets.QWidget):
         self.horizontalLayout.addWidget(self.fileDialog)
 
     def getPath(self):
-        # return only vaild path, otherwise return None
+        # return only valid path, otherwise return None
         try:
             path = Path(self.lineEdit.text())
             if ((path.is_file() | path.is_dir())):
@@ -138,7 +138,7 @@ class PathInput(qtwidgets.QWidget):
             else:
                 return None
         except Exception as ex:
-            print("converting path -" + self.lineEdit.text() + "- failed: " + str(ex))
+            localLogger.warning("converting path -" + self.lineEdit.text() + "- failed: " + str(ex))
             return None
 
     def setPath(self, path):
@@ -436,6 +436,7 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
         super(SortFilterProxyModel, self).__init__(*args, **kwargs)
         self.filters = {}
         self.setFilterCaseSensitivity(qt.CaseInsensitive)
+        self.firstValueColumn = 7
 
         self.sortedRow = 0
         self.sortedDir = 0
@@ -448,6 +449,15 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
     def setFilterByColumn(self, regex, column):
         self.filters[column] = regex
         self.invalidateFilter()
+
+    def lessThan(self, index1, index2):
+        column = index1.column()
+        if column >= self.sourceModel().firstValueColumn:
+            str1 = index1.data()
+            str2 = index2.data()
+            return float(str1) < float(str2)
+
+        return index1.data() < index2.data()
 
     def filterAcceptsRow(self, source_row, source_parent):
         for key, regex in self.filters.items():
@@ -503,7 +513,7 @@ def floatToString(f, n):
         zeroMatch = re.match("^(0*)(\d*?)$", sMatch[4])
         return sMatch[1] + sMatch[2] + '.' + zeroMatch[1] + zeroMatch[2][0:n].rstrip('0') + sMatch[5]  # 0.000000001234
     except Exception as ex:
-        print(str(ex) + ', string is ' + s)
+        localLogger.warning('error converting float to string: ' + str(ex) + ', string is ' + s)
     return s
 
 

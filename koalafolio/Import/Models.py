@@ -140,11 +140,11 @@ IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.BITTREX_UUID_REGEX, pat.BITTRE
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_bittrex
 
-# %% model 0: Date, Type, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State)
+# %% model 0: Date, Type, Pair, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin), (State), (ExchangeName)
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
 IMPORT_MODEL_LIST[index].modelHeaders = ['date', 'type', 'pair', 'price_average', 'amount', 'id', 'price_total', 'fee',
-                                         'feeCoin', 'state']
+                                         'feeCoin', 'state', 'exchangeName']
 IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.DATE_REGEX, pat.TYPE_REGEX, pat.PAIR_REGEX_0,
                                               pat.PRICE_AVERAGE_REGEX_0, pat.AMOUNT_SUB_REGEX_0]
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded + [pat.ID_REGEX,
@@ -242,3 +242,14 @@ IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNe
                                              pat.TRADELIST_VALUELOADED_REGEX, pat.TRADELIST_EXCHANGE_REGEX,
                                              pat.TRADELIST_EXTERNID_REGEX, pat.TRADELIST_WALLET_REGEX]
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_TradeList
+
+# %% model rotki: ,timestamp,location,pair,trade_type,amount,rate,fee,fee_currency,link,notes
+index = index + 1
+IMPORT_MODEL_LIST.append(Importmodel())
+IMPORT_MODEL_LIST[index].modelHeaders = ['timestamp', 'location', 'pair', 'trade_type', 'amount', 'rate',
+                                         'fee', 'fee_currency', 'link']
+IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.ROTKI_TIMESTAMP_REGEX, pat.ROTKI_LOCATION_REGEX, pat.ROTKI_PAIR_REGEX,
+                                              pat.ROTKI_TRADE_TYPE_REGEX, pat.ROTKI_AMOUNT_REGEX, pat.ROTKI_RATE_REGEX,
+                                              pat.ROTKI_FEE_REGEX, pat.ROTKI_FEE_CURRENCY_REGEX, pat.ROTKI_LINK_REGEX]
+IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
+IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_Rotki

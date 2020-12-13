@@ -92,7 +92,7 @@ class ExportTranslator(configparser.ConfigParser):
             self.saveTranslation()
             logger.globalLogger.info('translations reset to default')
         except Exception as ex:
-            print('error resetting translations: ' + str(ex))
+            localLogger.warning('error resetting translations: ' + str(ex))
 
     def getLanguages(self):
         return [l for l in self if l != "DEFAULT"]

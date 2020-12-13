@@ -439,12 +439,19 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         self.xAxis.setLabelsColor(style.myStyle.getQColor("TEXT_NORMAL"))
         self.chart.addAxis(self.xAxis, qt.AlignBottom)
 
-        # amount axis
-        self.yAxis = qtchart.QValueAxis()
-        self.yAxis.setLabelFormat("%.2f")
-        self.yAxis.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
-        self.yAxis.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
-        self.chart.addAxis(self.yAxis, qt.AlignLeft)
+        # balance axis
+        self.yAxisBalance = qtchart.QValueAxis()
+        self.yAxisBalance.setLabelFormat("%.2f")
+        self.yAxisBalance.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        self.yAxisBalance.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        self.chart.addAxis(self.yAxisBalance, qt.AlignLeft)
+
+        # price axis
+        self.yAxisPrice = qtchart.QValueAxis()
+        self.yAxisPrice.setLabelFormat("%.2f")
+        self.yAxisPrice.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        self.yAxisPrice.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
+        self.chart.addAxis(self.yAxisPrice, qt.AlignRight)
 
         # chartview
         self.chartView = qtchart.QChartView(self.chart)
@@ -454,43 +461,56 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         self.layout.addWidget(self.chartView)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-    # clear old series and add new one
-    def setData(self, dates, vals, qColor, name, lineWidth, chartType="Line"):
+    # clear old chart data
+    def clearData(self):
         self.chart.removeAllSeries()
-        self.yAxis.setLabelsColor(qColor)
-        self.addData(dates, vals, qColor, name, lineWidth, chartType=chartType)
-        self.yAxis.setRange(0, max(vals) * 1.1)
 
     # add new series
-    def addData(self, dates, vals, qColor, name, lineWidth, chartType="Line", newAxis=False):
-        if chartType == "Line":
+    def addData(self, dates, vals, qColor, name, lineWidth=1, chartType="line", axis='balance', updateAxis=True):
+        # check chart type
+        if chartType == "line":
             series = qtchart.QLineSeries()
-        elif chartType == "Scatter":
+        elif chartType == "scatter":
             series = qtchart.QScatterSeries()
             series.setMarkerSize(6)
+            series.setColor(qColor)
+            series.setBorderColor(qColor)
+        else:
+            raise ValueError
+        # series properties
         series.setName(name)
         for date, val in zip(dates, vals):
-            series.append(date.timestamp() * 1000, val)
+            if isinstance(date, datetime.datetime):
+                date = date.timestamp() * 1000
+            series.append(date, val)
         pen = qtgui.QPen(qColor)
         pen.setWidth(lineWidth)
         series.setPen(pen)
         self.chart.addSeries(series)
         series.attachAxis(self.xAxis)
-        if newAxis:
-            yAxis2 = qtchart.QValueAxis()
-            if max(vals) > 100:
-                yAxis2.setLabelFormat("%i")
-            elif max(vals) > 1:
-                yAxis2.setLabelFormat("%.2f")
-            elif max(vals) > 0.001:
-                yAxis2.setLabelFormat("%.4f")
-            else:
-                yAxis2.setLabelFormat("%.6f")
-            yAxis2.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
-            yAxis2.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
-            yAxis2.setLabelsColor(qColor)
-            self.chart.addAxis(yAxis2, qt.AlignRight)
-            series.attachAxis(yAxis2)
-            yAxis2.setRange(0, max(vals) * 1.1)
+        if axis == 'balance':
+            series.attachAxis(self.yAxisBalance)
+        elif axis == 'price':
+            series.attachAxis(self.yAxisPrice)
         else:
-            series.attachAxis(self.yAxis)
+            raise ValueError
+        if updateAxis:
+            self.adjustAxis(vals, qColor, axis=axis)
+
+    def adjustAxis(self, values, qColor, axis='balance'):
+        if axis == 'balance':
+            self.yAxisBalance.setRange(0, max(values) * 1.1)
+            self.yAxisBalance.setLabelsColor(qColor)
+        elif axis == 'price':
+            self.yAxisPrice.setRange(0, max(values) * 1.1)
+            self.yAxisPrice.setLabelsColor(qColor)
+            if max(values) > 100:
+                self.yAxisPrice.setLabelFormat("%i")
+            elif max(values) > 1:
+                self.yAxisPrice.setLabelFormat("%.2f")
+            elif max(values) > 0.001:
+                self.yAxisPrice.setLabelFormat("%.4f")
+            else:
+                self.yAxisPrice.setLabelFormat("%.6f")
+        else:
+            raise ValueError
