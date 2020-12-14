@@ -275,7 +275,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.sidebarLayout.addStretch()
 
         # %% statusbar for displaying status and progress of ongoing actions
-        self.statusbar = controls.StatusBar(self, height=80)
+        self.statusbar = controls.StatusBar(self, height=80, dataPath=self.dataPath)
         self.statusbar.setModel(self.logList)
 
         # %%  stacked Layout for content frames
