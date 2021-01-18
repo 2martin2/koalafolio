@@ -350,7 +350,7 @@ class PortfolioApp(qtwidgets.QWidget):
 
     # get TradeList
     def getTradeList(self):
-        return self.tradeList()
+        return self.tradeList
 
     # get CoinList
     def getCoinList(self):
