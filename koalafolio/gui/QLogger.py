@@ -81,9 +81,17 @@ class QLogModel(qtcore.QAbstractListModel):
 
 
 class QLogView(qtwidgets.QListView):
-    def __init__(self, *args, **kwargs):
-        super(QLogView, self).__init__(*args, **kwargs)
+    def __init__(self, parent=None, logfile=None, *args, **kwargs):
+        super(QLogView, self).__init__(parent=parent, *args, **kwargs)
+
+        self.logfile = logfile
 
     def rowsInserted(self, parent, start, end):
         super(QLogView, self).rowsInserted(parent, start, end)
         self.scrollToBottom()
+
+    def mouseDoubleClickEvent(self, a0: qtgui.QMouseEvent) -> None:
+        try:
+            os.system(self.logfile)
+        except Exception:
+            return

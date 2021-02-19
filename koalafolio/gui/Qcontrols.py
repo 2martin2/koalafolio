@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 import koalafolio.gui.QLogger as logger
 import koalafolio.gui.QSettings as settings
+import os
 
 localLogger = logger.globalLogger
 
@@ -52,14 +53,16 @@ class SubHeading(qtwidgets.QLabel):
 
 # status bar for printing logging entries
 class StatusBar(StyledFrame):
-    def __init__(self, parent, height=80, *args, **kwargs):
+    def __init__(self, parent, height=80, dataPath=None, *args, **kwargs):
         super(StatusBar, self).__init__(parent=parent, *args, **kwargs)
+
+        self.logfile = os.path.join(dataPath, 'logfile.txt')
 
         self.setObjectName('statusbar')
         self.setFrameShadow(qtwidgets.QFrame.Sunken)
         self.setFixedHeight(height)
 
-        self.statusView = logger.QLogView(self)
+        self.statusView = logger.QLogView(parent=self, logfile=self.logfile)
         self.statusView.setFrameStyle(qtwidgets.QFrame.StyledPanel)
 
         self.statusLayout = qtwidgets.QVBoxLayout(self)

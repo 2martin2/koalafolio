@@ -754,15 +754,15 @@ def modelCallback_Template1(headernames, dataFrame):
                 exchange = str(dataFrame[headernames[6]][row]).lower()
                 if exchange == 'nan':
                     exchange = ''
-            if dataFrame[headernames[1]][row].lower() == 'trade':
+            if tradeType == 'trade':
                 tempTrade_sell = core.Trade()  # sell
                 tempTrade_buy = core.Trade()  # buy
                 # get date
                 tempTrade_sell.date = date
                 tempTrade_buy.date = date
                 # get type
-                tempTrade_sell.tradeType = 'trade'
-                tempTrade_buy.tradeType = 'trade'
+                tempTrade_sell.tradeType = tradeType
+                tempTrade_buy.tradeType = tradeType
                 # get coin
                 tempTrade_sell.coin = (dataFrame[headernames[5]][row]).upper()
                 tempTrade_buy.coin = (dataFrame[headernames[3]][row]).upper()
@@ -787,21 +787,55 @@ def modelCallback_Template1(headernames, dataFrame):
             localLogger.warning('error in Converter Template1: ' + str(ex))
             skippedRows += 1
 
+        # rewards
+        try:
+            date = convertDate(dataFrame[headernames[0]][row])
+            tradeType = dataFrame[headernames[1]][row].lower()
+            if headernames[6]:
+                exchange = str(dataFrame[headernames[6]][row]).lower()
+                if exchange == 'nan':
+                    exchange = ''
+            if tradeType == 'reward':
+                tempTrade_buy = core.Trade()  # buy
+                # get date
+                tempTrade_buy.date = date
+                # get type
+                tempTrade_buy.tradeType = tradeType
+                # get coin
+                tempTrade_buy.coin = (dataFrame[headernames[3]][row]).upper()
+                # swap Coin Name
+                swapCoinName(tempTrade_buy)
+                # get amount
+                tempTrade_buy.amount = abs(dataFrame[headernames[2]][row])
+                # set exchange
+                tempTrade_buy.exchange = exchange
+                # set id
+                if not tempTrade_buy.tradeID:
+                    tempTrade_buy.generateID()
+                # add trades to tradeList
+                if not tradeList.addTrade(tempTrade_buy):
+                    skippedRows += 1
+        except Exception as ex:
+            localLogger.warning('error in Converter Template1: ' + str(ex))
+            skippedRows += 1
+
         # fees
         try:
-            if headernames[7] and str(dataFrame[headernames[7]][row]) != 'nan':  # if fee
-                if headernames[8] and str(dataFrame[headernames[8]][row]) != 'nan':  # if fee coin
-                    # use fee coin
-                    feecoin = dataFrame[headernames[8]][row]
-                else:  # no fee coin
-                    # use buy coin
-                    feecoin = tempTrade_buy.coin
-                # set coin amount
-                fee = createFee(date=date, amountStr=dataFrame[headernames[7]][row], maincoin=feecoin,
-                                subcoin=tempTrade_sell.coin,
-                                exchange=exchange)
-                fee.generateID()
-                feeList.addTrade(fee)
+            tradeType = dataFrame[headernames[1]][row].lower()
+            if tradeType == "fee":
+                if headernames[7] and str(dataFrame[headernames[7]][row]) != 'nan':  # if fee
+                    if headernames[8] and str(dataFrame[headernames[8]][row]) != 'nan':  # if fee coin
+                        # use fee coin
+                        feecoin = dataFrame[headernames[8]][row]
+                    else:  # no fee coin
+                        # use buy coin
+                        feecoin = tempTrade_buy.coin
+                    # set coin amount
+                    fee = createFee(date=date, amountStr=dataFrame[headernames[7]][row], maincoin=feecoin,
+                                    subcoin=tempTrade_sell.coin,
+                                    exchange=exchange)
+                    fee.generateID()
+                    feeList.addTrade(fee)
         except Exception as ex:  # do not skip line if error, just ignore fee
             localLogger.warning('error in Converter Template1: ' + str(ex))
 

@@ -275,7 +275,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.sidebarLayout.addStretch()
 
         # %% statusbar for displaying status and progress of ongoing actions
-        self.statusbar = controls.StatusBar(self, height=80)
+        self.statusbar = controls.StatusBar(self, height=80, dataPath=self.dataPath)
         self.statusbar.setModel(self.logList)
 
         # %%  stacked Layout for content frames
@@ -350,7 +350,7 @@ class PortfolioApp(qtwidgets.QWidget):
 
     # get TradeList
     def getTradeList(self):
-        return self.tradeList()
+        return self.tradeList
 
     # get CoinList
     def getCoinList(self):
@@ -362,9 +362,11 @@ def main():
     coreSettings.mySettings = settings.mySettings
     app = qtwidgets.QApplication(sys.argv)
     try:
+        os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         app_icon = qtgui.QIcon()
         app_icon.addFile(os.path.join(application_path, 'KoalaIcon.png'), qtcore.QSize(256, 256))
         app.setWindowIcon(app_icon)
+        app.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
         app.setApplicationName('koalafolio')
     except Exception as ex:
         print(str(ex))
