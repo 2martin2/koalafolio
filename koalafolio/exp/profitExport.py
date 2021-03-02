@@ -103,18 +103,18 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                                 ws.append(
                                     ['', '', '', buy.date, buy.amount, buy.getPrice()[currency],
                                      buy.value[currency], '', sell.date, sell.amount, sell.getPrice()[currency],
-                                     sell.value[currency], '', profit[currency], taxProfit])
+                                     sell.value[currency], '', round(profit[currency], 3), round(taxProfit, 3)])
                         else:
                             taxProfit = profit[currency]
                             ws.append(['', '', '', buy.date, buy.amount, buy.getPrice()[currency],
                                        buy.value[currency], '', sell.date, sell.amount, sell.getPrice()[currency],
-                                       sell.value[currency], '', profit[currency], taxProfit])
+                                       sell.value[currency], '', round(profit[currency], 3), round(taxProfit, 3)])
 
                 profitSumRows.append(ws.max_row + 2)
                 profitSumColumns.append(15)
                 #                ws['M' + str(profitSumRows[-1])] = 'Summe'
-                ws[profitSumColumn + str(profitSumRows[-1])] = '=SUM(' + profitSumColumn + str(
-                    firstProfitRow) + ':' + profitSumColumn + str(profitSumRows[-1] - 2) + ')'
+                ws[profitSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + profitSumColumn + str(
+                    firstProfitRow) + ':' + profitSumColumn + str(profitSumRows[-1] - 2) + '),2)'
 
                 # set width of date columns
                 ws.column_dimensions['D'].width = 11
@@ -193,13 +193,13 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
             for fee in coin.getFees():
                 # check date of sell
                 if fee.date.date() >= minDate and fee.date.date() <= maxDate:
-                    ws.append(['', '', '', fee.date, fee.amount, '', fee.value[currency], ''])
+                    ws.append(['', '', '', fee.date, fee.amount, '', round(fee.value[currency], 3), ''])
 
             profitSumRows.append(ws.max_row + 2)
             profitSumColumns.append(7)
             #                ws['M' + str(profitSumRows[-1])] = 'Summe'
-            ws[feeSumColumn + str(profitSumRows[-1])] = '=SUM(' + feeSumColumn + str(
-                firstProfitRow) + ':' + feeSumColumn + str(profitSumRows[-1] - 2) + ')'
+            ws[feeSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + feeSumColumn + str(
+                firstProfitRow) + ':' + feeSumColumn + str(profitSumRows[-1] - 2) + '),2)'
 
             # set width of date columns
             ws.column_dimensions['D'].width = 11
