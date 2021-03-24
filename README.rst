@@ -2,6 +2,8 @@ pycryptoportfolio
 ******************
 portfolio for cryptocoins with profit export for tax
 
+.. image:: koalaExample.png
+
 Installation with PipEnv
 -------------------------
    
