@@ -15,6 +15,7 @@ import koalafolio.PcpCore.logger as logger
 
 dictRegex = re.compile(r'^\{ *(\'.+\' *\: *\'.+\' *\, *)* *\'.+\' *\: *\'.+\'\ *}$')
 
+VERSION = '0.10.3'
 
 class Settings(configparser.ConfigParser):
     def __init__(self, *args, **kwargs):
@@ -35,8 +36,8 @@ class Settings(configparser.ConfigParser):
         # set default settings
         # general settings
         self['general'] = {}
-        self['general']['version'] = '0.10.2'
-        self['general']['initversion'] = '0.10.2'
+        self['general']['version'] = VERSION
+        self['general']['initversion'] = VERSION
         self['general']['timeModeDaywise'] = 'True'
         self['general']['priceUpdateInterval(s)'] = '100'
         self['general']['priceApiSwitch(cryptocompare/coingecko/mixed)'] = 'mixed'
@@ -76,7 +77,7 @@ class Settings(configparser.ConfigParser):
     def readSettings(self):
         try:
             self.read(self.filePath)
-            self['general']['version'] = '0.10.2'
+            self['general']['version'] = VERSION
             logger.globalLogger.info('settings loaded')
         except Exception as ex:
             logger.globalLogger.error('settings can not be loaded: ' + str(ex))
