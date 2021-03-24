@@ -360,13 +360,13 @@ class PortfolioApp(qtwidgets.QWidget):
 def main():
     coreLogger.globalLogger = logger.globalLogger
     coreSettings.mySettings = settings.mySettings
+    qtwidgets.QApplication.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
     app = qtwidgets.QApplication(sys.argv)
     try:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         app_icon = qtgui.QIcon()
         app_icon.addFile(os.path.join(application_path, 'KoalaIcon.png'), qtcore.QSize(256, 256))
         app.setWindowIcon(app_icon)
-        app.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
         app.setApplicationName('koalafolio')
     except Exception as ex:
         print(str(ex))
