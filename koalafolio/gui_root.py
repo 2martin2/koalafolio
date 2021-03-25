@@ -27,6 +27,7 @@ import koalafolio.Import.apiImport as apiImport
 from pathlib import Path
 import rotkehlchen.assets.resolver as resolver
 import rotkehlchen.constants.ethereum as ethereum
+import requests
 
 qt = qtcore.Qt
 # %% constants
@@ -66,6 +67,16 @@ class PortfolioApp(qtwidgets.QWidget):
 
         # init data
         self.initData()
+
+        # get latest version from pypi
+        package = 'koalafolio'
+        response = requests.get(f'https://pypi.org/pypi/{package}/json')
+        self.latestVersion = str(response.json()['info']['version'])
+        
+        if self.settings['general']['version'] != self.latestVersion:
+            self.logger.info('new version ' + self.latestVersion + ' available. Install with \"pip install koalafolio --upgrade\"')
+
+        # init style
         self.initStyle()
 
         # init gui
@@ -185,7 +196,12 @@ class PortfolioApp(qtwidgets.QWidget):
 
     def initStyle(self):
         self.logger.info('initializing style ...')
-        self.setWindowTitle(self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version'])
+        if self.latestVersion:
+            windowTitle = self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version'] + \
+                          ' (latest: ' + str(self.latestVersion) + ')'
+        else:
+            windowTitle = self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version']
+        self.setWindowTitle(windowTitle)
         try:
             app_icon = qtgui.QIcon()
             app_icon.addFile(os.path.join(self.appPath, 'KoalaIcon.png'), qtcore.QSize(256, 256))
