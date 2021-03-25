@@ -30,7 +30,7 @@ qt = qtcore.Qt
 
 
 # %% Trade table view
-class QTradeTableView(qtwidgets.QTableView):
+class QTradeTableView(controls.QScrollableTableView):
     viewResized = qtcore.pyqtSignal()
     viewUpdated = qtcore.pyqtSignal()
     focusInSignal = qtcore.pyqtSignal()

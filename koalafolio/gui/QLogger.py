@@ -11,6 +11,7 @@ import koalafolio.PcpCore.logger as logger
 import PyQt5.QtCore as qtcore
 import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
+import koalafolio.gui.Qcontrols as controls
 
 qt = qtcore.Qt
 
@@ -85,6 +86,7 @@ class QLogView(qtwidgets.QListView):
         super(QLogView, self).__init__(parent=parent, *args, **kwargs)
 
         self.logfile = logfile
+        self.setVerticalScrollBar(controls.MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
 
     def rowsInserted(self, parent, start, end):
         super(QLogView, self).rowsInserted(parent, start, end)
