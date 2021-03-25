@@ -21,6 +21,7 @@ import sys
 import os
 import koalafolio.PcpCore.settings as coreSettings
 import koalafolio.gui.QSettings as settings
+import koalafolio.gui.QSettingsPage as settingsPage
 import koalafolio.gui.QStyle as style
 import koalafolio.exp.QTranslate as translator
 import koalafolio.Import.apiImport as apiImport
@@ -221,7 +222,7 @@ class PortfolioApp(qtwidgets.QWidget):
     def initData(self):
         self.logger.info('initializing data ...')
         self.logList = logger.QLogModel()
-        self.settingsModel = settings.SettingsModel(self.settings)
+        self.settingsModel = settingsPage.SettingsModel(self.settings)
         self.tradeList = ttable.QTradeTableModel(self.dataPath)
         self.coinList = ptable.QPortfolioTableModel(self.dataPath)
 

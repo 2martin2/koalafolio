@@ -19,6 +19,7 @@ import koalafolio.Import.Models as models
 import os
 import re
 import koalafolio.gui.QSettings as settings
+import koalafolio.gui.QSettingsPage as settingsPage
 import datetime
 from pathlib import Path
 import koalafolio.gui.QLogger as logger
@@ -315,7 +316,7 @@ class ImportSelectPage(SubPage):
         self.fileSystemModel = qtwidgets.QFileSystemModel()
         self.fileSystemModel.setRootPath(qtcore.QDir.currentPath())
 
-        self.treeView = qtwidgets.QTreeView(self.fileFrame)
+        self.treeView = controls.QScrollableTreeView(self.fileFrame)
         self.treeView.setModel(self.fileSystemModel)
         self.treeView.setSelectionMode(qtwidgets.QAbstractItemView.ExtendedSelection)
         self.treeView.header().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
@@ -1015,7 +1016,7 @@ class SettingsPage(Page):
         self.vertLayout.addLayout(self.labelLayout)
 
         # content
-        self.settingsView = settings.SettingsTreeView(self)
+        self.settingsView = settingsPage.SettingsTreeView(self)
         self.settingsView.setModel(self.controller.settingsModel)
         self.settingsView.expandAll()
         self.settingsView.setColumnWidth(0, 350)

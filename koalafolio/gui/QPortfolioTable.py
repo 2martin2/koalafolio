@@ -26,7 +26,7 @@ qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 # %% portfolio table view
-class QPortfolioTableView(qtwidgets.QTreeView):
+class QPortfolioTableView(controls.QScrollableTreeView):
     def __init__(self, parent, *args, **kwargs):
         super(QPortfolioTableView, self).__init__(parent=parent, *args, **kwargs)
 
@@ -40,10 +40,6 @@ class QPortfolioTableView(qtwidgets.QTreeView):
         self.visibleEditorIndex = []
         self.collapsed.connect(self.collapsedCallback)
         self.expanded.connect(self.expandedCallback)
-
-        self.setVerticalScrollBar(controls.MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
-        self.verticalScrollBar().setSingleStep(1)
-        self.verticalScrollBar().setPageStep(1)
 
         self.horizontalHeader().sectionResized.connect(lambda index, oldSize, newSize: self.sectionSizeChanged(index, oldSize, newSize))
 

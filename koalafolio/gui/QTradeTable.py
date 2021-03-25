@@ -30,7 +30,7 @@ qt = qtcore.Qt
 
 
 # %% Trade table view
-class QTradeTableView(qtwidgets.QTableView):
+class QTradeTableView(controls.QScrollableTableView):
     viewResized = qtcore.pyqtSignal()
     viewUpdated = qtcore.pyqtSignal()
     focusInSignal = qtcore.pyqtSignal()
@@ -39,7 +39,6 @@ class QTradeTableView(qtwidgets.QTableView):
         super(QTradeTableView, self).__init__(parent=parent, *args, **kwargs)
 
         self.setModel(QTradeTableModel())
-        self.setVerticalScrollBar(controls.MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
         self.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Stretch)
         self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Fixed)
         self.verticalHeader().setDefaultSectionSize(30)

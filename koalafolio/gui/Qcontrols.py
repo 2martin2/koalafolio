@@ -502,6 +502,20 @@ class MinWheelScrollingScrollbar(qtwidgets.QScrollBar):
         self.setValue(self.value() - self.singleStep() * numSteps)
 
 
+class QScrollableTreeView(qtwidgets.QTreeView):
+    def __init__(self, parent, *args, **kwargs):
+        super(QScrollableTreeView, self).__init__(parent=parent, *args, **kwargs)
+
+        self.setVerticalScrollBar(MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
+
+
+class QScrollableTableView(qtwidgets.QTableView):
+    def __init__(self, parent, *args, **kwargs):
+        super(QScrollableTableView, self).__init__(parent=parent, *args, **kwargs)
+
+        self.setVerticalScrollBar(MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
+
+
 # %% functions
 def changeColorBrightness(rgb, change):
     r = int(rgb[1:3], 16)
