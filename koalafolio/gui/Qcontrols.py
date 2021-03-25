@@ -479,6 +479,29 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
         return True
 
 
+class MinWheelScrollingScrollbar(qtwidgets.QScrollBar):
+    def __init__(self, orientation, parent):
+        super(MinWheelScrollingScrollbar, self).__init__(orientation=orientation, parent=parent)
+
+    def wheelEvent(self, event: qtgui.QWheelEvent):
+        numPixels = event.pixelDelta()
+        numDegrees = event.angleDelta() / 8
+
+        if numPixels:
+            self.scrollWithPixels(numPixels)
+        elif numDegrees:
+            numSteps = numDegrees / 15
+            self.scrollWithDegrees(numSteps.y())
+
+        event.accept()
+
+    def scrollWithPixels(self, numPixels):
+        self.setValue(self.value() - numPixels)
+
+    def scrollWithDegrees(self, numSteps):
+        self.setValue(self.value() - self.singleStep() * numSteps)
+
+
 # %% functions
 def changeColorBrightness(rgb, change):
     r = int(rgb[1:3], 16)

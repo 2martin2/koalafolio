@@ -13,6 +13,7 @@ import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import PyQt5.QtGui as qtgui
 import koalafolio.PcpCore.settings as settings
+import koalafolio.gui.Qcontrols as controls
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -344,4 +345,5 @@ class SettingsTreeView(qtwidgets.QTreeView):
     def __init__(self, *args, **kwargs):
         super(SettingsTreeView, self).__init__(*args, **kwargs)
 
+        self.setVerticalScrollBar(controls.MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
         self.setItemDelegateForColumn(1, SettingsDelegate())
