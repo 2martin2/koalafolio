@@ -20,6 +20,8 @@ VERSION = '0.10.5'
 class Settings(configparser.ConfigParser):
     def __init__(self, *args, **kwargs):
         super(Settings, self).__init__(*args, **kwargs)
+
+        self.initDescriptions()
             
     def setPath(self, path):
         self.filePath = os.path.join(path, 'settings.txt')
@@ -38,31 +40,64 @@ class Settings(configparser.ConfigParser):
         self['general'] = {}
         self['general']['version'] = VERSION
         self['general']['initversion'] = VERSION
-        self['general']['timeModeDaywise'] = 'True'
-        self['general']['priceUpdateInterval(s)'] = '100'
-        self['general']['priceApiSwitch(cryptocompare/coingecko/mixed)'] = 'mixed'
+        self['general']['timemodedaywise'] = 'True'
+        self['general']['priceupdateinterval(s)'] = '100'
+        self['general']['priceapiswitch(cryptocompare/coingecko/mixed)'] = 'mixed'
         # proxy settings
         self['proxies'] = {}
         self['proxies']['http'] = ''
         self['proxies']['https'] = ''
         # import settings
         self['import'] = {}
-        self['import']['ignoreTradeIDs'] = 'False'
-        self['import']['importFileTypes'] = '(csv|txt|xlsx|xlsm|xls|json)'
+        self['import']['ignoretradeids'] = 'False'
+        self['import']['importfiletypes'] = '(csv|txt|xlsx|xlsm|xls|json)'
         # coin settings
         self['currency'] = {}
-        self['currency']['defaultReportCurrency'] = 'EUR'
-        self['currency']['defaultDisplayCurrencies'] = 'EUR,USD,BTC'
-        self['currency']['isFiat'] = 'EUR,USD,GBP,JPY,CNY,RUB,AUD,CAD,SGD,PLN,HKD,CHF,INR,BRL,KRW,NZD,ZAR'
+        self['currency']['defaultreportcurrency'] = 'EUR'
+        self['currency']['defaultdisplaycurrencies'] = 'EUR,USD,BTC'
+        self['currency']['isfiat'] = 'EUR,USD,GBP,JPY,CNY,RUB,AUD,CAD,SGD,PLN,HKD,CHF,INR,BRL,KRW,NZD,ZAR'
         self['currency']['coinswapdict'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
         self['currency']['coinswapdictcryptocompareapi'] = "{'dummy':'dummy'}"
         self['currency']['coinswapdictcoingeckoapi'] = "{'dummy':'dummy'}"
-        self['currency']['coinSwapDictCoinGeckoSymbolToId'] = "{'HOLO':'holotoken'}"
+        self['currency']['coinswapdictcoingeckosymboltoid'] = "{'HOLO':'holotoken'}"
         # tax settings
         self['tax'] = {}
         self['tax']['taxfreelimit'] = 'True'
         self['tax']['taxfreelimityears'] = '1'
-        self['tax']['exportLanguage'] = 'en'
+        self['tax']['exportlanguage'] = 'en'
+
+    def initDescriptions(self):
+        self.descriptions = {}
+        # general settings
+        self.descriptions['general'] = {}
+        self.descriptions['general']['version'] = 'current version'
+        self.descriptions['general']['initversion'] = 'first version which created this settings'
+        self.descriptions['general']['timemodedaywise'] = 'True: use avarage day prices for tax'
+        self.descriptions['general']['priceupdateinterval(s)'] = 'interval of price update in seconds'
+        self.descriptions['general']['priceapiswitch(cryptocompare/coingecko/mixed)'] = 'which api should be used for prices, mixed is recommended'
+        # proxy settings
+        self.descriptions['proxies'] = {}
+        self.descriptions['proxies']['http'] = ''
+        self.descriptions['proxies']['https'] = ''
+        # import settings
+        self.descriptions['import'] = {}
+        self.descriptions['import']['ignoretradeids'] = 'True: trade Ids are ignored during import. Trade Ids can help to prevent double import of same trade but some exchanges use the same id for subtrades/ partial execution.'
+        self.descriptions['import']['importfiletypes'] = 'file endings that shell be considered for file import'
+        # coin settings
+        self.descriptions['currency'] = {}
+        self.descriptions['currency']['defaultreportcurrency'] = 'default currency for portfolio and tax reporting'
+        self.descriptions['currency']['defaultdisplaycurrencies'] = 'display currencies for portfolio. defaultReportCurrency has to be included'
+        self.descriptions['currency']['isfiat'] = 'coin symbols that should be considered fiat money'
+        self.descriptions['currency']['coinswapdict'] = "coin symbols that should be switched during import (e.g. XBT to BTC)"
+        self.descriptions['currency']['coinswapdictcryptocompareapi'] = "swap coin symbol when loading prices from cryptocompare"
+        self.descriptions['currency']['coinswapdictcoingeckoapi'] = "swap coin symbol when loading prices from coingecko"
+        self.descriptions['currency']['coinswapdictcoingeckosymboltoid'] = "manual mapping of coin symbol to coingecko id. some coin symbols are not exclusive on coingecko"
+        # tax settings
+        self.descriptions['tax'] = {}
+        self.descriptions['tax']['taxfreelimit'] = 'enable hodl limit after that trades are tax free. (e.g. 1 year in Germany)'
+        self.descriptions['tax']['taxfreelimityears'] = 'number of years until trades are tax free. (e.g. 1 year in Germany)'
+        self.descriptions['tax']['exportlanguage'] = 'default language of tax report'
+
 
     def saveSettings(self):
         try:
@@ -94,14 +129,14 @@ class Settings(configparser.ConfigParser):
 
 # get/set methods
     def timeModeDaywise(self):
-        return self.getboolean('general', 'timeModeDaywise')
+        return self.getboolean('general', 'timemodedaywise')
 
     def priceUpdateInterval(self):
-        priceUpdateInterval = self.getfloat('general', 'priceUpdateInterval(s)')
+        priceUpdateInterval = self.getfloat('general', 'priceupdateinterval(s)')
         return 2 if priceUpdateInterval <= 2 else priceUpdateInterval
 
     def priceApiSwitch(self):
-        return self['general']['priceApiSwitch(cryptocompare/coingecko/mixed)']
+        return self['general']['priceapiswitch(cryptocompare/coingecko/mixed)']
 
     def proxies(self):
         if self['proxies']['http'] and self['proxies']['https']:
@@ -109,24 +144,24 @@ class Settings(configparser.ConfigParser):
         return {}
 
     def ignoreTradeIds(self):
-        return self.getboolean('import', 'ignoreTradeIDs')
+        return self.getboolean('import', 'ignoretradeids')
 
     def displayCurrencies(self):
-        return self['currency']['defaultDisplayCurrencies'].upper().split(',')
+        return self['currency']['defaultdisplaycurrencies'].upper().split(',')
     
     def setDisplayCurrencies(self, currencies):
-        self['currency']['defaultDisplayCurrencies'] = ','.join(currencies)
+        self['currency']['defaultdisplaycurrencies'] = ','.join(currencies)
 
     def reportCurrency(self):
         # report currency should be included in display currencies, otherwise prices are not available
-        if self['currency']['defaultReportCurrency'] in self.displayCurrencies():
-            return self['currency']['defaultReportCurrency']
-        logger.globalLogger.warning('defaultReportCurrency is not part of defaultDisplayCurrencies. First displayCurrency will be used for reports.')
+        if self['currency']['defaultreportcurrency'] in self.displayCurrencies():
+            return self['currency']['defaultreportcurrency']
+        logger.globalLogger.warning('defaultreportcurrency is not part of defaultdisplaycurrencies. First displayCurrency will be used for reports.')
         return self.displayCurrencies()[0]
 
     def setReportCurrency(self, cur):
         if cur in self.displayCurrencies():
-            self['currency']['defaultReportCurrency'] = cur
+            self['currency']['defaultreportcurrency'] = cur
 
     def fiatList(self):
         return self['currency']['isFiat'].split(',')
@@ -166,12 +201,12 @@ class Settings(configparser.ConfigParser):
 
     def coinSwapDictCoinGeckoSymbolToId(self):
         try:
-            if dictRegex.match(self['currency']['coinSwapDictCoinGeckoSymbolToId']):
-                return ast.literal_eval(self['currency']['coinSwapDictCoinGeckoSymbolToId'])
+            if dictRegex.match(self['currency']['coinswapdictcoingeckosymboltoid']):
+                return ast.literal_eval(self['currency']['coinswapdictcoingeckosymboltoid'])
             else:
-                raise SyntaxError('coinSwapDictCoinGeckoSymbolToId in settings.txt has invalid Syntax')
+                raise SyntaxError('coinswapdictcoingeckosymboltoid in settings.txt has invalid Syntax')
         except Exception as ex:
-            logger.globalLogger.warning('error while parsing coinSwapDictCoinGeckoSymbolToId from settings: ' + str(ex))
+            logger.globalLogger.warning('error while parsing coinswapdictcoingeckosymboltoid from settings: ' + str(ex))
         return dict()
 
     def taxSettings(self):

@@ -34,7 +34,7 @@ class WebApiInterface(qtcore.QObject):
     def loadPrices(self, coins: list):
         print('loading new prices')
         if coins:
-            if settings.mySettings.priceApiSwitch() == 'coinGecko':
+            if settings.mySettings.priceApiSwitch() == 'coingecko':
                 prices = coinGecko.getCoinPrices(coins)
             else:
                 prices = ccapi.getCoinPrices(coins)
@@ -43,7 +43,7 @@ class WebApiInterface(qtcore.QObject):
 
     def loadCoinIcons(self, coins: list):
         if coins:
-            if settings.mySettings.priceApiSwitch() == 'coinGecko':
+            if settings.mySettings.priceApiSwitch() == 'coingecko':
                 icons = coinGecko.getIcons(coins)
             else:
                 icons = ccapi.getIcons(coins)
@@ -75,7 +75,7 @@ class WebApiInterface(qtcore.QObject):
             trade = self.tradeBuffer.trades.pop()
             try:
                 if not trade.valueLoaded:
-                    if settings.mySettings.priceApiSwitch() == 'coinGecko':
+                    if settings.mySettings.priceApiSwitch() == 'coingecko':
                         histPrices[trade.tradeID] = coinGecko.getHistoricalPrice(trade)
                     else:
                         histPrices[trade.tradeID] = ccapi.getHistoricalPrice(trade)
@@ -91,7 +91,7 @@ class WebApiInterface(qtcore.QObject):
             self.historicalPricesLoaded.emit(histPrices, len(self.tradeBuffer))
 
     def loadcoinPriceCharts(self, coins: list, coinList: core.CoinList):
-        if settings.mySettings.getGuiSetting(key='loadPriceHistoryChart'):
+        if settings.mySettings.getGuiSetting(key='loadpricehistorychart'):
             if coins:
                 coinPriceCharts = {}
                 for coin in coins:

@@ -468,7 +468,7 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
             if ix.isValid():
                 text = str(self.sourceModel().data(ix))
                 try:
-                    if settings.mySettings.getGuiSettings()['filterUseRegex']:
+                    if settings.mySettings.getGuiSettings()['filteruseregex']:
                         if not re.match('.*' + regex + '.*', text, re.IGNORECASE):
                             return False
                     else:  # no regex

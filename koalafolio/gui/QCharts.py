@@ -269,7 +269,7 @@ class LabeledChartView(qtchart.QChartView):
                 label.setVisible(False)
 
     def setLabelToolTip(self, strings):
-        if settings.mySettings.getGuiSetting('toolTipsEnabled'):
+        if settings.mySettings.getGuiSetting('tooltipsenabled'):
             for label, string in zip(self.labels, strings):
                 label.setToolTip(string)
 

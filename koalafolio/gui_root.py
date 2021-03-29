@@ -198,10 +198,10 @@ class PortfolioApp(qtwidgets.QWidget):
     def initStyle(self):
         self.logger.info('initializing style ...')
         if self.latestVersion:
-            windowTitle = self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version'] + \
+            windowTitle = self.settings['window']['windowtitle'] + ' ' + self.settings['general']['version'] + \
                           ' (latest: ' + str(self.latestVersion) + ')'
         else:
-            windowTitle = self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version']
+            windowTitle = self.settings['window']['windowtitle'] + ' ' + self.settings['general']['version']
         self.setWindowTitle(windowTitle)
         try:
             app_icon = qtgui.QIcon()
