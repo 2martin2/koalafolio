@@ -62,10 +62,16 @@ class SettingsModel(qtcore.QAbstractItemModel):
         if parent.isValid():
             parentkey = self.getItemFromIndex(parent).key
             subsettings = self.settings[parentkey]
-            key = list(subsettings)[row]
+            try:
+                key = list(subsettings)[row]
+            except IndexError:
+                key = ""
         else:
             parentkey = ""
-            key = self.sections[row]
+            try:
+                key = self.sections[row]
+            except IndexError:
+                key = ""
         newItem = SettingsModelItem(key, parentkey, parent)
         itemId = -1
         itemFound = False
@@ -116,10 +122,12 @@ class SettingsModel(qtcore.QAbstractItemModel):
             self.displayCurrenciesChanged.emit(self.settings.displayCurrencies())
 
     def resetDefault(self):
+        self.beginResetModel()
         oldCur = self.settings.displayCurrencies()
         self.settings.resetDefault()
         if oldCur != self.settings.displayCurrencies():
             self.displayCurrenciesChanged.emit(self.settings.displayCurrencies())
+        self.endResetModel()
 
     def restoreSettings(self):
         oldCur = self.settings.displayCurrencies()

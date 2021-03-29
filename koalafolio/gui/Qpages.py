@@ -1050,6 +1050,7 @@ class SettingsPage(Page):
 
     def resetDefaultSettings(self):
         self.controller.settingsModel.resetDefault()
+        self.settingsView.expandAll()
         self.controller.reinit()
 
     def reloadSettings(self):
