@@ -54,6 +54,18 @@ trade import
    - poloniex
    - kraken
 
+optional arguments
+_____________________
+  -h, --help            show this help message and exit
+  -d DATADIR, --datadir DATADIR
+                        directory where user data should be stored. make sure
+                        it is a valid and writable dir
+  -u USERNAME, --username USERNAME
+                        username can be used to switch between different
+                        portfolios. username will be added to Datafolder
+                        (Data_username), so every user has its own settings,
+                        trades, styles and so on
+
 
 portfolio
 ----------
