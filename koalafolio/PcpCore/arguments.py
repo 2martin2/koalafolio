@@ -7,6 +7,7 @@ Created on 31.03.2021
 
 import argparse
 import os
+import koalafolio.PcpCore.settings as settings
 
 
 def parse_arguments():
@@ -14,6 +15,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser(prog="koalafolio",
                                      description=" visit https://github.com/2martin2/koalafolio for more information")
     # add arguments to the parser
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s ' + str(settings.VERSION),
+                        help="show version of koalafolio")
     parser.add_argument('-d', '--datadir', type=dir_path, required=False,
                         help="directory where user data should be stored. make sure it is a valid and writable dir")
     parser.add_argument('-u', '--username', type=str, required=False,
