@@ -57,6 +57,7 @@ trade import
 optional arguments
 _____________________
   -h, --help            show this help message and exit
+  -v, --version         show version of koalafolio
   -d DATADIR, --datadir DATADIR
                         directory where user data should be stored. make sure
                         it is a valid and writable dir
