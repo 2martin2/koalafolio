@@ -11,7 +11,7 @@ import os
 
 def parse_arguments():
     # create parser
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog="koalafolio")
     # add arguments to the parser
     parser.add_argument('-d', '--datadir', type=dir_path, required=False,
                         help="directory where user data should be stored. make sure it is a valid and writable dir")
