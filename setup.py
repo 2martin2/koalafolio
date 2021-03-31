@@ -5,7 +5,7 @@ with open('README.rst', encoding="utf-8") as f:
 
 setuptools.setup(
     name='koalafolio',
-    version='0.10.5',
+    version='0.10.6',
     description='portfolio app for crypto trading and tax reporting',
     long_description=readme,
     long_description_content_type='text/x-rst',
