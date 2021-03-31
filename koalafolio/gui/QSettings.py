@@ -20,6 +20,7 @@ class QSettings(settings.Settings):
     def __init__(self, *args, **kwargs):
         super(QSettings, self).__init__(*args, **kwargs)
 
+
     def initSettings(self):
         # set default settings
 
@@ -28,36 +29,74 @@ class QSettings(settings.Settings):
         self['window']['windowsize'] = '1400x600'
         self['window']['windowpos'] = '200,200'
         self['window']['windowstate'] = '0'
-        self['window']['windowTitle'] = 'KoalaFolio'
+        self['window']['windowtitle'] = 'KoalaFolio'
         self['window']['windowstyle'] = 'Fusion'
         self['window']['stylesheetname'] = 'defaultStyle'
         # color settings
         self['color'] = {}
-        self['color']['BACKGROUND'] = '42,46,51'
-        self['color']['TEXT_NORMAL'] = '255,255,255'
-        self['color']['TEXT_HIGHLIGHTED'] = '42,46,51'
-        self['color']['PRIMARY'] = '75,180,255'
-        self['color']['SECONDARY'] = '255,105,75'
-        self['color']['TERTIARY'] = '75,255,240'
-        self['color']['NEGATIV'] = '255,90,75'
-        self['color']['POSITIV'] = '90,255,75'
-        self['color']['NEUTRAL'] = '200,200,200'
+        self['color']['background'] = '42,46,51'
+        self['color']['text_normal'] = '255,255,255'
+        self['color']['text_highlighted'] = '42,46,51'
+        self['color']['primary'] = '75,180,255'
+        self['color']['secondary'] = '255,105,75'
+        self['color']['tertiary'] = '75,255,240'
+        self['color']['negativ'] = '255,90,75'
+        self['color']['positiv'] = '90,255,75'
+        self['color']['neutral'] = '200,200,200'
         # gui settings
         self['gui'] = {}
-        self['gui']['filterUseRegex'] = 'True'
-        self['gui']['portfolioFilterRow'] = '3'
-        self['gui']['tradeFilterRow'] = '2'
-        self['gui']['portfolioFilterDir'] = (str(qt.DescendingOrder))
-        self['gui']['tradeFilterDir'] = str(qt.AscendingOrder)
-        self['gui']['toolTipsEnabled'] = 'True'
-        self['gui']['performanceChartIndex'] = '0'
-        self['gui']['tradesEditLock'] = 'True'
-        self['gui']['hideLowBalanceCoins'] = 'True'
-        self['gui']['hideLowValueCoins'] = 'False'
-        self['gui']['lowValueFilterLimit(reportCurrency)'] = '50'
-        self['gui']['loadPriceHistoryChart'] = 'False'
+        self['gui']['filteruseregex'] = 'True'
+        self['gui']['portfolio_sort_row'] = '3'
+        self['gui']['trade_sort_row'] = '2'
+        self['gui']['portfolio_sort_dir'] = (str(qt.DescendingOrder))
+        self['gui']['trade_sort_dir'] = str(qt.AscendingOrder)
+        self['gui']['tooltipsenabled'] = 'True'
+        self['gui']['performancechartindex'] = '0'
+        self['gui']['tradeseditlock'] = 'True'
+        self['gui']['hidelowbalancecoins'] = 'True'
+        self['gui']['hidelowvaluecoins'] = 'False'
+        self['gui']['lowvaluefilterlimit(reportcurrency)'] = '50'
+        self['gui']['loadpricehistorychart'] = 'False'
 
         super(QSettings, self).initSettings()
+
+    def initDescriptions(self):
+
+        super(QSettings, self).initDescriptions()
+
+        # window settings
+        self.descriptions['window'] = {}
+        self.descriptions['window']['windowsize'] = 'init window size'
+        self.descriptions['window']['windowpos'] = 'init window pos'
+        self.descriptions['window']['windowstate'] = '0: normal; 1: minimized; 2: maximized; fullscreen;'
+        self.descriptions['window']['windowtitle'] = 'title which is displayed in title bar'
+        self.descriptions['window']['windowstyle'] = 'qt style, see https://doc.qt.io/qt-5/qtquickcontrols2-styles.html'
+        self.descriptions['window']['stylesheetname'] = 'name of style sheet in koalafolio\Styles that should be used. copy and rename defaultStyle.qss to create alternative styles'
+        # color settings
+        self.descriptions['color'] = {}
+        self.descriptions['color']['background'] = 'background color'
+        self.descriptions['color']['text_normal'] = 'text color'
+        self.descriptions['color']['text_highlighted'] = 'highlighted text'
+        self.descriptions['color']['primary'] = 'primary style color'
+        self.descriptions['color']['secondary'] = 'secondary style color'
+        self.descriptions['color']['tertiary'] = 'tertiary style color'
+        self.descriptions['color']['negativ'] = 'color for negative values'
+        self.descriptions['color']['positiv'] = 'color for positive values'
+        self.descriptions['color']['neutral'] = 'color for neutral values'
+        # gui settings
+        self.descriptions['gui'] = {}
+        self.descriptions['gui']['filteruseregex'] = 'True: use regex in filter boxes'
+        self.descriptions['gui']['portfolio_sort_row'] = 'last sorted row of portfolio table'
+        self.descriptions['gui']['trade_sort_row'] = 'last sorted row of trade table'
+        self.descriptions['gui']['portfolio_sort_dir'] = 'sort direction of portfolio table'
+        self.descriptions['gui']['trade_sort_dir'] = 'sort direction of trade table'
+        self.descriptions['gui']['tooltipsenabled'] = 'True: enable tool tips'
+        self.descriptions['gui']['performancechartindex'] = '0: crypto performance; 1: fiat performance'
+        self.descriptions['gui']['tradeseditlock'] = 'True: lock editing of trades in trade table'
+        self.descriptions['gui']['hideLowbalancecoins'] = 'True: coins with low or negative balance will be excluded from portfolio table'
+        self.descriptions['gui']['hidelowvaluecoins'] = 'True: coins with low fiat value will be excluded from portfolio'
+        self.descriptions['gui']['lowValuefilterlimit(reportcurrency)'] = 'fiat value limit to hide coins'
+        self.descriptions['gui']['loadpricehistorychart'] = 'True: historical prices will be shown in coin buy chart. Can cause high api load.'
 
     def getWindowProperties(self):
         windowProperties = {}
@@ -102,7 +141,7 @@ class QSettings(settings.Settings):
         for key in self['color']:
             if key == 'default':
                 continue
-            if key == 'TEXT_NORMAL':
+            if key == 'text_normal':
                 colorDict[key.upper()] = convertColor(self['color'][key], 0, 0, 0)
                 continue
             colorDict[key.upper()] = convertColor(self['color'][key], 255, 255, 255)
@@ -123,53 +162,53 @@ class QSettings(settings.Settings):
     def getGuiSettings(self):
         gui = {}
         try:
-            gui['filterUseRegex'] = self.getboolean('gui', 'filterUseRegex')
+            gui['filteruseregex'] = self.getboolean('gui', 'filteruseregex')
         except ValueError:
-            gui['filterUseRegex'] = True
+            gui['filteruseregex'] = True
         try:
-            gui['portfolioFilterRow'] = self.getint('gui', 'portfolioFilterRow')
+            gui['portfolio_sort_row'] = self.getint('gui', 'portfolio_sort_row')
         except ValueError:
-            gui['portfolioFilterRow'] = 3
+            gui['portfolio_sort_row'] = 3
         try:
-            gui['tradeFilterRow'] = self.getint('gui', 'tradeFilterRow')
+            gui['trade_sort_row'] = self.getint('gui', 'trade_sort_row')
         except ValueError:
-            gui['tradeFilterRow'] = 2
+            gui['trade_sort_row'] = 2
         try:
-            gui['portfolioFilterDir'] = self.getint('gui', 'portfolioFilterDir')
+            gui['portfolio_sort_dir'] = self.getint('gui', 'portfolio_sort_dir')
         except ValueError:
-            gui['portfolioFilterDir'] = qt.AscendingOrder
+            gui['portfolio_sort_dir'] = qt.AscendingOrder
         try:
-            gui['tradeFilterDir'] = self.getint('gui', 'tradeFilterDir')
+            gui['trade_sort_dir'] = self.getint('gui', 'trade_sort_dir')
         except ValueError:
-            gui['tradeFilterDir'] = qt.AscendingOrder
+            gui['trade_sort_dir'] = qt.AscendingOrder
         try:
-            gui['toolTipsEnabled'] = self.getboolean('gui', 'toolTipsEnabled')
+            gui['tooltipsenabled'] = self.getboolean('gui', 'tooltipsenabled')
         except ValueError:
-            gui['toolTipsEnabled'] = True
+            gui['tooltipsenabled'] = True
         try:
-            gui['performanceChartIndex'] = self.getint('gui', 'performanceChartIndex')
+            gui['performancechartindex'] = self.getint('gui', 'performancechartindex')
         except ValueError:
-            gui['performanceChartIndex'] = 0
+            gui['performancechartindex'] = 0
         try:
-            gui['tradesEditLock'] = self.getboolean('gui', 'tradesEditLock')
+            gui['tradeseditlock'] = self.getboolean('gui', 'tradeseditlock')
         except ValueError:
-            gui['tradesEditLock'] = True
+            gui['tradeseditlock'] = True
         try:
-            gui['hideLowBalanceCoins'] = self.getboolean('gui', 'hideLowBalanceCoins')
+            gui['hidelowbalancecoins'] = self.getboolean('gui', 'hidelowbalancecoins')
         except ValueError:
-            gui['hideLowBalanceCoins'] = True
+            gui['hidelowbalancecoins'] = True
         try:
-            gui['hideLowValueCoins'] = self.getboolean('gui', 'hideLowValueCoins')
+            gui['hidelowvaluecoins'] = self.getboolean('gui', 'hidelowvaluecoins')
         except ValueError:
-            gui['hideLowValueCoins'] = False
+            gui['hidelowvaluecoins'] = False
         try:
-            gui['lowValueFilterLimit(reportCurrency)'] = self.getfloat('gui', 'lowValueFilterLimit(reportCurrency)')
+            gui['lowvaluefilterlimit(reportcurrency)'] = self.getfloat('gui', 'lowvaluefilterlimit(reportcurrency)')
         except ValueError:
-            gui['lowValueFilterLimit(reportCurrency)'] = 50
+            gui['lowvaluefilterlimit(reportcurrency)'] = 50
         try:
-            gui['loadPriceHistoryChart'] = self.getboolean('gui', 'loadPriceHistoryChart')
+            gui['loadpricehistorychart'] = self.getboolean('gui', 'loadpricehistorychart')
         except ValueError:
-            gui['loadPriceHistoryChart'] = False
+            gui['loadpricehistorychart'] = False
         return gui
 
     def getGuiSetting(self, key):

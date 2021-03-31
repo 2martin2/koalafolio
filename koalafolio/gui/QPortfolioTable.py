@@ -417,15 +417,15 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
         return index1.data() < index2.data()
 
     def filterAcceptsRow(self, source_row, source_parent):
-        if settings.mySettings.getGuiSetting('hideLowBalanceCoins'):
+        if settings.mySettings.getGuiSetting('hidelowbalancecoins'):
             index = self.sourceModel().index(source_row, 1, source_parent)
             data = self.sourceModel().data(index)
             if data.balance <= 0:
                 return False
-        if settings.mySettings.getGuiSetting('hideLowValueCoins'):
+        if settings.mySettings.getGuiSetting('hidelowvaluecoins'):
             index = self.sourceModel().index(source_row, 1, source_parent)
             data = self.sourceModel().data(index)
-            if data.getCurrentValue()[settings.mySettings.reportCurrency()] <= settings.mySettings.getGuiSetting('lowValueFilterLimit(reportCurrency)'):
+            if data.getCurrentValue()[settings.mySettings.reportCurrency()] <= settings.mySettings.getGuiSetting('lowvaluefilterlimit(reportcurrency)'):
                 return False
         return True
 
@@ -805,7 +805,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.controller.endRefresh.connect(self.perfChartCont.setButtonStyle)
         self.perfChartCont.addChart(self.currentValueChart)
         self.perfChartCont.addChart(self.currentFiatValueChart)
-        self.perfChartCont.setChartIndex(settings.mySettings.getGuiSetting('performanceChartIndex'))
+        self.perfChartCont.setChartIndex(settings.mySettings.getGuiSetting('performancechartindex'))
         self.horzLayout.addWidget(self.perfChartCont)
 
         # table controls

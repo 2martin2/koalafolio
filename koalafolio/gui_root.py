@@ -16,6 +16,7 @@ import koalafolio.gui.QPortfolioTable as ptable
 import koalafolio.gui.QTradeTable as ttable
 import koalafolio.gui.QThreads as threads
 import koalafolio.PcpCore.logger as coreLogger
+import koalafolio.PcpCore.arguments as arguments
 import koalafolio.gui.QLogger as logger
 import sys
 import os
@@ -29,6 +30,8 @@ from pathlib import Path
 import rotkehlchen.assets.resolver as resolver
 import rotkehlchen.constants.ethereum as ethereum
 import requests
+
+import argparse
 
 qt = qtcore.Qt
 # %% constants
@@ -47,7 +50,6 @@ else:
         application_path = os.getcwd()
         running_mode = 'Interactive'
 
-
 # %% classes
 class PortfolioApp(qtwidgets.QWidget):
     PORTFOLIOPAGEINDEX = 0
@@ -58,8 +60,11 @@ class PortfolioApp(qtwidgets.QWidget):
     startRefresh = qtcore.pyqtSignal()
     endRefresh = qtcore.pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, userDataPath = "", username=""):
         super(PortfolioApp, self).__init__(parent=parent)
+
+        self.userDataPath = userDataPath
+        self.username = username
 
         self.setObjectName("MainWindow")
 
@@ -125,55 +130,81 @@ class PortfolioApp(qtwidgets.QWidget):
         # handle paths
         self.appPath = application_path
 
-        # check access to app folder (does not work on windows)
-        if os.access(self.appPath, os.X_OK):
-            self.userDataPath = application_path
+        if self.username:
+            dataFolderName = "Data_" + str(self.username)
         else:
-            print('user data can not be saved in koala dir: ' + str(self.appPath))
-            self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
-                                                qtcore.QStandardPaths.AppDataLocation))
-            print('user data will be saved in: ' + str(self.userDataPath))
-            if not os.path.isdir(self.userDataPath):
-                try:
-                    os.mkdir(self.userDataPath)
-                except Exception as ex:
-                    print('error creating user data folder: ' + str(ex))
-                    # todo: critical error should be handled somehow
+            dataFolderName = "Data"
 
-        self.dataPath = os.path.join(self.userDataPath, 'Data')
-
-        # check DataFolder
-        try:
-            os.stat(self.dataPath)
-            self.logger = logger.globalLogger.setPath(self.dataPath)  # test logfile
-        except:  # folder not found/ not writable
-            try:  # try to create Data folder in app path
-                os.mkdir(self.dataPath)
+        # check if valid userDataPath has been provided as argument
+        if self.userDataPath and os.path.isdir(self.userDataPath):
+            # check access to data folder (does not work on windows)
+            if not os.access(self.userDataPath, os.X_OK):
+                print('provided datadir is not writable')
+                sys.exit(0)
+            # try to write to userDataPath
+            self.dataPath = os.path.join(self.userDataPath, dataFolderName)
+            try:
+                os.stat(self.userDataPath)
                 self.logger = logger.globalLogger.setPath(self.dataPath)
-            except:  # creation of data folder not possible
-                # create data folder in system appDataPath
+            except Exception:
+                # try to create userDataPath
+                try:
+                    os.mkdir(self.dataPath)
+                    self.logger = logger.globalLogger.setPath(self.dataPath)
+                except Exception as ex:
+                    print('provided datadir is not valid: ' + str(ex))
+                    sys.exit(0)
+        else:  # no datadir provided, try to find writable location
+            # check access to app folder (does not work on windows)
+            if os.access(self.appPath, os.X_OK):
+                self.userDataPath = self.appPath
+            else:
                 print('user data can not be saved in koala dir: ' + str(self.appPath))
                 self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
                                                     qtcore.QStandardPaths.AppDataLocation))
                 print('user data will be saved in: ' + str(self.userDataPath))
-                self.dataPath = os.path.join(self.userDataPath, 'Data')
-                try:
-                    os.stat(self.dataPath)
-                    self.logger = logger.globalLogger.setPath(self.dataPath)
-                except:  # folder not found/ not writable
-                    try:  # try to create Data folder in app path (could be skipped in case of PermissionError)
-                        if not os.path.isdir(self.userDataPath):
-                            os.mkdir(self.userDataPath)
-                        os.mkdir(self.dataPath)
-                        self.logger = logger.globalLogger.setPath(self.dataPath)
+                if not os.path.isdir(self.userDataPath):
+                    try:
+                        os.mkdir(self.userDataPath)
                     except Exception as ex:
-                        print('creating data folder failed; changes will not be saved! ' + str(ex))
-                        # todo: critical error; should be handled somehow
-        # create and read Settings
-        # self.logger = logger.globalLogger.setPath(self.dataPath)
+                        print('error creating user data folder: ' + str(ex))
+                        sys.exit(0)
+
+            self.dataPath = os.path.join(self.userDataPath, dataFolderName)
+
+            # check DataFolder
+            try:
+                os.stat(self.dataPath)
+                self.logger = logger.globalLogger.setPath(self.dataPath)  # test logfile
+            except:  # folder not found/ not writable
+                try:  # try to create Data folder in app path
+                    os.mkdir(self.dataPath)
+                    self.logger = logger.globalLogger.setPath(self.dataPath)
+                except:  # creation of data folder not possible
+                    # create data folder in system appDataPath
+                    print('user data can not be saved in dir: ' + str(self.appPath))
+                    self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
+                                                        qtcore.QStandardPaths.AppDataLocation))
+                    print('user data will be saved in: ' + str(self.userDataPath))
+                    self.dataPath = os.path.join(self.userDataPath, dataFolderName)
+                    try:
+                        os.stat(self.dataPath)
+                        self.logger = logger.globalLogger.setPath(self.dataPath)
+                    except:  # folder not found/ not writable
+                        try:  # try to create Data folder in app path (could be skipped in case of PermissionError)
+                            if not os.path.isdir(self.userDataPath):
+                                os.mkdir(self.userDataPath)
+                            os.mkdir(self.dataPath)
+                            self.logger = logger.globalLogger.setPath(self.dataPath)
+                        except Exception as ex:
+                            print('creating data folder failed: ' + str(ex))
+                            sys.exit(0)
+
+        # valid data path, create user data
+        #self.logger = logger.globalLogger.setPath(self.dataPath)
         self.settings = settings.mySettings.setPath(self.dataPath)
         self.styleSheetHandler = style.StyleSheetHandler(self)
-        self.styleSheetHandler.setPath(self.userDataPath)
+        self.styleSheetHandler.setPath(self.dataPath)
         self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
         style.myStyle = self.styleSheetHandler
         self.apiDatabase = apiImport.ApiDatabase(path=self.dataPath)
@@ -197,11 +228,13 @@ class PortfolioApp(qtwidgets.QWidget):
 
     def initStyle(self):
         self.logger.info('initializing style ...')
+        windowTitle = self.settings['window']['windowtitle']
+        if self.username:
+            windowTitle += ' ' + str(self.username)
         if self.latestVersion:
-            windowTitle = self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version'] + \
-                          ' (latest: ' + str(self.latestVersion) + ')'
+            windowTitle += ' ' + self.settings['general']['version'] + ' (latest: ' + str(self.latestVersion) + ')'
         else:
-            windowTitle = self.settings['window']['windowTitle'] + ' ' + self.settings['general']['version']
+            windowTitle += ' ' + self.settings['general']['version']
         self.setWindowTitle(windowTitle)
         try:
             app_icon = qtgui.QIcon()
@@ -375,6 +408,7 @@ class PortfolioApp(qtwidgets.QWidget):
 
 
 def main():
+    args = arguments.parse_arguments()
     coreLogger.globalLogger = logger.globalLogger
     coreSettings.mySettings = settings.mySettings
     qtwidgets.QApplication.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
@@ -387,8 +421,7 @@ def main():
         app.setApplicationName('koalafolio')
     except Exception as ex:
         print(str(ex))
-    #    app.setStyle(qtwidgets.QStyleFactory.create('Fusion'))
-    window = PortfolioApp()
+    window = PortfolioApp(userDataPath=args.datadir, username=args.username)
 
     sys.exit(app.exec_())
 

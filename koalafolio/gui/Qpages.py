@@ -81,7 +81,7 @@ class PortfolioPage(Page):
         self.coinProxyModel.setSourceModel(self.controller.coinList)
         self.coinTableView.setModel(self.coinProxyModel)
         guiSettings = settings.mySettings.getGuiSettings()
-        self.coinTableView.sortByColumn(guiSettings['portfolioFilterRow'], guiSettings['portfolioFilterDir'])
+        self.coinTableView.sortByColumn(guiSettings['portfolio_sort_row'], guiSettings['portfolio_sort_dir'])
 
         self.coinTableView.show()
         self.controller.coinList.triggerViewReset.connect(self.createNewView)
@@ -102,9 +102,9 @@ class PortfolioPage(Page):
 
     def getGuiProps(self):
         gui = {}
-        gui['portfolioFilterRow'] = str(self.coinProxyModel.sortedRow)
-        gui['portfolioFilterDir'] = str(self.coinProxyModel.sortedDir)
-        gui['performanceChartIndex'] = self.coinDataFrame.perfChartCont.chartIndex
+        gui['portfolio_sort_row'] = str(self.coinProxyModel.sortedRow)
+        gui['portfolio_sort_dir'] = str(self.coinProxyModel.sortedDir)
+        gui['performancechartindex'] = self.coinDataFrame.perfChartCont.chartIndex
         return gui
 
     def createNewView(self):
@@ -117,7 +117,7 @@ class PortfolioPage(Page):
         self.coinTableView = ptable.QPortfolioTableView(self)
         self.coinTableView.setModel(self.coinProxyModel)
         guiSettings = settings.mySettings.getGuiSettings()
-        self.coinTableView.sortByColumn(guiSettings['portfolioFilterRow'], guiSettings['portfolioFilterDir'])
+        self.coinTableView.sortByColumn(guiSettings['portfolio_sort_row'], guiSettings['portfolio_sort_dir'])
 
         self.coinTableView.show()
 
@@ -144,7 +144,7 @@ class TradesPage(Page):
         self.tradeTableWidget = controls.QFilterTableView(self, self.tradeTableView)
         self.tradeTableWidget.setModel(self.controller.tradeList)
         gui = settings.mySettings.getGuiSettings()
-        self.tradeTableView.sortByColumn(gui['tradeFilterRow'], gui['tradeFilterDir'])
+        self.tradeTableView.sortByColumn(gui['trade_sort_row'], gui['trade_sort_dir'])
 
 
         # controls
@@ -179,7 +179,7 @@ class TradesPage(Page):
         # refresh page
 
     def refresh(self):
-        self.controller.tradeList.enableEditMode(not settings.mySettings.getGuiSetting('tradesEditLock'))
+        self.controller.tradeList.enableEditMode(not settings.mySettings.getGuiSetting('tradeseditlock'))
 
     def undoRemoveAddTrades(self):
         self.undoButton.clicked.disconnect(self.undoRemoveAddTrades)
@@ -205,8 +205,8 @@ class TradesPage(Page):
 
     def getGuiProps(self):
         gui = {}
-        gui['tradeFilterRow'] = str(self.tradeTableWidget.proxyModel.sortedRow)
-        gui['tradeFilterDir'] = str(self.tradeTableWidget.proxyModel.sortedDir)
+        gui['trade_sort_row'] = str(self.tradeTableWidget.proxyModel.sortedRow)
+        gui['trade_sort_dir'] = str(self.tradeTableWidget.proxyModel.sortedDir)
         return gui
 
 
@@ -1050,6 +1050,7 @@ class SettingsPage(Page):
 
     def resetDefaultSettings(self):
         self.controller.settingsModel.resetDefault()
+        self.settingsView.expandAll()
         self.controller.reinit()
 
     def reloadSettings(self):

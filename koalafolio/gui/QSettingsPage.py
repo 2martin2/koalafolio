@@ -35,7 +35,7 @@ class SettingsModel(qtcore.QAbstractItemModel):
         self.settings = settings
         self.sections = list(self.settings)[1:]
         self.items = []
-        self.header = ['setting', 'value']
+        self.header = ['setting', 'value', 'description']
 
     def headerData(self, section, orientation, role):
         if role == qt.DisplayRole:
@@ -56,16 +56,22 @@ class SettingsModel(qtcore.QAbstractItemModel):
                 return len(self.settings[self.getItemFromIndex(parent).key])
 
     def columnCount(self, parent):
-        return 2
+        return 3
 
     def index(self, row, column, parent):
         if parent.isValid():
             parentkey = self.getItemFromIndex(parent).key
             subsettings = self.settings[parentkey]
-            key = list(subsettings)[row]
+            try:
+                key = list(subsettings)[row]
+            except IndexError:
+                key = ""
         else:
             parentkey = ""
-            key = self.sections[row]
+            try:
+                key = self.sections[row]
+            except IndexError:
+                key = ""
         newItem = SettingsModelItem(key, parentkey, parent)
         itemId = -1
         itemFound = False
@@ -90,6 +96,11 @@ class SettingsModel(qtcore.QAbstractItemModel):
                     return item.key
                 if index.column() == 1:
                     return self.settings[parent.key][item.key]
+                if index.column() == 2:
+                    try:
+                        return self.settings.descriptions[parent.key][item.key]
+                    except KeyError:
+                        return 'depricated/ unknowen'
             else:
                 return self.sections[index.row()]
         return qtcore.QVariant()
@@ -111,10 +122,12 @@ class SettingsModel(qtcore.QAbstractItemModel):
             self.displayCurrenciesChanged.emit(self.settings.displayCurrencies())
 
     def resetDefault(self):
+        self.beginResetModel()
         oldCur = self.settings.displayCurrencies()
         self.settings.resetDefault()
         if oldCur != self.settings.displayCurrencies():
             self.displayCurrenciesChanged.emit(self.settings.displayCurrencies())
+        self.endResetModel()
 
     def restoreSettings(self):
         oldCur = self.settings.displayCurrencies()
@@ -126,12 +139,10 @@ class SettingsModel(qtcore.QAbstractItemModel):
         column = index.column()
         parent = self.getParentIndexFromIndex(index)
         if parent.isValid():
-            if column == 0:
-                return qt.ItemIsSelectable | qt.ItemIsEnabled | qt.ItemNeverHasChildren
             if column == 1:
                 return qt.ItemIsSelectable | qt.ItemIsEditable | qt.ItemIsEnabled | qt.ItemNeverHasChildren
-        else:
-            return qt.ItemIsSelectable | qt.ItemIsEnabled
+            return qt.ItemIsSelectable | qt.ItemIsEnabled | qt.ItemNeverHasChildren
+        return qt.ItemIsSelectable | qt.ItemIsEnabled
 
     def getParentIndexFromIndex(self, index):
         return self.items[index.internalId()].parent
