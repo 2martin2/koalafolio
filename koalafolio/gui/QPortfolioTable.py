@@ -774,6 +774,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         # profit table
         self.profitTable = qtwidgets.QTableWidget()
         self.profitTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
+        self.profitTable.setEditTriggers(qtwidgets.QAbstractItemView.NoEditTriggers)
         self.profitTable.setColumnCount(4)
         self.profitTable.setHorizontalHeaderLabels(["profit", "tax profit", "fees", "fiat profit"])
         self.profitTable.horizontalHeaderItem(0).setToolTip("profit per year")
