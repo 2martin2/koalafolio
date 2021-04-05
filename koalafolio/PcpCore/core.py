@@ -609,10 +609,11 @@ class TradeMatcher:
         sellIndex = 0
         maxIter = 10 * len(self.sellsBuffer)
         while (sellIndex < len(self.sellsBuffer) and buyIndex < len(self.buysBuffer)):
-            if self.sellsBuffer[sellIndex].date < self.buysBuffer[buyIndex].date:  # sell is bevore buy
+            if self.sellsBuffer[sellIndex].date < self.buysBuffer[buyIndex].date:  # sell is before buy
                 # no buy trade can be matched -> ignore sellTrade
-                logger.globalLogger.warning('no earlier buyTrade available for sellTrade: ' + self.sellsBuffer[
-                    sellIndex].toString() + '; sellTrade will be ignored for profit calculation')
+                if not self.coinBalance.isFiat():  # skip warning if coin is fiat
+                    logger.globalLogger.warning('no earlier buyTrade available for sellTrade: ' + self.sellsBuffer[
+                        sellIndex].toString() + '; sellTrade will be ignored for profit calculation')
                 sellIndex += 1
                 continue
             else:  # sell is after buy
@@ -821,22 +822,28 @@ class CoinBalance:
                 return True
         return False
 
+    def isReportCurrency(self):
+        reportCurrency = settings.mySettings.reportCurrency()
+        if reportCurrency == self.coinname:
+            return True
+        return False
+
     def matchTrades(self):
-        if self.isFiat():  # do not match fiat trades, just sum up all trades
-            self.initialValue.setValue(0)
-            for trade in self.trades:
-                self.initialValue += trade.value
-        else:  # all other trades have to be matched (sell can only be matched to an older buy)
-            self.tradeMatcher.setTrades(self.trades)
-            self.tradeMatcher.matchTrades()
-            # check balance with buys left in tradeMatcher
-            #        if self.balance != self.tradeMatcher.getBuyAmountLeft():
+        self.tradeMatcher.setTrades(self.trades)
+        self.tradeMatcher.matchTrades()
+        # check balance with buys left in tradeMatcher
+        hasAmountDismatch = False
+        if self.tradeMatcher.getBuyAmountLeft() == 0:
+            if self.balance != 0:
+                hasAmountDismatch = True
+        else:
+            if abs(1 - (self.balance / self.tradeMatcher.getBuyAmountLeft())) > 0.01:  # more than 1% error
+                hasAmountDismatch = True
+        if hasAmountDismatch:
             # something is wrong. balance should be equal
-            #            print('buys left in tradeMathcher do not fit to calculated balance for coin: ' + self.coinname)
-            #            print(str(self.balance) + '; ' + str(self.tradeMatcher.getBuyAmountLeft()))
-            #            pass
-            # todo: create logging entry
-            self.initialValue = self.tradeMatcher.getInitialPrice().mult(self.balance)
+            logger.globalLogger.warning('coin amount of matched trades do not fit portfolio balance of coin: ' + self.coinname + '; looks like imported trades are incomplete or inconsistent.')
+            logger.globalLogger.warning("portfolio balance: " + str(self.balance) + '; matched trades balance: ' + str(self.tradeMatcher.getBuyAmountLeft()))
+        self.initialValue = self.tradeMatcher.getInitialPrice().mult(self.balance)
 
     def getInitialPrice(self):
         return self.initialValue.div(self.balance)
