@@ -774,6 +774,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         # profit table
         self.profitTable = qtwidgets.QTableWidget()
         self.profitTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
+        self.profitTable.setEditTriggers(qtwidgets.QAbstractItemView.NoEditTriggers)
         self.profitTable.setColumnCount(4)
         self.profitTable.setHorizontalHeaderLabels(["profit", "tax profit", "fees", "fiat profit"])
         self.profitTable.horizontalHeaderItem(0).setToolTip("profit per year")
@@ -1032,11 +1033,12 @@ class PortfolioOverview(qtwidgets.QWidget):
             topvalue = 0
         for index in sortedModelIndex:
             coin = self.model.coins[index]
-            if coin.getCurrentValue()[taxCoinName] > topvalue/40 and \
-                    coin.getCurrentValue()[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/75):
-                pieSeries.append(coin.coinname, coin.getCurrentValue()[taxCoinName])
-            elif coin.getCurrentValue()[taxCoinName] > 0:
-                otherssum.add(coin.getCurrentValue())
+            if not coin.isFiat():
+                if coin.getCurrentValue()[taxCoinName] > topvalue/40 and \
+                        coin.getCurrentValue()[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/75):
+                    pieSeries.append(coin.coinname, coin.getCurrentValue()[taxCoinName])
+                elif coin.getCurrentValue()[taxCoinName] > 0:
+                    otherssum.add(coin.getCurrentValue())
         if otherssum[taxCoinName] > abs(hypotheticalCoinValueNoFiat[taxCoinName]/100):
             slice = pieSeries.append("others", otherssum[taxCoinName])
             slice.setLabelVisible()
