@@ -521,7 +521,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     painter.setPen(sellPen)
                     painter.drawText(contentRect, qt.AlignRight | qt.AlignBottom, sellAmount)
 
-            elif index.column() == 2:
+            elif index.column() == 2:  # realized
                 profit = index.data(qt.DisplayRole)
                 key = settings.mySettings.reportCurrency()
                 # for key in profit:
@@ -540,7 +540,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 profitString = controls.floatToString(profit[key], 4)
                 painter.drawText(contentRect, qt.AlignHCenter | qt.AlignVCenter, profitString)
 
-            elif index.column() >= index.model().sourceModel().firstValueColumn:
+            elif index.column() >= index.model().sourceModel().firstValueColumn:  # performance
                 try:  # catch key error if currency is not in database. Could happen during currency switch
                     coinBalance, key, cols = index.data(qt.DisplayRole)
                     boughtValue = coinBalance.initialValue[key]
@@ -906,16 +906,23 @@ class PortfolioOverview(qtwidgets.QWidget):
         for coin in self.model:
             if coin.isFiat():  # calculate invested and returned fiat
                 for trade in coin.trades:
-                    if trade.amount < 0:
-                        totalInvestFiat.add(trade.getValue().mult(-1))
-                    else:
-                        totalReturnFiat.add(trade.getValue())
-                    # fiat invest/ return per year
-                    for year in range(startYear, stopYear + 1):
-                        startDate = datetime.date(year=year, month=1, day=1)
-                        endDate = datetime.date(year=year, month=12, day=31)
-                        if trade.date.date() >= startDate and trade.date.date() <= endDate:
-                            fiatPerYear[str(year)].add(trade.getValue())
+                    # only add fiat trade if partner trade is not fiat
+                    isFiatCryptoTrade = True
+                    if trade.tradePartnerId:
+                        if self.controller.tradeList.getTradeById(trade.tradePartnerId):
+                            if self.controller.tradeList.getTradeById(trade.tradePartnerId).isFiat():
+                                isFiatCryptoTrade = False
+                    if isFiatCryptoTrade:
+                        if trade.amount < 0:
+                            totalInvestFiat.add(trade.getValue().mult(-1))
+                        else:
+                            totalReturnFiat.add(trade.getValue())
+                        # fiat invest/ return per year
+                        for year in range(startYear, stopYear + 1):
+                            startDate = datetime.date(year=year, month=1, day=1)
+                            endDate = datetime.date(year=year, month=12, day=31)
+                            if trade.date.date() >= startDate and trade.date.date() <= endDate:
+                                fiatPerYear[str(year)].add(trade.getValue())
 
             else:  # calculate value of portfolio
                 currentInvestNoFiat.add(coin.initialValue)
