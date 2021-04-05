@@ -30,7 +30,8 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
     profitSumRows = []
     profitSumColumns = []
     for coin in coinList.coins:
-        if not coin.isFiat():
+        # check if coin is report Currency
+        if not coin.isReportCurrency():
             # check if there are sells in the given timeframe
             validSellFound = False
             for sell in coin.tradeMatcher.sellsMatched:
