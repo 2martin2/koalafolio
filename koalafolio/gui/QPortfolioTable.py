@@ -14,11 +14,8 @@ import koalafolio.gui.QCharts as charts
 import koalafolio.PcpCore.core as core
 import koalafolio.gui.QSettings as settings
 import koalafolio.gui.QStyle as style
-import colorsys
-import koalafolio.gui.QThreads as threads
 import datetime
 import koalafolio.gui.QLogger as logger
-from PIL.ImageQt import ImageQt
 import os
 import configparser
 
@@ -801,7 +798,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.sliceCoinValue = self.currentFiatValueChart.addSlice('coin value', 0.5, -1, False)
         self.sliceFiatReturn = self.currentFiatValueChart.addSlice('fiat return', 0.5, -1, False)
 
-        self.perfChartCont = charts.ChartCont(self)
+        self.perfChartCont = charts.ChartCont(appPath=self.controller.appPath, parent=self)
         self.controller.startRefresh.connect(self.perfChartCont.clearButtonStyle)
         self.controller.endRefresh.connect(self.perfChartCont.setButtonStyle)
         self.perfChartCont.addChart(self.currentValueChart)

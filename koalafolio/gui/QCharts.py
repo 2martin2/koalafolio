@@ -11,12 +11,10 @@ import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import PyQt5.QtChart as qtchart
 import koalafolio.gui.Qcontrols as controls
-import koalafolio.PcpCore.core as core
 import koalafolio.gui.QSettings as settings
 import koalafolio.gui.QStyle as style
 import datetime
 import koalafolio.gui.QLogger as logger
-import koalafolio.gui_root as gui_root
 import os
 
 qt = qtcore.Qt
@@ -24,12 +22,14 @@ localLogger = logger.globalLogger
 
 # container for switchable charts
 class ChartCont(qtwidgets.QFrame):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, appPath='', *args, **kwargs):
         super(ChartCont, self).__init__(*args, **kwargs)
 
         self.setObjectName('ChartCont')
         self.setContentsMargins(0, 0, 0, 0)
         self.setFrameShape(qtwidgets.QFrame.StyledPanel)
+
+        self.appPath = appPath
 
         self.charts = []
         self.chartIndex = None
@@ -48,13 +48,13 @@ class ChartCont(qtwidgets.QFrame):
         self.leftButton.setStyleSheet("")
 
     def setButtonStyle(self):
-        appPath = gui_root.application_path
-        self.rightButton.setStyleSheet("QPushButton {border-image: url(" +
-                                           os.path.join(appPath, 'graphics', 'right.png').replace('\\', '/') +
+        if self.appPath:
+            self.rightButton.setStyleSheet("QPushButton {border-image: url(" +
+                                               os.path.join(self.appPath, 'graphics', 'right.png').replace('\\', '/') +
+                                               ") 0 15 0 15 stretch;}")
+            self.leftButton.setStyleSheet("QPushButton {border-image: url(" +
+                                           os.path.join(self.appPath, 'graphics', 'left.png').replace('\\', '/') +
                                            ") 0 15 0 15 stretch;}")
-        self.leftButton.setStyleSheet("QPushButton {border-image: url(" +
-                                       os.path.join(appPath, 'graphics', 'left.png').replace('\\', '/') +
-                                       ") 0 15 0 15 stretch;}")
 
     def updateButtonPosition(self, height=20):
         leftPos = qtcore.QPoint(5, 5)
