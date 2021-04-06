@@ -8,9 +8,9 @@ Created on Sun Sep 16 09:57:14 2018
 import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-import PyQt5.QtChart as qtchart
 
 import koalafolio.gui.Qpages as pages
+import koalafolio.gui.QExportPage as exportpage
 import koalafolio.gui.Qcontrols as controls
 import koalafolio.gui.QPortfolioTable as ptable
 import koalafolio.gui.QTradeTable as ttable
@@ -332,7 +332,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.portfolioPage = pages.PortfolioPage(parent=self, controller=self)
         self.tradesPage = pages.TradesPage(parent=self, controller=self)
         self.importPage = pages.ImportPage(parent=self, controller=self)
-        self.exportPage = pages.ExportPage(parent=self, controller=self)
+        self.exportPage = exportpage.ExportPage(parent=self, controller=self)
         self.settingsPage = pages.SettingsPage(parent=self, controller=self)
         self.pages = [self.portfolioPage, self.tradesPage, self.importPage, self.exportPage, self.settingsPage]
         self.stackedContentLayout = qtwidgets.QStackedLayout()
