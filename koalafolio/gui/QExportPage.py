@@ -19,34 +19,47 @@ qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 
-# %% export page for exporting csv, txt, xls ...
-class ExportPage(qpages.Page):
-    def __init__(self, parent, controller):
-        super(ExportPage, self).__init__(parent=parent, controller=controller)
+# %% export profit frame
+class QExportFrame(controls.StyledFrame):
+    def __init__(self, controller=None, *args, **kwargs):
+        super(QExportFrame, self).__init__(*args, **kwargs)
+
+        self.setObjectName("QExportFrame")
+        self.setFrameShape(qtwidgets.QFrame.StyledPanel)
+        self.setFrameShadow(qtwidgets.QFrame.Raised)
+        self.setLineWidth(2)
+        self.setMidLineWidth(3)
+
+        self.setFixedWidth(275)
+
+        self.controller = controller
+
+
+# %% export profit frame
+class QExportProfitFrame(QExportFrame):
+    def __init__(self, controller, *args, **kwargs):
+        super(QExportProfitFrame, self).__init__(controller=controller, *args, **kwargs)
 
         self.fileDialog = qtwidgets.QFileDialog(self)
         # self.fileDialog.setDirectory(self.controller.appPath)
 
-        self.exportProfitFrame = controls.StyledFrame(self)
-        self.exportProfitFrame.setFixedWidth(275)
-
-        # heading
-        self.exportProfitLabel = qtwidgets.QLabel("export profit", self.exportProfitFrame)
-        font = self.exportProfitLabel.font()
+        # title
+        self.titleLabel = qtwidgets.QLabel("export profit", self)
+        font = self.titleLabel.font()
         font.setPointSize(14)
-        self.exportProfitLabel.setFont(font)
+        self.titleLabel.setFont(font)
 
         self.headingLayout = qtwidgets.QHBoxLayout()
         self.headingLayout.addStretch()
-        self.headingLayout.addWidget(self.exportProfitLabel)
+        self.headingLayout.addWidget(self.titleLabel)
         self.headingLayout.addStretch()
 
         # start and end date
-        self.fromDateLabel = qtwidgets.QLabel("start: ", self.exportProfitFrame)
-        self.toDateLabel = qtwidgets.QLabel("end: ", self.exportProfitFrame)
-        self.fromDateEdit = qtwidgets.QDateEdit(self.exportProfitFrame)
+        self.fromDateLabel = qtwidgets.QLabel("start: ", self)
+        self.toDateLabel = qtwidgets.QLabel("end: ", self)
+        self.fromDateEdit = qtwidgets.QDateEdit(self)
         self.fromDateEdit.setCalendarPopup(True)
-        self.toDateEdit = qtwidgets.QDateEdit(self.exportProfitFrame)
+        self.toDateEdit = qtwidgets.QDateEdit(self)
         self.toDateEdit.setCalendarPopup(True)
 
         self.dateLayout = qtwidgets.QHBoxLayout()
@@ -58,8 +71,8 @@ class ExportPage(qpages.Page):
         # self.dateLayout.addStretch()
 
         # year
-        self.yearLabel = qtwidgets.QLabel("year: ", self.exportProfitFrame)
-        self.yearDateEdit = qtwidgets.QSpinBox(self.exportProfitFrame)
+        self.yearLabel = qtwidgets.QLabel("year: ", self)
+        self.yearDateEdit = qtwidgets.QSpinBox(self)
         self.yearDateEdit.valueChanged.connect(self.yearChanged)
         self.yearDateEdit.setMinimum(0)
         self.yearDateEdit.setMaximum(datetime.datetime.now().year)
@@ -74,8 +87,8 @@ class ExportPage(qpages.Page):
         self.optionsLayout = qtwidgets.QGridLayout()
 
         # currency
-        self.currencyLabel = qtwidgets.QLabel("currency", self.exportProfitFrame)
-        self.currencyBox = qtwidgets.QComboBox(self.exportProfitFrame)
+        self.currencyLabel = qtwidgets.QLabel("currency", self)
+        self.currencyBox = qtwidgets.QComboBox(self)
         listModel = qtcore.QStringListModel()
         currencys = list(core.CoinValue())
         listModel.setStringList(currencys)
@@ -87,8 +100,8 @@ class ExportPage(qpages.Page):
         self.optionsLayout.addWidget(self.currencyBox, 0, 2)
 
         # language
-        self.languageLabel = qtwidgets.QLabel("language", self.exportProfitFrame)
-        self.languageBox = qtwidgets.QComboBox(self.exportProfitFrame)
+        self.languageLabel = qtwidgets.QLabel("language", self)
+        self.languageBox = qtwidgets.QComboBox(self)
         lanListModel = qtcore.QStringListModel()
         languages = self.controller.exportTranslator.getLanguages()
         lanListModel.setStringList(languages)
@@ -100,9 +113,9 @@ class ExportPage(qpages.Page):
         self.optionsLayout.addWidget(self.languageBox, 1, 2)
 
         # tax timelimit
-        self.timeLimitLabel = qtwidgets.QLabel("tax year limit", self.exportProfitFrame)
-        self.timeLimitBox = qtwidgets.QCheckBox(self.exportProfitFrame)
-        self.timeLimitEdit = qtwidgets.QSpinBox(self.exportProfitFrame)
+        self.timeLimitLabel = qtwidgets.QLabel("tax year limit", self)
+        self.timeLimitBox = qtwidgets.QCheckBox(self)
+        self.timeLimitEdit = qtwidgets.QSpinBox(self)
         self.timeLimitEdit.setValue(1)
         self.timeLimitEdit.setMinimum(0)
         self.timeLimitBox.setCheckState(qt.Checked)
@@ -112,8 +125,8 @@ class ExportPage(qpages.Page):
         self.optionsLayout.addWidget(self.timeLimitEdit, 2, 2)
 
         # include tax free trades
-        self.taxFreeTradesLabel = qtwidgets.QLabel("include tax free trades", self.exportProfitFrame)
-        self.taxFreeTradesBox = qtwidgets.QCheckBox(self.exportProfitFrame)
+        self.taxFreeTradesLabel = qtwidgets.QLabel("include tax free trades", self)
+        self.taxFreeTradesBox = qtwidgets.QCheckBox(self)
         self.taxFreeTradesBox.setCheckState(qt.Checked)
 
         # self.taxFreeTradesLayout = qtwidgets.QHBoxLayout()
@@ -139,7 +152,7 @@ class ExportPage(qpages.Page):
         self.timeLimitCheckBoxChanged()
 
         # export button
-        self.exportProfitButton = qtwidgets.QPushButton("export", self.exportProfitFrame)
+        self.exportProfitButton = qtwidgets.QPushButton("export", self)
         self.exportProfitButton.clicked.connect(self.exportProfit)
 
         self.buttonLayout = qtwidgets.QHBoxLayout()
@@ -151,7 +164,7 @@ class ExportPage(qpages.Page):
         self.optionsHorzLayout.addLayout(self.optionsLayout)
         self.optionsHorzLayout.addStretch()
 
-        self.vertLayout = qtwidgets.QVBoxLayout(self.exportProfitFrame)
+        self.vertLayout = qtwidgets.QVBoxLayout(self)
         self.vertLayout.addLayout(self.headingLayout)
         self.vertLayout.addLayout(self.yearLayout)
         self.vertLayout.addLayout(self.dateLayout)
@@ -163,14 +176,6 @@ class ExportPage(qpages.Page):
         self.vertLayout.addStretch()
         self.vertLayout.addLayout(self.buttonLayout)
 
-        self.horzLayout = qtwidgets.QHBoxLayout(self)
-        self.horzLayout.addWidget(self.exportProfitFrame)
-        self.horzLayout.addStretch()
-
-
-
-    def refresh(self):
-        pass
 
     def yearChanged(self):
         year = self.yearDateEdit.value()
@@ -203,3 +208,69 @@ class ExportPage(qpages.Page):
             profex.createProfitExcel(self.controller.coinList, pathReturn[0], minDate, maxDate, currency=currency,
                                      taxyearlimit=taxyearlimit, includeTaxFreeTrades=includeTaxFreeTrades,
                                      lang=language, translator=self.controller.exportTranslator)
+
+
+# class QDummyFrame(QExportFrame):
+#     def __init__(self, controller, *args, **kwargs):
+#         super(QDummyFrame, self).__init__(controller=controller, *args, **kwargs)
+#
+#         # title
+#         self.titleLabel = qtwidgets.QLabel("dummy export", self)
+#         font = self.titleLabel.font()
+#         font.setPointSize(14)
+#         self.titleLabel.setFont(font)
+#
+#         self.headingLayout = qtwidgets.QHBoxLayout()
+#         self.headingLayout.addStretch()
+#         self.headingLayout.addWidget(self.titleLabel)
+#         self.headingLayout.addStretch()
+#
+#         # start and end date
+#         self.fromDateLabel = qtwidgets.QLabel("start: ", self)
+#         self.toDateLabel = qtwidgets.QLabel("end: ", self)
+#         self.fromDateEdit = qtwidgets.QDateEdit(self)
+#         self.fromDateEdit.setCalendarPopup(True)
+#         self.toDateEdit = qtwidgets.QDateEdit(self)
+#         self.toDateEdit.setCalendarPopup(True)
+#
+#         self.dateLayout = qtwidgets.QHBoxLayout()
+#         self.dateLayout.addWidget(self.fromDateLabel)
+#         self.dateLayout.addWidget(self.fromDateEdit)
+#         self.dateLayout.addStretch()
+#         self.dateLayout.addWidget(self.toDateLabel)
+#         self.dateLayout.addWidget(self.toDateEdit)
+#         # self.dateLayout.addStretch()
+#
+#         # export button
+#         self.exportProfitButton = qtwidgets.QPushButton("export", self)
+#
+#         self.buttonLayout = qtwidgets.QHBoxLayout()
+#         self.buttonLayout.addStretch()
+#         self.buttonLayout.addWidget(self.exportProfitButton)
+#         self.buttonLayout.addStretch()
+#
+#         # layout
+#         self.vertLayout = qtwidgets.QVBoxLayout(self)
+#         self.vertLayout.addLayout(self.headingLayout)
+#         self.vertLayout.addLayout(self.dateLayout)
+#         self.vertLayout.addStretch()
+#         self.vertLayout.addLayout(self.buttonLayout)
+
+
+
+
+# %% export page for exporting csv, txt, xls ...
+class ExportPage(qpages.Page):
+    def __init__(self, parent, controller):
+        super(ExportPage, self).__init__(parent=parent, controller=controller)
+
+        self.exportProfitFrame = QExportProfitFrame(parent=self, controller=self.controller)
+        # self.dummyFrame = QDummyFrame(parent=self, controller=self.controller)
+
+        self.horzLayout = qtwidgets.QHBoxLayout(self)
+        self.horzLayout.addWidget(self.exportProfitFrame)
+        # self.horzLayout.addWidget(self.dummyFrame)
+        self.horzLayout.addStretch()
+
+    def refresh(self):
+        pass
