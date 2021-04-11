@@ -32,6 +32,7 @@ import rotkehlchen.constants.ethereum as ethereum
 import requests
 from koalafolio.gui.TradesPage import TradesPage
 from koalafolio.gui.ImportPage import ImportPage
+from koalafolio.gui.PortfolioPage import PortfolioPage
 
 import argparse
 
@@ -331,7 +332,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.statusbar.setModel(self.logList)
 
         # %%  stacked Layout for content frames
-        self.portfolioPage = pages.PortfolioPage(parent=self, controller=self)
+        self.portfolioPage = PortfolioPage(parent=self, controller=self)
         self.tradesPage = TradesPage(parent=self, controller=self)
         self.importPage = ImportPage(parent=self, controller=self)
         self.exportPage = exportpage.ExportPage(parent=self, controller=self)

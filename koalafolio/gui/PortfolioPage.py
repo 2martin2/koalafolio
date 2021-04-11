@@ -368,7 +368,7 @@ class PortfolioPage(Page):
         # exit code -1073741819 (0xC0000005), very strange
         # todo: check out error
         # for now no parent is given, seems to work fine
-        self.coinDataFrame = ptable.PortfolioOverview(self.controller, height=200)
+        self.coinDataFrame = PortfolioOverview(self.controller, height=200)
         self.controller.settingsModel.displayCurrenciesChanged.connect(
             self.coinDataFrame.displayCurrenciesChangedSlot)
         # self.coinDataFrame.setFixedHeight(200)
