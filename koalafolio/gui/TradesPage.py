@@ -47,7 +47,7 @@ class TradesPage(Page):
         self.resetFilterButton = qtwidgets.QPushButton('Reset Filter', self)
         self.resetFilterButton.clicked.connect(lambda checked: self.tradeTableView.clearFilters(checked))
 
-        self.useRegexCheckbox = qtwidgets.QCheckBox(text='Regex?', parent=self)
+        self.useRegexCheckbox = qtwidgets.QCheckBox(text='use regex', parent=self)
         if settings.mySettings.getGuiSetting('filteruseregex'):
             self.useRegexCheckbox.setCheckState(qt.Checked)
         else:
