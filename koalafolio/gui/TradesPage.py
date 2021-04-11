@@ -42,6 +42,8 @@ class TradesPage(Page):
         self.tradeTableView.sortByColumn(gui['trade_sort_row'], gui['trade_sort_dir'])
 
         # properties line , contains gui elements to control table behavior (buttons, checkboxes, ...)
+
+        # controls
         self.resetFilterButton = qtwidgets.QPushButton('Reset Filter', self)
         self.resetFilterButton.clicked.connect(lambda checked: self.tradeTableView.clearFilters(checked))
 
@@ -52,12 +54,7 @@ class TradesPage(Page):
             self.useRegexCheckbox.setCheckState(qt.Unchecked)
         self.useRegexCheckbox.stateChanged.connect(lambda state: self.switchRegexFilter(state))
 
-        self.horizontalPropertiesLayout = qtwidgets.QHBoxLayout()
-        self.horizontalPropertiesLayout.addWidget(self.resetFilterButton)
-        self.horizontalPropertiesLayout.addWidget(self.useRegexCheckbox)
-        self.horizontalPropertiesLayout.addStretch()
 
-        # controls
         self.deleteSelectedTradesButton = qtwidgets.QPushButton('delete selected', self)
         self.deleteSelectedTradesButton.clicked.connect(self.deleteSelectedTrades)
         self.deleteTradesButton = qtwidgets.QPushButton('delete all', self)
@@ -70,6 +67,8 @@ class TradesPage(Page):
         self.recalculateIdsButton.clicked.connect(self.recalcIds)
 
         self.hButtonLayout = qtwidgets.QHBoxLayout()
+        self.hButtonLayout.addWidget(self.resetFilterButton)
+        self.hButtonLayout.addWidget(self.useRegexCheckbox)
         self.hButtonLayout.addStretch()
         self.hButtonLayout.addWidget(self.deleteSelectedTradesButton)
         self.hButtonLayout.addWidget(self.deleteTradesButton)
@@ -81,7 +80,6 @@ class TradesPage(Page):
 
         # layout
         self.verticalLayout = qtwidgets.QVBoxLayout()
-        self.verticalLayout.addLayout(self.horizontalPropertiesLayout)
         self.verticalLayout.addWidget(self.tradeTableView)
         self.verticalLayout.addLayout(self.hButtonLayout)
         self.verticalLayout.setContentsMargins(5, 2, 5, 5)
