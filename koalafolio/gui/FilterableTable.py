@@ -77,9 +77,13 @@ class FilterableTableView(scrollbar.QScrollableTableView):
         """create filter boxes regarding column count of new model"""
         super(FilterableTableView, self).setModel(model)
         # init filter boxes of header view
-        self.horizontalHeader().setFilterBoxes(model.columnCount(qtcore.QModelIndex()))
+        self.initFilterBoxes()
+        model.sourceModelChanged.connect(lambda: self.initFilterBoxes())
         # connect filter Activated Signal of this view with Filter Slot from model
         self.filterActivated.connect(lambda index, text: model.setFilterByColumn(index, text))
+
+    def initFilterBoxes(self):
+        self.horizontalHeader().setFilterBoxes(self.model().columnCount(qtcore.QModelIndex()))
 
     def clearFilters(self, checked):
         """clear all Filters of horizontal header"""
