@@ -22,7 +22,7 @@ import sys
 import os
 import koalafolio.PcpCore.settings as coreSettings
 import koalafolio.gui.QSettings as settings
-import koalafolio.gui.QSettingsPage as settingsPage
+import koalafolio.gui.SettingsPage as settingsPage
 import koalafolio.gui.QStyle as style
 import koalafolio.exp.QTranslate as translator
 import koalafolio.Import.apiImport as apiImport
@@ -31,6 +31,7 @@ import rotkehlchen.assets.resolver as resolver
 import rotkehlchen.constants.ethereum as ethereum
 import requests
 from koalafolio.gui.TradesPage import TradesPage
+from koalafolio.gui.ImportPage import ImportPage
 
 import argparse
 
@@ -332,7 +333,7 @@ class PortfolioApp(qtwidgets.QWidget):
         # %%  stacked Layout for content frames
         self.portfolioPage = pages.PortfolioPage(parent=self, controller=self)
         self.tradesPage = TradesPage(parent=self, controller=self)
-        self.importPage = pages.ImportPage(parent=self, controller=self)
+        self.importPage = ImportPage(parent=self, controller=self)
         self.exportPage = exportpage.ExportPage(parent=self, controller=self)
         self.settingsPage = pages.SettingsPage(parent=self, controller=self)
         self.pages = [self.portfolioPage, self.tradesPage, self.importPage, self.exportPage, self.settingsPage]
