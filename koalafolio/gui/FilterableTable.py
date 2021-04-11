@@ -9,7 +9,7 @@ import PyQt5.QtCore as qtcore
 import re
 import koalafolio.gui.QLogger as logger
 import koalafolio.gui.FilterableHeader as filterableHeader
-import koalafolio.gui.Scrollbar as scrollbar
+import koalafolio.gui.ScrollableTable as stable
 
 localLogger = logger.globalLogger
 
@@ -61,7 +61,7 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
 
 
 
-class FilterableTableView(scrollbar.QScrollableTableView):
+class FilterableTableView(stable.QScrollableTableView):
     """Table View with Filterable Header"""
     # filterActivated Signal: [filterboxIndex, filterText]
     filterActivated = qtcore.pyqtSignal([int, str])
@@ -94,3 +94,38 @@ class FilterableTableView(scrollbar.QScrollableTableView):
         super(FilterableTableView, self).columnCountChanged(oldCount, newCount)
         # reinit filter boxes of header view
         self.horizontalHeader().setFilterBoxes(newCount)
+
+
+class FilterableTreeView(stable.QScrollableTreeView):
+    """Table View with Filterable Header"""
+    # filterActivated Signal: [filterboxIndex, filterText]
+    filterActivated = qtcore.pyqtSignal([int, str])
+    def __init__(self, *args, **kwargs):
+        super(FilterableTreeView, self).__init__(*args, **kwargs)
+
+        # add filterable Header as horizontal Header
+        header = filterableHeader.FilterableHeaderView(self)
+        self.setHeader(header)
+        header.filterActivated.connect(self.filterActivated)
+
+    def setModel(self, model: SortFilterProxyModel):
+        """create filter boxes regarding column count of new model"""
+        super(FilterableTreeView, self).setModel(model)
+        # init filter boxes of header view
+        self.initFilterBoxes()
+        model.sourceModelChanged.connect(lambda: self.initFilterBoxes())
+        # connect filter Activated Signal of this view with Filter Slot from model
+        self.filterActivated.connect(lambda index, text: model.setFilterByColumn(index, text))
+
+    def initFilterBoxes(self):
+        self.header().setFilterBoxes(self.model().columnCount(qtcore.QModelIndex()))
+
+    def clearFilters(self, checked):
+        """clear all Filters of horizontal header"""
+        self.header().clearFilters()
+
+    def columnCountChanged(self, oldCount, newCount):
+        """update filterbox count if column Count has changed"""
+        super(FilterableTreeView, self).columnCountChanged(oldCount, newCount)
+        # reinit filter boxes of header view
+        self.header().setFilterBoxes(newCount)

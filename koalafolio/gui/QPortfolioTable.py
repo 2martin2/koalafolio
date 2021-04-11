@@ -9,6 +9,8 @@ import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import koalafolio.gui.Qcontrols as controls
+import koalafolio.gui.FilterableTable as fTable
+import koalafolio.gui.ScrollableTable as sTable
 import koalafolio.gui.QCharts as charts
 import koalafolio.PcpCore.core as core
 import koalafolio.gui.QSettings as settings
@@ -22,7 +24,7 @@ qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 # %% portfolio table view
-class QPortfolioTableView(controls.QScrollableTreeView):
+class QPortfolioTableView(sTable.QScrollableTreeView):
     def __init__(self, parent, *args, **kwargs):
         super(QPortfolioTableView, self).__init__(parent=parent, *args, **kwargs)
 
@@ -385,17 +387,11 @@ class QPortfolioTableModel(QCoinContainer):
         self.triggerViewReset.emit()
 
 
-class QTableSortingModel(qtcore.QSortFilterProxyModel):
+class QTableSortingModel(fTable.SortFilterProxyModel):
     def __init__(self, *args, **kwargs):
         super(QTableSortingModel, self).__init__(*args, **kwargs)
 
-        self.sortedRow = 0
-        self.sortedDir = 0
-
-    def sort(self, row, order):
-        super(QTableSortingModel, self).sort(row, order)
-        self.sortedRow = row
-        self.sortedDir = order
+        self.useRegex = False
 
     def lessThan(self, index1, index2):
         column = index1.column()
@@ -413,17 +409,19 @@ class QTableSortingModel(qtcore.QSortFilterProxyModel):
         return index1.data() < index2.data()
 
     def filterAcceptsRow(self, source_row, source_parent):
-        if settings.mySettings.getGuiSetting('hidelowbalancecoins'):
-            index = self.sourceModel().index(source_row, 1, source_parent)
-            data = self.sourceModel().data(index)
-            if data.balance <= 0:
-                return False
-        if settings.mySettings.getGuiSetting('hidelowvaluecoins'):
-            index = self.sourceModel().index(source_row, 1, source_parent)
-            data = self.sourceModel().data(index)
-            if data.getCurrentValue()[settings.mySettings.reportCurrency()] <= settings.mySettings.getGuiSetting('lowvaluefilterlimit(reportcurrency)'):
-                return False
-        return True
+        filterAcceptsRow = super(QTableSortingModel, self).filterAcceptsRow(source_row, source_parent)
+        if filterAcceptsRow:
+            if settings.mySettings.getGuiSetting('hidelowbalancecoins'):
+                index = self.sourceModel().index(source_row, 1, source_parent)
+                data = self.sourceModel().data(index)
+                if data.balance <= 0:
+                    return False
+            if settings.mySettings.getGuiSetting('hidelowvaluecoins'):
+                index = self.sourceModel().index(source_row, 1, source_parent)
+                data = self.sourceModel().data(index)
+                if data.getCurrentValue()[settings.mySettings.reportCurrency()] <= settings.mySettings.getGuiSetting('lowvaluefilterlimit(reportcurrency)'):
+                    return False
+        return filterAcceptsRow
 
 # %% portfolio table delegate
 # class QCoinBalanceDelegate(qtwidgets.QStyledItemDelegate):

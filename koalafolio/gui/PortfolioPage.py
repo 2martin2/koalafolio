@@ -29,7 +29,9 @@ localLogger = logger.globalLogger
 class PortfolioOverview(qtwidgets.QWidget):
     expandTable = qtcore.pyqtSignal()
     collapseTable = qtcore.pyqtSignal()
-    filterSoldCoins = qtcore.pyqtSignal()
+    hideLowBalanceChanged = qtcore.pyqtSignal()
+    hideLowValueChanged = qtcore.pyqtSignal()
+    searchBoxTextChanged = qtcore.pyqtSignal([str])
 
     def __init__(self, controller, height=200, *args, **kwargs):
         super(PortfolioOverview, self).__init__(*args, **kwargs)
@@ -81,17 +83,33 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.horzLayout.addWidget(self.perfChartCont)
 
         # table controls
+        self.searchBox = qtwidgets.QLineEdit(parent=self)
+        self.searchBox.setPlaceholderText('search')
+        self.searchBox.textChanged.connect(self.searchBoxTextChanged)
         self.expandAllButton = qtwidgets.QPushButton("expand", self)
         self.expandAllButton.clicked.connect(self.expandTable)
         self.collapseAllButton = qtwidgets.QPushButton("collapse", self)
         self.collapseAllButton.clicked.connect(self.collapseTable)
-        # self.filterSoldCoinsBox = qtwidgets.QCheckBox(self)
+        self.hideLowBalanceCheckBox = qtwidgets.QCheckBox("hide low balance", parent=self)
+        if settings.mySettings.getGuiSetting('hidelowbalancecoins'):
+            self.hideLowBalanceCheckBox.setCheckState(qt.Checked)
+        else:
+            self.hideLowBalanceCheckBox.setCheckState(qt.Unchecked)
+        self.hideLowBalanceCheckBox.stateChanged.connect(lambda state: self.emitHideLowBalanceChanged(state))
+        self.hideLowValueCheckBox = qtwidgets.QCheckBox("hide low value", parent=self)
+        if settings.mySettings.getGuiSetting('hidelowvaluecoins'):
+            self.hideLowValueCheckBox.setCheckState(qt.Checked)
+        else:
+            self.hideLowValueCheckBox.setCheckState(qt.Unchecked)
+        self.hideLowValueCheckBox.stateChanged.connect(lambda state: self.emitHideLowValueChanged(state))
 
         self.controlsLayout = qtwidgets.QHBoxLayout()
         self.controlsLayout.addStretch()
+        self.controlsLayout.addWidget(self.searchBox)
+        self.controlsLayout.addWidget(self.hideLowBalanceCheckBox)
+        self.controlsLayout.addWidget(self.hideLowValueCheckBox)
         self.controlsLayout.addWidget(self.expandAllButton)
         self.controlsLayout.addWidget(self.collapseAllButton)
-        # self.controlsLayout.addWidget(self.filterSoldCoinsBox)
         self.controlsLayout.addStretch()
 
         self.centerVertLayout = qtwidgets.QVBoxLayout()
@@ -122,6 +140,20 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.model.modelReset.connect(self.coinTableChangedSlot)
         self.model.dataChanged.connect(self.coinTableChangedSlot)
         self.coinTableChangedSlot()
+
+    def emitHideLowBalanceChanged(self, state):
+        if state == qt.Checked:
+            settings.mySettings.setGuiSetting('hidelowbalancecoins', True)
+        else:
+            settings.mySettings.setGuiSetting('hidelowbalancecoins', False)
+        self.hideLowBalanceChanged.emit()
+
+    def emitHideLowValueChanged(self, state):
+        if state == qt.Checked:
+            settings.mySettings.setGuiSetting('hidelowvaluecoins', True)
+        else:
+            settings.mySettings.setGuiSetting('hidelowvaluecoins', False)
+        self.hideLowValueChanged.emit()
 
     def coinTableChangedSlot(self):
         # update new values
@@ -385,6 +417,10 @@ class PortfolioPage(Page):
         self.controller.coinList.triggerViewReset.connect(self.createNewView)
         self.coinDataFrame.expandTable.connect(self.coinTableView.expandAll)
         self.coinDataFrame.collapseTable.connect(self.coinTableView.collapseAll)
+        self.coinDataFrame.hideLowBalanceChanged.connect(lambda: self.filterCoinTable())
+        self.coinDataFrame.hideLowValueChanged.connect(lambda: self.filterCoinTable())
+        self.coinDataFrame.searchBoxTextChanged.connect(
+            lambda text: self.coinTableView.model().setFilterByColumn(0, text))
 
         # layout
         self.verticalLayout = qtwidgets.QVBoxLayout()
@@ -404,6 +440,9 @@ class PortfolioPage(Page):
         gui['portfolio_sort_dir'] = str(self.coinProxyModel.sortedDir)
         gui['performancechartindex'] = self.coinDataFrame.perfChartCont.chartIndex
         return gui
+
+    def filterCoinTable(self):
+        self.coinTableView.model().invalidateFilter()
 
     def createNewView(self):
         self.coinDataFrame.expandTable.disconnect(self.coinTableView.expandAll)
