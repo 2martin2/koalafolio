@@ -67,7 +67,7 @@ class QSettings(settings.Settings):
         self.descriptions['window'] = {}
         self.descriptions['window']['windowsize'] = 'init window size'
         self.descriptions['window']['windowpos'] = 'init window pos'
-        self.descriptions['window']['windowstate'] = '0: normal; 1: minimized; 2: maximized; fullscreen;'
+        self.descriptions['window']['windowstate'] = '0: normal; 1: minimized; 2: maximized; 4 fullscreen;'
         self.descriptions['window']['windowtitle'] = 'title which is displayed in title bar'
         self.descriptions['window']['windowstyle'] = 'qt style, see https://doc.qt.io/qt-5/qtquickcontrols2-styles.html'
         self.descriptions['window']['stylesheetname'] = 'name of style sheet in koalafolio\Styles that should be used. copy and rename defaultStyle.qss to create alternative styles'
