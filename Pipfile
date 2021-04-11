@@ -1,17 +1,7 @@
-[[source]]
-name = "pypi"
-url = "https://pypi.org/simple"
-verify_ssl = true
+[packages]
+koalafolio = {editable = true, file = "file:///E:/git/koalafolio"}
 
 [dev-packages]
-PyQt5-stubs = "*"
-pyinstaller = "*"
+wheel = "*"
 setuptools = "*"
-ipython = "*"
-pyqtdeploy = "*"
-
-[packages]
-koalafolio = {editable = true,path = "."}
-
-[requires]
-python_version = "3.7"
+twine = "*"

@@ -20,7 +20,6 @@ class QSettings(settings.Settings):
     def __init__(self, *args, **kwargs):
         super(QSettings, self).__init__(*args, **kwargs)
 
-
     def initSettings(self):
         # set default settings
 
@@ -68,7 +67,7 @@ class QSettings(settings.Settings):
         self.descriptions['window'] = {}
         self.descriptions['window']['windowsize'] = 'init window size'
         self.descriptions['window']['windowpos'] = 'init window pos'
-        self.descriptions['window']['windowstate'] = '0: normal; 1: minimized; 2: maximized; fullscreen;'
+        self.descriptions['window']['windowstate'] = '0: normal; 1: minimized; 2: maximized; 4 fullscreen;'
         self.descriptions['window']['windowtitle'] = 'title which is displayed in title bar'
         self.descriptions['window']['windowstyle'] = 'qt style, see https://doc.qt.io/qt-5/qtquickcontrols2-styles.html'
         self.descriptions['window']['stylesheetname'] = 'name of style sheet in koalafolio\Styles that should be used. copy and rename defaultStyle.qss to create alternative styles'
@@ -93,9 +92,9 @@ class QSettings(settings.Settings):
         self.descriptions['gui']['tooltipsenabled'] = 'True: enable tool tips'
         self.descriptions['gui']['performancechartindex'] = '0: crypto performance; 1: fiat performance'
         self.descriptions['gui']['tradeseditlock'] = 'True: lock editing of trades in trade table'
-        self.descriptions['gui']['hideLowbalancecoins'] = 'True: coins with low or negative balance will be excluded from portfolio table'
+        self.descriptions['gui']['hidelowbalancecoins'] = 'True: coins with low or negative balance will be excluded from portfolio table'
         self.descriptions['gui']['hidelowvaluecoins'] = 'True: coins with low fiat value will be excluded from portfolio'
-        self.descriptions['gui']['lowValuefilterlimit(reportcurrency)'] = 'fiat value limit to hide coins'
+        self.descriptions['gui']['lowvaluefilterlimit(reportcurrency)'] = 'fiat value limit to hide coins'
         self.descriptions['gui']['loadpricehistorychart'] = 'True: historical prices will be shown in coin buy chart. Can cause high api load.'
 
     def getWindowProperties(self):
@@ -220,6 +219,14 @@ class QSettings(settings.Settings):
                 self['gui'][key] = str(gui[key])
             else:
                 raise KeyError('invalid key ' + key + ' for gui settings')
+
+    def setGuiSetting(self, key, value):
+        if key in self['gui']:
+            self['gui'][key] = str(value)
+        else:
+            raise KeyError('invalid key ' + key + ' for gui settings')
+
+
 
 
 mySettings = QSettings()
