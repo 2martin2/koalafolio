@@ -92,9 +92,9 @@ class QSettings(settings.Settings):
         self.descriptions['gui']['tooltipsenabled'] = 'True: enable tool tips'
         self.descriptions['gui']['performancechartindex'] = '0: crypto performance; 1: fiat performance'
         self.descriptions['gui']['tradeseditlock'] = 'True: lock editing of trades in trade table'
-        self.descriptions['gui']['hideLowbalancecoins'] = 'True: coins with low or negative balance will be excluded from portfolio table'
+        self.descriptions['gui']['hidelowbalancecoins'] = 'True: coins with low or negative balance will be excluded from portfolio table'
         self.descriptions['gui']['hidelowvaluecoins'] = 'True: coins with low fiat value will be excluded from portfolio'
-        self.descriptions['gui']['lowValuefilterlimit(reportcurrency)'] = 'fiat value limit to hide coins'
+        self.descriptions['gui']['lowvaluefilterlimit(reportcurrency)'] = 'fiat value limit to hide coins'
         self.descriptions['gui']['loadpricehistorychart'] = 'True: historical prices will be shown in coin buy chart. Can cause high api load.'
 
     def getWindowProperties(self):
