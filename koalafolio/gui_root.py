@@ -30,6 +30,7 @@ from pathlib import Path
 import rotkehlchen.assets.resolver as resolver
 import rotkehlchen.constants.ethereum as ethereum
 import requests
+from koalafolio.gui.TradesPage import TradesPage
 
 import argparse
 
@@ -330,7 +331,7 @@ class PortfolioApp(qtwidgets.QWidget):
 
         # %%  stacked Layout for content frames
         self.portfolioPage = pages.PortfolioPage(parent=self, controller=self)
-        self.tradesPage = pages.TradesPage(parent=self, controller=self)
+        self.tradesPage = TradesPage(parent=self, controller=self)
         self.importPage = pages.ImportPage(parent=self, controller=self)
         self.exportPage = exportpage.ExportPage(parent=self, controller=self)
         self.settingsPage = pages.SettingsPage(parent=self, controller=self)

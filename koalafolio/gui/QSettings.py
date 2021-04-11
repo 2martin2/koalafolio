@@ -20,7 +20,6 @@ class QSettings(settings.Settings):
     def __init__(self, *args, **kwargs):
         super(QSettings, self).__init__(*args, **kwargs)
 
-
     def initSettings(self):
         # set default settings
 
@@ -220,6 +219,14 @@ class QSettings(settings.Settings):
                 self['gui'][key] = str(gui[key])
             else:
                 raise KeyError('invalid key ' + key + ' for gui settings')
+
+    def setGuiSetting(self, key, value):
+        if key in self['gui']:
+            self['gui'][key] = str(value)
+        else:
+            raise KeyError('invalid key ' + key + ' for gui settings')
+
+
 
 
 mySettings = QSettings()

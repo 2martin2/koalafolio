@@ -19,18 +19,17 @@ import koalafolio.gui.Qcontrols as controls
 import os
 import koalafolio.PcpCore.core as core
 import koalafolio.Import.Converter as converter
-import koalafolio.gui.QThreads as threads
 import koalafolio.gui.QLogger as logger
 import koalafolio.Import.TradeImporter as importer
 import koalafolio.Import.Models as models
 import koalafolio.gui.QStyle as style
+import koalafolio.gui.FilterableTable as ftable
 
 localLogger = logger.globalLogger
 qt = qtcore.Qt
 
-
 # %% Trade table view
-class QTradeTableView(controls.QScrollableTableView):
+class QTradeTableView(ftable.FilterableTableView):
     viewResized = qtcore.pyqtSignal()
     viewUpdated = qtcore.pyqtSignal()
     focusInSignal = qtcore.pyqtSignal()
@@ -38,7 +37,6 @@ class QTradeTableView(controls.QScrollableTableView):
     def __init__(self, parent, *args, **kwargs):
         super(QTradeTableView, self).__init__(parent=parent, *args, **kwargs)
 
-        self.setModel(QTradeTableModel())
         self.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Stretch)
         self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Fixed)
         self.verticalHeader().setDefaultSectionSize(30)
@@ -76,13 +74,6 @@ class QTradeTableView(controls.QScrollableTableView):
         super(QTradeTableView, self).resizeEvent(event)
         self.viewResized.emit()
 
-
-
-
-# #%% Trade table model
-# class QTradeItemModel(qtcore.QAbstractItemModel):
-#     def __init__(self, *args, **kwargs):
-#         super(QTradeItemModel, self).__init__(*args, **kwargs)
 
 
 # trade list

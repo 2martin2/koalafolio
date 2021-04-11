@@ -10,10 +10,10 @@ import PyQt5.QtCore as qtcore
 import koalafolio.gui.Qcontrols as controls
 import koalafolio.gui.QPortfolioTable as ptable
 import koalafolio.Import.TradeImporter as importer
-import koalafolio.Import.Models as importModels
+import koalafolio.Import.Models as models
 import koalafolio.PcpCore.core as core
 import koalafolio.gui.QTradeTable as ttable
-import koalafolio.Import.Models as models
+import koalafolio.gui.FilterableTable as ftable
 import os
 import re
 import koalafolio.gui.QSettings as settings
@@ -122,89 +122,6 @@ class PortfolioPage(Page):
         self.coinDataFrame.collapseTable.connect(self.coinTableView.collapseAll)
 
         self.verticalLayout.addWidget(self.coinTableView)
-
-
-# %% trades page showing all the imported trades
-class TradesPage(Page):
-    def __init__(self, parent, controller):
-        super(TradesPage, self).__init__(parent=parent, controller=controller)
-
-        self.layoutUI()
-
-    # initial layout of page
-    def layoutUI(self):
-        # base layout
-        self.horizontalLayout = qtwidgets.QHBoxLayout(self)
-
-        # table for tradeList        
-        self.tradeTableView = ttable.QTradeTableView(self)
-        self.tradeTableWidget = controls.QFilterTableView(self, self.tradeTableView)
-        self.tradeTableWidget.setModel(self.controller.tradeList)
-        gui = settings.mySettings.getGuiSettings()
-        self.tradeTableView.sortByColumn(gui['trade_sort_row'], gui['trade_sort_dir'])
-
-
-        # controls
-        self.deleteSelectedTradesButton = qtwidgets.QPushButton('delete selected', self)
-        self.deleteSelectedTradesButton.clicked.connect(self.deleteSelectedTrades)
-        self.deleteTradesButton = qtwidgets.QPushButton('delete all', self)
-        self.deleteTradesButton.clicked.connect(self.deleteAllTrades)
-        self.undoButton = qtwidgets.QPushButton('undo', self)
-        self.undoButton.clicked.connect(self.undoRemoveAddTrades)
-        self.reloadPricesButton = qtwidgets.QPushButton('reload prices', self)
-        self.reloadPricesButton.clicked.connect(self.reloadPrices)
-        self.recalculateIdsButton = qtwidgets.QPushButton('recalculate Ids', self)
-        self.recalculateIdsButton.clicked.connect(self.recalcIds)
-
-        self.hButtonLayout = qtwidgets.QHBoxLayout()
-        self.hButtonLayout.addStretch()
-        self.hButtonLayout.addWidget(self.deleteSelectedTradesButton)
-        self.hButtonLayout.addWidget(self.deleteTradesButton)
-        self.hButtonLayout.addWidget(self.undoButton)
-        self.hButtonLayout.addStretch()
-        self.hButtonLayout.addWidget(self.reloadPricesButton)
-        self.hButtonLayout.addWidget(self.recalculateIdsButton)
-        self.hButtonLayout.addStretch()
-
-        # layout
-        self.verticalLayout = qtwidgets.QVBoxLayout()
-        self.verticalLayout.addWidget(self.tradeTableWidget)
-        self.verticalLayout.addLayout(self.hButtonLayout)
-
-        self.horizontalLayout.addLayout(self.verticalLayout)
-
-        # refresh page
-
-    def refresh(self):
-        self.controller.tradeList.enableEditMode(not settings.mySettings.getGuiSetting('tradeseditlock'))
-
-    def undoRemoveAddTrades(self):
-        self.undoButton.clicked.disconnect(self.undoRemoveAddTrades)
-        self.controller.tradeList.undoRemoveAddTrades()
-        self.undoButton.clicked.connect(self.undoRemoveAddTrades)
-
-    def deleteAllTrades(self):
-        self.deleteTradesButton.clicked.disconnect(self.deleteAllTrades)
-        self.controller.tradeList.deleteAllTrades()
-        self.deleteTradesButton.clicked.connect(self.deleteAllTrades)
-
-    def deleteSelectedTrades(self):
-        self.deleteSelectedTradesButton.clicked.disconnect(self.deleteSelectedTrades)
-        self.tradeTableView.deleteSelectedTrades()
-        self.deleteSelectedTradesButton.clicked.connect(self.deleteSelectedTrades)
-
-    def reloadPrices(self):
-        self.controller.tradeList.clearPriceFlag()
-        self.controller.tradeList.updatePrices(self.controller.tradeList)
-
-    def recalcIds(self):
-        self.controller.tradeList.recalcIds()
-
-    def getGuiProps(self):
-        gui = {}
-        gui['trade_sort_row'] = str(self.tradeTableWidget.proxyModel.sortedRow)
-        gui['trade_sort_dir'] = str(self.tradeTableWidget.proxyModel.sortedDir)
-        return gui
 
 
 # %% import page for importing csv, txt, xls ...
@@ -499,7 +416,7 @@ class ImportSelectPage(SubPage):
         pathReturn = self.templateFileDialog.getSaveFileName(self, "save file", filename, "CSV (*.csv *.txt)")
         if pathReturn[0]:
             with open(pathReturn[0], 'w') as file:
-                for model in importModels.IMPORT_MODEL_LIST:
+                for model in models.IMPORT_MODEL_LIST:
                     if model.modelName == 'Template1':
                         file.write(','.join([x for x in model.modelHeaders]) + '\n')
                         break
@@ -565,14 +482,14 @@ class ImportPreviewPage(SubPage):
 
         # create trade table
         self.tableView = ttable.QTradeTableView(self)
-        self.tradeProxyModel = qtcore.QSortFilterProxyModel()
+        self.tradeProxyModel = ftable.SortFilterProxyModel()
         self.tradeProxyModel.setSourceModel(self.tradeListTemp)
         self.tableView.setModel(self.tradeProxyModel)
         self.tableView.show()
 
         # create fee table
         self.feeTableView = ttable.QTradeTableView(self)
-        self.feeProxyModel = qtcore.QSortFilterProxyModel()
+        self.feeProxyModel = ftable.SortFilterProxyModel()
         self.feeProxyModel.setSourceModel(self.feeListTemp)
         self.feeTableView.setModel(self.feeProxyModel)
         self.feeTableView.show()
@@ -695,13 +612,13 @@ class ImportFinishPage(SubPage):
 
         # trade table view
         self.tableView = ttable.QTradeTableView(self)
-        self.tradeProxyModel = qtcore.QSortFilterProxyModel()
+        self.tradeProxyModel = ftable.SortFilterProxyModel()
         self.tableView.setModel(self.tradeProxyModel)
         self.tableView.focusInSignal.connect(self.focusChanged)
 
         # fee table view
         self.feeTableView = ttable.QTradeTableView(self)
-        self.feeProxyModel = qtcore.QSortFilterProxyModel()
+        self.feeProxyModel = ftable.SortFilterProxyModel()
         self.feeTableView.setModel(self.feeProxyModel)
         self.feeTableView.focusInSignal.connect(self.focusChanged)
 
