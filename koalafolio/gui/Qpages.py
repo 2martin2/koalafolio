@@ -152,12 +152,9 @@ class ImportPage(Page):
         self.refresh()
 
     def initData(self):
-        self.newTradesBuffer = ttable.QImportTradeTableModel(self.controller.tradeList)
+        self.newTradesBuffer = ttable.QImportTradeTableModel(baseModel=self.controller.tradeList)
         self.newTradesBuffer.showPrices(False)
         self.newTradesBuffer.columnNotEditable = [0, 1]
-        self.newFeesBuffer = ttable.QImportTradeTableModel(self.controller.tradeList)
-        self.newFeesBuffer.showPrices(False)
-        self.newFeesBuffer.columnNotEditable = [0, 1]
         self.skippedRows = 0
         self.importedRows = 0
         self.filesNotImported = 0
@@ -193,18 +190,11 @@ class ImportPage(Page):
     def getNewTrades(self):
         return self.newTradesBuffer
 
-    def getNewFees(self):
-        return self.newFeesBuffer
-
     def clearNewTrades(self):
         self.newTradesBuffer.clearTrades()
-        self.newFeesBuffer.clearTrades()
 
     def finishImport(self):
-        newTrades = core.TradeList()
-        newTrades.mergeTradeList(self.getNewTrades())
-        newTrades.mergeTradeList(self.getNewFees())
-        self.controller.tradeList.addTrades(newTrades)
+        self.controller.tradeList.addTrades(self.getNewTrades())
         # jump to TradesPage
         self.controller.showFrame(self.controller.TRADESPAGEINDEX)
 
@@ -346,12 +336,12 @@ class ImportSelectPage(SubPage):
             # check import
             if match:
                 self.controller.newTradesBuffer.mergeTradeList(tradeListTemp)
-                self.controller.newFeesBuffer.mergeTradeList(feeListTemp)
-                self.controller.importedRows += len(tradeListTemp.trades) + len(feeListTemp.trades)
+                self.controller.newTradesBuffer.mergeTradeList(feeListTemp)
+                self.controller.importedRows += len(tradeListTemp.trades)
                 self.controller.skippedRows += skippedRows
                 self.controller.filesImported += 1
 
-                if not (self.controller.getNewTrades().isEmpty() and self.controller.getNewFees().isEmpty()):
+                if not (self.controller.getNewTrades().isEmpty()):
                     self.controller.showFrame(self.controller.IMPORTFINISHPAGEINDEX)
                 else:
                     localLogger.info("no valid data received from api")
@@ -391,15 +381,15 @@ class ImportSelectPage(SubPage):
                     # check import
                     if match:
                         self.controller.newTradesBuffer.mergeTradeList(tradeListTemp)
-                        self.controller.newFeesBuffer.mergeTradeList(feeListTemp)
-                        self.controller.importedRows += len(tradeListTemp.trades) + len(feeListTemp.trades)
+                        self.controller.newTradesBuffer.mergeTradeList(feeListTemp)
+                        self.controller.importedRows += len(tradeListTemp.trades)
                         self.controller.skippedRows += skippedRows
                         self.controller.filesImported += 1
                     else:
                         self.controller.filesNotImported += 1
                 else:
                     self.controller.filesNotImported += 1
-            if not (self.controller.getNewTrades().isEmpty() and self.controller.getNewFees().isEmpty()):
+            if not (self.controller.getNewTrades().isEmpty()):
                 self.controller.showFrame(self.controller.IMPORTFINISHPAGEINDEX)
             else:
                 localLogger.info('please select at least one valid file')
@@ -482,17 +472,10 @@ class ImportPreviewPage(SubPage):
 
         # create trade table
         self.tableView = ttable.QTradeTableView(self)
-        self.tradeProxyModel = ftable.SortFilterProxyModel()
-        self.tradeProxyModel.setSourceModel(self.tradeListTemp)
-        self.tableView.setModel(self.tradeProxyModel)
+        self.importProxyModel = ftable.SortFilterProxyModel()
+        self.importProxyModel.setSourceModel(self.tradeListTemp)
+        self.tableView.setModel(self.importProxyModel)
         self.tableView.show()
-
-        # create fee table
-        self.feeTableView = ttable.QTradeTableView(self)
-        self.feeProxyModel = ftable.SortFilterProxyModel()
-        self.feeProxyModel.setSourceModel(self.feeListTemp)
-        self.feeTableView.setModel(self.feeProxyModel)
-        self.feeTableView.show()
 
         self.cancelButton = qtwidgets.QPushButton("Cancel", self)
         self.cancelButton.clicked.connect(lambda: self.cancelImport())
@@ -512,23 +495,18 @@ class ImportPreviewPage(SubPage):
         self.verticalLayout.addLayout(self.headerHorzLayout)
         self.verticalLayout.addLayout(self.legendLayout)
         self.verticalLayout.addWidget(self.tableView)
-        self.verticalLayout.addWidget(self.feeTableView)
         self.verticalLayout.addLayout(self.horzButtonLayout)
 
     # create empty buffer for file path  
     def initData(self):
         self.filePathIndex = 0
-        self.tradeListTemp = ttable.QImportTradeTableModel(self.controller.controller.tradeList)
+        self.tradeListTemp = ttable.QImportTradeTableModel(baseModel=self.controller.controller.tradeList)
         self.tradeListTemp.showPrices(False)
         self.tradeListTemp.columnNotEditable = [0, 1]
-        self.feeListTemp = ttable.QImportTradeTableModel(self.controller.controller.tradeList)
-        self.feeListTemp.showPrices(False)
-        self.feeListTemp.columnNotEditable = [0, 1]
 
     # refresh data
     def refresh(self):
         self.tradeListTemp.clearTrades()
-        self.feeListTemp.clearTrades()
         self.filePathIndex = 0
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
@@ -541,7 +519,6 @@ class ImportPreviewPage(SubPage):
 
     def skipImport(self):
         self.tradeListTemp.clearTrades()
-        self.feeListTemp.clearTrades()
         if (self.filePathIndex < len(self.controller.getFilesPath()) - 1):
             self.exchangeInput.setText("")
             self.filePathIndex += 1
@@ -552,7 +529,6 @@ class ImportPreviewPage(SubPage):
     def nextImport(self):
         # merge new trades
         self.controller.newTradesBuffer.mergeTradeList(self.tradeListTemp)
-        self.controller.newFeesBuffer.mergeTradeList(self.feeListTemp)
         # go to next import using the skip function
         self.skipImport()
 
@@ -569,8 +545,8 @@ class ImportPreviewPage(SubPage):
             # check import
             if match:
                 self.tradeListTemp.copyFromTradeList(importedTradeList)
-                self.feeListTemp.copyFromTradeList(importedFeeList)
-                importedRows = len(self.tradeListTemp.trades) + len(self.feeListTemp.trades)
+                self.tradeListTemp.mergeTradeList(importedFeeList)
+                importedRows = len(self.tradeListTemp.trades)
                 self.controller.importedRows += importedRows
                 self.controller.skippedRows += skippedRows
                 self.controller.filesImported += 1
@@ -584,14 +560,13 @@ class ImportPreviewPage(SubPage):
             self.infoLabel.setText('fileimport failed')
 
     def finishImportPreview(self):
-        if not (self.controller.getNewTrades().isEmpty() and self.controller.getNewFees().isEmpty()):
+        if not (self.controller.getNewTrades().isEmpty()):
             self.controller.showFrame(self.controller.IMPORTFINISHPAGEINDEX)
         else:
             self.controller.showFrame(self.controller.IMPORTSELECTPAGEINDEX)
 
     def exchangeChanged(self):
         self.tradeListTemp.setExchange(self.exchangeInput.text())
-        self.feeListTemp.setExchange(self.exchangeInput.text())
 
     def clearLabelStyle(self):
         self.legendGrayLabel.setStyleSheet("")
@@ -612,17 +587,8 @@ class ImportFinishPage(SubPage):
 
         # trade table view
         self.tableView = ttable.QTradeTableView(self)
-        self.tradeProxyModel = ftable.SortFilterProxyModel()
-        self.tableView.setModel(self.tradeProxyModel)
-        self.tableView.focusInSignal.connect(self.focusChanged)
-
-        # fee table view
-        self.feeTableView = ttable.QTradeTableView(self)
-        self.feeProxyModel = ftable.SortFilterProxyModel()
-        self.feeTableView.setModel(self.feeProxyModel)
-        self.feeTableView.focusInSignal.connect(self.focusChanged)
-
-        self.lastFocusTable = self.tableView
+        self.importProxyModel = ftable.SortFilterProxyModel()
+        self.tableView.setModel(self.importProxyModel)
 
         self.cancelButton = qtwidgets.QPushButton("cancel", self)
         self.cancelButton.clicked.connect(self.cancelTrades)
@@ -658,13 +624,11 @@ class ImportFinishPage(SubPage):
         self.verticalLayout.addWidget(self.statusLabel)
         self.verticalLayout.addLayout(self.legendLayout)
         self.verticalLayout.addWidget(self.tableView)
-        self.verticalLayout.addWidget(self.feeTableView)
         self.verticalLayout.addLayout(self.horzButtonLayout)
 
 
     def refresh(self):
-        self.tradeProxyModel.setSourceModel(self.controller.getNewTrades())
-        self.feeProxyModel.setSourceModel(self.controller.getNewFees())
+        self.importProxyModel.setSourceModel(self.controller.getNewTrades())
         self.tableView.show()
         if not (self.controller.getNewTrades().isEmpty()):
             selectedFiles = len(self.controller.getFilesPath())
@@ -675,23 +639,16 @@ class ImportFinishPage(SubPage):
             status += 'importedRows: ' + str(self.controller.importedRows)
             self.statusLabel.setText(status)
 
-    def focusChanged(self):
-        if self.tableView.hasFocus():
-            self.lastFocusTable = self.tableView
-        if self.feeTableView.hasFocus():
-            self.lastFocusTable = self.feeTableView
-
     def acceptTrades(self):
         # merge trades with database
         self.controller.finishImport()
 
     def deleteSelectedTrades(self):
-        # remove all trades that are not selected
-        self.lastFocusTable.deleteSelectedTrades()
+        # remove all trades that are selected
+        self.tableView.deleteSelectedTrades()
 
     def deleteSimilarTrades(self):
         self.tableView.deleteSimilarTrades()
-        self.feeTableView.deleteSimilarTrades()
 
     def cancelTrades(self):
         # delete trades and go back to file selection

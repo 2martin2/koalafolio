@@ -30,10 +30,6 @@ qt = qtcore.Qt
 
 # %% Trade table view
 class QTradeTableView(ftable.FilterableTableView):
-    viewResized = qtcore.pyqtSignal()
-    viewUpdated = qtcore.pyqtSignal()
-    focusInSignal = qtcore.pyqtSignal()
-
     def __init__(self, parent, *args, **kwargs):
         super(QTradeTableView, self).__init__(parent=parent, *args, **kwargs)
 
@@ -50,9 +46,6 @@ class QTradeTableView(ftable.FilterableTableView):
         else:
             super(QTradeTableView, self).keyPressEvent(event)
 
-    def focusInEvent(self, event):
-        self.focusInSignal.emit()
-
     def deleteSelectedTrades(self):
         if self.selectionModel().hasSelection():
             inds = self.selectionModel().selectedIndexes()
@@ -65,14 +58,6 @@ class QTradeTableView(ftable.FilterableTableView):
 
     def deleteSimilarTrades(self):
         self.model().sourceModel().deleteSimilarTrades()
-
-    def update(self, index):
-        super(QTradeTableView, self).update(index)
-        self.viewUpdated.emit()
-
-    def resizeEvent(self, event):
-        super(QTradeTableView, self).resizeEvent(event)
-        self.viewResized.emit()
 
 
 
