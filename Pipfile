@@ -2,3 +2,6 @@
 koalafolio = {editable = true, file = "file:///E:/git/koalafolio"}
 
 [dev-packages]
+wheel = "*"
+setuptools = "*"
+twine = "*"
