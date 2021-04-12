@@ -409,15 +409,19 @@ class QTableSortingModel(fTable.SortFilterProxyModel):
         return index1.data() < index2.data()
 
     def filterAcceptsRow(self, source_row, source_parent):
+        index = self.sourceModel().index(source_row, 1, source_parent)
+        parent = self.sourceModel().parent(index)
+        if parent.isValid():
+            # always use top level for filter
+            source_parent = qtcore.QModelIndex()
+            source_row = parent.row()
         filterAcceptsRow = super(QTableSortingModel, self).filterAcceptsRow(source_row, source_parent)
         if filterAcceptsRow:
             if settings.mySettings.getGuiSetting('hidelowbalancecoins'):
-                index = self.sourceModel().index(source_row, 1, source_parent)
                 data = self.sourceModel().data(index)
                 if data.balance <= 0:
                     return False
             if settings.mySettings.getGuiSetting('hidelowvaluecoins'):
-                index = self.sourceModel().index(source_row, 1, source_parent)
                 data = self.sourceModel().data(index)
                 if data.getCurrentValue()[settings.mySettings.reportCurrency()] <= settings.mySettings.getGuiSetting('lowvaluefilterlimit(reportcurrency)'):
                     return False
