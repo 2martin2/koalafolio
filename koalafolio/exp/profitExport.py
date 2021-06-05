@@ -7,12 +7,15 @@ Created on Fri Aug 24 09:44:38 2018
 import openpyxl
 import koalafolio.PcpCore.settings as settings
 import datetime
+import pytz
 from dateutil.relativedelta import relativedelta
 import koalafolio.PcpCore.core as core
 import re
+import koalafolio.gui.QLogger as logger
+
+localLogger = logger.globalLogger
 
 from openpyxl.styles import PatternFill, Alignment, Font
-
 
 # %% create excelfile
 def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearlimit=1,
@@ -194,7 +197,8 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
             for fee in coin.getFees():
                 # check date of sell
                 if fee.date.date() >= minDate and fee.date.date() <= maxDate:
-                    ws.append(['', '', '', fee.date, fee.amount, '', round(fee.value[currency], 3), ''])
+                    feedate = fee.date.astimezone(pytz.utc).replace(tzinfo=None)
+                    ws.append(['', '', '', feedate, fee.amount, '', round(fee.value[currency], 3), ''])
 
             profitSumRows.append(ws.max_row + 2)
             profitSumColumns.append(7)
@@ -314,7 +318,10 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
     # save file
     # wb.save(path + '-' + str(datetime.datetime.now()).replace(' ', '_').replace(':', '_').replace('-', '_').replace('.',
     #                                                                                                                 '_') + '.xlsx')
-    wb.save(path)
+    try:
+        wb.save(path)
+    except PermissionError as ex:
+        localLogger.error("saving export failed: " + str(ex))
 
 
 def pageSetup(ws):
