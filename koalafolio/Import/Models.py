@@ -69,6 +69,21 @@ IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.EXODUS_DATE_REGEX, pat.EXODUS_
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_exodus
 
+# kucoin [orderCreatedAt,id,clientOid,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,remark,tags,orderStatus]
+index = index + 1
+IMPORT_MODEL_LIST.append(Importmodel())
+IMPORT_MODEL_LIST[index].modelHeaders = ['orderCreatedAt', 'id', 'symbol', 'side', 'type', 'stopPrice', 'price', 'size',
+                                         'dealSize', 'dealFunds', 'averagePrice', 'fee', 'feeCurrency', 'orderStatus']
+IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.KUCOIN_ORDERCREATEDAT_REGEX, pat.KUCOIN_ID_REGEX,
+                                              pat.KUCOIN_SYMBOL_REGEX, pat.KUCOIN_SIDE_REGEX, pat.KUCOIN_TYPE_REGEX,
+                                              pat.KUCOIN_STOPPRICE_REGEX,
+                                              pat.KUCOIN_PRICE_REGEX, pat.KUCOIN_SIZE_REGEX, pat.KUCOIN_DEALSIZE_REGEX,
+                                              pat.KUCOIN_DEALFUNDS_REGEX,
+                                              pat.KUCOIN_AVERAGEPRICE_REGEX, pat.KUCOIN_FEE_REGEX, pat.KUCOIN_FEECURRENCY_REGEX,
+                                              pat.KUCOIN_ORDERSTATUS_REGEX]
+IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
+IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_kucoin
+
 # %% kraken ["txid","ordertxid","pair","time","type","ordertype","price","cost","fee","vol","margin","misc","ledgers"]
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())

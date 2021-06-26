@@ -137,6 +137,49 @@ def modelCallback_exodus(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
+
+# %% kucoin model: [orderCreatedAt,id,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,orderStatus]
+def modelCallback_kucoin(headernames, dataFrame):
+    # seperate coin pair
+    # orderCreatedAt,id,clientOid,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,remark,tags,orderStatus,
+    # 2021-06-24 09:32:35,60d3e0b3eaedb000066310e1,,ADA-KCS,sell,limit,0,0.1839,50,50,9.195,0.1839,0.009195,KCS,,,done,
+    # 2021-06-26 21:07:27,60d7268fadb8ff0006645e4d,,ETH-USDT,buy,limit,0,1787,2.0290968,28.0290968,50087.9959816,1787,50.0879959816,USDT,,,done,
+
+    COIN_PAIR_REGEX = re.compile('^([a-z|A-Z]*)-([a-z|A-Z]*)$')
+
+    for row in range(dataFrame.shape[0]):
+
+        coinPairMatch = COIN_PAIR_REGEX.match(dataFrame[headernames[2]][row])
+        if coinPairMatch:
+            subcoin = coinPairMatch.group(1)
+            maincoin = coinPairMatch.group(2)
+            dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
+        else:
+            raise ValueError('kucoin market pair does not fit the expected pattern')
+
+    headernames_m0 = []
+    headernames_m0.append(headernames[0])  # date
+    headernames_m0.append(headernames[3])  # type
+    headernames_m0.append(headernames[2])  # pair
+    headernames_m0.append(headernames[10])  # average price
+    headernames_m0.append(headernames[8])  # amount
+    headernames_m0.append(headernames[1])  # id
+    headernames_m0.append(headernames[9])  # total
+    headernames_m0.append(headernames[11])  # fee
+    headernames_m0.append(headernames[12])  # feecoin
+    headernames_m0.append(headernames[13])  # state
+    headernames_m0.append('')  # exchange
+
+    tradeList, feeList, skippedRows = modelCallback_0(headernames_m0, dataFrame, useLocalTime=False)
+
+    for trade in tradeList:
+        trade.exchange = 'kucoin'
+    for fee in feeList:
+        fee.exchange = 'kucoin'
+
+    return tradeList, feeList, skippedRows
+
+
 # %% krakenapi model: "txid","ordertxid","pair","dtime","type","ordertype","price","cost","fee","vol","margin","misc","postxid","time"
 def modelCallback_krakenapi(headernames, dataFrame):
     return modelCallback_kraken(headernames, dataFrame) # call kraken callback since difference in header is not relevant for parsing
@@ -347,7 +390,7 @@ def modelCallback_0(headernames, dataFrame, useLocalTime=False):
     skippedRows = 0
     for row in range(dataFrame.shape[0]):
         if headernames[9]:  # if state included
-            if re.match(r'^.*?(CANCELED).*?$', dataFrame[headernames[9]][row], re.IGNORECASE):  # check state
+            if re.match(r'^.*?(CANCEL).*?$', dataFrame[headernames[9]][row], re.IGNORECASE):  # check state
                 skippedRows += 1
                 continue  # skip row
         tempTrade_sub = core.Trade()  # sub
