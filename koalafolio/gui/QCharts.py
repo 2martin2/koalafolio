@@ -461,6 +461,10 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         self.layout.addWidget(self.chartView)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+    # set title
+    def setTitle(self, title):
+        self.chart.setTitle(str(title))
+
     # clear old chart data
     def clearData(self):
         self.chart.removeAllSeries()

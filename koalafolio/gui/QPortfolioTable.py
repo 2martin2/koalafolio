@@ -93,10 +93,12 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
         self.closePersistentEditor(child2)
 
     def expandedCallback(self, index):
-        child = self.model().index(0, 0, index)
-        child2 = self.model().index(0, 1, index)
-        self.openPersistentEditor(child)
-        self.openPersistentEditor(child2)
+        rows = self.model().rowCount(index)
+        columns = self.model().rowCount(index)
+        for row in range(rows):
+            for column in range(columns):
+                child = self.model().index(row, column, index)
+                self.openPersistentEditor(child)
 
     def drawRow(self, painter, options, index):
         if index.parent().isValid():
@@ -122,7 +124,7 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
         mypen.setBrush(myBrush)
         painter.setPen(mypen)
         rect = options.rect
-        if index.parent().isValid():  # draw lower line over indent
+        if index.parent().isValid():  # child level, draw lower line over indent
             # draw lower horz line
             x = rect.x() - self.indentation()
             painter.drawLine(x, rect.y() + rect.height(), rect.x() + rect.width(), rect.y() + rect.height())
@@ -159,6 +161,8 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
             for coin in coins:
                 if not self.hasMember(coin):
                     self.addCoin(coin)
+                    for wallet in self.coinDatabase.getCoinWallets(coin):
+                        self.getCoinByName(coin).addWallet(wallet)
             self.coinDatabase.updateCoinInfo(self)
         self.coinAdded.emit(self.getCoinNames())
 
@@ -177,8 +181,8 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
                     localLogger.warning('error creating coin info backup in QCoinContainer: ' + str(ex))
             self.coinDatabase.setCoinInfo(self)
 
-    def setNotes(self, index, notes):
-        self.coins[index].notes = notes
+    def setNotes(self, parentrow, childrow, notes):
+        self.coins[parentrow].wallets[childrow].notes = notes
         self.saveCoins()
 
 # %% portfolio table model
@@ -201,7 +205,7 @@ class QPortfolioTableModel(QCoinContainer):
     def rowCount(self, parent):
         if parent.isValid():
             if not parent.parent().isValid():  # first child level
-                return 1
+                return len(self.coins[parent.row()].wallets)
             else:
                 return 0  # only one child level
         else:  # top level
@@ -240,9 +244,9 @@ class QPortfolioTableModel(QCoinContainer):
         if index.parent().isValid():  # child level
             if role == qt.DisplayRole:
                 if index.column() == 0:  # coin row
-                    return self.coins[index.parent().row()].notes
+                    return self.coins[index.parent().row()].wallets[index.row()].notes
                 if index.column() == 1:
-                    return self.coins[index.parent().row()]
+                    return self.coins[index.parent().row()].wallets[index.row()]
         else:  # top level
             if role == qt.DisplayRole:
                 if index.column() == 0:  # coin row
@@ -308,7 +312,7 @@ class QPortfolioTableModel(QCoinContainer):
     def setData(self, index, value, role):
         if index.parent().isValid():  # child level
             if role == qt.EditRole:
-                self.setNotes(index.parent().row(), value)
+                self.setNotes(index.parent().row(), index.row(), value)
         return True
 
     def histPricesChanged(self):
@@ -394,27 +398,31 @@ class QTableSortingModel(fTable.SortFilterProxyModel):
         self.useRegex = False
 
     def lessThan(self, index1, index2):
-        column = index1.column()
-        if column == 2:
-            profit1 = index1.data()[settings.mySettings.reportCurrency()]
-            profit2 = index2.data()[settings.mySettings.reportCurrency()]
-            return profit1 < profit2
-        if column >= self.sourceModel().firstValueColumn:
-            coinBalance1, key1, cols1 = index1.data()
-            coinBalance2, key2, cols2 = index2.data()
-            if cols1 >= 2:
-                return coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2]
-            else:
-                return coinBalance1.getChange24h(key1) < coinBalance2.getChange24h(key2)
-        return index1.data() < index2.data()
+        if not index1.parent().isValid():  # top level
+            column = index1.column()
+            if column == 2:
+                profit1 = index1.data()[settings.mySettings.reportCurrency()]
+                profit2 = index2.data()[settings.mySettings.reportCurrency()]
+                return profit1 < profit2
+            if column >= self.sourceModel().firstValueColumn:
+                coinBalance1, key1, cols1 = index1.data()
+                coinBalance2, key2, cols2 = index2.data()
+                if cols1 >= 2:
+                    return coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2]
+                else:
+                    return coinBalance1.getChange24h(key1) < coinBalance2.getChange24h(key2)
+            return index1.data() < index2.data()
+        else:  #child level
+            return str(index1.data()) < str(index2.data())
 
     def filterAcceptsRow(self, source_row, source_parent):
         index = self.sourceModel().index(source_row, 1, source_parent)
         parent = self.sourceModel().parent(index)
-        if parent.isValid():
+        if parent.isValid():  # child level
             # always use top level for filter
             source_parent = qtcore.QModelIndex()
             source_row = parent.row()
+            index = self.sourceModel().index(source_row, 1, source_parent)
         filterAcceptsRow = super(QTableSortingModel, self).filterAcceptsRow(source_row, source_parent)
         if filterAcceptsRow:
             if settings.mySettings.getGuiSetting('hidelowbalancecoins'):
@@ -641,6 +649,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 return
             if index.column() == 1:
                 data = index.data()
+                editor.setTitle(data.walletname)
                 # draw buys left
                 dates = []
                 vals = []
@@ -790,18 +799,30 @@ class QCoinInfoDatabase(configparser.ConfigParser):
             logger.globalLogger.error('coin info can not be loaded: ' + str(ex))
 
     def setCoinInfo(self, coinList):
-        for coin in coinList:
-            if not coin.coinname in self:
-                self[coin.coinname] = {}
-            self[coin.coinname]['notes'] = coin.notes
+        for coinwallets in coinList:
+            coinname = coinwallets.coinname
+            if not coinname in self:
+                self[coinname] = {}
+            for coin in coinwallets:
+                if coin.walletname == "default":
+                    notename = "notes"
+                else:
+                    notename = "notes" + "_" + coin.walletname
+                self[coinname][notename] = coin.notes
         self.saveCoins()
 
     def updateCoinInfo(self, coinList):
-        for coin in coinList:
-            try:
-                coin.notes = self[coin.coinname]['notes']
-            except KeyError:
-                coin.notes = ""
+        for coinwallets in coinList:
+            coinname = coinwallets.coinname
+            for coin in coinwallets:
+                if coin.walletname == "default":
+                    notename = "notes"
+                else:
+                    notename = "notes" + "_" + coin.walletname
+                try:
+                    coin.notes = self[coinname][notename]
+                except KeyError:
+                    coin.notes = ""
 
     def getCoins(self):
         coins = []
@@ -809,3 +830,15 @@ class QCoinInfoDatabase(configparser.ConfigParser):
             if key != 'DEFAULT':
                 coins.append(key)
         return coins
+
+    def getCoinWallets(self, coin):
+        wallets = []
+        try:
+            for key in self[coin]:
+                if '_' in key:
+                    wallets.append(key.split('_')[1])
+                else:
+                    wallets.append("")
+        except KeyError:
+            wallets.append("")  # add default wallet if coin not present
+        return wallets

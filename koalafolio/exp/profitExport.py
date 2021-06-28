@@ -32,113 +32,118 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
     profitSumColumn = 'O'
     profitSumRows = []
     profitSumColumns = []
-    for coin in coinList.coins:
+    for coinWallets in coinList.coins:
         # check if coin is report Currency
-        if not coin.isReportCurrency():
+        if not coinWallets.isReportCurrency():
             # check if there are sells in the given timeframe
             validSellFound = False
-            for sell in coin.tradeMatcher.sellsMatched:
-                if sell.date >= minDate and sell.date <= maxDate:
-                    validSellFound = True
-                    break
-            if validSellFound:
-                wsname = re.sub('[^A-Za-z0-9]+', '', coin.coinname)
-                ws = wb.create_sheet(wsname)
-
-                # write top header 
-                # cell = WriteOnlyCell(ws)
-                if translator:
-                    ws.append(['', '', '', trans('Buy'), '', '', '', '', trans('Sell'), '', '', '', '', trans('Profit'), ''])
-                else:
-                    ws.append(['', '', '', 'Ankauf', '', '', '', '', 'Verkauf', '', '', '', '', 'Profit', ''])
-                ws.merge_cells('A1:B1')
-                ws.merge_cells('D1:G1')
-                ws.merge_cells('I1:L1')
-                ws.merge_cells('N1:O1')
-                headingFont = Font(size=12, bold=True)
-                headingAlignment = Alignment(horizontal='center',
-                                             vertical='center')
-                headings = [ws['A1'], ws['D1'], ws['I1'], ws['N1']]
-                for heading in headings:
-                    heading.font = headingFont
-                    heading.alignment = headingAlignment
-
-                # blue, green, yellow, purple
-                headingColors = ['FF61D2FF', 'FF6DE992', 'FFFFFF52', 'FFE057FF']
-                for i in range(len(headings)):
-                    headings[i].fill = PatternFill(fill_type='solid',
-                                                   start_color=headingColors[i],
-                                                   end_color=headingColors[i])
-
-                # empty row
-                ws.append([])
-
-                # write sub header
-                if translator:
-                    ws.append(
-                        ['', '', '', trans('Date'), trans('Amount'), trans('Price'), trans('Value'), '', trans('Date'),
-                         trans('Amount'), trans('Price'), trans('Value'), '', trans('Profit'), trans('tax relevant')])
-                    ws.append(['', '', '', '', trans('in') + ' ' + trans('pc'),
-                               trans('in') + ' ' + currency + '/' + trans('pc'),
-                               trans('in') + ' ' + currency, '', '', trans('in') + ' ' + trans('pc'),
-                               trans('in') + ' ' + currency + '/' + trans('pc'), trans('in') + ' ' + currency, '',
-                               trans('in') + ' ' + currency, trans('in') + ' ' + currency])
-                else:
-                    ws.append(['', '', '', 'Datum', 'Anzahl', 'Preis', 'Wert', '', 'Datum', 'Anzahl', 'Preis', 'Wert', '',
-                               'Gewinn', 'zu versteuern'])
-                    ws.append(['', '', '', '', 'in Stk', 'in ' + currency + '/Stk', 'in ' + currency, '', '', 'in Stk',
-                               'in ' + currency + '/Stk', 'in ' + currency, '', 'in ' + currency, 'in ' + currency])
-
-                # coinname
-                ws.append([coin.coinname, ''])
-
-                firstProfitRow = ws.max_row + 1
-                # write data
-                for irow in range(len(coin.tradeMatcher.profitMatched)):
-                    sell = coin.tradeMatcher.sellsMatched[irow]
-                    # check date of sell
+            for coin in coinWallets.wallets:
+                for sell in coin.tradeMatcher.sellsMatched:
                     if sell.date >= minDate and sell.date <= maxDate:
-                        buy = coin.tradeMatcher.buysMatched[irow]
-                        profit = coin.tradeMatcher.profitMatched[irow]
-                        # if taxyearlimit is given # if limit is relevant
-                        if taxyearlimit and ((sell.date - relativedelta(years=taxyearlimit)) > buy.date):  # if taxyearlimit is given
-                            taxProfit = 0
-                            if includeTaxFreeTrades:
-                                ws.append(
-                                    ['', '', '', buy.date, buy.amount, buy.getPrice()[currency],
-                                     buy.value[currency], '', sell.date, sell.amount, sell.getPrice()[currency],
-                                     sell.value[currency], '', round(profit[currency], 3), round(taxProfit, 3)])
-                        else:
-                            taxProfit = profit[currency]
-                            ws.append(['', '', '', buy.date, buy.amount, buy.getPrice()[currency],
-                                       buy.value[currency], '', sell.date, sell.amount, sell.getPrice()[currency],
-                                       sell.value[currency], '', round(profit[currency], 3), round(taxProfit, 3)])
+                        validSellFound = True
+                        break
+                if validSellFound:
+                    if coin.walletname != "default":
+                        tabname = coin.coinname + "_" + coin.walletname
+                    else:
+                        tabname = coin.coinname
+                    wsname = re.sub('[^A-Za-z0-9_]+', '', tabname)
+                    ws = wb.create_sheet(wsname)
 
-                profitSumRows.append(ws.max_row + 2)
-                profitSumColumns.append(15)
-                #                ws['M' + str(profitSumRows[-1])] = 'Summe'
-                ws[profitSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + profitSumColumn + str(
-                    firstProfitRow) + ':' + profitSumColumn + str(profitSumRows[-1] - 2) + '),2)'
+                    # write top header
+                    # cell = WriteOnlyCell(ws)
+                    if translator:
+                        ws.append(['', '', '', trans('Buy'), '', '', '', '', trans('Sell'), '', '', '', '', trans('Profit'), ''])
+                    else:
+                        ws.append(['', '', '', 'Ankauf', '', '', '', '', 'Verkauf', '', '', '', '', 'Profit', ''])
+                    ws.merge_cells('A1:B1')
+                    ws.merge_cells('D1:G1')
+                    ws.merge_cells('I1:L1')
+                    ws.merge_cells('N1:O1')
+                    headingFont = Font(size=12, bold=True)
+                    headingAlignment = Alignment(horizontal='center',
+                                                 vertical='center')
+                    headings = [ws['A1'], ws['D1'], ws['I1'], ws['N1']]
+                    for heading in headings:
+                        heading.font = headingFont
+                        heading.alignment = headingAlignment
 
-                # set width of date columns
-                ws.column_dimensions['D'].width = 11
-                ws.column_dimensions['I'].width = 11
-                # set width of gap columns
-                gapColumns = ['C', 'H', 'M', 'P']
-                gapFill = PatternFill(fill_type='solid',
-                                      start_color='FFC8C8C8',
-                                      end_color='FFC8C8C8')
-                for gapColumn in gapColumns:
-                    ws.column_dimensions[gapColumn].width = 4
+                    # blue, green, yellow, purple
+                    headingColors = ['FF61D2FF', 'FF6DE992', 'FFFFFF52', 'FFE057FF']
+                    for i in range(len(headings)):
+                        headings[i].fill = PatternFill(fill_type='solid',
+                                                       start_color=headingColors[i],
+                                                       end_color=headingColors[i])
 
-                    # set gap color
-                    for cell in ws[gapColumn]:
-                        cell.fill = gapFill
+                    # empty row
+                    ws.append([])
 
-                # page setup
-                #                ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
-                #                ws.page_setup.fitToWidth = 1
-                pageSetup(ws)
+                    # write sub header
+                    if translator:
+                        ws.append(
+                            ['', '', '', trans('Date'), trans('Amount'), trans('Price'), trans('Value'), '', trans('Date'),
+                             trans('Amount'), trans('Price'), trans('Value'), '', trans('Profit'), trans('tax relevant')])
+                        ws.append(['', '', '', '', trans('in') + ' ' + trans('pc'),
+                                   trans('in') + ' ' + currency + '/' + trans('pc'),
+                                   trans('in') + ' ' + currency, '', '', trans('in') + ' ' + trans('pc'),
+                                   trans('in') + ' ' + currency + '/' + trans('pc'), trans('in') + ' ' + currency, '',
+                                   trans('in') + ' ' + currency, trans('in') + ' ' + currency])
+                    else:
+                        ws.append(['', '', '', 'Datum', 'Anzahl', 'Preis', 'Wert', '', 'Datum', 'Anzahl', 'Preis', 'Wert', '',
+                                   'Gewinn', 'zu versteuern'])
+                        ws.append(['', '', '', '', 'in Stk', 'in ' + currency + '/Stk', 'in ' + currency, '', '', 'in Stk',
+                                   'in ' + currency + '/Stk', 'in ' + currency, '', 'in ' + currency, 'in ' + currency])
+
+                    # coinname
+                    ws.append([coin.coinname, ''])
+
+                    firstProfitRow = ws.max_row + 1
+                    # write data
+                    for irow in range(len(coin.tradeMatcher.profitMatched)):
+                        sell = coin.tradeMatcher.sellsMatched[irow]
+                        # check date of sell
+                        if sell.date >= minDate and sell.date <= maxDate:
+                            buy = coin.tradeMatcher.buysMatched[irow]
+                            profit = coin.tradeMatcher.profitMatched[irow]
+                            # if taxyearlimit is given # if limit is relevant
+                            if taxyearlimit and ((sell.date - relativedelta(years=taxyearlimit)) > buy.date):  # if taxyearlimit is given
+                                taxProfit = 0
+                                if includeTaxFreeTrades:
+                                    ws.append(
+                                        ['', '', '', buy.date, buy.amount, buy.getPrice()[currency],
+                                         buy.value[currency], '', sell.date, sell.amount, sell.getPrice()[currency],
+                                         sell.value[currency], '', round(profit[currency], 3), round(taxProfit, 3)])
+                            else:
+                                taxProfit = profit[currency]
+                                ws.append(['', '', '', buy.date, buy.amount, buy.getPrice()[currency],
+                                           buy.value[currency], '', sell.date, sell.amount, sell.getPrice()[currency],
+                                           sell.value[currency], '', round(profit[currency], 3), round(taxProfit, 3)])
+
+                    profitSumRows.append(ws.max_row + 2)
+                    profitSumColumns.append(15)
+                    #                ws['M' + str(profitSumRows[-1])] = 'Summe'
+                    ws[profitSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + profitSumColumn + str(
+                        firstProfitRow) + ':' + profitSumColumn + str(profitSumRows[-1] - 2) + '),2)'
+
+                    # set width of date columns
+                    ws.column_dimensions['D'].width = 11
+                    ws.column_dimensions['I'].width = 11
+                    # set width of gap columns
+                    gapColumns = ['C', 'H', 'M', 'P']
+                    gapFill = PatternFill(fill_type='solid',
+                                          start_color='FFC8C8C8',
+                                          end_color='FFC8C8C8')
+                    for gapColumn in gapColumns:
+                        ws.column_dimensions[gapColumn].width = 4
+
+                        # set gap color
+                        for cell in ws[gapColumn]:
+                            cell.fill = gapFill
+
+                    # page setup
+                    #                ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+                    #                ws.page_setup.fitToWidth = 1
+                    pageSetup(ws)
 
     # %% fee sheets
     feeSumColumn = 'G'

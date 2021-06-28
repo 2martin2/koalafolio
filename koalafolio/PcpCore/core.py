@@ -607,7 +607,7 @@ class TradeMatcher:
         self.buysLeft = []
         buyIndex = 0
         sellIndex = 0
-        maxIter = 10 * len(self.sellsBuffer)
+        maxIter = 2 * (len(self.sellsBuffer) + len(self.buysBuffer))
         while (sellIndex < len(self.sellsBuffer) and buyIndex < len(self.buysBuffer)):
             if self.sellsBuffer[sellIndex].date < self.buysBuffer[buyIndex].date:  # sell is before buy
                 # no buy trade can be matched -> ignore sellTrade
@@ -853,6 +853,18 @@ class CoinBalancePrimitive:
     def setCurrentValueAll(self, value):
         self.currentPrice = value.div(self.balance)
 
+    def setCurrentPrice(self, price):
+        self.currentPrice = price
+
+    def setChange24h(self, change24h):
+        self.change24h = change24h
+
+    def getChange24h(self, key):
+        if self.change24h[key]:
+            return self.change24h[key]
+        else:
+            return 0
+
     def getFees(self):
         fees = []
         for trade in self.trades:
@@ -874,11 +886,6 @@ class CoinBalancePrimitive:
         return [self.coinname, self.balance] + [self.initialValue.value[key] for key in self.initialValue.value] + \
                [self.getCurrentValue().value[key] for key in self.getCurrentValue().value]
 
-    def getChange24h(self, key):
-        if self.change24h[key]:
-            return self.change24h[key]
-        else:
-            return 0
 
 # TradeMatcher get functions
     def getTotalProfit(self):
@@ -906,6 +913,27 @@ class CoinWallet(CoinBalancePrimitive):
         super(CoinWallet, self).__init__()
         self.walletname = name
 
+    def matchTrades(self):
+        self.tradeMatcher.setTrades(self.trades)
+        self.tradeMatcher.matchTrades()
+        # check balance with buys left in tradeMatcher
+        hasAmountDismatch = False
+        if self.tradeMatcher.getBuyAmountLeft() == 0:
+            if self.balance != 0:
+                hasAmountDismatch = True
+        else:
+            if abs(1 - (self.balance / self.tradeMatcher.getBuyAmountLeft())) > 0.01:  # more than 1% error
+                hasAmountDismatch = True
+        if hasAmountDismatch:
+            # something is wrong. balance should be equal
+            if self.walletname == "DEFAULT":
+                coinname = self.coinname
+            else:
+                coinname = self.coinname + ' ' + self.walletname
+            logger.globalLogger.warning('coin amount of matched trades do not fit portfolio balance of coin: ' + coinname + '; looks like imported trades are incomplete or inconsistent.')
+            logger.globalLogger.warning("portfolio balance: " + str(self.balance) + '; matched trades balance: ' + str(self.tradeMatcher.getBuyAmountLeft()))
+        self.initialValue = self.tradeMatcher.getInitialPrice().mult(self.balance)
+
 
 # %% Sum of Coin Wallets
 class CoinBalance(CoinBalancePrimitive):
@@ -913,7 +941,17 @@ class CoinBalance(CoinBalancePrimitive):
         super(CoinBalance, self).__init__()
         self.wallets = []
 
+    # iterate wallets
+    def __iter__(self):
+        return iter(self.wallets)
+
+    def addWallet(self, walletname="default"):
+        if walletname == "":
+            walletname = "default"
+        return self.getWalletbyName(walletname)
+
     def getWalletbyName(self, walletname):
+        walletname = walletname.upper()  # always use uppercase (walletnames not casesensitive)
         for wallet in self.wallets:
             if wallet.walletname == walletname:
                 return wallet
@@ -944,7 +982,7 @@ class CoinBalance(CoinBalancePrimitive):
             wallet.updateBalance()
 
     def matchTrades(self):
-        super(CoinBalance, self).matchTrades()
+        # super(CoinBalance, self).matchTrades()
         # match Trades of wallets
         initialValueSum = CoinValue()
         for wallet in self.wallets:
@@ -952,6 +990,21 @@ class CoinBalance(CoinBalancePrimitive):
             initialValueSum += wallet.initialValue
 
         self.initialValue = initialValueSum
+
+    def setCurrentValueAll(self, value):
+        super(CoinBalance, self).setCurrentValueAll(value)
+        for wallet in self.wallets:
+            wallet.currentPrice = self.currentPrice
+
+    def setCurrentPrice(self, price):
+        super(CoinBalance, self).setCurrentPrice(price)
+        for wallet in self.wallets:
+            wallet.setCurrentPrice(price)
+
+    def setChange24h(self, change24h):
+        super(CoinBalance, self).setChange24h(change24h)
+        for wallet in self.wallets:
+            wallet.setChange24h(change24h)
 
 
 
@@ -1068,12 +1121,16 @@ class CoinList:
     # set prices from dict
     def setPrices(self, prices):
         for coin in self.coins:
-                for key in coin.currentPrice:
-                    try:
-                        coin.currentPrice[key] = prices[coin.coinname][key]['PRICE']
-                        coin.change24h[key] = prices[coin.coinname][key]['CHANGEPCT24HOUR']
-                    except KeyError:
-                        pass
+            price = CoinValue()
+            change24h = CoinValue()
+            for key in coin.currentPrice:
+                try:
+                    price[key] = prices[coin.coinname][key]['PRICE']
+                    change24h[key] = prices[coin.coinname][key]['CHANGEPCT24HOUR']
+                except KeyError:
+                    pass
+            coin.setCurrentPrice(price)
+            coin.setChange24h(change24h)
 
     def setPriceChartData(self, priceChartData: dict):
         for coin in self.coins:
