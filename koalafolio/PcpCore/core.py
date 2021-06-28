@@ -672,9 +672,6 @@ class TradeMatcher:
     def getTotalProfit(self):
         return sum(self.profitMatched, CoinValue())
 
-    # def getTimeInvest(self, date):
-
-
     def getTimeDeltaProfit(self, fromDate, toDate, taxFreeTimeDelta=-1):
         if taxFreeTimeDelta == -1:
             return sum([profit for profit, date in zip(self.profitMatched, self.profitMatchedTime)
@@ -745,9 +742,8 @@ class TradeMatcher:
     def getBuyAmountLeftTaxFree(self, taxfreeLimit):
         return self.getBuyAmountLeftToDate(datetime.datetime.now().date() - relativedelta(years=1))
 
-
 # %% Coin_Balance
-class CoinBalance:
+class CoinBalancePrimitive:
     def __init__(self):
         self.coinname = None
         self.balance = 0
@@ -883,6 +879,82 @@ class CoinBalance:
             return self.change24h[key]
         else:
             return 0
+
+# TradeMatcher get functions
+    def getTotalProfit(self):
+        return self.tradeMatcher.getTotalProfit()
+
+    def getTimeDeltaProfit(self, fromDate, toDate, taxFreeTimeDelta=-1):
+        return self.tradeMatcher.getTimeDeltaProfit(fromDate, toDate, taxFreeTimeDelta)
+
+    def getBuyAmount(self):
+        return self.tradeMatcher.getBuyAmount()
+
+    def getSellAmount(self):
+        return self.tradeMatcher.getSellAmount()
+
+    def getFirstBuyLeftDate(self):
+        return self.tradeMatcher.getFirstBuyLeftDate()
+
+    def getBuyAmountLeftTaxFree(self, taxfreeLimit):
+        return self.tradeMatcher.getBuyAmountLeftTaxFree(taxfreeLimit)
+
+
+# %% Coin Wallet
+class CoinWallet(CoinBalancePrimitive):
+    def __init__(self, name):
+        super(CoinWallet, self).__init__()
+        self.walletname = name
+
+
+# %% Sum of Coin Wallets
+class CoinBalance(CoinBalancePrimitive):
+    def __init__(self):
+        super(CoinBalance, self).__init__()
+        self.wallets = []
+
+    def getWalletbyName(self, walletname):
+        for wallet in self.wallets:
+            if wallet.walletname == walletname:
+                return wallet
+        self.wallets.append(CoinWallet(walletname))
+        self.wallets[-1].coinname = self.coinname
+        return self.wallets[-1]
+
+    def getWalletnameFromTrade(self, trade):
+        if not trade.wallet:
+            return "default"
+        else:
+            return str(trade.wallet)
+
+    def addTrade(self, trade):
+        super(CoinBalance, self).addTrade(trade)
+        # add Trade to wallet
+        self.getWalletbyName(self.getWalletnameFromTrade(trade)).addTrade(trade)
+
+    def removeTrade(self, trade):
+        super(CoinBalance, self).removeTrade(trade)
+        # remove Trade from wallet
+        self.getWalletbyName(self.getWalletnameFromTrade(trade)).removeTrade(trade)
+
+    def updateBalance(self):
+        super(CoinBalance, self).updateBalance()
+        # update balance of wallets
+        for wallet in self.wallets:
+            wallet.updateBalance()
+
+    def matchTrades(self):
+        super(CoinBalance, self).matchTrades()
+        # match Trades of wallets
+        initialValueSum = CoinValue()
+        for wallet in self.wallets:
+            wallet.matchTrades()
+            initialValueSum += wallet.initialValue
+
+        self.initialValue = initialValueSum
+
+
+
 
 
 # %% CoinList

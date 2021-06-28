@@ -250,7 +250,7 @@ class QPortfolioTableModel(QCoinContainer):
                 if index.column() == 1:  # balance row
                     return self.coins[index.row()]  # return CoinBalance
                 if index.column() == 2:  # profit row
-                    return self.coins[index.row()].tradeMatcher.getTotalProfit()  # return profit
+                    return self.coins[index.row()].getTotalProfit()  # return profit
                 if index.column() >= self.firstValueColumn:  # return CoinBalance and key
                     keys = [*core.CoinValue().value]
                     return self.coins[index.row()], keys[index.column() - self.firstValueColumn], self.valueCols
@@ -467,12 +467,12 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 if settings.mySettings.getTaxSetting('taxfreelimit'):
                     taxFreeLimitYears = settings.mySettings.getTaxSetting('taxfreelimityears')
                     freeBuyYears = '>' + str(taxFreeLimitYears) + 'y'
-                    buyAmountVal = coinBalance.tradeMatcher.getBuyAmountLeftTaxFree(taxFreeLimitYears)
+                    buyAmountVal = coinBalance.getBuyAmountLeftTaxFree(taxFreeLimitYears)
                     buyAmount = controls.floatToString(buyAmountVal, 4)
                 else:
-                    buyAmount = controls.floatToString(coinBalance.tradeMatcher.getBuyAmount(), 4)
-                    sellAmount = controls.floatToString(coinBalance.tradeMatcher.getSellAmount(), 4)
-                    firstBuyLeftDate = coinBalance.tradeMatcher.getFirstBuyLeftDate()
+                    buyAmount = controls.floatToString(coinBalance.getBuyAmount(), 4)
+                    sellAmount = controls.floatToString(coinBalance.getSellAmount(), 4)
+                    firstBuyLeftDate = coinBalance.getFirstBuyLeftDate()
                     if firstBuyLeftDate:
                         now = datetime.datetime.now()
                         yearDif = now.year - firstBuyLeftDate.year
@@ -673,7 +673,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                                                                          settings.mySettings.getTaxSetting("taxfreelimityears"))
                         firstDate = datetime.datetime.combine(data.tradeMatcher.buysLeft[0].date, datetime.time(0, 0, 0, 0))
                         limitDates = [limitDate, limitDate]
-                        limitAmount = data.tradeMatcher.getBuyAmountLeftTaxFree(settings.mySettings.getTaxSetting("taxfreelimityears"))
+                        limitAmount = data.getBuyAmountLeftTaxFree(settings.mySettings.getTaxSetting("taxfreelimityears"))
                         limitVals = [limitAmount, 0]
                     # addData(self, dates, vals, qColor, name, lineWidth=1, chartType="line", axis='balance', updateAxis=True)
                     editor.addData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", lineWidth=3)
