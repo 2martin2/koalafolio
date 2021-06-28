@@ -5,7 +5,7 @@ import koalafolio.PcpCore.settings as settings
 import re, numbers, pandas
 import koalafolio.Import.RegexPatterns as pat
 import datetime, tzlocal, pytz
-import dateutil
+import dateutil.parser
 import koalafolio.PcpCore.logger as logger
 
 localLogger = logger.globalLogger
@@ -988,6 +988,8 @@ def modelCallback_Rotki(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
+dmyDateRegex = re.compile(r'^.*\d{1,2}\.\d{1,2}\.\d{2,4}.*$')
+
 # %% functions
 def convertDate(dateString, useLocalTime=False):
     # check if pandas time pattern fits
@@ -997,7 +999,10 @@ def convertDate(dateString, useLocalTime=False):
         timestamp = dateString
     else:
         try:  # try dateutil parser
-            timestamp = dateutil.parser.parse(dateString)
+            if dmyDateRegex.match(dateString):
+                timestamp = dateutil.parser.parse(dateString, dayfirst=True)
+            else:
+                timestamp = dateutil.parser.parse(dateString, dayfirst=False)
         except ValueError:  # manuel parsing
             localLogger.info('autoparsing date failed. try extended date parsing: ' + str(dateString))
             if pat.Pandas_TIME_REGEX.match(dateString):
