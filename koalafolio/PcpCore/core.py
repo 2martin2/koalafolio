@@ -550,6 +550,8 @@ class TradeMatcher:
         self.trades = trades
 
     def prepareTrades(self, timemode=DAYWISE):
+        # sort trades
+        self.trades.sort(key=lambda x: x.date, reverse=False)
         # copy trades to buffer
         self.sellsBuffer = []
         self.buysBuffer = []
@@ -1005,6 +1007,45 @@ class CoinBalance(CoinBalancePrimitive):
         super(CoinBalance, self).setChange24h(change24h)
         for wallet in self.wallets:
             wallet.setChange24h(change24h)
+
+    # TradeMatcher get functions
+    def getTotalProfit(self):
+        profitsum = CoinValue()
+        for wallet in self.wallets:
+            profitsum += wallet.getTotalProfit()
+        return profitsum
+
+    def getTimeDeltaProfit(self, fromDate, toDate, taxFreeTimeDelta=-1):
+        profitsum = CoinValue()
+        for wallet in self.wallets:
+            profitsum += wallet.tradeMatcher.getTimeDeltaProfit(fromDate, toDate, taxFreeTimeDelta)
+        return profitsum
+
+    def getBuyAmount(self):
+        buyAmount = 0
+        for wallet in self.wallets:
+            buyAmount += wallet.tradeMatcher.getBuyAmount()
+        return buyAmount
+
+    def getSellAmount(self):
+        sellAmount = 0
+        for wallet in self.wallets:
+            sellAmount += wallet.tradeMatcher.getSellAmount()
+        return sellAmount
+
+    def getFirstBuyLeftDate(self):
+        firstBuyLeftDate = self.wallets[0].tradeMatcher.getFirstBuyLeftDate()
+        for wallet in self.wallets:
+            firstWalletDate = wallet.tradeMatcher.getFirstBuyLeftDate()
+            if firstWalletDate < firstBuyLeftDate:
+                firstBuyLeftDate = firstWalletDate
+        return firstBuyLeftDate
+
+    def getBuyAmountLeftTaxFree(self, taxfreeLimit):
+        taxFreeAmount = 0
+        for wallet in self.wallets:
+            taxFreeAmount += wallet.tradeMatcher.getBuyAmountLeftTaxFree(taxfreeLimit)
+        return taxFreeAmount
 
 
 

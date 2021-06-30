@@ -94,7 +94,7 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
 
     def expandedCallback(self, index):
         rows = self.model().rowCount(index)
-        columns = self.model().rowCount(index)
+        columns = self.model().columnCount(index)
         for row in range(rows):
             for column in range(columns):
                 child = self.model().index(row, column, index)
@@ -643,31 +643,57 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
         return None
 
     def setEditorData(self, editor, index):
-        if index.parent().isValid():
+        if index.parent().isValid():  # child level
             if index.column() == 0:
                 editor.setText(index.data())
                 return
             if index.column() == 1:
+                # get settings
+                taxfreelimityears = settings.mySettings.getTaxSetting("taxfreelimityears")
+                taxfreelimit = settings.mySettings.getTaxSetting("taxfreelimit")
+                coinchartdatatype = settings.mySettings.getGuiSetting("coinchartdatatype")
                 data = index.data()
                 editor.setTitle(data.walletname)
                 # draw buys left
-                dates = []
-                vals = []
-                oldSum = 0
-                # draw buy prices
-                priceDates = []
-                prices = []
-                for trade in data.tradeMatcher.buysLeft:
-                    date = datetime.datetime.combine(trade.date, datetime.time(0, 0, 0, 0))
+                if coinchartdatatype == 'buys':
+                    dates = []
+                    vals = []
+                    oldSum = 0
+                    # draw buy prices
+                    priceDates = []
+                    prices = []
                     # buys left
-                    dates.append(date)
-                    vals.append(oldSum)
-                    dates.append(date)
-                    vals.append(oldSum + trade.amount)
-                    oldSum = vals[-1]
-                    # prices
-                    priceDates.append(date)
-                    prices.append(trade.getPrice()[settings.mySettings.reportCurrency()])
+                    for trade in data.tradeMatcher.buysLeft:
+                        date = datetime.datetime.combine(trade.date, datetime.time(0, 0, 0, 0))
+                        # buys left
+                        dates.append(date)
+                        vals.append(oldSum)
+                        dates.append(date)
+                        vals.append(oldSum + trade.amount)
+                        oldSum = vals[-1]
+                        # prices
+                        priceDates.append(date)
+                        prices.append(trade.getPrice()[settings.mySettings.reportCurrency()])
+                else:  # coinchartdatatype == 'balance':
+                    # balance
+                    tradesSorted = data.tradeMatcher.trades
+                    # tradesSorted.sort(key=lambda x: x.date, reverse=False)
+                    dates = [datetime.datetime.combine(tradesSorted[0].date, datetime.time(0, 0, 0, 0))]
+                    vals = [0]
+                    oldSum = 0
+                    priceDates = []
+                    prices = []
+                    for trade in tradesSorted:
+                        date = datetime.datetime.combine(trade.date, datetime.time(0, 0, 0, 0))
+                        # balance
+                        dates.append(date)
+                        vals.append(oldSum)
+                        dates.append(date)
+                        vals.append(oldSum + trade.amount)
+                        oldSum = vals[-1]
+                        # prices
+                        priceDates.append(date)
+                        prices.append(trade.getPrice()[settings.mySettings.reportCurrency()])
                 if dates:
                     # buys left
                     dates.append(datetime.datetime.now())
@@ -676,17 +702,19 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     if not data.priceChartData: # if not price chart data available add at least current value
                         priceDates.append(datetime.datetime.now())
                         prices.append(data.getCurrentPrice()[settings.mySettings.reportCurrency()])
+                    # draw chart data
+                    if coinchartdatatype == 'buys':
+                        editor.addData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", lineWidth=3)
+                    else:  # coinchartdatatype == 'balance':
+                        editor.addData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "balance", lineWidth=3)
                     # draw taxlimit
-                    if settings.mySettings.getTaxSetting("taxfreelimit"):
+                    if taxfreelimit:
                         limitDate = datetime.datetime.now().replace(year=datetime.datetime.now().year -
-                                                                         settings.mySettings.getTaxSetting("taxfreelimityears"))
+                                                                         taxfreelimityears)
                         firstDate = datetime.datetime.combine(data.tradeMatcher.buysLeft[0].date, datetime.time(0, 0, 0, 0))
                         limitDates = [limitDate, limitDate]
-                        limitAmount = data.getBuyAmountLeftTaxFree(settings.mySettings.getTaxSetting("taxfreelimityears"))
+                        limitAmount = data.getBuyAmountLeftTaxFree(taxfreelimityears)
                         limitVals = [limitAmount, 0]
-                    # addData(self, dates, vals, qColor, name, lineWidth=1, chartType="line", axis='balance', updateAxis=True)
-                    editor.addData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "buys", lineWidth=3)
-                    if settings.mySettings.getTaxSetting("taxfreelimit"):
                         editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", lineWidth=3, updateAxis=False)
                     editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY'),
                                    "buyPrice " + settings.mySettings.reportCurrency(), lineWidth=3,
