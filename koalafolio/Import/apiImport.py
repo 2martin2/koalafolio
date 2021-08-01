@@ -36,6 +36,7 @@ def getApiHistory(apiname, key, secret, start, end):
     if apiname not in apiNames:
         raise KeyError("invalid api name")
     else:
+        localLogger.info("started requesting data from " + str(apiname))
         try:
             return apiHandle[apiname](key, secret, start, end)
         except Exception as ex:
