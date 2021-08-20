@@ -915,6 +915,12 @@ class CoinWallet(CoinBalancePrimitive):
         super(CoinWallet, self).__init__()
         self.walletname = name
 
+    def getWalletName(self):
+        if self.walletname == "DEFAULT":
+            return self.coinname
+        else:
+            return self.coinname + '_' + self.walletname
+
     def matchTrades(self):
         self.tradeMatcher.setTrades(self.trades)
         self.tradeMatcher.matchTrades()
@@ -934,7 +940,8 @@ class CoinWallet(CoinBalancePrimitive):
                 coinname = self.coinname + ' ' + self.walletname
             logger.globalLogger.warning('coin amount of matched trades do not fit portfolio balance of coin: ' + coinname + '; looks like imported trades are incomplete or inconsistent.')
             logger.globalLogger.warning("portfolio balance: " + str(self.balance) + '; matched trades balance: ' + str(self.tradeMatcher.getBuyAmountLeft()))
-        self.initialValue = self.tradeMatcher.getInitialPrice().mult(self.balance)
+        self.mult = self.tradeMatcher.getInitialPrice().mult(self.balance)
+        self.initialValue = self.mult
 
 
 # %% Sum of Coin Wallets
@@ -947,9 +954,9 @@ class CoinBalance(CoinBalancePrimitive):
     def __iter__(self):
         return iter(self.wallets)
 
-    def addWallet(self, walletname="default"):
+    def addWallet(self, walletname="DEFAULT"):
         if walletname == "":
-            walletname = "default"
+            walletname = "DEFAULT"
         return self.getWalletbyName(walletname)
 
     def getWalletbyName(self, walletname):
@@ -963,7 +970,7 @@ class CoinBalance(CoinBalancePrimitive):
 
     def getWalletnameFromTrade(self, trade):
         if not trade.wallet:
-            return "default"
+            return "DEFAULT"
         else:
             return str(trade.wallet)
 

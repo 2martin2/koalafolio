@@ -43,10 +43,7 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                         validSellFound = True
                         break
                 if validSellFound:
-                    if coin.walletname != "default":
-                        tabname = coin.coinname + "_" + coin.walletname
-                    else:
-                        tabname = coin.coinname
+                    tabname = coin.getWalletName()
                     wsname = re.sub('[^A-Za-z0-9_]+', '', tabname)
                     ws = wb.create_sheet(wsname)
 
