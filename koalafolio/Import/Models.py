@@ -230,18 +230,19 @@ IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNe
                                                                                         pat.STATUS_REGEX]
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_5
 
-# %% model template1: "date","type","buy amount","buy cur","sell amount","sell cur",("exchange"),("fee amount"),("fee currency")
+# %% model template1: "date","type","buy amount","buy cur","sell amount","sell cur",("exchange"),("fee amount"),("fee currency"),("wallet")
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
 IMPORT_MODEL_LIST[index].modelName = 'Template1'
 IMPORT_MODEL_LIST[index].modelHeaders = ['DATE', 'TYPE', 'BUY_AMOUNT', 'BUY_CUR', 'SELL_AMOUNT', 'SELL_CUR',
-                                         'EXCHANGE', 'FEE_AMOUNT', 'FEE_CURRENCY']
+                                         'EXCHANGE', 'FEE_AMOUNT', 'FEE_CURRENCY', "BUY_WALLET", "SELL_WALLET"]
 IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.TEMPLATE1_DATE_REGEX, pat.TEMPLATE1_TYPE_REGEX,
                                               pat.TEMPLATE1_BUY_AMOUNT_REGEX, pat.TEMPLATE1_BUY_CUR_REGEX,
                                               pat.TEMPLATE1_SELL_AMOUNT_REGEX, pat.TEMPLATE1_SELL_CUR_REGEX]
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded \
                                           + [pat.TEMPLATE1_EXCHANGE_REGEX, pat.TEMPLATE1_FEE_AMOUNT_REGEX,
-                                             pat.TEMPLATE1_FEE_CURRENCY_REGEX]
+                                             pat.TEMPLATE1_FEE_CURRENCY_REGEX, pat.TEMPLATE1_BUY_WALLET_REGEX,
+                                             pat.TEMPLATE1_SELL_WALLET_REGEX]
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_Template1
 
 

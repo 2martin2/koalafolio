@@ -313,12 +313,15 @@ class ImportSelectPage(SubPage):
                         file.write(','.join([x for x in model.modelHeaders]) + '\n')
                         break
                 #"date", "type", "buy amount", "buy cur", "sell amount", "sell cur", ("exchange"),
-                # ("fee amount"), ("fee currency")
+                # ("fee amount"), ("fee currency"), ("buy_wallet"), ("sell_wallet")
                 rows = []
-                rows.append([datetime.datetime.now(), 'trade', 10, 'ETH', 0.5, 'BTC', 'binance', 0.01, 'ETH'])
-                rows.append([datetime.datetime.now(), 'trade', 5, 'ETH', 0.25, 'BTC', '', '', ''])
-                rows.append([datetime.datetime.now(), 'trade', 20, 'ETH', 1, 'BTC', '', 0.0001, 'BTC'])
-                rows.append([datetime.datetime.now(), 'fee', '', '', '', '', '', 0.0015, 'ETH'])
+                rows.append([datetime.datetime.now(), 'trade', 10, 'ETH', 0.5, 'BTC', 'binance', 0.01, 'ETH', '', ''])
+                rows.append([datetime.datetime.now(), 'trade', 5, 'ETH', 0.25, 'BTC', '', '', '', ''])
+                rows.append([datetime.datetime.now(), 'trade', 20, 'ETH', 1, 'BTC', '', 0.0001, 'BTC', '', ''])
+                rows.append([datetime.datetime.now(), 'fee', '', '', '', '', '', 0.0015, 'ETH', '', ''])
+                rows.append([datetime.datetime.now(), 'trade', 50000, 'ADA', 20000, 'USD', 'kraken', '', '', 'Hodl_1', ''])
+                rows.append([datetime.datetime.now(), 'trade', 100000, 'ADA', 50000, 'USD', 'kraken', '', '', 'Staking_1', ''])
+                rows.append([datetime.datetime.now(), 'reward', 1000, 'ADA', 1000, 'USD', '', '', '', 'Staking_1', ''])
                 for row in rows:
                     file.write(','.join([str(x) for x in row]) + '\n')
                 file.close()
