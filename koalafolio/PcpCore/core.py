@@ -874,6 +874,13 @@ class CoinBalancePrimitive:
                 fees.append(trade)
         return fees
 
+    def getRewards(self):
+        rewards = []
+        for trade in self.trades:
+            if trade.tradeType == "reward":
+                rewards.append(trade)
+        return rewards
+
     def getTotalFees(self):
         fees = CoinValue()
         for trade in self.trades:

@@ -49,6 +49,8 @@ class ExportTranslator(configparser.ConfigParser):
         self['en']['tax_relevant'] = 'tax relevant'
         self['en']['Fees'] = 'Fees'
         self['en']['Fee'] = 'Fee'
+        self['en']['Rewards'] = 'Rewards'
+        self['en']['Reward'] = 'Reward'
         self['en']['pc'] = 'pc'
         # de
         self['de'] = {}
@@ -65,6 +67,8 @@ class ExportTranslator(configparser.ConfigParser):
         self['de']['tax_relevant'] = 'zu versteuern'
         self['de']['Fees'] = 'Gebühren'
         self['de']['Fee'] = 'Gebühr'
+        self['de']['Rewards'] = 'Entlohnungen'
+        self['de']['Reward'] = 'Entlohnung'
         self['de']['pc'] = 'stk'
 
     def saveTranslation(self):

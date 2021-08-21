@@ -227,6 +227,91 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
             #                ws.page_setup.fitToWidth = 1
             pageSetup(ws)
 
+    # %% reward sheets
+    rewardSumColumn = 'G'
+    rewardSumRows = []
+    for coin in coinList.coins:
+        rewards = coin.getRewards()
+        rewardSum = core.CoinValue()
+        for reward in rewards:
+            if reward.date.date() >= minDate and reward.date.date() <= maxDate:
+                rewardSum.add(reward.value)
+        if rewardSum[currency] != 0:  # if rewards have been received
+            wsname = re.sub('[^A-Za-z0-9]+', '', coin.coinname)
+            ws = wb.create_sheet(wsname + '_rewards')
+
+            # write top header
+            # cell = WriteOnlyCell(ws)
+            if translator:
+                ws.append(['', '', '', trans('Rewards'), '', '', '', ''])
+            else:
+                ws.append(['', '', '', 'Gebühren', '', '', '', ''])
+            ws.merge_cells('A1:B1')
+            ws.merge_cells('D1:G1')
+            headingFont = Font(size=12, bold=True)
+            headingAlignment = Alignment(horizontal='center',
+                                         vertical='center')
+            headings = [ws['A1'], ws['D1']]
+            for heading in headings:
+                heading.font = headingFont
+                heading.alignment = headingAlignment
+
+            # blue, purple
+            headingColors = ['FF61D2FF', 'FFE057FF']
+            for i in range(len(headings)):
+                headings[i].fill = PatternFill(fill_type='solid',
+                                               start_color=headingColors[i],
+                                               end_color=headingColors[i])
+
+            # empty row
+            ws.append([])
+
+            # write sub header
+            if translator:
+                ws.append(
+                    ['', '', '', trans('Date'), trans('Reward'), '', trans('Reward'), ''])
+                ws.append(['', '', '', '', trans('in') + ' ' + trans('pc'), '', trans('in') + ' ' + currency, ''])
+            else:
+                ws.append(
+                    ['', '', '', 'Datum', 'Gebühr', '', 'Gebühr', ''])
+                ws.append(['', '', '', '', 'in Stk', '', 'in ' + currency, ''])
+
+            # coinname
+            ws.append([coin.coinname, ''])
+
+            firstProfitRow = ws.max_row + 1
+            # write data
+            for reward in coin.getRewards():
+                # check date of sell
+                if reward.date.date() >= minDate and reward.date.date() <= maxDate:
+                    rewarddate = reward.date.astimezone(pytz.utc).replace(tzinfo=None)
+                    ws.append(['', '', '', rewarddate, reward.amount, '', round(reward.value[currency], 3), ''])
+
+            profitSumRows.append(ws.max_row + 2)
+            profitSumColumns.append(7)
+            #                ws['M' + str(profitSumRows[-1])] = 'Summe'
+            ws[rewardSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + rewardSumColumn + str(
+                firstProfitRow) + ':' + rewardSumColumn + str(profitSumRows[-1] - 2) + '),2)'
+
+            # set width of date columns
+            ws.column_dimensions['D'].width = 11
+            # set width of gap columns
+            gapColumns = ['C', 'H']
+            gapFill = PatternFill(fill_type='solid',
+                                  start_color='FFC8C8C8',
+                                  end_color='FFC8C8C8')
+            for gapColumn in gapColumns:
+                ws.column_dimensions[gapColumn].width = 4
+
+                # set gap color
+                for cell in ws[gapColumn]:
+                    cell.fill = gapFill
+
+            # page setup
+            #                ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+            #                ws.page_setup.fitToWidth = 1
+            pageSetup(ws)
+
     # %% overview sheet
     ws = wb.create_sheet('Overview', 0)
 
