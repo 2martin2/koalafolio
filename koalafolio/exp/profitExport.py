@@ -96,6 +96,7 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
 
                     firstProfitRow = ws.max_row + 1
                     # write data
+                    rowcount = 0
                     for irow in range(len(coin.tradeMatcher.profitMatched)):
                         sell = coin.tradeMatcher.sellsMatched[irow]
                         # check date of sell
@@ -106,41 +107,46 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                             if taxyearlimit and ((sell.date - relativedelta(years=taxyearlimit)) > buy.date):  # if taxyearlimit is given
                                 taxProfit = 0
                                 if includeTaxFreeTrades:
+                                    rowcount += 1
                                     ws.append(
                                         ['', '', '', buy.date, buy.amount, buy.getPrice()[currency],
                                          buy.value[currency], '', sell.date, sell.amount, sell.getPrice()[currency],
                                          sell.value[currency], '', round(profit[currency], 3), round(taxProfit, 3)])
                             else:
+                                rowcount += 1
                                 taxProfit = profit[currency]
                                 ws.append(['', '', '', buy.date, buy.amount, buy.getPrice()[currency],
                                            buy.value[currency], '', sell.date, sell.amount, sell.getPrice()[currency],
                                            sell.value[currency], '', round(profit[currency], 3), round(taxProfit, 3)])
+                    if rowcount == 0:  # no trades added:
+                        wb.remove(ws)
+                    else:
+                        profitSumRows.append(ws.max_row + 2)
+                        profitSumColumns.append(15)
+                        #                ws['M' + str(profitSumRows[-1])] = 'Summe'
+                        ws[profitSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + profitSumColumn + str(
+                            firstProfitRow) + ':' + profitSumColumn + str(profitSumRows[-1] - 2) + '),2)'
 
-                    profitSumRows.append(ws.max_row + 2)
-                    profitSumColumns.append(15)
-                    #                ws['M' + str(profitSumRows[-1])] = 'Summe'
-                    ws[profitSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + profitSumColumn + str(
-                        firstProfitRow) + ':' + profitSumColumn + str(profitSumRows[-1] - 2) + '),2)'
+                        # set width of date columns
+                        ws.column_dimensions['D'].width = 11
+                        ws.column_dimensions['I'].width = 11
+                        # set width of gap columns
+                        gapColumns = ['C', 'H', 'M', 'P']
+                        gapFill = PatternFill(fill_type='solid',
+                                              start_color='FFC8C8C8',
+                                              end_color='FFC8C8C8')
+                        for gapColumn in gapColumns:
+                            ws.column_dimensions[gapColumn].width = 4
 
-                    # set width of date columns
-                    ws.column_dimensions['D'].width = 11
-                    ws.column_dimensions['I'].width = 11
-                    # set width of gap columns
-                    gapColumns = ['C', 'H', 'M', 'P']
-                    gapFill = PatternFill(fill_type='solid',
-                                          start_color='FFC8C8C8',
-                                          end_color='FFC8C8C8')
-                    for gapColumn in gapColumns:
-                        ws.column_dimensions[gapColumn].width = 4
+                            # set gap color
+                            for cell in ws[gapColumn]:
+                                cell.fill = gapFill
 
-                        # set gap color
-                        for cell in ws[gapColumn]:
-                            cell.fill = gapFill
+                        # page setup
+                        #                ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+                        #                ws.page_setup.fitToWidth = 1
+                        pageSetup(ws)
 
-                    # page setup
-                    #                ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
-                    #                ws.page_setup.fitToWidth = 1
-                    pageSetup(ws)
 
     # %% fee sheets
     feeSumColumn = 'G'
