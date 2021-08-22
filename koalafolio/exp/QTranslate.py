@@ -39,6 +39,7 @@ class ExportTranslator(configparser.ConfigParser):
         self['en']['Profit'] = 'Profit'
         self['en']['Timeframe'] = 'Timeframe'
         self['en']['in'] = 'in'
+        self['en']['of'] = 'of'
         self['en']['Group'] = 'Group'
         self['en']['Buy'] = 'Buy'
         self['en']['Sell'] = 'Sell'
@@ -52,11 +53,13 @@ class ExportTranslator(configparser.ConfigParser):
         self['en']['Rewards'] = 'Rewards'
         self['en']['Reward'] = 'Reward'
         self['en']['pc'] = 'pc'
+        self['en']['Page'] = 'Page'
         # de
         self['de'] = {}
         self['de']['Profit'] = 'Gewinn'
         self['de']['Timeframe'] = 'Zeitraum'
         self['de']['in'] = 'in'
+        self['en']['of'] = 'von'
         self['de']['Group'] = 'Gruppe'
         self['de']['Buy'] = 'Ankauf'
         self['de']['Sell'] = 'Verkauf'
@@ -70,6 +73,7 @@ class ExportTranslator(configparser.ConfigParser):
         self['de']['Rewards'] = 'Entlohnungen'
         self['de']['Reward'] = 'Entlohnung'
         self['de']['pc'] = 'stk'
+        self['en']['Page'] = 'Seite'
 
     def saveTranslation(self):
         try:
