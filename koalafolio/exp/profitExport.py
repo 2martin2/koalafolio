@@ -212,9 +212,10 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
 
             firstProfitRow = ws.max_row + 1
             # write data
-            for fee in coin.getFees():
+            fees.sort(key=lambda x: x.date, reverse=False)
+            for fee in fees:
                 # check amount of fee not zero
-                if fee.amount > 0:
+                if fee.amount < 0:
                     # check date of sell
                     if fee.date.date() >= minDate and fee.date.date() <= maxDate:
                         feedate = fee.date.astimezone(pytz.utc).replace(tzinfo=None).date()
