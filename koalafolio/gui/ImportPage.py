@@ -363,11 +363,18 @@ class ImportPreviewPage(SubPage):
         self.exchangeInput = qtwidgets.QLineEdit(self.optionsFrame)
         self.exchangeInputButton = qtwidgets.QPushButton("set exchange", self.optionsFrame)
         self.exchangeInputButton.clicked.connect(self.exchangeChanged)
+        self.walletLabel = qtwidgets.QLabel("wallet:", self.optionsFrame)
+        self.walletInput = qtwidgets.QLineEdit(self.optionsFrame)
+        self.walletInputButton = qtwidgets.QPushButton("set wallet", self.optionsFrame)
+        self.walletInputButton.clicked.connect(self.walletChanged)
 
         self.optionsLayout = qtwidgets.QHBoxLayout(self.optionsFrame)
         self.optionsLayout.addWidget(self.exchangeLabel)
         self.optionsLayout.addWidget(self.exchangeInput)
         self.optionsLayout.addWidget(self.exchangeInputButton)
+        self.optionsLayout.addWidget(self.walletLabel)
+        self.optionsLayout.addWidget(self.walletInput)
+        self.optionsLayout.addWidget(self.walletInputButton)
 
         # header layout
         self.headerHorzLayout = qtwidgets.QHBoxLayout()
@@ -426,6 +433,7 @@ class ImportPreviewPage(SubPage):
         self.tradeListTemp.clearTrades()
         if (self.filePathIndex < len(self.controller.getFilesPath()) - 1):
             self.exchangeInput.setText("")
+            self.walletInput.setText("")
             self.filePathIndex += 1
             self.showFile(self.filePathIndex)
         else:
@@ -471,7 +479,10 @@ class ImportPreviewPage(SubPage):
             self.controller.showFrame(self.controller.IMPORTSELECTPAGEINDEX)
 
     def exchangeChanged(self):
-        self.tradeListTemp.setExchange(self.exchangeInput.text())
+        self.tableView.addExchangeToSelectedTrades(self.exchangeInput.text())
+
+    def walletChanged(self):
+        self.tableView.addWalletToSelectedTrades(self.walletInput.text())
 
     def clearLabelStyle(self):
         self.legendGrayLabel.setStyleSheet("")

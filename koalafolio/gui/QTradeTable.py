@@ -56,6 +56,30 @@ class QTradeTableView(ftable.FilterableTableView):
                     rows.append(sourceInd.row())
             self.model().sourceModel().deleteTrades(rows)
 
+    def addWalletToSelectedTrades(self, wallet):
+        if self.selectionModel().hasSelection():
+            inds = self.selectionModel().selectedIndexes()
+            rows = []
+            for ind in inds:
+                sourceInd = self.model().mapToSource(ind)
+                if not sourceInd.row() in rows:
+                    rows.append(sourceInd.row())
+            self.model().sourceModel().setWalletOfTrades(rows, wallet)
+        else:
+            self.model().sourceModel().setWallet(wallet)
+
+    def addExchangeToSelectedTrades(self, wallet):
+        if self.selectionModel().hasSelection():
+            inds = self.selectionModel().selectedIndexes()
+            rows = []
+            for ind in inds:
+                sourceInd = self.model().mapToSource(ind)
+                if not sourceInd.row() in rows:
+                    rows.append(sourceInd.row())
+            self.model().sourceModel().setExchangeOfTrades(rows, wallet)
+        else:
+            self.model().sourceModel().setExchange(wallet)
+
     def deleteSimilarTrades(self):
         self.model().sourceModel().deleteSimilarTrades()
 
@@ -355,6 +379,24 @@ class QTradeTableModel(QTradeContainer):
         self.beginResetModel()
         for trade in self.trades:
             trade.exchange = exchange
+        self.endResetModel()
+
+    def setWallet(self, wallet):
+        self.beginResetModel()
+        for trade in self.trades:
+            trade.wallet = wallet
+        self.endResetModel()
+
+    def setExchangeOfTrades(self, rows, exchange):
+        self.beginResetModel()
+        for row in rows:
+            self.trades[row].exchange = exchange
+        self.endResetModel()
+
+    def setWalletOfTrades(self, rows, wallet):
+        self.beginResetModel()
+        for row in rows:
+            self.trades[row].wallet = wallet
         self.endResetModel()
 
     def copyFromTradeList(self, tradeList):
