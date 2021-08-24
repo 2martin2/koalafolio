@@ -8,8 +8,10 @@ pycryptoportfolio
 .. |Language grade: Python| image:: https://img.shields.io/lgtm/grade/python/g/2martin2/koalafolio.svg?logo=lgtm&logoWidth=18
    :target: https://lgtm.com/projects/g/2martin2/koalafolio/context:python
 
-.. image:: https://img.shields.io/pypi/v/koalafolio
-.. image:: https://img.shields.io/pypi/dm/koalafolio
+|pypi version| |pypi downloads|
+
+.. |pypi version| image:: https://img.shields.io/pypi/v/koalafolio
+.. |pypi downloads| image:: https://img.shields.io/pypi/dm/koalafolio
 
 portfolio for cryptocoins with profit export for tax
 
