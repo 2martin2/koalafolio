@@ -895,6 +895,9 @@ class CoinBalancePrimitive:
         return [self.coinname, self.balance] + [self.initialValue.value[key] for key in self.initialValue.value] + \
                [self.getCurrentValue().value[key] for key in self.getCurrentValue().value]
 
+    def getTimeDeltaReward(self, fromDate, toDate):
+        return sum([trade.getValue() for trade in self.trades
+                    if trade.tradeType == 'reward' and (fromDate <= trade.date.date() <= toDate)], CoinValue())
 
 # TradeMatcher get functions
     def getTotalProfit(self):
@@ -1034,6 +1037,12 @@ class CoinBalance(CoinBalancePrimitive):
         for wallet in self.wallets:
             profitsum += wallet.tradeMatcher.getTimeDeltaProfit(fromDate, toDate, taxFreeTimeDelta)
         return profitsum
+
+    def getTimeDeltaReward(self, fromDate, toDate):
+        rewardsum = CoinValue()
+        for wallet in self.wallets:
+            rewardsum += wallet.getTimeDeltaReward(fromDate, toDate)
+        return rewardsum
 
     def getBuyAmount(self):
         buyAmount = 0
