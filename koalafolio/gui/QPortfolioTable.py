@@ -653,7 +653,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 taxfreelimit = settings.mySettings.getTaxSetting("taxfreelimit")
                 coinchartdatatype = settings.mySettings.getGuiSetting("coinchartdatatype")
                 data = index.data()
-                editor.setTitle(data.walletname)
+                editor.setTitle("Wallet: " + data.walletname)
                 # draw buys left
                 if coinchartdatatype == 'buys':
                     dates = []
