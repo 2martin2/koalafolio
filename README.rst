@@ -11,7 +11,9 @@ pycryptoportfolio
 |pypi version| |pypi downloads|
 
 .. |pypi version| image:: https://img.shields.io/pypi/v/koalafolio
+   :target: https://pypi.org/project/koalafolio/
 .. |pypi downloads| image:: https://img.shields.io/pypi/dm/koalafolio
+   :target: https://pypi.org/project/koalafolio/#files
 
 portfolio for cryptocoins with profit export for tax
 
