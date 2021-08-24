@@ -44,6 +44,13 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
     wb = openpyxl.Workbook(write_only=False)
     wb.remove(wb.active)
 
+    tradeprofitSumRows = []
+    feeSumRows = []
+    rewardSumRows = []
+    tradeprofitSumColumns = []
+    feeSumColumns = []
+    rewardSumColumns = []
+
     # %% profit sheets
     profitSumColumn = 'O'
     profitSumRows = []
@@ -140,7 +147,9 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                         wb.remove(ws)
                     else:
                         profitSumRows.append(ws.max_row + 2)
+                        tradeprofitSumRows.append(profitSumRows[-1])
                         profitSumColumns.append(15)
+                        tradeprofitSumColumns.append(profitSumColumns[-1])
                         #                ws['M' + str(profitSumRows[-1])] = 'Summe'
                         ws[profitSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + profitSumColumn + str(
                             firstProfitRow) + ':' + profitSumColumn + str(profitSumRows[-1] - 2) + '),2)'
@@ -220,7 +229,9 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                         ws.append(['', '', '', feedate, fee.amount, '', round(fee.value[currency], 3), ''])
 
             profitSumRows.append(ws.max_row + 2)
+            feeSumRows.append(profitSumRows[-1])
             profitSumColumns.append(7)
+            feeSumColumns.append(profitSumColumns[-1])
             #                ws['M' + str(profitSumRows[-1])] = 'Summe'
             ws[feeSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + feeSumColumn + str(
                 firstProfitRow) + ':' + feeSumColumn + str(profitSumRows[-1] - 2) + '),2)'
@@ -298,7 +309,9 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                     ws.append(['', '', '', rewarddate, reward.amount, '', round(reward.value[currency], 3), ''])
 
             profitSumRows.append(ws.max_row + 2)
+            rewardSumRows.append(profitSumRows[-1])
             profitSumColumns.append(7)
+            rewardSumColumns.append(profitSumColumns[-1])
             #                ws['M' + str(profitSumRows[-1])] = 'Summe'
             ws[rewardSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + rewardSumColumn + str(
                 firstProfitRow) + ':' + rewardSumColumn + str(profitSumRows[-1] - 2) + '),2)'
@@ -319,22 +332,24 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
 
     # write top header
     if translator:
-        ws.append(['', '', '', trans('Profit'), '', ''])
+        ws.append(['', '', '', trans('Trades'), '', '', trans('Fees'), '', '', trans('Rewards'), '', ''])
     else:
-        ws.append(['', '', '', 'Profit', '', ''])
+        ws.append(['', '', '', 'Trades', '', '', 'Fees', '', '', 'Rewards', '', ''])
     ws.merge_cells('A1:B1')
     ws.merge_cells('D1:E1')
+    ws.merge_cells('G1:H1')
+    ws.merge_cells('J1:K1')
     headingFont = Font(size=12, bold=True)
     headingAlignment = Alignment(horizontal='center',
                                  vertical='center')
 
-    # blue, purple
-    headings = [ws['A1'], ws['D1']]
+    # blue, green, yellow, purple
+    headings = [ws['A1'], ws['D1'], ws['G1'], ws['J1']]
     for heading in headings:
         heading.font = headingFont
         heading.alignment = headingAlignment
 
-    headingColors = [BLUECOLORCODE, PURPLECOLORCODE]
+    headingColors = [BLUECOLORCODE, GREENCOLORCODE, YELLOWCOLORCODE, PURPLECOLORCODE]
     for i in range(len(headings)):
         headings[i].fill = PatternFill(fill_type='solid',
                                        start_color=headingColors[i],
@@ -345,33 +360,72 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
 
     # write sub header
     if translator:
-        ws.append(['', '', '', trans('Coin') + '/' + trans('Wallet'), trans('Profit'), ''])
-        ws.append(['', '', '', '', trans('in') + ' ' + currency, ''])
+        ws.append(['', '', '', trans('Coin') + '/' + trans('Wallet'), trans('Profit'), '',
+                   trans('Coin'), trans('Fee'), '', trans('Coin'), trans('Reward'), ''])
+        ws.append(['', '', '', '', trans('in') + ' ' + currency, '',
+                   '', trans('in') + ' ' + currency, '',
+                   '', trans('in') + ' ' + currency, ''])
         ws.append([trans('Timeframe'), str(minDate) + ' : ' + str(maxDate)])
     else:
-        ws.append(['', '', '', 'Coin/Wallet', 'Gewinn', ''])
-        ws.append(['', '', '', '', 'in ' + currency, ''])
+        ws.append(['', '', '', 'Coin/Wallet', 'Gewinn', '',
+                   'Coin', 'Gebühren', '', 'Coin', 'Rewards', ''])
+        ws.append(['', '', '', '', 'in ' + currency, '',
+                   '', 'in ' + currency, '', '', 'in ' + currency, ''])
         ws.append(['Zeitraum', str(minDate) + ' : ' + str(maxDate)])
 
     firstProfitRow = ws.max_row + 1
 
     # write data
     sheets = wb.sheetnames[1:]
-    for isheet in range(len(sheets)):
-        #            profit = wb[sheets[isheet]][profitSumColumn + str(profitSumRows[isheet])].value
-        #            =INDIREKT("ETH!"&ADRESSE(13;16;4))
-        profit = '=INDIRECT(\"' + sheets[isheet] + '!\"&ADDRESS(' + str(profitSumRows[isheet]) + ',' + str(profitSumColumns[isheet]) + ',4))'
-        ws.append(['', '', '', sheets[isheet], profit])
+    # count number of different sheet types
+    numTradeSheets = len(tradeprofitSumRows)
+    numFeeSheets = len(feeSumRows)
+    numRewardSheets = len(rewardSumRows)
+    # for isheet in range(len(sheets)):
+    for irow in range(max(numTradeSheets, numFeeSheets, numRewardSheets)):
+        # claculate sheetindex for all sheet types
+        iTradeSheet = irow
+        iFeeSheet = irow + numTradeSheets
+        iRewardSheet = iFeeSheet + numFeeSheets
+
+        if irow < numTradeSheets:
+            tradeProfitSumRef = '=INDIRECT(\"' + sheets[iTradeSheet] + '!\"&ADDRESS(' + str(tradeprofitSumRows[irow]) + ',' + str(tradeprofitSumColumns[irow]) + ',4))'
+            tradeProfitSheet = sheets[iTradeSheet]
+        else:
+            tradeProfitSumRef = ''
+            tradeProfitSheet = ''
+        if irow < numFeeSheets:
+            feeSumRef =  '=INDIRECT(\"' + sheets[iFeeSheet] + '!\"&ADDRESS(' + str(feeSumRows[irow]) + ',' + str(feeSumColumns[irow]) + ',4))'
+            feeSheet = sheets[iFeeSheet]
+        else:
+            feeSumRef = ''
+            feeSheet = ''
+        if irow < numRewardSheets:
+            rewardSumRef =  '=INDIRECT(\"' + sheets[iRewardSheet] + '!\"&ADDRESS(' + str(rewardSumRows[irow]) + ',' + str(rewardSumColumns[irow]) + ',4))'
+            rewardSheet = sheets[iRewardSheet]
+        else:
+            rewardSumRef = ''
+            rewardSheet = ''
+
+        ws.append(['', '', '', tradeProfitSheet, tradeProfitSumRef, '', feeSheet, feeSumRef, '', rewardSheet, rewardSumRef])
 
     profitSumRow = ws.max_row + 2
-    profitSumColumn = 'E'
-    #                ws['M' + str(profitSumRows[-1])] = 'Summe'
-    ws[profitSumColumn + str(profitSumRow)] = '=SUM(' + profitSumColumn + str(
-        firstProfitRow) + ':' + profitSumColumn + str(profitSumRow - 2) + ')'
+    profitSumColumns = ['E', 'H', 'K']
+    for profitSumColumn in profitSumColumns:
+        ws[profitSumColumn + str(profitSumRow)] = '=SUM(' + profitSumColumn + str(
+            firstProfitRow) + ':' + profitSumColumn + str(profitSumRow - 2) + ')'
+
+    if translator:
+        ws['A' + str(profitSumRow)] = trans('Profit')
+    else:
+        ws['A' + str(profitSumRow)] = 'Gewinn'
+    profitSumSumColumn = 'B'
+    cells = [col + str(profitSumRow) for col in profitSumColumns]
+    ws[profitSumSumColumn + str(profitSumRow)] = ('=' + cells[0] + '+' + cells[1] + '+' + cells[2])
 
     # page setup
-    pageSetup(ws, dateCols=[], gapCols=['C', 'F'], lastRow=profitSumRow, lastCol=6,
-              setWidthCols=['A', 'B', 'D'], setWidthValue=[10, 23, 20], trans=trans)
+    pageSetup(ws, dateCols=[], gapCols=['C', 'F', 'I', 'L'], lastRow=profitSumRow, lastCol=6,
+              setWidthCols=['A', 'B', 'D', 'G', 'J'], setWidthValue=[10, 23, 20, 20, 20], trans=trans)
 
     # def textLen(value):
     #     if value is None:
