@@ -5,7 +5,6 @@ import koalafolio.web.cryptocompare as cryptcomp
 # import datetime
 import koalafolio.PcpCore.core as core
 import koalafolio.PcpCore.settings as settings
-import time
 import koalafolio.PcpCore.logger as logger
 from PIL import Image
 from io import BytesIO

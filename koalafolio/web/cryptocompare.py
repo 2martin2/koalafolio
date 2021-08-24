@@ -92,9 +92,6 @@ def get_exchanges(*args, **kwargs):
     if response:
         return response['Data']
 
-def get_coin_general_info(coin, curr=CURR, *args, **kwargs):
-    return query_cryptocompare(URL_COIN_GENERAL.format(coin, format_parameter(curr)), *args, **kwargs)
-
 def get_coin_general_info(coins, curr=CURR, *args, **kwargs):
     return query_cryptocompare(URL_COIN_GENERAL, params={'fsyms': coins, 'tsym': str(curr)}, *args, **kwargs)
 

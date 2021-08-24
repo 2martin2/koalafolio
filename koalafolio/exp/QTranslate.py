@@ -6,10 +6,7 @@ Created on Fri May 31 08:17:21 2019
 """
 
 import configparser
-import re
-from pathlib import Path
 import koalafolio.gui.QLogger as logger
-import koalafolio.gui.QSettings as settings
 import os
 
 localLogger = logger.globalLogger
@@ -108,5 +105,5 @@ class ExportTranslator(configparser.ConfigParser):
     def translate(self, text, lang):
         try:
             return self[lang][text.replace(' ', '_')]
-        except:
+        except KeyError:
             return text

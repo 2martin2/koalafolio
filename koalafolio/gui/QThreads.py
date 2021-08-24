@@ -5,7 +5,6 @@ Created on Tue Nov 27 21:03:59 2018
 @author: Martin
 """
 import PyQt5.QtGui as qtgui
-import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import koalafolio.gui.QSettings as settings
 import koalafolio.web.cryptocompareApi as ccapi

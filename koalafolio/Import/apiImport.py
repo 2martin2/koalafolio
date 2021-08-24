@@ -5,7 +5,6 @@ Created on Sun Sep  15 15:15:19 2019
 @author: Martin
 """
 import koalafolio.gui.QLogger as logger
-import koalafolio.web.krakenApi as krakenApi
 import koalafolio.web.exchanges as exchanges
 import pandas
 from Cryptodome.Cipher import AES

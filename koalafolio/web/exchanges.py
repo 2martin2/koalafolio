@@ -48,7 +48,8 @@ def getTradeHistoryCoinbase(key, secret, start, end):
 def getTradeHistoryCoinbasepro(key, secret, start, end):
     # pass None as database for now. Can cause errors. Will be catched in getApiHistory
     api = coinbasepro.Coinbasepro(api_key=key, secret=secret.encode(),
-                                 database=None, msg_aggregator=user_messages.MessagesAggregator())
+                                  database=None, msg_aggregator=user_messages.MessagesAggregator(),
+                                  passphrase='rotki')
     return getTradesFromApi(api, start, end)
 
 

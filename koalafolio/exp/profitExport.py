@@ -7,7 +7,6 @@ Created on Fri Aug 24 09:44:38 2018
 import openpyxl
 import openpyxl.styles.borders as xlborders
 import koalafolio.PcpCore.settings as settings
-import datetime
 import pytz
 from dateutil.relativedelta import relativedelta
 import koalafolio.PcpCore.core as core
@@ -160,7 +159,6 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
 
     # %% fee sheets
     feeSumColumn = 'G'
-    feeSumRows = []
     for coin in coinList.coins:
         fees = coin.getFees()
         feeSum = core.CoinValue()

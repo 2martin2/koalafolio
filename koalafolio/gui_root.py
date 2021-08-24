@@ -9,15 +9,16 @@ import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 
+import koalafolio.PcpCore.logger as coreLogger
+import koalafolio.gui.QLogger as logger
+import koalafolio.gui.QLoggerWidget as loggerwidget
 import koalafolio.gui.Qpages as pages
 import koalafolio.gui.QExportPage as exportpage
 import koalafolio.gui.Qcontrols as controls
 import koalafolio.gui.QPortfolioTable as ptable
 import koalafolio.gui.QTradeTable as ttable
 import koalafolio.gui.QThreads as threads
-import koalafolio.PcpCore.logger as coreLogger
 import koalafolio.PcpCore.arguments as arguments
-import koalafolio.gui.QLogger as logger
 import sys
 import os
 import koalafolio.PcpCore.settings as coreSettings
@@ -34,7 +35,6 @@ from koalafolio.gui.TradesPage import TradesPage
 from koalafolio.gui.ImportPage import ImportPage
 from koalafolio.gui.PortfolioPage import PortfolioPage
 
-import argparse
 
 qt = qtcore.Qt
 # %% constants
@@ -257,7 +257,7 @@ class PortfolioApp(qtwidgets.QWidget):
 
     def initData(self):
         self.logger.info('initializing data ...')
-        self.logList = logger.QLogModel()
+        self.logList = loggerwidget.QLogModel()
         self.settingsModel = settingsPage.SettingsModel(self.settings)
         self.tradeList = ttable.QTradeTableModel(self.dataPath)
         self.coinList = ptable.QPortfolioTableModel(self.dataPath)
@@ -376,16 +376,16 @@ class PortfolioApp(qtwidgets.QWidget):
         frame.refresh()
         self.stackedContentLayout.setCurrentIndex(pageIndex)
         # reset color of all buttons in sidebar
-        for buttonIndex in range(len(self.sidebarButtons)):
-            button = self.sidebarButtons[buttonIndex]
-            if buttonIndex == pageIndex:
-                # do something with selected button
-                #                button.config(bg=controls.changeColorBrightness(self.sidebar['bg'], 40))
-                pass
-            else:
-                # do something with not selected buttons
-                #                button.config(bg = self.sidebar['bg'])
-                pass
+        # for buttonIndex in range(len(self.sidebarButtons)):
+        #     button = self.sidebarButtons[buttonIndex]
+        #     if buttonIndex == pageIndex:
+        #         # do something with selected button
+        #         #                button.config(bg=controls.changeColorBrightness(self.sidebar['bg'], 40))
+        #         pass
+        #     else:
+        #         # do something with not selected buttons
+        #         #                button.config(bg = self.sidebar['bg'])
+        #         pass
 
     def closeEvent(self, event):
         # save window props

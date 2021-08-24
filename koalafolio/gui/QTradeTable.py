@@ -12,10 +12,8 @@ Created on Sun Dec 16 19:09:51 2018
 @author: Martin
 """
 
-import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-import koalafolio.gui.Qcontrols as controls
 import os
 import koalafolio.PcpCore.core as core
 import koalafolio.Import.Converter as converter

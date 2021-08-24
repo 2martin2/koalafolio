@@ -367,7 +367,7 @@ class QPortfolioTableModel(QCoinContainer):
         for coin in icons:
             try:
                 self.getCoinByName(coin).coinIcon = icons[coin]
-            except:
+            except KeyError:
                 pass
         RowStartIndex = self.index(0, 0, qtcore.QModelIndex())
         RowEndIndex = self.index(len(self.coins) - 1, 0, qtcore.QModelIndex())

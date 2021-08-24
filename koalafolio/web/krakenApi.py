@@ -7,7 +7,6 @@ Created on Sun Sep  15 15:15:19 2019
 import pandas as pd
 import krakenex
 import pykrakenapi
-import datetime
 
 # help(pykrakenapi.KrakenAPI)
 
