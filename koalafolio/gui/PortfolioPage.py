@@ -195,7 +195,6 @@ class PortfolioOverview(qtwidgets.QWidget):
         stopYear = datetime.datetime.now().year
         realizedProfitPerYear = {}
         paidFeesPerYear = {}
-        realizedProfitPerYearCoinList = {}
         fiatPerYear = {}
         taxProfitPerYear = {}
         rewardPerYear = {}
@@ -243,23 +242,17 @@ class PortfolioOverview(qtwidgets.QWidget):
                         if trade.date.date() >= startDate and trade.date.date() <= endDate:
                             paidFeesPerYear[str(year)].add(trade.getValue())
 
-            realizedProfitPerYearCoinList[coin.coinname] = (coin.getTimeDeltaProfit(
-                datetime.date(year=2017, month=1, day=1), datetime.date(year=2019, month=12, day=31),
-                taxFreeTimeDelta=settings.mySettings.getTaxSetting('taxfreelimityears'))[taxCoinName])
             for year in range(startYear, stopYear + 1):
                 startDate = datetime.date(year=year, month=1, day=1)
                 endDate = datetime.date(year=year, month=12, day=31)
-                taxProfitPerYear[str(year)].add(coin.getTimeDeltaProfit(startDate, endDate,
-                                                                        taxFreeTimeDelta=settings.mySettings.getTaxSetting('taxfreelimityears')))
+                taxProfitPerYear[str(year)].add(coin.getTimeDeltaProfitTaxable(startDate, endDate))
                 rewardPerYear[str(year)].add(coin.getTimeDeltaReward(startDate, endDate))
-                realizedProfitPerYear[str(year)].add(coin.getTimeDeltaProfit(startDate, endDate,
-                                                                                          taxFreeTimeDelta = -1))
+                realizedProfitPerYear[str(year)].add(coin.getTimeDeltaProfit(startDate, endDate))
             # fiat and coins
             # currentInvestAll.add(coin.initialValue)
             # hypotheticalValueAll.add(coin.getCurrentValue())
             # realizedProfitAll.add(coin..getTotalProfit())
 
-        realizedProfitPerYearCoinListSum = sum([realizedProfitPerYearCoinList[key] for key in realizedProfitPerYearCoinList])
         fiatPerformance = (totalReturnFiat-totalInvestFiat).div(totalInvestFiat).mult(100)
         hypotheticalPerformanceNoFiat = (hypotheticalCoinValueNoFiat.div(currentInvestNoFiat)
                                          - core.CoinValue().setValue(1)).mult(100)

@@ -674,13 +674,23 @@ class TradeMatcher:
     def getTotalProfit(self):
         return sum(self.profitMatched, CoinValue())
 
-    def getTimeDeltaProfit(self, fromDate, toDate, taxFreeTimeDelta=-1):
+    def getTimeDeltaProfit(self, fromDate, toDate):
+        return sum([profit for profit, date in zip(self.profitMatched, self.profitMatchedTime)
+                    if (date >= fromDate and date <=toDate)], CoinValue())
+
+    def getTimeDeltaProfitTaxable(self, fromDate, toDate):
+        taxFreeTimeDelta = -1
+        if settings.mySettings.getTaxSetting('taxfreelimit'):  # global tax limit enabled
+            if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):  # use wallet tax limit
+                if self.coinBalance.taxYearLimitEnabled:  # wallet tax limit enabled
+                    taxFreeTimeDelta = self.coinBalance.taxYearLimit
+            else:  # use global tax limit
+                taxFreeTimeDelta = settings.mySettings.getTaxSetting('taxfreelimityears')
         if taxFreeTimeDelta == -1:
-            return sum([profit for profit, date in zip(self.profitMatched, self.profitMatchedTime)
-                        if (date >= fromDate and date <=toDate)], CoinValue())
+            return self.getTimeDeltaProfit(fromDate, toDate)
         else:
             return sum([profit for profit, date, buydate in zip(self.profitMatched, self.profitMatchedTime,
-                                                                  self.profitMatchedBuyTime)
+                                                                self.profitMatchedBuyTime)
                         if (date >= fromDate and date <= toDate and (date - relativedelta(years=taxFreeTimeDelta) <= buydate))],
                        CoinValue())
 
@@ -741,8 +751,16 @@ class TradeMatcher:
                     amount += trade.amount
         return amount
 
-    def getBuyAmountLeftTaxFree(self, taxfreeLimit):
-        return self.getBuyAmountLeftToDate(datetime.datetime.now().date() - relativedelta(years=1))
+    def getBuyAmountLeftTaxFree(self):
+        taxFreeTimeDelta = 0
+        if settings.mySettings.getTaxSetting('taxfreelimit'):  # global tax limit enabled
+            if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):  # use wallet tax limit
+                if self.coinBalance.taxYearLimitEnabled:  # wallet tax limit enabled
+                    taxFreeTimeDelta = self.coinBalance.taxYearLimit
+            else:  # use global tax limit
+                taxFreeTimeDelta = settings.mySettings.getTaxSetting('taxfreelimityears')
+        return self.getBuyAmountLeftToDate(datetime.datetime.now().date() - relativedelta(years=taxFreeTimeDelta))
+
 
 # %% Coin_Balance
 class CoinBalancePrimitive:
@@ -905,8 +923,11 @@ class CoinBalancePrimitive:
     def getTotalProfit(self):
         return self.tradeMatcher.getTotalProfit()
 
-    def getTimeDeltaProfit(self, fromDate, toDate, taxFreeTimeDelta=-1):
-        return self.tradeMatcher.getTimeDeltaProfit(fromDate, toDate, taxFreeTimeDelta)
+    def getTimeDeltaProfit(self, fromDate, toDate):
+        return self.tradeMatcher.getTimeDeltaProfit(fromDate, toDate)
+
+    def getTimeDeltaProfitTaxable(self, fromDate, toDate):
+        return self.tradeMatcher.getTimeDeltaProfitTaxable(fromDate, toDate)
 
     def getBuyAmount(self):
         return self.tradeMatcher.getBuyAmount()
@@ -917,8 +938,8 @@ class CoinBalancePrimitive:
     def getFirstBuyLeftDate(self):
         return self.tradeMatcher.getFirstBuyLeftDate()
 
-    def getBuyAmountLeftTaxFree(self, taxfreeLimit):
-        return self.tradeMatcher.getBuyAmountLeftTaxFree(taxfreeLimit)
+    def getBuyAmountLeftTaxFree(self):
+        return self.tradeMatcher.getBuyAmountLeftTaxFree()
 
 
 # %% Coin Wallet
@@ -1033,10 +1054,16 @@ class CoinBalance(CoinBalancePrimitive):
             profitsum += wallet.getTotalProfit()
         return profitsum
 
-    def getTimeDeltaProfit(self, fromDate, toDate, taxFreeTimeDelta=-1):
+    def getTimeDeltaProfit(self, fromDate, toDate):
         profitsum = CoinValue()
         for wallet in self.wallets:
-            profitsum += wallet.tradeMatcher.getTimeDeltaProfit(fromDate, toDate, taxFreeTimeDelta)
+            profitsum += wallet.tradeMatcher.getTimeDeltaProfit(fromDate, toDate)
+        return profitsum
+
+    def getTimeDeltaProfitTaxable(self, fromDate, toDate):
+        profitsum = CoinValue()
+        for wallet in self.wallets:
+            profitsum += wallet.tradeMatcher.getTimeDeltaProfitTaxable(fromDate, toDate)
         return profitsum
 
     def getTimeDeltaReward(self, fromDate, toDate):
@@ -1058,17 +1085,24 @@ class CoinBalance(CoinBalancePrimitive):
         return sellAmount
 
     def getFirstBuyLeftDate(self):
-        firstBuyLeftDate = self.wallets[0].tradeMatcher.getFirstBuyLeftDate()
-        for wallet in self.wallets:
+        firstBuyLeftDate = None
+        for wallet in self.wallets:  # search first valid date
+            if wallet.tradeMatcher.getFirstBuyLeftDate():
+                firstBuyLeftDate = wallet.tradeMatcher.getFirstBuyLeftDate()
+                break
+        if firstBuyLeftDate is None:  # no valid date found
+            return None
+        for wallet in self.wallets:  # search earliest date
             firstWalletDate = wallet.tradeMatcher.getFirstBuyLeftDate()
-            if firstWalletDate < firstBuyLeftDate:
-                firstBuyLeftDate = firstWalletDate
+            if firstWalletDate:  # only compare valid dates
+                if firstWalletDate < firstBuyLeftDate:
+                    firstBuyLeftDate = firstWalletDate
         return firstBuyLeftDate
 
-    def getBuyAmountLeftTaxFree(self, taxfreeLimit):
+    def getBuyAmountLeftTaxFree(self):
         taxFreeAmount = 0
         for wallet in self.wallets:
-            taxFreeAmount += wallet.tradeMatcher.getBuyAmountLeftTaxFree(taxfreeLimit)
+            taxFreeAmount += wallet.tradeMatcher.getBuyAmountLeftTaxFree()
         return taxFreeAmount
 
 

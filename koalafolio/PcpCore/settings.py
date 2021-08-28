@@ -65,6 +65,7 @@ class Settings(configparser.ConfigParser):
         self['tax']['taxfreelimit'] = 'True'
         self['tax']['taxfreelimityears'] = '1'
         self['tax']['exportlanguage'] = 'en'
+        self['tax']['usewallettaxfreelimityears'] = 'True'
 
     def initDescriptions(self):
         self.descriptions = {}
@@ -94,9 +95,10 @@ class Settings(configparser.ConfigParser):
         self.descriptions['currency']['coinswapdictcoingeckosymboltoid'] = "manual mapping of coin symbol to coingecko id. some coin symbols are not exclusive on coingecko"
         # tax settings
         self.descriptions['tax'] = {}
-        self.descriptions['tax']['taxfreelimit'] = 'enable hodl limit after that trades are tax free. (e.g. 1 year in Germany)'
-        self.descriptions['tax']['taxfreelimityears'] = 'number of years until trades are tax free. (e.g. 1 year in Germany)'
+        self.descriptions['tax']['taxfreelimit'] = 'global switch to enable hodl limit after that trades are tax free. (e.g. 1 year in Germany)'
+        self.descriptions['tax']['taxfreelimityears'] = 'number of years until trades are tax free. (e.g. 1 year in Germany). Only used if usewallettaxfreelimityears is False'
         self.descriptions['tax']['exportlanguage'] = 'default language of tax report'
+        self.descriptions['tax']['usewallettaxfreelimityears'] = 'True: use seperate taxfreelimityears for every wallet. False: use global setting taxfreelimityears.'
 
 
     def saveSettings(self):
@@ -220,6 +222,10 @@ class Settings(configparser.ConfigParser):
         except ValueError:
             tax['taxfreelimityears'] = 1
         tax['exportLanguage'] = self['tax']['exportLanguage']
+        try:
+            tax['usewallettaxfreelimityears'] = self.getboolean('tax', 'usewallettaxfreelimityears')
+        except ValueError:
+            tax['usewallettaxfreelimityears'] = True
         return tax
 
     def getTaxSetting(self, key):

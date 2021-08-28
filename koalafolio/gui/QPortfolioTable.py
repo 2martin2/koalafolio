@@ -281,7 +281,7 @@ class QPortfolioTableModel(QCoinContainer):
                 return section
         if role == qt.ToolTipRole:
             if orientation == qt.Horizontal:
-                if section >= 3:
+                if section >= 3:  # value Header
                     return self.valueHeaderToolTip
         return qtcore.QVariant()
 
@@ -479,25 +479,20 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 super(QCoinTableDelegate, self).paint(painter, option, index)
             elif index.column() == 1:  # balance
                 coinBalance = index.data(qt.DisplayRole)
+                # settings
+                taxFreeLimitEnabled = False
+                taxFreeLimitYears = 100
+                if settings.mySettings.getTaxSetting('taxfreelimit'):  # global tax limit enabled
+                    if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):  # use wallet tax limit
+                        for wallet in coinBalance.wallets:
+                            if wallet.taxYearLimitEnabled:
+                                taxFreeLimitEnabled = True
+                                if taxFreeLimitYears > wallet.taxYearLimit:
+                                    taxFreeLimitYears = wallet.taxYearLimit
+                    else:  # use global tax limit
+                        taxFreeLimitEnabled = True
+                        taxFreeLimitYears = settings.mySettings.getTaxSetting('taxfreelimityears')
                 balance = controls.floatToString(coinBalance.balance, 5)
-                if settings.mySettings.getTaxSetting('taxfreelimit'):
-                    taxFreeLimitYears = settings.mySettings.getTaxSetting('taxfreelimityears')
-                    freeBuyYears = '>' + str(taxFreeLimitYears) + 'y'
-                    buyAmountVal = coinBalance.getBuyAmountLeftTaxFree(taxFreeLimitYears)
-                    buyAmount = controls.floatToString(buyAmountVal, 4)
-                else:
-                    buyAmount = controls.floatToString(coinBalance.getBuyAmount(), 4)
-                    sellAmount = controls.floatToString(coinBalance.getSellAmount(), 4)
-                    firstBuyLeftDate = coinBalance.getFirstBuyLeftDate()
-                    if firstBuyLeftDate:
-                        now = datetime.datetime.now()
-                        yearDif = now.year - firstBuyLeftDate.year
-                        monthDif = now.month - firstBuyLeftDate.month
-                        dayDif = now.day - firstBuyLeftDate.day
-                        if monthDif < 0 or (monthDif == 0 and dayDif < 0):
-                            yearDif -= 1
-                        freeBuyYears = '>' + str(yearDif) + 'y'
-
                 defaultFont = painter.font()
                 # paint balance text
                 newFont = painter.font()
@@ -506,7 +501,11 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 painter.drawText(contentRect, qt.AlignHCenter | qt.AlignTop, balance)
                 painter.setFont(defaultFont)
 
-                if settings.mySettings.getTaxSetting('taxfreelimit'):
+                if taxFreeLimitEnabled:  # draw tax free buys
+
+                    taxFreeLabel = '>' + str(taxFreeLimitYears) + 'y'
+                    buyAmountVal = coinBalance.getBuyAmountLeftTaxFree()
+                    buyAmount = controls.floatToString(buyAmountVal, 4)
                     if buyAmountVal > 0:
                         # paint buy that can be sold tax free
                         buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
@@ -515,8 +514,11 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                         buyPen.setBrush(buyBrush)
                         painter.setPen(buyPen)
                         painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
-                        painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
-                else:
+                        painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, taxFreeLabel)
+                else:  # draw buy amount and sell amount
+                    buyAmount = controls.floatToString(coinBalance.getBuyAmount(), 4)
+                    sellAmount = controls.floatToString(coinBalance.getSellAmount(), 4)
+
                     # paint buy
                     buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
                     buyBrush = qtgui.QBrush(buyColor)
@@ -524,8 +526,6 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     buyPen.setBrush(buyBrush)
                     painter.setPen(buyPen)
                     painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
-                    if firstBuyLeftDate:
-                        painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, freeBuyYears)
 
                     # paint sell
                     sellColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
@@ -652,15 +652,23 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
     def setEditorData(self, editor, index):
         if index.parent().isValid():  # child level
-            if index.column() == 0:
+            if index.column() == 0:  # properties
                 editor.setData(index.data())
                 return
-            if index.column() == 1:
-                # get settings
-                taxfreelimityears = settings.mySettings.getTaxSetting("taxfreelimityears")
-                taxfreelimit = settings.mySettings.getTaxSetting("taxfreelimit")
-                coinchartdatatype = settings.mySettings.getGuiSetting("coinchartdatatype")
+            if index.column() == 1:  # chart
                 data = index.data()
+                # get settings
+                taxfreelimityears = 0
+                taxfreelimitEnabled = False
+                if settings.mySettings.getTaxSetting('taxfreelimit'):  # global tax limit enabled
+                    if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):  # use wallet tax limit
+                        if data.taxYearLimitEnabled:  # wallet tax limit enabled
+                            taxfreelimityears = data.taxYearLimit
+                            taxfreelimitEnabled = True
+                    else:  # use global tax limit
+                        taxfreelimityears = settings.mySettings.getTaxSetting('taxfreelimityears')
+                        taxfreelimitEnabled = True
+                coinchartdatatype = settings.mySettings.getGuiSetting("coinchartdatatype")
                 editor.setTitle("Wallet: " + data.walletname)
                 # draw buys left
                 if coinchartdatatype == 'buys':
@@ -716,14 +724,15 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     else:  # coinchartdatatype == 'balance':
                         editor.addData(dates, vals, style.myStyle.getQColor('PRIMARY_MIDLIGHT'), "balance", lineWidth=3)
                     # draw taxlimit
-                    if taxfreelimit:
+                    if taxfreelimitEnabled:
                         limitDate = datetime.datetime.now().replace(year=datetime.datetime.now().year -
                                                                          taxfreelimityears)
                         firstDate = datetime.datetime.combine(data.tradeMatcher.buysLeft[0].date, datetime.time(0, 0, 0, 0))
                         limitDates = [limitDate, limitDate]
-                        limitAmount = data.getBuyAmountLeftTaxFree(taxfreelimityears)
+                        limitAmount = data.getBuyAmountLeftTaxFree()
                         limitVals = [limitAmount, 0]
-                        editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree", lineWidth=3, updateAxis=False)
+                        editor.addData(limitDates, limitVals, style.myStyle.getQColor('POSITIV'), "taxfree",
+                                       lineWidth=3, updateAxis=False)
                     editor.addData(priceDates, prices, style.myStyle.getQColor('SECONDARY'),
                                    "buyPrice " + settings.mySettings.reportCurrency(), lineWidth=3,
                                    chartType="scatter", axis='price')
