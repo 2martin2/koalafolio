@@ -756,6 +756,8 @@ class CoinBalancePrimitive:
         self.tradeMatcher = TradeMatcher(self)
         self.coinIcon = None
         self.notes = ""
+        self.taxYearLimitEnabled = True
+        self.taxYearLimit = 1  # number of years until no tax has to be paid
         self.priceChartData = []
 
     def __lt__(self, other):
@@ -952,7 +954,6 @@ class CoinWallet(CoinBalancePrimitive):
             logger.globalLogger.warning("portfolio balance: " + str(self.balance) + '; matched trades balance: ' + str(self.tradeMatcher.getBuyAmountLeft()))
         self.mult = self.tradeMatcher.getInitialPrice().mult(self.balance)
         self.initialValue = self.mult
-
 
 # %% Sum of Coin Wallets
 class CoinBalance(CoinBalancePrimitive):

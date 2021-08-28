@@ -633,10 +633,9 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
         if index.parent().isValid():  # child level
             if index.column() == 0:
                 if int(index.flags()) & qt.ItemIsEditable:
-                    textedit = qtwidgets.QTextEdit(parent)
-                    textedit.setPlaceholderText('notes')
-                    self.updateEditorGeometry(textedit, option, index)
-                    return textedit
+                    propertiesWidget = QWalletPropertiesWidget(parent)
+                    self.updateEditorGeometry(propertiesWidget, option, index)
+                    return propertiesWidget
             if index.column() == 1:
                 timelinechart = charts.BuyTimelineChartCont(parent)
                 return timelinechart
@@ -645,7 +644,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
     def setEditorData(self, editor, index):
         if index.parent().isValid():  # child level
             if index.column() == 0:
-                editor.setText(index.data())
+                editor.setData(index.data())
                 return
             if index.column() == 1:
                 # get settings
@@ -745,9 +744,9 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             raise TypeError
 
     def setModelData(self, editor, model, index):
-        if index.parent().isValid():
-            if index.column() == 0:
-                model.setData(index, editor.toPlainText(), qt.EditRole)
+        if index.parent().isValid():  # child level
+            if index.column() == 0:  # propertiesWidget
+                model.setData(index, editor.getData(), qt.EditRole)
 
     def sizeHint(self, option, index):
         if index.parent().isValid():  # child level
@@ -761,6 +760,52 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             elif index.column() >= 2:
                 return qtcore.QSize(200, 40)
         return qtcore.QSize()
+
+
+class QWalletPropertiesWidget(qtwidgets.QWidget):
+    commitData = qtcore.pyqtSignal()
+    def __init__(self, parent):
+        super(QWalletPropertiesWidget, self).__init__(parent=parent)
+
+        self.notesTextedit = qtwidgets.QTextEdit(self)
+        self.notesTextedit.setPlaceholderText('notes')
+        self.notesTextedit.textChanged.connect(self.commitData)
+        # self.notesTextedit.cursorPositionChanged.connect(self.commitData)
+
+        self.optionsLayout = qtwidgets.QHBoxLayout()
+
+        self.timeLimitLabel = qtwidgets.QLabel("tax year limit", self)
+        self.timeLimitBox = qtwidgets.QCheckBox(self)
+        self.timeLimitEdit = qtwidgets.QSpinBox(self)
+        self.timeLimitEdit.setValue(1)
+        self.timeLimitEdit.setMinimum(0)
+        self.timeLimitBox.setCheckState(qt.Checked)
+
+        self.optionsLayout.addWidget(self.timeLimitBox)
+        self.optionsLayout.addWidget(self.timeLimitLabel)
+        self.optionsLayout.addWidget(self.timeLimitEdit)
+        self.optionsLayout.addStretch()
+
+        self.vertLayout = qtwidgets.QVBoxLayout(self)
+        self.vertLayout.addWidget(self.notesTextedit)
+        self.vertLayout.addLayout(self.optionsLayout)
+
+        self.timeLimitBox.stateChanged.connect(self.timeLimitCheckBoxChanged)
+        self.timeLimitCheckBoxChanged()
+
+    def setData(self, data):
+        self.notesTextedit.setText(data)
+
+    def getData(self):
+        return self.notesTextedit.toPlainText()
+
+    def timeLimitCheckBoxChanged(self):
+        if self.timeLimitBox.isChecked():
+            self.timeLimitEdit.setEnabled(True)
+        else:
+            self.timeLimitEdit.setEnabled(False)
+
+
 
 
 class QArrowPainterPath(qtgui.QPainterPath):
