@@ -763,14 +763,17 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
 
 class QWalletPropertiesWidget(qtwidgets.QWidget):
-    commitData = qtcore.pyqtSignal()
+    textChanged = qtcore.pyqtSignal()
+    cursorPositionChanged = qtcore.pyqtSignal()
     def __init__(self, parent):
         super(QWalletPropertiesWidget, self).__init__(parent=parent)
 
+        self.setFocusPolicy(qt.StrongFocus)
+
         self.notesTextedit = qtwidgets.QTextEdit(self)
         self.notesTextedit.setPlaceholderText('notes')
-        self.notesTextedit.textChanged.connect(self.commitData)
-        # self.notesTextedit.cursorPositionChanged.connect(self.commitData)
+        self.notesTextedit.textChanged.connect(self.textChanged)
+        self.notesTextedit.cursorPositionChanged.connect(self.cursorPositionChanged)
 
         self.optionsLayout = qtwidgets.QHBoxLayout()
 
