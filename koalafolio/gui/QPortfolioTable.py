@@ -181,9 +181,12 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
                     localLogger.warning('error creating coin info backup in QCoinContainer: ' + str(ex))
             self.coinDatabase.setCoinInfo(self)
 
-    def setNotes(self, parentrow, childrow, notes):
+    def setWalletProperties(self, parentrow, childrow, notes, taxYearLimitEnabled, taxYearLimit):
         self.coins[parentrow].wallets[childrow].notes = notes
+        self.coins[parentrow].wallets[childrow].taxYearLimitEnabled = taxYearLimitEnabled
+        self.coins[parentrow].wallets[childrow].taxYearLimit = taxYearLimit
         self.saveCoins()
+
 
 # %% portfolio table model
 class QPortfolioTableModel(QCoinContainer):
@@ -243,9 +246,12 @@ class QPortfolioTableModel(QCoinContainer):
     def data(self, index, role=qt.DisplayRole):
         if index.parent().isValid():  # child level
             if role == qt.DisplayRole:
-                if index.column() == 0:  # coin row
-                    return self.coins[index.parent().row()].wallets[index.row()].notes
-                if index.column() == 1:
+                if index.column() == 0:  # wallet properties
+                    wallet = self.coins[index.parent().row()].wallets[index.row()]
+                    return QWalletPropertiesData(notes=wallet.notes,
+                                                 taxLimitEnabled=wallet.taxYearLimitEnabled,
+                                                 taxLimitYears=wallet.taxYearLimit)
+                if index.column() == 1:  # wallet chart
                     return self.coins[index.parent().row()].wallets[index.row()]
         else:  # top level
             if role == qt.DisplayRole:
@@ -310,9 +316,11 @@ class QPortfolioTableModel(QCoinContainer):
         return qt.ItemIsEnabled
 
     def setData(self, index, value, role):
-        if index.parent().isValid():  # child level
-            if role == qt.EditRole:
-                self.setNotes(index.parent().row(), index.row(), value)
+        if role == qt.EditRole:
+            if index.parent().isValid():  # child level
+                if index.column() == 0:  # properties
+                    self.setWalletProperties(index.parent().row(), index.row(), value.notes, value.taxLimitEnabled,
+                                             value.taxLimitYears)
         return True
 
     def histPricesChanged(self):
@@ -635,6 +643,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 if int(index.flags()) & qt.ItemIsEditable:
                     propertiesWidget = QWalletPropertiesWidget(parent)
                     self.updateEditorGeometry(propertiesWidget, option, index)
+                    propertiesWidget.dataChanged.connect(self.commitData)
                     return propertiesWidget
             if index.column() == 1:
                 timelinechart = charts.BuyTimelineChartCont(parent)
@@ -763,29 +772,30 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
 
 class QWalletPropertiesWidget(qtwidgets.QWidget):
-    textChanged = qtcore.pyqtSignal()
-    cursorPositionChanged = qtcore.pyqtSignal()
+    dataChanged = qtcore.pyqtSignal([qtwidgets.QWidget])
     def __init__(self, parent):
         super(QWalletPropertiesWidget, self).__init__(parent=parent)
 
         self.setFocusPolicy(qt.StrongFocus)
 
+        # notes
         self.notesTextedit = qtwidgets.QTextEdit(self)
         self.notesTextedit.setPlaceholderText('notes')
-        self.notesTextedit.textChanged.connect(self.textChanged)
-        self.notesTextedit.cursorPositionChanged.connect(self.cursorPositionChanged)
+        self.notesTextedit.installEventFilter(self)
 
         self.optionsLayout = qtwidgets.QHBoxLayout()
 
-        self.timeLimitLabel = qtwidgets.QLabel("tax year limit", self)
-        self.timeLimitBox = qtwidgets.QCheckBox(self)
+        # tax limit
+        self.timeLimitBox = qtwidgets.QCheckBox("tax year limit", self)
+        self.timeLimitBox.installEventFilter(self)
         self.timeLimitEdit = qtwidgets.QSpinBox(self)
+        self.timeLimitEdit.installEventFilter(self)
         self.timeLimitEdit.setValue(1)
         self.timeLimitEdit.setMinimum(0)
         self.timeLimitBox.setCheckState(qt.Checked)
+        self.timeLimitBox.setTristate(False)
 
         self.optionsLayout.addWidget(self.timeLimitBox)
-        self.optionsLayout.addWidget(self.timeLimitLabel)
         self.optionsLayout.addWidget(self.timeLimitEdit)
         self.optionsLayout.addStretch()
 
@@ -797,10 +807,15 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
         self.timeLimitCheckBoxChanged()
 
     def setData(self, data):
-        self.notesTextedit.setText(data)
+        self.notesTextedit.setText(data.notes)
+        self.timeLimitBox.setCheckState(data.taxLimitEnabled)
+        self.timeLimitBox.setTristate(False)
+        self.timeLimitEdit.setValue(data.taxLimitYears)
 
     def getData(self):
-        return self.notesTextedit.toPlainText()
+        return QWalletPropertiesData(notes=self.notesTextedit.toPlainText(),
+                                     taxLimitEnabled=self.timeLimitBox.isChecked(),
+                                     taxLimitYears=self.timeLimitEdit.value())
 
     def timeLimitCheckBoxChanged(self):
         if self.timeLimitBox.isChecked():
@@ -808,7 +823,25 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
         else:
             self.timeLimitEdit.setEnabled(False)
 
+    def eventFilter(self, object: 'QObject', event: 'QEvent') -> bool:
+        if object is None:
+            return False
+        if event.type() == qtcore.QEvent.FocusOut:
+            w = qtwidgets.QApplication.focusWidget()
+            while w:  # don't worry about focus changes internally in the editor
+                if w == object:
+                    return False
+                w = w.parentWidget()
+            self.dataChanged.emit(self)
 
+        return False
+
+
+class QWalletPropertiesData:
+    def __init__(self, notes, taxLimitEnabled, taxLimitYears):
+        self.notes = notes
+        self.taxLimitEnabled = taxLimitEnabled
+        self.taxLimitYears = taxLimitYears
 
 
 class QArrowPainterPath(qtgui.QPainterPath):
@@ -880,25 +913,37 @@ class QCoinInfoDatabase(configparser.ConfigParser):
             if not coinname in self:
                 self[coinname] = {}
             for coin in coinwallets:
-                if coin.walletname == "default":
+                if coin.walletname == "DEFAULT":
                     notename = "notes"
+                    taxYearEnabledName = "taxYearEnabled"
+                    taxYearLimitName = "taxYearLimit"
                 else:
                     notename = "notes" + "_" + coin.walletname
+                    taxYearEnabledName = "taxYearEnabled" + "_" + coin.walletname
+                    taxYearLimitName = "taxYearLimit" + "_" + coin.walletname
                 self[coinname][notename] = coin.notes
+                self[coinname][taxYearEnabledName] = str(coin.taxYearLimitEnabled)
+                self[coinname][taxYearLimitName] = str(coin.taxYearLimit)
         self.saveCoins()
 
     def updateCoinInfo(self, coinList):
         for coinwallets in coinList:
             coinname = coinwallets.coinname
             for coin in coinwallets:
-                if coin.walletname == "default":
+                if coin.walletname == "DEFAULT":
                     notename = "notes"
+                    taxYearEnabledName = "taxYearEnabled"
+                    taxYearLimitName = "taxYearLimit"
                 else:
                     notename = "notes" + "_" + coin.walletname
+                    taxYearEnabledName = "taxYearEnabled" + "_" + coin.walletname
+                    taxYearLimitName = "taxYearLimit" + "_" + coin.walletname
                 try:
                     coin.notes = self[coinname][notename]
+                    coin.taxYearLimitEnabled = self.getboolean(coinname, taxYearEnabledName)
+                    coin.taxYearLimit = self.getint(coinname, taxYearLimitName)
                 except KeyError:
-                    coin.notes = ""
+                    pass
 
     def getCoins(self):
         coins = []
