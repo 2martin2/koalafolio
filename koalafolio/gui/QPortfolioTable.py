@@ -101,22 +101,6 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
                 self.openPersistentEditor(child)
 
     def drawRow(self, painter, options, index):
-        if index.parent().isValid():
-            firstSection = self.header().logicalIndex(0)
-            # midSection = self.header().logicalIndex(2)
-            lastSection = self.header().logicalIndex(self.header().count() - 1)
-            left = self.header().sectionViewportPosition(firstSection)
-            # mid = self.header().sectionViewportPosition(midSection) + self.header().sectionSize(midSection)
-            right = self.header().sectionViewportPosition(lastSection) + self.header().sectionSize(lastSection)
-            indent = 1 * self.indentation()
-            left += indent
-
-            options.rect.setX(left)
-            options.rect.setWidth(right - left)
-
-            # self.itemDelegate(index).paint(painter, options, index)
-        else:
-            super(QPortfolioTableView, self).drawRow(painter, options, index)
         painter.save()
         myCol = style.myStyle.getQColor('BACKGROUND_BITDARK')
         myBrush = qtgui.QBrush(myCol)
@@ -124,19 +108,41 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
         mypen.setBrush(myBrush)
         painter.setPen(mypen)
         rect = options.rect
-        if index.parent().isValid():  # child level, draw lower line over indent
-            # draw lower horz line
-            x = rect.x() - self.indentation()
-            painter.drawLine(x, rect.y() + rect.height(), rect.x() + rect.width(), rect.y() + rect.height())
-            # draw upper horz line
-            painter.drawLine(x, rect.y(), rect.x() + rect.width(), rect.y())
-            # draw mid line
-            mid = rect.width() * 0.3 + 20
-            painter.drawLine(mid, rect.y(), mid, rect.y() + rect.height())
-        else:
-            # draw lower horz line
-            painter.drawLine(rect.x(), rect.y() + rect.height(), rect.x() + rect.width(), rect.y() + rect.height())
-        painter.restore()
+        # draw upper horz line
+        painter.drawLine(rect.x(), rect.y(), rect.x() + rect.width(), rect.y())
+        # draw lower horz line
+        painter.drawLine(rect.x(), rect.y() + rect.height(), rect.x() + rect.width(), rect.y() + rect.height())
+        # restore painter
+        super(QPortfolioTableView, self).drawRow(painter, options, index)
+
+    def visualRect(self, index: qtcore.QModelIndex) -> qtcore.QRect:
+        rect = super(QPortfolioTableView, self).visualRect(index)
+        if index.parent().isValid():  # child level
+            if index.column() == 0:  # properties
+                sectionStart = self.header().logicalIndex(0)
+                sectionEnd = self.header().logicalIndex(2)
+                left = self.header().sectionViewportPosition(sectionStart)
+                right = self.header().sectionViewportPosition(sectionEnd) + self.header().sectionSize(sectionEnd)
+                indent = 1 * self.indentation()
+                left += indent
+                # update visual rect
+                rect.setX(left + 1)
+                rect.setY(rect.y() + 1)
+                rect.setWidth(right - left - 2)
+                rect.setHeight(rect.height() - 2)
+
+            if index.column() == 3:  # chart
+                sectionStart = self.header().logicalIndex(3)
+                sectionEnd = self.header().logicalIndex(self.header().count() - 1)
+                left = self.header().sectionViewportPosition(sectionStart)
+                right = self.header().sectionViewportPosition(sectionEnd) + self.header().sectionSize(sectionEnd)
+                # update visual rect
+                rect.setX(left + 1)
+                rect.setY(rect.y() + 1)
+                rect.setWidth(right - left - 2)
+                rect.setHeight(rect.height() - 2)
+        return rect
+
 
 # %% portfolio coin container
 class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
@@ -217,7 +223,7 @@ class QPortfolioTableModel(QCoinContainer):
     def columnCount(self, parent):
         if parent.isValid():
             if not parent.parent().isValid():  # first child level
-                return 2
+                return 4
             else:
                 return 0  # only one child level
         else:  # top level
@@ -251,7 +257,7 @@ class QPortfolioTableModel(QCoinContainer):
                     return QWalletPropertiesData(notes=wallet.notes,
                                                  taxLimitEnabled=wallet.taxYearLimitEnabled,
                                                  taxLimitYears=wallet.taxYearLimit)
-                if index.column() == 1:  # wallet chart
+                if index.column() == 3:  # wallet chart
                     return self.coins[index.parent().row()].wallets[index.row()]
         else:  # top level
             if role == qt.DisplayRole:
@@ -461,16 +467,23 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
         cellStopX = cellStartX + cellWidth
         cellStopY = cellStartY + cellHeight
 
-        painter.save()
-        myCol = style.myStyle.getQColor('BACKGROUND_BITDARK')
-        myBrush = qtgui.QBrush(myCol)
-        mypen = painter.pen()
-        mypen.setBrush(myBrush)
-        painter.setPen(mypen)
-        rect = option.rect
-        # draw right line
-        painter.drawLine(rect.x() + rect.width(), rect.y(), rect.x() + rect.width(), rect.y() + rect.height())
-        painter.restore()
+        # if not in child level and in column 0 or 1 or 3 or 4 draw right grid line
+        if not (index.parent().isValid() and (index.column() == 0 or
+                                              index.column() == 1 or
+                                              index.column() == 3 or
+                                              index.column() == 4)):
+            painter.save()
+            myCol = style.myStyle.getQColor('BACKGROUND_BITDARK')
+            myBrush = qtgui.QBrush(myCol)
+            mypen = painter.pen()
+            mypen.setBrush(myBrush)
+            painter.setPen(mypen)
+            rect = option.rect
+            # draw left line
+            # painter.drawLine(rect.x(), rect.y(), rect.x(), rect.y() + rect.height())
+            # draw right line
+            painter.drawLine(rect.x() + rect.width(), rect.y(), rect.x() + rect.width(), rect.y() + rect.height())
+            painter.restore()
 
         contentRect = qtcore.QRect(cellStartX, cellStartY, cellWidth, cellHeight)
         painter.save()
@@ -498,6 +511,11 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 newFont = painter.font()
                 newFont.setPixelSize(15)
                 painter.setFont(newFont)
+                myCol = style.myStyle.getQColor('TEXT_NORMAL')
+                myBrush = qtgui.QBrush(myCol)
+                mypen = painter.pen()
+                mypen.setBrush(myBrush)
+                painter.setPen(mypen)
                 painter.drawText(contentRect, qt.AlignHCenter | qt.AlignTop, balance)
                 painter.setFont(defaultFont)
 
@@ -547,7 +565,6 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 pen = painter.pen()
                 pen.setBrush(qtgui.QBrush(drawColor))
                 painter.setPen(pen)
-                defaultFont = painter.font()
                 newFont = painter.font()
                 newFont.setPixelSize(14)
                 painter.setFont(newFont)
@@ -632,20 +649,19 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                             drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
                 except KeyError as ex:
                     localLogger.warning("currency is missing in coindata: " + str(ex))
-        # else:  # child level
-        #     if index.column() == 1:  # trade hist chart
-        #         # draw chart
+        else:  # child level
+            super(QCoinTableDelegate, self).paint(painter, option, index)
         painter.restore()
 
     def createEditor(self, parent, option, index):
         if index.parent().isValid():  # child level
-            if index.column() == 0:
+            if index.column() == 0:  # properties
                 if int(index.flags()) & qt.ItemIsEditable:
                     propertiesWidget = QWalletPropertiesWidget(parent)
-                    self.updateEditorGeometry(propertiesWidget, option, index)
+                    # self.updateEditorGeometry(propertiesWidget, option, index)
                     propertiesWidget.dataChanged.connect(self.commitData)
                     return propertiesWidget
-            if index.column() == 1:
+            if index.column() == 3:  # chart
                 timelinechart = charts.BuyTimelineChartCont(parent)
                 return timelinechart
         return None
@@ -655,7 +671,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             if index.column() == 0:  # properties
                 editor.setData(index.data())
                 return
-            if index.column() == 1:  # chart
+            if index.column() == 3:  # chart
                 data = index.data()
                 # get settings
                 taxfreelimityears = 0
@@ -743,23 +759,21 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                                        chartType="line", axis='price')
                 return
 
-    def updateEditorGeometry(self, editor, option, index):
-        if index.parent().isValid():  # child level
-
-            if index.column() == 0:
-                size = self.sizeHint(option, index)
-                rect = qtcore.QRect(editor.parent().x(), option.rect.y() + 5, editor.parent().width() * 0.3,
-                                    size.height() - 10)
-                editor.setGeometry(rect)
-                return
-            if index.column() == 1:
-                size = self.sizeHint(option, index)
-                rect = qtcore.QRect(editor.parent().x() + editor.parent().width() * 0.3 + 20, option.rect.y() + 5, editor.parent().width() * 0.7 - 20,
-                                    size.height() - 10)
-                editor.setGeometry(rect)
-                return
-        else:
-            raise TypeError
+    # def updateEditorGeometry(self, editor, option, index):
+    #     debugrow = index.row()
+    #     debugcol = index.column()
+    #     debugrect = option.rect
+    #     debugParent = editor.parent()
+    #     debugSize = self.sizeHint(option, index)
+    #     if index.parent().isValid():  # child level
+    #         if index.column() == 0:  # properties
+    #             editor.setGeometry(option.rect)
+    #             return
+    #         if index.column() == 3:  # chart
+    #             editor.setGeometry(option.rect)
+    #             return
+    #     else:
+    #         raise TypeError
 
     def setModelData(self, editor, model, index):
         if index.parent().isValid():  # child level
@@ -768,15 +782,20 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         if index.parent().isValid():  # child level
-            size = super(QCoinTableDelegate, self).sizeHint(option, index)
-            return qtcore.QSize(size.width(), 200)
-        else:
-            if index.column() == 0:
-                return qtcore.QSize(50, 40)
-            elif index.column() == 1:
-                return qtcore.QSize(100, 40)
-            elif index.column() >= 2:
-                return qtcore.QSize(200, 40)
+            childLevelHight = 200
+            if index.column() == 0:  # properties
+                return qtcore.QSize(350, childLevelHight)
+            elif index.column() == 3:  # chart
+                size = super(QCoinTableDelegate, self).sizeHint(option, index)
+                return qtcore.QSize(size.width(), childLevelHight)
+        else:  # top level
+            topLevelHight = 40
+            if index.column() == 0:  # coin
+                return qtcore.QSize(50, topLevelHight)
+            elif index.column() == 1:  # balance
+                return qtcore.QSize(100, topLevelHight)
+            elif index.column() >= 2:  # realized
+                return qtcore.QSize(200, topLevelHight)
         return qtcore.QSize()
 
 

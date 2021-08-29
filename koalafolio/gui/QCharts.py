@@ -381,7 +381,6 @@ class ProfitPerYearWidget(qtwidgets.QFrame):
         self.headings = []
         self.labels = {}
 
-
     def updateChart(self, dict):
         self.yLabels = []
         self.headings = []
@@ -518,3 +517,10 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
                 self.yAxisPrice.setLabelFormat("%.6f")
         else:
             raise ValueError
+
+    def minimumSizeHint(self) -> qtcore.QSize:
+        return self.chart.minimumSize()
+
+    def sizeHint(self) -> qtcore.QSize:
+        sizeF = self.chart.sizeHint(qt.PreferredSize, constraint=qtcore.QSizeF(10000, 200))
+        return sizeF.toSize()
