@@ -519,8 +519,7 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
             raise ValueError
 
     def minimumSizeHint(self) -> qtcore.QSize:
-        return self.chart.minimumSize()
+        return qtcore.QSize(0, 0)
 
     def sizeHint(self) -> qtcore.QSize:
-        sizeF = self.chart.sizeHint(qt.PreferredSize, constraint=qtcore.QSizeF(10000, 200))
-        return sizeF.toSize()
+        return qtcore.QSize(0, 0)

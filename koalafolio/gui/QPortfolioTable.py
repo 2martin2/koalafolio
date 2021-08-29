@@ -785,6 +785,8 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             childLevelHight = 200
             if index.column() == 0:  # properties
                 return qtcore.QSize(350, childLevelHight)
+            if index.column() == 1 or index.column() == 2:  # properties
+                return qtcore.QSize(0, childLevelHight)
             elif index.column() == 3:  # chart
                 size = super(QCoinTableDelegate, self).sizeHint(option, index)
                 return qtcore.QSize(size.width(), childLevelHight)
@@ -863,6 +865,9 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
             self.dataChanged.emit(self)
 
         return False
+
+    def sizeHint(self):
+        return qtcore.QSize(0, 0)
 
 
 class QWalletPropertiesData:
