@@ -232,9 +232,10 @@ class QExportProfitFrame(QExportFrame):
             currency = self.currencyBox.currentText()
             language = self.languageBox.currentText()
             taxyearlimit = None
+            useWalletTaxYearLimit = False
             if self.timeLimitBox.isChecked():
                 taxyearlimit = self.timeLimitEdit.value()
-            useWalletTaxYearLimit = self.useWalletTaxLimitBox.isChecked()
+                useWalletTaxYearLimit = self.useWalletTaxLimitBox.isChecked()
             includeTaxFreeTrades = self.taxFreeTradesBox.isChecked()
             profex.createProfitExcel(self.controller.coinList, pathReturn[0], minDate, maxDate, currency=currency,
                                      taxyearlimit=taxyearlimit, useWalletTaxYearLimit=useWalletTaxYearLimit,
