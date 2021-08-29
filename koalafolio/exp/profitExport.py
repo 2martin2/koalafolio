@@ -34,7 +34,7 @@ thin_border = xlborders.Border(left=xlborders.Side(style='thin', color=GRAYCOLOR
 
 
 # %% create excelfile
-def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearlimit=1,
+def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearlimit=1, useWalletTaxYearLimit=True,
                       includeTaxFreeTrades = True, lang="en", translator=None):
 
     if translator:
@@ -66,6 +66,11 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                         validSellFound = True
                         break
                 if validSellFound:
+                    if useWalletTaxYearLimit:  # get taxfreelimit from wallet
+                        if coin.taxYearLimitEnabled == True:
+                            taxyearlimit = coin.taxYearLimit
+                        else:
+                            taxyearlimit = None
                     walletname = coin.getWalletName()
                     wsname = re.sub('[^A-Za-z0-9_]+', '', walletname)
                     ws = wb.create_sheet(wsname)
