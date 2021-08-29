@@ -307,7 +307,9 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
 
             firstProfitRow = ws.max_row + 1
             # write data
-            for reward in coin.getRewards():
+            rewards = coin.getRewards()
+            rewards.sort(key=lambda x: x.date, reverse=False)
+            for reward in rewards:
                 # check date of sell
                 if reward.date.date() >= minDate and reward.date.date() <= maxDate:
                     rewarddate = reward.date.astimezone(pytz.utc).replace(tzinfo=None).date()
