@@ -948,12 +948,12 @@ class QCoinInfoDatabase(configparser.ConfigParser):
             for coin in coinwallets:
                 if coin.walletname == "DEFAULT":
                     notename = "notes"
-                    taxYearEnabledName = "taxYearEnabled"
-                    taxYearLimitName = "taxYearLimit"
+                    taxYearEnabledName = "taxyearenabled"
+                    taxYearLimitName = "taxyearlimit"
                 else:
                     notename = "notes" + "_" + coin.walletname
-                    taxYearEnabledName = "taxYearEnabled" + "_" + coin.walletname
-                    taxYearLimitName = "taxYearLimit" + "_" + coin.walletname
+                    taxYearEnabledName = "taxyearenabled" + "_" + coin.walletname
+                    taxYearLimitName = "taxyearlimit" + "_" + coin.walletname
                 self[coinname][notename] = coin.notes
                 self[coinname][taxYearEnabledName] = str(coin.taxYearLimitEnabled)
                 self[coinname][taxYearLimitName] = str(coin.taxYearLimit)
@@ -965,17 +965,17 @@ class QCoinInfoDatabase(configparser.ConfigParser):
             for coin in coinwallets:
                 if coin.walletname == "DEFAULT":
                     notename = "notes"
-                    taxYearEnabledName = "taxYearEnabled"
-                    taxYearLimitName = "taxYearLimit"
+                    taxYearEnabledName = "taxyearenabled"
+                    taxYearLimitName = "taxyearlimit"
                 else:
                     notename = "notes" + "_" + coin.walletname
-                    taxYearEnabledName = "taxYearEnabled" + "_" + coin.walletname
-                    taxYearLimitName = "taxYearLimit" + "_" + coin.walletname
+                    taxYearEnabledName = "taxyearenabled" + "_" + coin.walletname
+                    taxYearLimitName = "taxyearlimit" + "_" + coin.walletname
                 try:
                     coin.notes = self[coinname][notename]
                     coin.taxYearLimitEnabled = self.getboolean(coinname, taxYearEnabledName)
                     coin.taxYearLimit = self.getint(coinname, taxYearLimitName)
-                except KeyError:
+                except (KeyError, configparser.NoOptionError):
                     pass
 
     def getCoins(self):
