@@ -94,7 +94,7 @@ portfolio
 export
 -------
   export profit made in a specific timeframe using FIFO-method (excel)
-   - coins can be splitted in wallets to seperate them for tax calculation. (Each Wallet has its own FIFO calculation)
+   - trades can be splitted in wallets to seperate them for tax calculation. (FIFO for each wallet)
    - language of export english and german (others can be added in translation.txt)
 
 Credits
