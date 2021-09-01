@@ -254,7 +254,8 @@ class QPortfolioTableModel(QCoinContainer):
             if role == qt.DisplayRole:
                 if index.column() == 0:  # wallet properties
                     wallet = self.coins[index.parent().row()].wallets[index.row()]
-                    return QWalletPropertiesData(notes=wallet.notes,
+                    return QWalletPropertiesData(walletname=wallet.getWalletName(),
+                                                 notes=wallet.notes,
                                                  taxLimitEnabled=wallet.taxYearLimitEnabled,
                                                  taxLimitYears=wallet.taxYearLimit)
                 if index.column() == 3:  # wallet chart
@@ -412,8 +413,8 @@ class QTableSortingModel(fTable.SortFilterProxyModel):
         self.useRegex = False
 
     def lessThan(self, index1, index2):
+        column = index1.column()
         if not index1.parent().isValid():  # top level
-            column = index1.column()
             if column == 2:
                 profit1 = index1.data()[settings.mySettings.reportCurrency()]
                 profit2 = index2.data()[settings.mySettings.reportCurrency()]
@@ -426,8 +427,15 @@ class QTableSortingModel(fTable.SortFilterProxyModel):
                 else:
                     return coinBalance1.getChange24h(key1) < coinBalance2.getChange24h(key2)
             return index1.data() < index2.data()
-        else:  #child level
-            return str(index1.data()) < str(index2.data())
+        else:  # child level
+            if column == 0:  # properties
+                # sort by walletname
+                return str(index1.data().walletname) < str(index2.data().walletname)
+            if column == 3:  # chart
+                # sort by walletname inverted
+                return str(index1.data().getWalletName()) >= str(index2.data().getWalletName())
+            else:
+                return str(index1.data()) < str(index2.data())
 
     def filterAcceptsRow(self, source_row, source_parent):
         index = self.sourceModel().index(source_row, 1, source_parent)
@@ -806,6 +814,8 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
     def __init__(self, parent):
         super(QWalletPropertiesWidget, self).__init__(parent=parent)
 
+        self.walletname = ''
+
         self.setFocusPolicy(qt.StrongFocus)
 
         # notes
@@ -837,13 +847,15 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
         self.timeLimitCheckBoxChanged()
 
     def setData(self, data):
+        self.walletname = data.walletname
         self.notesTextedit.setText(data.notes)
         self.timeLimitBox.setCheckState(data.taxLimitEnabled)
         self.timeLimitBox.setTristate(False)
         self.timeLimitEdit.setValue(data.taxLimitYears)
 
     def getData(self):
-        return QWalletPropertiesData(notes=self.notesTextedit.toPlainText(),
+        return QWalletPropertiesData(walletname=self.walletname,
+                                     notes=self.notesTextedit.toPlainText(),
                                      taxLimitEnabled=self.timeLimitBox.isChecked(),
                                      taxLimitYears=self.timeLimitEdit.value())
 
@@ -871,7 +883,8 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
 
 
 class QWalletPropertiesData:
-    def __init__(self, notes, taxLimitEnabled, taxLimitYears):
+    def __init__(self, walletname, notes, taxLimitEnabled, taxLimitYears):
+        self.walletname = walletname
         self.notes = notes
         self.taxLimitEnabled = taxLimitEnabled
         self.taxLimitYears = taxLimitYears
