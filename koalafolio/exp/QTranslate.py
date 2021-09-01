@@ -6,10 +6,7 @@ Created on Fri May 31 08:17:21 2019
 """
 
 import configparser
-import re
-from pathlib import Path
 import koalafolio.gui.QLogger as logger
-import koalafolio.gui.QSettings as settings
 import os
 
 localLogger = logger.globalLogger
@@ -39,6 +36,7 @@ class ExportTranslator(configparser.ConfigParser):
         self['en']['Profit'] = 'Profit'
         self['en']['Timeframe'] = 'Timeframe'
         self['en']['in'] = 'in'
+        self['en']['of'] = 'of'
         self['en']['Group'] = 'Group'
         self['en']['Buy'] = 'Buy'
         self['en']['Sell'] = 'Sell'
@@ -47,14 +45,20 @@ class ExportTranslator(configparser.ConfigParser):
         self['en']['Price'] = 'Price'
         self['en']['Value'] = 'Value'
         self['en']['tax_relevant'] = 'tax relevant'
+        self['en']['Trades'] = 'Trades'
+        self['en']['Trade'] = 'Trade'
         self['en']['Fees'] = 'Fees'
         self['en']['Fee'] = 'Fee'
+        self['en']['Rewards'] = 'Rewards'
+        self['en']['Reward'] = 'Reward'
         self['en']['pc'] = 'pc'
+        self['en']['Page'] = 'Page'
         # de
         self['de'] = {}
         self['de']['Profit'] = 'Gewinn'
         self['de']['Timeframe'] = 'Zeitraum'
         self['de']['in'] = 'in'
+        self['en']['of'] = 'von'
         self['de']['Group'] = 'Gruppe'
         self['de']['Buy'] = 'Ankauf'
         self['de']['Sell'] = 'Verkauf'
@@ -63,9 +67,14 @@ class ExportTranslator(configparser.ConfigParser):
         self['de']['Price'] = 'Preis'
         self['de']['Value'] = 'Wert'
         self['de']['tax_relevant'] = 'zu versteuern'
+        self['de']['Trades'] = 'Trades'
+        self['de']['Trade'] = 'Trade'
         self['de']['Fees'] = 'Gebühren'
         self['de']['Fee'] = 'Gebühr'
+        self['de']['Rewards'] = 'Entlohnungen'
+        self['de']['Reward'] = 'Entlohnung'
         self['de']['pc'] = 'stk'
+        self['en']['Page'] = 'Seite'
 
     def saveTranslation(self):
         try:
@@ -100,5 +109,5 @@ class ExportTranslator(configparser.ConfigParser):
     def translate(self, text, lang):
         try:
             return self[lang][text.replace(' ', '_')]
-        except:
+        except KeyError:
             return text

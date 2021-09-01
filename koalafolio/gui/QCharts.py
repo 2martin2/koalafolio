@@ -381,7 +381,6 @@ class ProfitPerYearWidget(qtwidgets.QFrame):
         self.headings = []
         self.labels = {}
 
-
     def updateChart(self, dict):
         self.yLabels = []
         self.headings = []
@@ -461,6 +460,10 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         self.layout.addWidget(self.chartView)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+    # set title
+    def setTitle(self, title):
+        self.chart.setTitle(str(title))
+
     # clear old chart data
     def clearData(self):
         self.chart.removeAllSeries()
@@ -514,3 +517,9 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
                 self.yAxisPrice.setLabelFormat("%.6f")
         else:
             raise ValueError
+
+    def minimumSizeHint(self) -> qtcore.QSize:
+        return qtcore.QSize(0, 0)
+
+    def sizeHint(self) -> qtcore.QSize:
+        return qtcore.QSize(0, 0)

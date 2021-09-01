@@ -6,8 +6,6 @@ Created on Sun Sep 16 09:57:14 2018
 """
 
 import PyQt5.QtGui as qtgui
-import PyQt5.QtWidgets as qtwigets
-import PyQt5.QtCore as qtcore
 import koalafolio.gui.QLogger as logger
 import os
 import re

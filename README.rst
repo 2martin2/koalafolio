@@ -1,5 +1,20 @@
 pycryptoportfolio
 ******************
+
+|Language grade: Python| |Total alerts|
+
+.. |Total alerts| image:: https://img.shields.io/lgtm/alerts/g/2martin2/koalafolio.svg?logo=lgtm&logoWidth=18
+   :target: https://lgtm.com/projects/g/2martin2/koalafolio/alerts/
+.. |Language grade: Python| image:: https://img.shields.io/lgtm/grade/python/g/2martin2/koalafolio.svg?logo=lgtm&logoWidth=18
+   :target: https://lgtm.com/projects/g/2martin2/koalafolio/context:python
+
+|pypi version| |pypi downloads|
+
+.. |pypi version| image:: https://img.shields.io/pypi/v/koalafolio
+   :target: https://pypi.org/project/koalafolio/
+.. |pypi downloads| image:: https://img.shields.io/pypi/dm/koalafolio
+   :target: https://pypi.org/project/koalafolio/#files
+
 portfolio for cryptocoins with profit export for tax
 
 .. image:: koalaExample.png
@@ -27,7 +42,7 @@ Installation with Pip
 trade import
 -------------
  import trades from exchanges using their export files
-  supported exchanges (so far):
+  supported exchanges:
    - binance (xls)
    - bitcoinde (csv)
    - bitfinex (csv)
@@ -41,10 +56,11 @@ trade import
    - okex (csv)
    - poloniex (csv)
    - exodus (v1/txs/.json)
-   - others could work as well but not tested
+   - others could work as well but not test
+   - csv template can be created for manual import
    
  import trades from exchanges using their API:
-  supported exchanges (so far):
+  supported exchanges:
    - binance
    - bittrex
    - bitmex
@@ -78,7 +94,8 @@ portfolio
 export
 -------
   export profit made in a specific timeframe using FIFO-method (excel)
-   - (english and german, others can be added in translation.txt)
+   - trades can be splitted in wallets to seperate them for tax calculation. (FIFO for each wallet)
+   - language of export english and german (others can be added in translation.txt)
 
 Credits
 *********

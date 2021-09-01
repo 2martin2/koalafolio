@@ -56,6 +56,7 @@ class QSettings(settings.Settings):
         self['gui']['hidelowvaluecoins'] = 'False'
         self['gui']['lowvaluefilterlimit(reportcurrency)'] = '50'
         self['gui']['loadpricehistorychart'] = 'False'
+        self['gui']['coinchartdatatype'] = 'buys'
 
         super(QSettings, self).initSettings()
 
@@ -96,6 +97,7 @@ class QSettings(settings.Settings):
         self.descriptions['gui']['hidelowvaluecoins'] = 'True: coins with low fiat value will be excluded from portfolio'
         self.descriptions['gui']['lowvaluefilterlimit(reportcurrency)'] = 'fiat value limit to hide coins'
         self.descriptions['gui']['loadpricehistorychart'] = 'True: historical prices will be shown in coin buy chart. Can cause high api load.'
+        self.descriptions['gui']['coinchartdatatype'] = 'buys: show cummulative buys that hav not been sold yet (FIFO), balance: show balance chart including buys and sells.'
 
     def getWindowProperties(self):
         windowProperties = {}
@@ -208,6 +210,7 @@ class QSettings(settings.Settings):
             gui['loadpricehistorychart'] = self.getboolean('gui', 'loadpricehistorychart')
         except ValueError:
             gui['loadpricehistorychart'] = False
+        gui['coinchartdatatype'] = self['gui']['coinchartdatatype']
         return gui
 
     def getGuiSetting(self, key):

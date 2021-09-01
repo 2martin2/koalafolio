@@ -46,7 +46,7 @@ AMOUNT_MAIN_REGEX_PATTERN_5 = AMOUNT_MAIN_REGEX_PATTERN_0
 AMOUNT_SUB_REGEX_PATTERN_5 = AMOUNT_SUB_REGEX_PATTERN_0
 
 # %% model template1:
-# "date","type","buy amount","buy cur","sell amount","sell cur",("exchange"),("fee amount"),("fee currency")
+# "date","type","buy amount","buy cur","sell amount","sell cur",("exchange"),("fee amount"),("fee currency"),("wallet")
 TEMPLATE1_DATE_REGEX = re.compile(r'^DATE$')
 TEMPLATE1_TYPE_REGEX = re.compile(r'^TYPE$')
 TEMPLATE1_BUY_AMOUNT_REGEX = re.compile(r'^BUY_AMOUNT$')
@@ -56,6 +56,8 @@ TEMPLATE1_SELL_CUR_REGEX = re.compile(r'^SELL_CUR$')
 TEMPLATE1_EXCHANGE_REGEX = re.compile(r'^EXCHANGE$')
 TEMPLATE1_FEE_AMOUNT_REGEX = re.compile(r'^FEE_AMOUNT$')
 TEMPLATE1_FEE_CURRENCY_REGEX = re.compile(r'^FEE_CURRENCY$')
+TEMPLATE1_BUY_WALLET_REGEX = re.compile(r'^BUY_WALLET$')
+TEMPLATE1_SELL_WALLET_REGEX = re.compile(r'^SELL_WALLET$')
 
 # %% model tradeList: no,id,date,type,coin,amount,value,valueLoaded,tradePartnerId,exchange,externId,wallet
 TRADELIST_ID_REGEX = re.compile(r'^id$', re.IGNORECASE)

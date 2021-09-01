@@ -11,7 +11,7 @@ import PyQt5.QtCore as qtcore
 import re
 from pathlib import Path
 import koalafolio.gui.QLogger as logger
-import koalafolio.gui.QSettings as settings
+import koalafolio.gui.QLoggerWidget as loggerwidget
 import os
 
 localLogger = logger.globalLogger
@@ -62,7 +62,7 @@ class StatusBar(StyledFrame):
         self.setFrameShadow(qtwidgets.QFrame.Sunken)
         self.setFixedHeight(height)
 
-        self.statusView = logger.QLogView(parent=self, logfile=self.logfile)
+        self.statusView = loggerwidget.QLogView(parent=self, logfile=self.logfile)
         self.statusView.setFrameStyle(qtwidgets.QFrame.StyledPanel)
 
         self.statusLayout = qtwidgets.QVBoxLayout(self)

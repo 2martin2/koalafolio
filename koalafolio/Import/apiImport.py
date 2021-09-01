@@ -5,7 +5,6 @@ Created on Sun Sep  15 15:15:19 2019
 @author: Martin
 """
 import koalafolio.gui.QLogger as logger
-import koalafolio.web.krakenApi as krakenApi
 import koalafolio.web.exchanges as exchanges
 import pandas
 from Cryptodome.Cipher import AES
@@ -36,6 +35,7 @@ def getApiHistory(apiname, key, secret, start, end):
     if apiname not in apiNames:
         raise KeyError("invalid api name")
     else:
+        localLogger.info("started requesting data from " + str(apiname))
         try:
             return apiHandle[apiname](key, secret, start, end)
         except Exception as ex:

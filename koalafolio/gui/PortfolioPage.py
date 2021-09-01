@@ -195,15 +195,16 @@ class PortfolioOverview(qtwidgets.QWidget):
         stopYear = datetime.datetime.now().year
         realizedProfitPerYear = {}
         paidFeesPerYear = {}
-        realizedProfitPerYearCoinList = {}
         fiatPerYear = {}
         taxProfitPerYear = {}
+        rewardPerYear = {}
 
         for year in range(startYear, stopYear+1):
             realizedProfitPerYear[str(year)] = core.CoinValue()
             paidFeesPerYear[str(year)] = core.CoinValue()
             fiatPerYear[str(year)] = core.CoinValue()
             taxProfitPerYear[str(year)] = core.CoinValue()
+            rewardPerYear[str(year)] = core.CoinValue()
 
         # calculate all needed values
         for coin in self.model:
@@ -230,7 +231,7 @@ class PortfolioOverview(qtwidgets.QWidget):
             else:  # calculate value of portfolio
                 currentInvestNoFiat.add(coin.initialValue)
                 hypotheticalCoinValueNoFiat.add(coin.getCurrentValue())
-                realizedProfit.add(coin.tradeMatcher.getTotalProfit())
+                realizedProfit.add(coin.getTotalProfit())
             # calc fees per year
             for trade in coin.trades:
                 if trade.tradeType == "fee":
@@ -241,22 +242,17 @@ class PortfolioOverview(qtwidgets.QWidget):
                         if trade.date.date() >= startDate and trade.date.date() <= endDate:
                             paidFeesPerYear[str(year)].add(trade.getValue())
 
-            realizedProfitPerYearCoinList[coin.coinname] = (coin.tradeMatcher.getTimeDeltaProfit(
-                datetime.date(year=2017, month=1, day=1), datetime.date(year=2019, month=12, day=31),
-                taxFreeTimeDelta=settings.mySettings.getTaxSetting('taxfreelimityears'))[taxCoinName])
             for year in range(startYear, stopYear + 1):
                 startDate = datetime.date(year=year, month=1, day=1)
                 endDate = datetime.date(year=year, month=12, day=31)
-                taxProfitPerYear[str(year)].add(coin.tradeMatcher.getTimeDeltaProfit(startDate, endDate,
-                                                                                     taxFreeTimeDelta=settings.mySettings.getTaxSetting('taxfreelimityears')))
-                realizedProfitPerYear[str(year)].add(coin.tradeMatcher.getTimeDeltaProfit(startDate, endDate,
-                                                                                          taxFreeTimeDelta = -1))
+                taxProfitPerYear[str(year)].add(coin.getTimeDeltaProfitTaxable(startDate, endDate))
+                rewardPerYear[str(year)].add(coin.getTimeDeltaReward(startDate, endDate))
+                realizedProfitPerYear[str(year)].add(coin.getTimeDeltaProfit(startDate, endDate))
             # fiat and coins
             # currentInvestAll.add(coin.initialValue)
             # hypotheticalValueAll.add(coin.getCurrentValue())
-            # realizedProfitAll.add(coin.tradeMatcher.getTotalProfit())
+            # realizedProfitAll.add(coin..getTotalProfit())
 
-        realizedProfitPerYearCoinListSum = sum([realizedProfitPerYearCoinList[key] for key in realizedProfitPerYearCoinList])
         fiatPerformance = (totalReturnFiat-totalInvestFiat).div(totalInvestFiat).mult(100)
         hypotheticalPerformanceNoFiat = (hypotheticalCoinValueNoFiat.div(currentInvestNoFiat)
                                          - core.CoinValue().setValue(1)).mult(100)
@@ -323,9 +319,9 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.profitTable.setVerticalHeaderLabels(years)
         for year, row in zip(realizedProfitPerYear, range(len(realizedProfitPerYear))):
             self.profitTable.setItem(row, 0, qtwidgets.QTableWidgetItem(
-                controls.floatToString(realizedProfitPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
+                controls.floatToString(realizedProfitPerYear[year][taxCoinName] + rewardPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
             self.profitTable.setItem(row, 1, qtwidgets.QTableWidgetItem(
-                controls.floatToString(taxProfitPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
+                controls.floatToString(taxProfitPerYear[year][taxCoinName] + rewardPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
             self.profitTable.setItem(row, 2, qtwidgets.QTableWidgetItem(
                 controls.floatToString(paidFeesPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
             self.profitTable.setItem(row, 3, qtwidgets.QTableWidgetItem(

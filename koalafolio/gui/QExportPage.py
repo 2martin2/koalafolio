@@ -116,22 +116,37 @@ class QExportProfitFrame(QExportFrame):
         self.timeLimitLabel = qtwidgets.QLabel("tax year limit", self)
         self.timeLimitBox = qtwidgets.QCheckBox(self)
         self.timeLimitEdit = qtwidgets.QSpinBox(self)
-        self.timeLimitEdit.setValue(1)
+        self.timeLimitEdit.setValue(settings.mySettings.getTaxSetting('taxfreelimityears'))
         self.timeLimitEdit.setMinimum(0)
-        self.timeLimitBox.setCheckState(qt.Checked)
+        if settings.mySettings.getTaxSetting('taxfreelimit'):
+            self.timeLimitBox.setCheckState(qt.Checked)
+        else:
+            self.timeLimitBox.setCheckState(qt.Unchecked)
 
         self.optionsLayout.addWidget(self.timeLimitBox, 2, 0)
         self.optionsLayout.addWidget(self.timeLimitLabel, 2, 1)
         self.optionsLayout.addWidget(self.timeLimitEdit, 2, 2)
+
+        # use wallet tax free limit
+        self.useWalletTaxLimitLabel = qtwidgets.QLabel("use wallet tax year limit", self)
+        self.useWalletTaxLimitBox = qtwidgets.QCheckBox(self)
+        if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):
+            self.useWalletTaxLimitBox.setCheckState(qt.Checked)
+        else:
+            self.useWalletTaxLimitBox.setCheckState(qt.Unchecked)
+
+        self.optionsLayout.addWidget(self.useWalletTaxLimitBox, 3, 0)
+        self.optionsLayout.addWidget(self.useWalletTaxLimitLabel, 3, 1)
 
         # include tax free trades
         self.taxFreeTradesLabel = qtwidgets.QLabel("include tax free trades", self)
         self.taxFreeTradesBox = qtwidgets.QCheckBox(self)
         self.taxFreeTradesBox.setCheckState(qt.Checked)
 
-        # self.taxFreeTradesLayout = qtwidgets.QHBoxLayout()
-        self.optionsLayout.addWidget(self.taxFreeTradesBox, 3, 0)
-        self.optionsLayout.addWidget(self.taxFreeTradesLabel, 3, 1)
+        self.optionsLayout.addWidget(self.taxFreeTradesBox, 4, 0)
+        self.optionsLayout.addWidget(self.taxFreeTradesLabel, 4, 1)
+
+
         # self.taxFreeTradesLayout.addStretch()
 
         # todo: add export checkboxes
@@ -150,6 +165,8 @@ class QExportProfitFrame(QExportFrame):
 
         self.timeLimitBox.stateChanged.connect(self.timeLimitCheckBoxChanged)
         self.timeLimitCheckBoxChanged()
+        self.useWalletTaxLimitBox.stateChanged.connect(self.useWalletTaxLimitChanged)
+        self.useWalletTaxLimitChanged()
 
         # export button
         self.exportProfitButton = qtwidgets.QPushButton("export", self)
@@ -184,11 +201,24 @@ class QExportProfitFrame(QExportFrame):
 
     def timeLimitCheckBoxChanged(self):
         if self.timeLimitBox.isChecked():
-            self.timeLimitEdit.setEnabled(True)
+            if self.useWalletTaxLimitBox.isChecked():
+                self.timeLimitEdit.setEnabled(False)
+            else:
+                self.timeLimitEdit.setEnabled(True)
+            self.useWalletTaxLimitBox.setEnabled(True)
             self.taxFreeTradesBox.setEnabled(True)
         else:
             self.timeLimitEdit.setEnabled(False)
+            self.useWalletTaxLimitBox.setEnabled(False)
             self.taxFreeTradesBox.setEnabled(False)
+
+    def useWalletTaxLimitChanged(self):
+        if not self.timeLimitBox.isChecked():
+            return
+        if self.useWalletTaxLimitBox.isChecked():
+            self.timeLimitEdit.setEnabled(False)
+        else:
+            self.timeLimitEdit.setEnabled(True)
 
     def exportProfit(self):
         self.fileDialog.setDefaultSuffix("xlsx")
@@ -202,12 +232,15 @@ class QExportProfitFrame(QExportFrame):
             currency = self.currencyBox.currentText()
             language = self.languageBox.currentText()
             taxyearlimit = None
+            useWalletTaxYearLimit = False
             if self.timeLimitBox.isChecked():
                 taxyearlimit = self.timeLimitEdit.value()
+                useWalletTaxYearLimit = self.useWalletTaxLimitBox.isChecked()
             includeTaxFreeTrades = self.taxFreeTradesBox.isChecked()
             profex.createProfitExcel(self.controller.coinList, pathReturn[0], minDate, maxDate, currency=currency,
-                                     taxyearlimit=taxyearlimit, includeTaxFreeTrades=includeTaxFreeTrades,
-                                     lang=language, translator=self.controller.exportTranslator)
+                                     taxyearlimit=taxyearlimit, useWalletTaxYearLimit=useWalletTaxYearLimit,
+                                     includeTaxFreeTrades=includeTaxFreeTrades, lang=language,
+                                     translator=self.controller.exportTranslator)
 
 
 # class QDummyFrame(QExportFrame):

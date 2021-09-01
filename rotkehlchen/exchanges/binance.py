@@ -402,28 +402,40 @@ class Binance(ExchangeInterface):
         for symbol in iter_markets:
             last_trade_id = 0
             len_result = limit
-            while len_result == limit:
-                # We know that myTrades returns a list from the api docs
-                result = self.api_query_list(
-                    'myTrades',
-                    options={
-                        'symbol': symbol,
-                        'fromId': last_trade_id,
-                        'limit': limit,
-                        # Not specifying them since binance does not seem to
-                        # respect them and always return all trades
-                        # 'startTime': start_ts * 1000,
-                        # 'endTime': end_ts * 1000,
-                    })
-                if result:
-                    last_trade_id = result[-1]['id'] + 1
-                len_result = len(result)
-                log.debug('binance myTrades query result', results_num=len_result)
-                for r in result:
-                    r['symbol'] = symbol
-                raw_data.extend(result)
+            try_query_left = 10
+            while try_query_left > 0:
+                try:
+                    while len_result == limit:
+                        # We know that myTrades returns a list from the api docs
+                        result = self.api_query_list(
+                            'myTrades',
+                            options={
+                                'symbol': symbol,
+                                'fromId': last_trade_id,
+                                'limit': limit,
+                                # Not specifying them since binance does not seem to
+                                # respect them and always return all trades
+                                # 'startTime': start_ts * 1000,
+                                # 'endTime': end_ts * 1000,
+                            })
+                        if result:
+                            last_trade_id = result[-1]['id'] + 1
+                        len_result = len(result)
+                        log.debug('binance myTrades query result', results_num=len_result)
+                        for r in result:
+                            r['symbol'] = symbol
+                        raw_data.extend(result)
 
-            raw_data.sort(key=lambda x: x['time'])
+                    raw_data.sort(key=lambda x: x['time'])
+                    # query finished, set try's to zero
+                    try_query_left = 0
+                except RemoteError as ex:
+                    # if RemoteError try again to fix sporadic signature errors. Cause not clear.
+                    if try_query_left > 1:
+                        try_query_left -= 1
+                    # if limit reached, finally raise RemoteError
+                    else:
+                        raise ex
 
         trades = []
         for raw_trade in raw_data:

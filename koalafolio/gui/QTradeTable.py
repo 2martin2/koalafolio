@@ -12,10 +12,8 @@ Created on Sun Dec 16 19:09:51 2018
 @author: Martin
 """
 
-import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-import koalafolio.gui.Qcontrols as controls
 import os
 import koalafolio.PcpCore.core as core
 import koalafolio.Import.Converter as converter
@@ -55,6 +53,30 @@ class QTradeTableView(ftable.FilterableTableView):
                 if not sourceInd.row() in rows:
                     rows.append(sourceInd.row())
             self.model().sourceModel().deleteTrades(rows)
+
+    def addWalletToSelectedTrades(self, wallet):
+        if self.selectionModel().hasSelection():
+            inds = self.selectionModel().selectedIndexes()
+            rows = []
+            for ind in inds:
+                sourceInd = self.model().mapToSource(ind)
+                if not sourceInd.row() in rows:
+                    rows.append(sourceInd.row())
+            self.model().sourceModel().setWalletOfTrades(rows, wallet)
+        else:
+            self.model().sourceModel().setWallet(wallet)
+
+    def addExchangeToSelectedTrades(self, wallet):
+        if self.selectionModel().hasSelection():
+            inds = self.selectionModel().selectedIndexes()
+            rows = []
+            for ind in inds:
+                sourceInd = self.model().mapToSource(ind)
+                if not sourceInd.row() in rows:
+                    rows.append(sourceInd.row())
+            self.model().sourceModel().setExchangeOfTrades(rows, wallet)
+        else:
+            self.model().sourceModel().setExchange(wallet)
 
     def deleteSimilarTrades(self):
         self.model().sourceModel().deleteSimilarTrades()
@@ -236,7 +258,7 @@ class QTradeTableModel(QTradeContainer):
 
         #self.tradesLen = len(self.trades)
         self.showPrices(True)
-        self.firstValueColumn = 7
+        self.firstValueColumn = 8
         self.enableEditMode(True)
 
     def enableEditMode(self, enable):
@@ -247,7 +269,7 @@ class QTradeTableModel(QTradeContainer):
 
     def initDisplayCurrencies(self):
         self.keys = [*core.CoinValue().value]
-        self.header = ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange'] + ['value ' + key for key in
+        self.header = ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange', 'wallet'] + ['value ' + key for key in
                                                                                             self.keys]
         self.headerLen = len(self.header)
 
@@ -274,6 +296,8 @@ class QTradeTableModel(QTradeContainer):
                 return str(self.trades[index.row()].amount)
             if index.column() == 6:  # return exchange
                 return self.trades[index.row()].exchange
+            if index.column() == 7:  # return wallet
+                return self.trades[index.row()].wallet
             if index.column() >= self.firstValueColumn:  # return value
                 key = self.keys[index.column() - self.firstValueColumn]
                 return str(self.trades[index.row()].value[key])
@@ -322,6 +346,9 @@ class QTradeTableModel(QTradeContainer):
                 if index.column() == 6:  # return exchange
                     self.trades[index.row()].exchange = value
                     returnAfterChange()
+                if index.column() == 7:  # return wallet
+                    self.trades[index.row()].wallet = value
+                    returnAfterChange()
                 if index.column() >= self.firstValueColumn:  # return value
                     key = self.keys[index.column() - self.firstValueColumn]
                     self.trades[index.row()].value[key] = float(value)
@@ -339,17 +366,35 @@ class QTradeTableModel(QTradeContainer):
     def showPrices(self, showPrices=True):
         self.pricesShowen = showPrices
         if showPrices:
-            self.header = ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange'] + ['value ' + key for key
+            self.header = ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange', 'wallet'] + ['value ' + key for key
                                                                                                 in self.keys]
             self.headerLen = len(self.header)
         else:
-            self.header = ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange']
+            self.header = ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange', 'wallet']
             self.headerLen = len(self.header)
 
     def setExchange(self, exchange):
         self.beginResetModel()
         for trade in self.trades:
             trade.exchange = exchange
+        self.endResetModel()
+
+    def setWallet(self, wallet):
+        self.beginResetModel()
+        for trade in self.trades:
+            trade.wallet = wallet
+        self.endResetModel()
+
+    def setExchangeOfTrades(self, rows, exchange):
+        self.beginResetModel()
+        for row in rows:
+            self.trades[row].exchange = exchange
+        self.endResetModel()
+
+    def setWalletOfTrades(self, rows, wallet):
+        self.beginResetModel()
+        for row in rows:
+            self.trades[row].wallet = wallet
         self.endResetModel()
 
     def copyFromTradeList(self, tradeList):

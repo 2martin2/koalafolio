@@ -7,7 +7,6 @@ Created on Sun Sep 16 20:17:51 2018
 
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-import koalafolio.gui.QPortfolioTable as ptable
 import koalafolio.gui.QSettings as settings
 import koalafolio.gui.SettingsPage as settingsPage
 import koalafolio.gui.QLogger as logger

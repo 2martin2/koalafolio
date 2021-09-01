@@ -8,7 +8,8 @@ Created on 10.12.2020
 import datetime
 
 def roundTime(dt=None, roundToS=60):
-    if dt == None: dt = datetime.datetime.now()
+    if dt is None:
+        dt = datetime.datetime.now()
     if roundToS > 1:
         if roundToS < 10:
             dt = roundTime(dt, roundToS=1)
@@ -17,13 +18,15 @@ def roundTime(dt=None, roundToS=60):
         return dt + datetime.timedelta(0, rounding-seconds, -dt.microsecond)
     else:
         roundTo = roundToS*1000000
-        if dt == None : dt = datetime.datetime.now()
+        if dt is None:
+            dt = datetime.datetime.now()
         microseconds = (dt.replace(tzinfo=None) - dt.min).microseconds
         rounding = (microseconds+roundTo/2) // roundTo * roundTo
         return dt + datetime.timedelta(0, 0, rounding-microseconds)
 
 def roundTimeMin(dt=None):
-    if dt == None: dt = datetime.datetime.now()
+    if dt is None:
+        dt = datetime.datetime.now()
     dt = dt.replace(microsecond=0)
     dt = dt + datetime.timedelta(seconds=30)
     dt = dt.replace(second=0)

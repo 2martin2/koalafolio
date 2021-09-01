@@ -550,6 +550,8 @@ class TradeMatcher:
         self.trades = trades
 
     def prepareTrades(self, timemode=DAYWISE):
+        # sort trades
+        self.trades.sort(key=lambda x: x.date, reverse=False)
         # copy trades to buffer
         self.sellsBuffer = []
         self.buysBuffer = []
@@ -607,7 +609,7 @@ class TradeMatcher:
         self.buysLeft = []
         buyIndex = 0
         sellIndex = 0
-        maxIter = 10 * len(self.sellsBuffer)
+        maxIter = 2 * (len(self.sellsBuffer) + len(self.buysBuffer))
         while (sellIndex < len(self.sellsBuffer) and buyIndex < len(self.buysBuffer)):
             if self.sellsBuffer[sellIndex].date < self.buysBuffer[buyIndex].date:  # sell is before buy
                 # no buy trade can be matched -> ignore sellTrade
@@ -672,16 +674,23 @@ class TradeMatcher:
     def getTotalProfit(self):
         return sum(self.profitMatched, CoinValue())
 
-    # def getTimeInvest(self, date):
+    def getTimeDeltaProfit(self, fromDate, toDate):
+        return sum([profit for profit, date in zip(self.profitMatched, self.profitMatchedTime)
+                    if (date >= fromDate and date <=toDate)], CoinValue())
 
-
-    def getTimeDeltaProfit(self, fromDate, toDate, taxFreeTimeDelta=-1):
+    def getTimeDeltaProfitTaxable(self, fromDate, toDate):
+        taxFreeTimeDelta = -1
+        if settings.mySettings.getTaxSetting('taxfreelimit'):  # global tax limit enabled
+            if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):  # use wallet tax limit
+                if self.coinBalance.taxYearLimitEnabled:  # wallet tax limit enabled
+                    taxFreeTimeDelta = self.coinBalance.taxYearLimit
+            else:  # use global tax limit
+                taxFreeTimeDelta = settings.mySettings.getTaxSetting('taxfreelimityears')
         if taxFreeTimeDelta == -1:
-            return sum([profit for profit, date in zip(self.profitMatched, self.profitMatchedTime)
-                        if (date >= fromDate and date <=toDate)], CoinValue())
+            return self.getTimeDeltaProfit(fromDate, toDate)
         else:
             return sum([profit for profit, date, buydate in zip(self.profitMatched, self.profitMatchedTime,
-                                                                  self.profitMatchedBuyTime)
+                                                                self.profitMatchedBuyTime)
                         if (date >= fromDate and date <= toDate and (date - relativedelta(years=taxFreeTimeDelta) <= buydate))],
                        CoinValue())
 
@@ -742,12 +751,19 @@ class TradeMatcher:
                     amount += trade.amount
         return amount
 
-    def getBuyAmountLeftTaxFree(self, taxfreeLimit):
-        return self.getBuyAmountLeftToDate(datetime.datetime.now().date() - relativedelta(years=1))
+    def getBuyAmountLeftTaxFree(self):
+        taxFreeTimeDelta = 0
+        if settings.mySettings.getTaxSetting('taxfreelimit'):  # global tax limit enabled
+            if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):  # use wallet tax limit
+                if self.coinBalance.taxYearLimitEnabled:  # wallet tax limit enabled
+                    taxFreeTimeDelta = self.coinBalance.taxYearLimit
+            else:  # use global tax limit
+                taxFreeTimeDelta = settings.mySettings.getTaxSetting('taxfreelimityears')
+        return self.getBuyAmountLeftToDate(datetime.datetime.now().date() - relativedelta(years=taxFreeTimeDelta))
 
 
 # %% Coin_Balance
-class CoinBalance:
+class CoinBalancePrimitive:
     def __init__(self):
         self.coinname = None
         self.balance = 0
@@ -758,6 +774,8 @@ class CoinBalance:
         self.tradeMatcher = TradeMatcher(self)
         self.coinIcon = None
         self.notes = ""
+        self.taxYearLimitEnabled = True
+        self.taxYearLimit = 1  # number of years until no tax has to be paid
         self.priceChartData = []
 
     def __lt__(self, other):
@@ -857,12 +875,31 @@ class CoinBalance:
     def setCurrentValueAll(self, value):
         self.currentPrice = value.div(self.balance)
 
+    def setCurrentPrice(self, price):
+        self.currentPrice = price
+
+    def setChange24h(self, change24h):
+        self.change24h = change24h
+
+    def getChange24h(self, key):
+        if self.change24h[key]:
+            return self.change24h[key]
+        else:
+            return 0
+
     def getFees(self):
         fees = []
         for trade in self.trades:
             if trade.tradeType == "fee":
                 fees.append(trade)
         return fees
+
+    def getRewards(self):
+        rewards = []
+        for trade in self.trades:
+            if trade.tradeType == "reward":
+                rewards.append(trade)
+        return rewards
 
     def getTotalFees(self):
         fees = CoinValue()
@@ -878,11 +915,198 @@ class CoinBalance:
         return [self.coinname, self.balance] + [self.initialValue.value[key] for key in self.initialValue.value] + \
                [self.getCurrentValue().value[key] for key in self.getCurrentValue().value]
 
-    def getChange24h(self, key):
-        if self.change24h[key]:
-            return self.change24h[key]
+    def getTimeDeltaReward(self, fromDate, toDate):
+        return sum([trade.getValue() for trade in self.trades
+                    if trade.tradeType == 'reward' and (fromDate <= trade.date.date() <= toDate)], CoinValue())
+
+# TradeMatcher get functions
+    def getTotalProfit(self):
+        return self.tradeMatcher.getTotalProfit()
+
+    def getTimeDeltaProfit(self, fromDate, toDate):
+        return self.tradeMatcher.getTimeDeltaProfit(fromDate, toDate)
+
+    def getTimeDeltaProfitTaxable(self, fromDate, toDate):
+        return self.tradeMatcher.getTimeDeltaProfitTaxable(fromDate, toDate)
+
+    def getBuyAmount(self):
+        return self.tradeMatcher.getBuyAmount()
+
+    def getSellAmount(self):
+        return self.tradeMatcher.getSellAmount()
+
+    def getFirstBuyLeftDate(self):
+        return self.tradeMatcher.getFirstBuyLeftDate()
+
+    def getBuyAmountLeftTaxFree(self):
+        return self.tradeMatcher.getBuyAmountLeftTaxFree()
+
+
+# %% Coin Wallet
+class CoinWallet(CoinBalancePrimitive):
+    def __init__(self, name):
+        super(CoinWallet, self).__init__()
+        self.walletname = name
+
+    def getWalletName(self):
+        if self.walletname == "DEFAULT":
+            return self.coinname
         else:
-            return 0
+            return self.coinname + '_' + self.walletname
+
+    def matchTrades(self):
+        self.tradeMatcher.setTrades(self.trades)
+        self.tradeMatcher.matchTrades()
+        # check balance with buys left in tradeMatcher
+        hasAmountDismatch = False
+        if self.tradeMatcher.getBuyAmountLeft() == 0:
+            if self.balance != 0:
+                hasAmountDismatch = True
+        else:
+            if abs(1 - (self.balance / self.tradeMatcher.getBuyAmountLeft())) > 0.01:  # more than 1% error
+                hasAmountDismatch = True
+        if hasAmountDismatch:
+            # something is wrong. balance should be equal
+            if self.walletname == "DEFAULT":
+                coinname = self.coinname
+            else:
+                coinname = self.coinname + ' ' + self.walletname
+            logger.globalLogger.warning('coin amount of matched trades do not fit portfolio balance of coin: ' + coinname + '; looks like imported trades are incomplete or inconsistent.')
+            logger.globalLogger.warning("portfolio balance: " + str(self.balance) + '; matched trades balance: ' + str(self.tradeMatcher.getBuyAmountLeft()))
+        self.mult = self.tradeMatcher.getInitialPrice().mult(self.balance)
+        self.initialValue = self.mult
+
+# %% Sum of Coin Wallets
+class CoinBalance(CoinBalancePrimitive):
+    def __init__(self):
+        super(CoinBalance, self).__init__()
+        self.wallets = []
+
+    # iterate wallets
+    def __iter__(self):
+        return iter(self.wallets)
+
+    def addWallet(self, walletname="DEFAULT"):
+        if walletname == "":
+            walletname = "DEFAULT"
+        return self.getWalletbyName(walletname)
+
+    def getWalletbyName(self, walletname):
+        walletname = walletname.upper()  # always use uppercase (walletnames not casesensitive)
+        for wallet in self.wallets:
+            if wallet.walletname == walletname:
+                return wallet
+        self.wallets.append(CoinWallet(walletname))
+        self.wallets[-1].coinname = self.coinname
+        return self.wallets[-1]
+
+    def getWalletnameFromTrade(self, trade):
+        if not trade.wallet:
+            return "DEFAULT"
+        else:
+            return str(trade.wallet)
+
+    def addTrade(self, trade):
+        super(CoinBalance, self).addTrade(trade)
+        # add Trade to wallet
+        self.getWalletbyName(self.getWalletnameFromTrade(trade)).addTrade(trade)
+
+    def removeTrade(self, trade):
+        super(CoinBalance, self).removeTrade(trade)
+        # remove Trade from wallet
+        self.getWalletbyName(self.getWalletnameFromTrade(trade)).removeTrade(trade)
+
+    def updateBalance(self):
+        super(CoinBalance, self).updateBalance()
+        # update balance of wallets
+        for wallet in self.wallets:
+            wallet.updateBalance()
+
+    def matchTrades(self):
+        # super(CoinBalance, self).matchTrades()
+        # match Trades of wallets
+        initialValueSum = CoinValue()
+        for wallet in self.wallets:
+            wallet.matchTrades()
+            initialValueSum += wallet.initialValue
+
+        self.initialValue = initialValueSum
+
+    def setCurrentValueAll(self, value):
+        super(CoinBalance, self).setCurrentValueAll(value)
+        for wallet in self.wallets:
+            wallet.currentPrice = self.currentPrice
+
+    def setCurrentPrice(self, price):
+        super(CoinBalance, self).setCurrentPrice(price)
+        for wallet in self.wallets:
+            wallet.setCurrentPrice(price)
+
+    def setChange24h(self, change24h):
+        super(CoinBalance, self).setChange24h(change24h)
+        for wallet in self.wallets:
+            wallet.setChange24h(change24h)
+
+    # TradeMatcher get functions
+    def getTotalProfit(self):
+        profitsum = CoinValue()
+        for wallet in self.wallets:
+            profitsum += wallet.getTotalProfit()
+        return profitsum
+
+    def getTimeDeltaProfit(self, fromDate, toDate):
+        profitsum = CoinValue()
+        for wallet in self.wallets:
+            profitsum += wallet.tradeMatcher.getTimeDeltaProfit(fromDate, toDate)
+        return profitsum
+
+    def getTimeDeltaProfitTaxable(self, fromDate, toDate):
+        profitsum = CoinValue()
+        for wallet in self.wallets:
+            profitsum += wallet.tradeMatcher.getTimeDeltaProfitTaxable(fromDate, toDate)
+        return profitsum
+
+    def getTimeDeltaReward(self, fromDate, toDate):
+        rewardsum = CoinValue()
+        for wallet in self.wallets:
+            rewardsum += wallet.getTimeDeltaReward(fromDate, toDate)
+        return rewardsum
+
+    def getBuyAmount(self):
+        buyAmount = 0
+        for wallet in self.wallets:
+            buyAmount += wallet.tradeMatcher.getBuyAmount()
+        return buyAmount
+
+    def getSellAmount(self):
+        sellAmount = 0
+        for wallet in self.wallets:
+            sellAmount += wallet.tradeMatcher.getSellAmount()
+        return sellAmount
+
+    def getFirstBuyLeftDate(self):
+        firstBuyLeftDate = None
+        for wallet in self.wallets:  # search first valid date
+            if wallet.tradeMatcher.getFirstBuyLeftDate():
+                firstBuyLeftDate = wallet.tradeMatcher.getFirstBuyLeftDate()
+                break
+        if firstBuyLeftDate is None:  # no valid date found
+            return None
+        for wallet in self.wallets:  # search earliest date
+            firstWalletDate = wallet.tradeMatcher.getFirstBuyLeftDate()
+            if firstWalletDate:  # only compare valid dates
+                if firstWalletDate < firstBuyLeftDate:
+                    firstBuyLeftDate = firstWalletDate
+        return firstBuyLeftDate
+
+    def getBuyAmountLeftTaxFree(self):
+        taxFreeAmount = 0
+        for wallet in self.wallets:
+            taxFreeAmount += wallet.tradeMatcher.getBuyAmountLeftTaxFree()
+        return taxFreeAmount
+
+
+
 
 
 # %% CoinList
@@ -996,12 +1220,16 @@ class CoinList:
     # set prices from dict
     def setPrices(self, prices):
         for coin in self.coins:
-                for key in coin.currentPrice:
-                    try:
-                        coin.currentPrice[key] = prices[coin.coinname][key]['PRICE']
-                        coin.change24h[key] = prices[coin.coinname][key]['CHANGEPCT24HOUR']
-                    except KeyError:
-                        pass
+            price = CoinValue()
+            change24h = CoinValue()
+            for key in coin.currentPrice:
+                try:
+                    price[key] = prices[coin.coinname][key]['PRICE']
+                    change24h[key] = prices[coin.coinname][key]['CHANGEPCT24HOUR']
+                except KeyError:
+                    pass
+            coin.setCurrentPrice(price)
+            coin.setChange24h(change24h)
 
     def setPriceChartData(self, priceChartData: dict):
         for coin in self.coins:

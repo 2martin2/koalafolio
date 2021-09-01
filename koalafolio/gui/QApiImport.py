@@ -5,11 +5,8 @@ Created on Wen Oct 01 15:36:21 2019
 @author: Martin
 """
 
-import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-import re
-from pathlib import Path
 import koalafolio.gui.QLogger as logger
 import koalafolio.gui.QSettings as settings
 import koalafolio.gui.Qcontrols as controls

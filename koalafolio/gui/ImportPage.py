@@ -313,12 +313,15 @@ class ImportSelectPage(SubPage):
                         file.write(','.join([x for x in model.modelHeaders]) + '\n')
                         break
                 #"date", "type", "buy amount", "buy cur", "sell amount", "sell cur", ("exchange"),
-                # ("fee amount"), ("fee currency")
+                # ("fee amount"), ("fee currency"), ("buy_wallet"), ("sell_wallet")
                 rows = []
-                rows.append([datetime.datetime.now(), 'trade', 10, 'ETH', 0.5, 'BTC', 'binance', 0.01, 'ETH'])
-                rows.append([datetime.datetime.now(), 'trade', 5, 'ETH', 0.25, 'BTC', '', '', ''])
-                rows.append([datetime.datetime.now(), 'trade', 20, 'ETH', 1, 'BTC', '', 0.0001, 'BTC'])
-                rows.append([datetime.datetime.now(), 'fee', '', '', '', '', '', 0.0015, 'ETH'])
+                rows.append([datetime.datetime.now(), 'trade', 10, 'ETH', 0.5, 'BTC', 'binance', 0.01, 'ETH', '', ''])
+                rows.append([datetime.datetime.now(), 'trade', 5, 'ETH', 0.25, 'BTC', '', '', '', ''])
+                rows.append([datetime.datetime.now(), 'trade', 20, 'ETH', 1, 'BTC', '', 0.0001, 'BTC', '', ''])
+                rows.append([datetime.datetime.now(), 'fee', '', '', '', '', '', 0.0015, 'ETH', '', ''])
+                rows.append([datetime.datetime.now(), 'trade', 50000, 'ADA', 20000, 'USD', 'kraken', '', '', 'Hodl_1', ''])
+                rows.append([datetime.datetime.now(), 'trade', 100000, 'ADA', 50000, 'USD', 'kraken', '', '', 'Staking_1', ''])
+                rows.append([datetime.datetime.now(), 'reward', 1000, 'ADA', 1000, 'USD', '', '', '', 'Staking_1', ''])
                 for row in rows:
                     file.write(','.join([str(x) for x in row]) + '\n')
                 file.close()
@@ -360,11 +363,18 @@ class ImportPreviewPage(SubPage):
         self.exchangeInput = qtwidgets.QLineEdit(self.optionsFrame)
         self.exchangeInputButton = qtwidgets.QPushButton("set exchange", self.optionsFrame)
         self.exchangeInputButton.clicked.connect(self.exchangeChanged)
+        self.walletLabel = qtwidgets.QLabel("wallet:", self.optionsFrame)
+        self.walletInput = qtwidgets.QLineEdit(self.optionsFrame)
+        self.walletInputButton = qtwidgets.QPushButton("set wallet", self.optionsFrame)
+        self.walletInputButton.clicked.connect(self.walletChanged)
 
         self.optionsLayout = qtwidgets.QHBoxLayout(self.optionsFrame)
         self.optionsLayout.addWidget(self.exchangeLabel)
         self.optionsLayout.addWidget(self.exchangeInput)
         self.optionsLayout.addWidget(self.exchangeInputButton)
+        self.optionsLayout.addWidget(self.walletLabel)
+        self.optionsLayout.addWidget(self.walletInput)
+        self.optionsLayout.addWidget(self.walletInputButton)
 
         # header layout
         self.headerHorzLayout = qtwidgets.QHBoxLayout()
@@ -423,6 +433,7 @@ class ImportPreviewPage(SubPage):
         self.tradeListTemp.clearTrades()
         if (self.filePathIndex < len(self.controller.getFilesPath()) - 1):
             self.exchangeInput.setText("")
+            self.walletInput.setText("")
             self.filePathIndex += 1
             self.showFile(self.filePathIndex)
         else:
@@ -468,7 +479,10 @@ class ImportPreviewPage(SubPage):
             self.controller.showFrame(self.controller.IMPORTSELECTPAGEINDEX)
 
     def exchangeChanged(self):
-        self.tradeListTemp.setExchange(self.exchangeInput.text())
+        self.tableView.addExchangeToSelectedTrades(self.exchangeInput.text())
+
+    def walletChanged(self):
+        self.tableView.addWalletToSelectedTrades(self.walletInput.text())
 
     def clearLabelStyle(self):
         self.legendGrayLabel.setStyleSheet("")

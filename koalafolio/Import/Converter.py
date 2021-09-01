@@ -5,7 +5,7 @@ import koalafolio.PcpCore.settings as settings
 import re, numbers, pandas
 import koalafolio.Import.RegexPatterns as pat
 import datetime, tzlocal, pytz
-import dateutil
+import dateutil.parser
 import koalafolio.PcpCore.logger as logger
 
 localLogger = logger.globalLogger
@@ -782,8 +782,8 @@ def modelCallback_5(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 # %% model template1:
-# "date","type","buy amount","buy cur","sell amount","sell cur",("exchange"),("fee amount"),("fee currency")
-#   0       1       2           3         4             5            6              7               8
+# "date","type","buy amount","buy cur","sell amount","sell cur",("exchange"),("fee amount"),("fee currency"),("buy wallet"), ("sell wallet")
+#   0       1       2           3         4             5            6              7               8           9               10
 def modelCallback_Template1(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
@@ -797,6 +797,13 @@ def modelCallback_Template1(headernames, dataFrame):
                 exchange = str(dataFrame[headernames[6]][row]).lower()
                 if exchange == 'nan':
                     exchange = ''
+                buyWallet = str(dataFrame[headernames[9]][row]).lower()
+                if buyWallet == 'nan':
+                    buyWallet = ''
+                sellWallet = str(dataFrame[headernames[10]][row]).lower()
+                if sellWallet == 'nan':
+                    sellWallet = ''
+
             if tradeType == 'trade':
                 tempTrade_sell = core.Trade()  # sell
                 tempTrade_buy = core.Trade()  # buy
@@ -818,6 +825,9 @@ def modelCallback_Template1(headernames, dataFrame):
                 # set exchange
                 tempTrade_sell.exchange = exchange
                 tempTrade_buy.exchange = exchange
+                # set wallet
+                tempTrade_sell.wallet = sellWallet
+                tempTrade_buy.wallet = buyWallet
                 # set id
                 if not tempTrade_sell.tradeID:
                     tempTrade_sell.generateID()
@@ -826,18 +836,8 @@ def modelCallback_Template1(headernames, dataFrame):
                 # add trades to tradeList
                 if not tradeList.addTradePair(tempTrade_sell, tempTrade_buy):
                     skippedRows += 1
-        except Exception as ex:
-            localLogger.warning('error in Converter Template1: ' + str(ex))
-            skippedRows += 1
 
-        # rewards
-        try:
-            date = convertDate(dataFrame[headernames[0]][row])
-            tradeType = dataFrame[headernames[1]][row].lower()
-            if headernames[6]:
-                exchange = str(dataFrame[headernames[6]][row]).lower()
-                if exchange == 'nan':
-                    exchange = ''
+            # reward
             if tradeType == 'reward':
                 tempTrade_buy = core.Trade()  # buy
                 # get date
@@ -852,35 +852,33 @@ def modelCallback_Template1(headernames, dataFrame):
                 tempTrade_buy.amount = abs(dataFrame[headernames[2]][row])
                 # set exchange
                 tempTrade_buy.exchange = exchange
+                # set wallet
+                tempTrade_buy.wallet = buyWallet
                 # set id
                 if not tempTrade_buy.tradeID:
                     tempTrade_buy.generateID()
                 # add trades to tradeList
                 if not tradeList.addTrade(tempTrade_buy):
                     skippedRows += 1
+
+            # fees
+            if headernames[7] and str(dataFrame[headernames[7]][row]) != 'nan':  # if fee
+                if headernames[8] and str(dataFrame[headernames[8]][row]) != 'nan':  # if fee coin
+                    # use fee coin
+                    feecoin = dataFrame[headernames[8]][row]
+                else:  # no fee coin
+                    # use buy coin
+                    feecoin = tempTrade_buy.coin
+                # set coin amount
+                fee = createFee(date=date, amountStr=dataFrame[headernames[7]][row], maincoin=feecoin,
+                                subcoin=tempTrade_sell.coin,
+                                exchange=exchange)
+                fee.generateID()
+                feeList.addTrade(fee)
+
         except Exception as ex:
             localLogger.warning('error in Converter Template1: ' + str(ex))
             skippedRows += 1
-
-        # fees
-        try:
-            tradeType = dataFrame[headernames[1]][row].lower()
-            if tradeType == "fee":
-                if headernames[7] and str(dataFrame[headernames[7]][row]) != 'nan':  # if fee
-                    if headernames[8] and str(dataFrame[headernames[8]][row]) != 'nan':  # if fee coin
-                        # use fee coin
-                        feecoin = dataFrame[headernames[8]][row]
-                    else:  # no fee coin
-                        # use buy coin
-                        feecoin = tempTrade_buy.coin
-                    # set coin amount
-                    fee = createFee(date=date, amountStr=dataFrame[headernames[7]][row], maincoin=feecoin,
-                                    subcoin=tempTrade_sell.coin,
-                                    exchange=exchange)
-                    fee.generateID()
-                    feeList.addTrade(fee)
-        except Exception as ex:  # do not skip line if error, just ignore fee
-            localLogger.warning('error in Converter Template1: ' + str(ex))
 
     return tradeList, feeList, skippedRows
 
@@ -988,6 +986,8 @@ def modelCallback_Rotki(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
+dmyDateRegex = re.compile(r'^.*\d{1,2}\.\d{1,2}\.\d{2,4}.*$')
+
 # %% functions
 def convertDate(dateString, useLocalTime=False):
     # check if pandas time pattern fits
@@ -997,7 +997,10 @@ def convertDate(dateString, useLocalTime=False):
         timestamp = dateString
     else:
         try:  # try dateutil parser
-            timestamp = dateutil.parser.parse(dateString)
+            if dmyDateRegex.match(dateString):
+                timestamp = dateutil.parser.parse(dateString, dayfirst=True)
+            else:
+                timestamp = dateutil.parser.parse(dateString, dayfirst=False)
         except ValueError:  # manuel parsing
             localLogger.info('autoparsing date failed. try extended date parsing: ' + str(dateString))
             if pat.Pandas_TIME_REGEX.match(dateString):
@@ -1068,7 +1071,8 @@ def convertDate(dateString, useLocalTime=False):
     return timestamp
 
 def roundTime(dt=None, roundToS=60):
-    if dt == None: dt = datetime.datetime.now()
+    if dt is None:
+        dt = datetime.datetime.now()
     if roundToS > 1:
         if roundToS < 10:
             dt = roundTime(dt, roundToS=1)
@@ -1077,13 +1081,15 @@ def roundTime(dt=None, roundToS=60):
         return dt + datetime.timedelta(0, rounding-seconds, -dt.microsecond)
     else:
         roundTo = roundToS*1000000
-        if dt == None : dt = datetime.datetime.now()
+        if dt is None:
+            dt = datetime.datetime.now()
         microseconds = (dt.replace(tzinfo=None) - dt.min).microseconds
         rounding = (microseconds+roundTo/2) // roundTo * roundTo
         return dt + datetime.timedelta(0, 0, rounding-microseconds)
 
 def roundTimeMin(dt=None):
-    if dt == None: dt = datetime.datetime.now()
+    if dt is None:
+        dt = datetime.datetime.now()
     dt = dt.replace(microsecond=0)
     dt = dt + datetime.timedelta(seconds=30)
     dt = dt.replace(second=0)

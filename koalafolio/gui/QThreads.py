@@ -5,7 +5,6 @@ Created on Tue Nov 27 21:03:59 2018
 @author: Martin
 """
 import PyQt5.QtGui as qtgui
-import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import koalafolio.gui.QSettings as settings
 import koalafolio.web.cryptocompareApi as ccapi
@@ -94,18 +93,19 @@ class WebApiInterface(qtcore.QObject):
         if settings.mySettings.getGuiSetting(key='loadpricehistorychart'):
             if coins:
                 coinPriceCharts = {}
-                for coin in coins:
-                    try:
-                        trades = coinList.getCoinByName(coin).tradeMatcher.buysLeft
-                        if trades:
-                            minDate = datetime.datetime.combine(min([trade.date for trade in trades]), datetime.datetime.min.time())
-                            coinPriceCharts[coin] = coinGecko.getPriceChartData(coin, startTime=minDate)
-                    except KeyError:
-                        localLogger.warning('no priceChartData available for ' + coin)  # ignore invalid key
-                    except Exception as ex:
-                        localLogger.error('error converting priceChartData: ' + str(ex))
+                for coinwallets in coins:
+                    for coin in coinwallets:
+                        try:
+                            trades = coinList.getCoinByName(coin).tradeMatcher.buysLeft
+                            if trades:
+                                minDate = datetime.datetime.combine(min([trade.date for trade in trades]), datetime.datetime.min.time())
+                                coinPriceCharts[coin] = coinGecko.getPriceChartData(coin, startTime=minDate)
+                        except KeyError:
+                            localLogger.warning('no priceChartData available for ' + coin)  # ignore invalid key
+                        except Exception as ex:
+                            localLogger.error('error converting priceChartData: ' + str(ex))
 
-                self.coinPriceChartsLoaded.emit(coinPriceCharts)
+                    self.coinPriceChartsLoaded.emit(coinPriceCharts)
 
 
 # %% threads
