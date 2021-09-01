@@ -438,22 +438,38 @@ class QTableSortingModel(fTable.SortFilterProxyModel):
                 return str(index1.data()) < str(index2.data())
 
     def filterAcceptsRow(self, source_row, source_parent):
-        index = self.sourceModel().index(source_row, 1, source_parent)
-        parent = self.sourceModel().parent(index)
-        if parent.isValid():  # child level
-            # always use top level for filter
-            source_parent = qtcore.QModelIndex()
-            source_row = parent.row()
-            index = self.sourceModel().index(source_row, 1, source_parent)
+        # get coinbalance from column 3 to filter rows
+        index = self.sourceModel().index(source_row, 3, source_parent)
+        if source_parent.isValid():  # child level
+            parent_row = source_parent.row()
+            parentIndex = self.sourceModel().index(parent_row, 3, qtcore.QModelIndex())
         filterAcceptsRow = super(QTableSortingModel, self).filterAcceptsRow(source_row, source_parent)
         if filterAcceptsRow:
             if settings.mySettings.getGuiSetting('hidelowbalancecoins'):
-                data = self.sourceModel().data(index)
+                if source_parent.isValid():  # child level
+                    # check if parent is filtered
+                    data, cur, rows = self.sourceModel().data(parentIndex)
+                    if data.balance <= 0:
+                        return False
+                    # parent is visible, check wallet
+                    data = self.sourceModel().data(index)
+                else:  # top level
+                    data, cur, rows = self.sourceModel().data(index)
                 if data.balance <= 0:
                     return False
             if settings.mySettings.getGuiSetting('hidelowvaluecoins'):
-                data = self.sourceModel().data(index)
-                if data.getCurrentValue()[settings.mySettings.reportCurrency()] <= settings.mySettings.getGuiSetting('lowvaluefilterlimit(reportcurrency)'):
+                if source_parent.isValid():  # child level
+                    # check if parent is filtered
+                    data, cur, rows = self.sourceModel().data(parentIndex)
+                    if data.getCurrentValue()[settings.mySettings.reportCurrency()] \
+                            <= settings.mySettings.getGuiSetting('lowvaluefilterlimit(reportcurrency)'):
+                        return False
+                    # parent is visible, check wallet
+                    data = self.sourceModel().data(index)
+                else:  # top level
+                    data, cur, rows = self.sourceModel().data(index)
+                if data.getCurrentValue()[settings.mySettings.reportCurrency()] \
+                        <= settings.mySettings.getGuiSetting('lowvaluefilterlimit(reportcurrency)'):
                     return False
         return filterAcceptsRow
 
