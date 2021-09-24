@@ -793,13 +793,18 @@ def modelCallback_Template1(headernames, dataFrame):
         try:
             date = convertDate(dataFrame[headernames[0]][row])
             tradeType = dataFrame[headernames[1]][row].lower()
+            exchange = ''
             if headernames[6]:
                 exchange = str(dataFrame[headernames[6]][row]).lower()
                 if exchange == 'nan':
                     exchange = ''
+            buyWallet = ''
+            if headernames[9]:
                 buyWallet = str(dataFrame[headernames[9]][row]).lower()
                 if buyWallet == 'nan':
                     buyWallet = ''
+            sellWallet = ''
+            if headernames[10]:
                 sellWallet = str(dataFrame[headernames[10]][row]).lower()
                 if sellWallet == 'nan':
                     sellWallet = ''
