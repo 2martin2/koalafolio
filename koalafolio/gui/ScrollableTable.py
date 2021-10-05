@@ -18,7 +18,7 @@ class MinWheelScrollingScrollbar(QScrollBar):
         numDegrees = event.angleDelta() / 8
 
         if numPixels:
-            self.scrollWithPixels(numPixels)
+            self.scrollWithPixels(numPixels.y())
         elif numDegrees:
             numSteps = numDegrees / 15
             self.scrollWithDegrees(numSteps.y())
