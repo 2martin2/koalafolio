@@ -6,7 +6,8 @@ import re, numbers, pandas
 import koalafolio.Import.RegexPatterns as pat
 import datetime, tzlocal, pytz
 import dateutil.parser
-import koalafolio.PcpCore.logger as logger
+# import koalafolio.PcpCore.logger as logger
+import koalafolio.gui.QLogger as logger
 
 localLogger = logger.globalLogger
 
@@ -83,7 +84,7 @@ def modelCallback_exodus(headernames, dataFrame):
     feeList = core.TradeList()
     skippedRows = 0
     exchangeRegex = re.compile(r'^(exchange)$')
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         exchangeMatch = exchangeRegex.match(dataFrame[headernames[1]][row])  # check type
         isFee = str(dataFrame[headernames[4]][row]) != 'nan'
         if not exchangeMatch and not isFee:  # no trade and no fee
@@ -147,7 +148,7 @@ def modelCallback_kucoin(headernames, dataFrame):
 
     COIN_PAIR_REGEX = re.compile('^([a-z|A-Z]*)-([a-z|A-Z]*)$')
 
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
 
         coinPairMatch = COIN_PAIR_REGEX.match(dataFrame[headernames[2]][row])
         if coinPairMatch:
@@ -192,31 +193,38 @@ def modelCallback_kraken(headernames, dataFrame):
     # "x"	    "x"			"XXBTZEUR"	"x"		"buy"	"limit"		5220.00000	3839.00171	6.14240	0.73544094	0.00000		""		"x"
     # "x"	    "x"			"ADAEUR"	"x"		"buy"	"limit"		0.0400000	1000.00171	1.14240	0.73544094	0.00000		""		"x"
 
-    COIN_PAIR_REGEX = re.compile('^X([a-z|A-Z]*)Z([a-z|A-Z]*)$')
+    COIN_PAIR_REGEX = re.compile('^[XZ]([a-z|A-Z]{3,})[XZ]([a-z|A-Z]{3,})$')
     COIN_PAIR_REGEX_2 = re.compile('^([a-z|A-Z]{3})([a-z|A-Z]{3})$')
     COIN_PAIR_REGEX_3 = re.compile('^([a-z|A-Z]{4})([a-z|A-Z]{3})$')
 
-    for row in range(dataFrame.shape[0]):
+    rowsToDelete =[]
 
-        coinPairMatch = COIN_PAIR_REGEX.match(dataFrame[headernames[2]][row])
+    for rowIndex, rowObject in dataFrame.iterrows():
+        coinPairMatch = COIN_PAIR_REGEX.match(dataFrame[headernames[2]][rowIndex])
         if coinPairMatch:
             subcoin = coinPairMatch.group(1)
             maincoin = coinPairMatch.group(2)
-            dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
+            dataFrame.at[rowIndex, headernames[2]] = subcoin + '/' + maincoin
         else:
-            coinPairMatch = COIN_PAIR_REGEX_2.match(dataFrame[headernames[2]][row])
+            coinPairMatch = COIN_PAIR_REGEX_2.match(dataFrame[headernames[2]][rowIndex])
             if coinPairMatch:
                 subcoin = coinPairMatch.group(1)
                 maincoin = coinPairMatch.group(2)
-                dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
+                dataFrame.at[rowIndex, headernames[2]] = subcoin + '/' + maincoin
             else:
-                coinPairMatch = COIN_PAIR_REGEX_3.match(dataFrame[headernames[2]][row])
+                coinPairMatch = COIN_PAIR_REGEX_3.match(dataFrame[headernames[2]][rowIndex])
                 if coinPairMatch:
                     subcoin = coinPairMatch.group(1)
                     maincoin = coinPairMatch.group(2)
-                    dataFrame.at[row, headernames[2]] = subcoin + '/' + maincoin
+                    dataFrame.at[rowIndex, headernames[2]] = subcoin + '/' + maincoin
                 else:
-                    raise ValueError('kraken market pair does not fit the expected pattern')
+                    localLogger.error('kraken market pair does not fit the expected pattern: '
+                                      + dataFrame[headernames[2]][rowIndex])
+                    # remove row from data before next parsing step
+                    rowsToDelete.append(rowIndex)
+
+    # remove rows with wrong coinpair from dataframe
+    dataFrame = dataFrame.drop(rowsToDelete)
 
     headernames_m0 = []
     headernames_m0.append(headernames[3])  # date
@@ -238,6 +246,8 @@ def modelCallback_kraken(headernames, dataFrame):
     for fee in feeList:
         fee.exchange = 'kraken'
 
+    skippedRows += len(rowsToDelete)
+
     return tradeList, feeList, skippedRows
 
 
@@ -251,7 +261,7 @@ def modelCallback_binance(headernames, dataFrame):
     COIN_PAIR_REGEX = re.compile('^([a-z|A-Z]*)([a-z|A-Z]{3})$')
     USDT_REGEX = re.compile('^([a-z|A-Z]*)(USDT)$')
 
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
 
         usdtMatch = USDT_REGEX.match(dataFrame[headernames[1]][row])
         if usdtMatch:
@@ -309,7 +319,7 @@ def modelCallback_poloniex(headernames, dataFrame):
     #   xxx,  BCN/BTC, Exchange,  Sell,  0.00000072,  857643.36794962,  0.61750322,     0.25%,  9246260491,    0.61595947,        -857643.36794962
 
     feecoins = []
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         coinSub = re.match(r'^(.*)/.*$', dataFrame[headernames[1]][row]).group(1).upper()
         coinMain = re.match(r'^.*/(.*)$', dataFrame[headernames[1]][row]).group(1).upper()
         feeProz = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[7]][row]).group(1)))
@@ -357,7 +367,7 @@ def modelCallback_poloniex(headernames, dataFrame):
 # Commission	Price	PricePerUnit	IsConditional	Condition	ConditionTarget	ImmediateOrCancel	Closed]
 def modelCallback_bittrex(headernames, dataFrame):
 
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         dataFrame.at[row, headernames[5]] = dataFrame[headernames[5]][row] - dataFrame[headernames[6]][row]
 
     # model 1: Date, Type, Exchange, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin)
@@ -388,7 +398,8 @@ def modelCallback_0(headernames, dataFrame, useLocalTime=False):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
-    for row in range(dataFrame.shape[0]):
+
+    for row, rowObject in dataFrame.iterrows():
         if headernames[9]:  # if state included
             if re.match(r'^.*?(CANCEL).*?$', dataFrame[headernames[9]][row], re.IGNORECASE):  # check state
                 skippedRows += 1
@@ -468,7 +479,7 @@ def modelCallback_0(headernames, dataFrame, useLocalTime=False):
 # %% model 1: Date, Type, Exchange, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin)
 def modelCallback_1(headernames, dataFrame):
     headernames.append('')
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         coin_sub = re.match(r'^.*-(.*)$', dataFrame[headernames[2]][row]).group(1).upper()
         coin_main = re.match(r'^(.*)-.*$', dataFrame[headernames[2]][row]).group(1).upper()
         dataFrame.at[row, headernames[2]] = coin_sub + r'/' + coin_main
@@ -483,7 +494,7 @@ def modelCallback_2(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         tempTrade_sub = core.Trade()  # sub
         tempTrade_main = core.Trade()  # main
         # get id
@@ -557,7 +568,7 @@ def modelCallback_3(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         tempTrade_sub = core.Trade()
         # get id
         if headernames[4]:
@@ -606,7 +617,7 @@ def modelCallback_4(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         if 'Gebühr' in dataFrame[headernames[1]][row]:
             # fees
             date = convertDate(dataFrame[headernames[0]][row])
@@ -718,7 +729,7 @@ def modelCallback_5(headernames, dataFrame):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         if headernames[8]:  # if state included
             if re.match(r'^.*?(CANCELED).*?$', dataFrame[headernames[8]][row], re.IGNORECASE):  # check state
                 skippedRows += 1
@@ -789,7 +800,7 @@ def modelCallback_Template1(headernames, dataFrame):
     feeList = core.TradeList()
     skippedRows = 0
 
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         try:
             date = convertDate(dataFrame[headernames[0]][row])
             tradeType = dataFrame[headernames[1]][row].lower()
@@ -895,7 +906,7 @@ def modelCallback_TradeList(headernames, dataFrame):
     feeList = core.TradeList()
     skippedRows = 0
 
-    for row in range(dataFrame.shape[0]):
+    for row, rowObject in dataFrame.iterrows():
         try:
             trade = core.Trade()
 
