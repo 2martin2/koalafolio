@@ -155,7 +155,7 @@ def nextColor(rgbcolor, step):
     rgbcolornorm = [color/255 for color in rgbcolor]
     hls_color = colorsys.rgb_to_hls(*tuple(rgbcolornorm))
     rgbcolornew = colorsys.hls_to_rgb(hls_color[0]+step/360, hls_color[1], hls_color[2])
-    return [round(col, 1) for col in [rgbcolornew[0]*255, rgbcolornew[1]*255, rgbcolornew[2]*255]]
+    return [int(round(col, 1)) for col in [rgbcolornew[0]*255, rgbcolornew[1]*255, rgbcolornew[2]*255]]
 
 
 # globals

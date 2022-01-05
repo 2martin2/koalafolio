@@ -1,5 +1,10 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
 [packages]
-koalafolio = {editable = true, file = "file:///E:/git/koalafolio"}
+koalafolio = {editable = true, path = "."}
 
 [dev-packages]
 wheel = "*"
