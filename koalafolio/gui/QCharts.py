@@ -175,7 +175,7 @@ class LabeledChartView(qtchart.QChartView):
         self.heading.setMargin(3)
         self.heading.adjustSize()
         self.heading.setObjectName('heading')
-        headingPos = qtcore.QPoint(self.width()/2 - self.heading.width()/2, 5)
+        headingPos = qtcore.QPoint(int(self.width()/2 - self.heading.width()/2), 5)
         self.heading.move(headingPos)
         # self.labels = [qtwidgets.QLabel('', self) for num in range(numberLabels)]
         # for label in self.labels:
@@ -222,20 +222,20 @@ class LabeledChartView(qtchart.QChartView):
         origins = [qtcore.QPoint(center) for label in self.labels]
         for origin, col in zip(origins, range(len(origins))):
             for label in self.labels[0:col]:  # put label underneath each other
-                origin.setY(origin.y() + label.height())
+                origin.setY(int(origin.y() + label.height()))
             # move labels up to have the middle one in the center
-            origin.setY(origin.y() - sum([label.height() for label in self.labels])/2)
+            origin.setY(int(origin.y() - sum([label.height() for label in self.labels])/2))
             # move labels left to have them in the center
-            origin.setX(origin.x() - self.labels[col].width()/2 + 2)
+            origin.setX(int(origin.x() - self.labels[col].width()/2 + 2))
 
         if self.labelAlignment == qt.AlignLeft:
             maxWidth = max([label.width() for label in self.labels])
             for label, origin in zip(self.labels, origins):
-                origin.setX(origin.x() - (maxWidth - label.width())/2)
+                origin.setX(int(origin.x() - (maxWidth - label.width())/2))
         elif self.labelAlignment == qt.AlignRight:
             maxWidth = max([label.width() for label in self.labels])
             for label, origin in zip(self.labels, origins):
-                origin.setX(origin.x() + (maxWidth - label.width())/2)
+                origin.setX(int(origin.x() + (maxWidth - label.width())/2))
         for label, origin in zip(self.labels, origins):
             label.move(origin)
 

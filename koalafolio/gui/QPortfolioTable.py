@@ -126,8 +126,8 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
                 indent = 1 * self.indentation()
                 left += indent
                 # update visual rect
-                rect.setX(left + 1)
-                rect.setY(rect.y() + 1)
+                rect.setX(int(left + 1))
+                rect.setY(int(rect.y() + 1))
                 rect.setWidth(right - left - 2)
                 rect.setHeight(rect.height() - 2)
 
@@ -137,8 +137,8 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
                 left = self.header().sectionViewportPosition(sectionStart)
                 right = self.header().sectionViewportPosition(sectionEnd) + self.header().sectionSize(sectionEnd)
                 # update visual rect
-                rect.setX(left + 1)
-                rect.setY(rect.y() + 1)
+                rect.setX(int(left + 1))
+                rect.setY(int(rect.y() + 1))
                 rect.setWidth(right - left - 2)
                 rect.setHeight(rect.height() - 2)
         return rect
