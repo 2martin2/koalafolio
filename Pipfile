@@ -10,3 +10,4 @@ koalafolio = {editable = true, path = "."}
 wheel = "*"
 setuptools = "*"
 twine = "*"
+pyinstaller = "*"
