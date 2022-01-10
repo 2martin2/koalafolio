@@ -1070,7 +1070,8 @@ def convertDate(dateString, useLocalTime=False):
             # use local/UTC timezone (could cause matching error!)
             if useLocalTime:
                 myTimezone = tzlocal.get_localzone()
-                timestamp = myTimezone.localize(timestamp)
+                timestamp = timestamp.replace(tzinfo=myTimezone)
+            #    timestamp = myTimezone.localize(timestamp)
             #                myTimezone = datetime.timezone.now().astimezone().tzinfo
             #                timestamp = timestamp.replace(tzingo=myTimezone)
             else:  # use UTC
@@ -1083,7 +1084,8 @@ def convertDate(dateString, useLocalTime=False):
             timestamp = timestamp.astimezone(myTimezone)
     else:
         raise SyntaxError("date format not supported")
-    timestamp = timestamp.replace(microsecond=0)
+    if timestamp.microsecond:
+        timestamp = timestamp.replace(microsecond=0)
     return timestamp
 
 def roundTime(dt=None, roundToS=60):
