@@ -22,6 +22,7 @@ import koalafolio.Import.apiImport as apiImport
 import koalafolio.gui.QApiImport as qApiImport
 import koalafolio.gui.QStyle as style
 from koalafolio.gui.Qpages import Page, SubPage
+import koalafolio.gui.ScrollableTable as sTable
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -122,7 +123,7 @@ class ImportSelectPage(SubPage):
         self.fileSystemModel = qtwidgets.QFileSystemModel()
         self.fileSystemModel.setRootPath(qtcore.QDir.currentPath())
 
-        self.treeView = controls.QScrollableTreeView(self.fileFrame)
+        self.treeView = sTable.QScrollableTreeView(self.fileFrame)
         self.treeView.setModel(self.fileSystemModel)
         self.treeView.setSelectionMode(qtwidgets.QAbstractItemView.ExtendedSelection)
         self.treeView.header().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)

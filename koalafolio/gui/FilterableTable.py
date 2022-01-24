@@ -9,7 +9,7 @@ import PyQt5.QtCore as qtcore
 import re
 import koalafolio.gui.QLogger as logger
 import koalafolio.gui.FilterableHeader as filterableHeader
-import koalafolio.gui.ScrollableTable as stable
+import koalafolio.gui.ScrollableTable as sTable
 
 localLogger = logger.globalLogger
 
@@ -61,7 +61,7 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
 
 
 
-class FilterableTableView(stable.QScrollableTableView):
+class FilterableTableView(sTable.QScrollableTableView):
     """Table View with Filterable Header"""
     # filterActivated Signal: [filterboxIndex, filterText]
     filterActivated = qtcore.pyqtSignal([int, str])
@@ -96,7 +96,7 @@ class FilterableTableView(stable.QScrollableTableView):
         self.horizontalHeader().setFilterBoxes(newCount)
 
 
-class FilterableTreeView(stable.QScrollableTreeView):
+class FilterableTreeView(sTable.QScrollableTreeView):
     """Table View with Filterable Header"""
     # filterActivated Signal: [filterboxIndex, filterText]
     filterActivated = qtcore.pyqtSignal([int, str])
