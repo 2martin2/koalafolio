@@ -11,7 +11,7 @@ Created on Thu Oct  4 15:15:19 2018
 import koalafolio.gui.QLogger as logger
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-import koalafolio.gui.Qcontrols as controls
+import koalafolio.gui.ScrollableTable as sTable
 
 qt = qtcore.Qt
 localLogger = logger.globalLogger
@@ -180,7 +180,7 @@ class SettingsDelegate(qtwidgets.QStyledItemDelegate):
         return qtcore.QSize()
 
 
-class SettingsTreeView(controls.QScrollableTreeView):
+class SettingsTreeView(sTable.QScrollableTreeView):
     def __init__(self, *args, **kwargs):
         super(SettingsTreeView, self).__init__(*args, **kwargs)
 
