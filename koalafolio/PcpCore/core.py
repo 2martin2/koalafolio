@@ -464,9 +464,10 @@ class TradeList:
                         trade.setValueAll(partner.getValue().mult(-1))
                     # if both values loaded and both trades are crypto use the same value
                     elif not trade.isFiat():
-                        if trade.getValue() < partner.getValue():  # use smaller value (tax will be paid later)
+                        # use value of bought coin
+                        if trade.amount > 0:  # this is a buy trade
                             partner.setValueAll(trade.getValue().mult(-1))
-                        else:
+                        else:  # this is a sell trade
                             trade.setValueAll(partner.getValue().mult(-1))
 
     def updateValues(self):
