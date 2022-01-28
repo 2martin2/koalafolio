@@ -134,7 +134,7 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                                 buy = coin.tradeMatcher.buysMatched[irow]
                                 profit = coin.tradeMatcher.profitMatched[irow]
                                 # if taxyearlimit is given # if limit is relevant
-                                if taxyearlimit and ((sell.date - relativedelta(years=taxyearlimit)) > buy.date):  # if taxyearlimit is given
+                                if taxyearlimit is not None and ((sell.date - relativedelta(years=taxyearlimit)) > buy.date):  # if taxyearlimit is given
                                     taxProfit = 0
                                     if includeTaxFreeTrades:
                                         rowcount += 1
