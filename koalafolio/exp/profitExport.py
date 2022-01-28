@@ -431,7 +431,7 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
     ws[profitSumSumColumn + str(profitSumRow)] = ('=' + cells[0] + '+' + cells[1] + '+' + cells[2])
 
     # page setup
-    pageSetup(ws, dateCols=[], gapCols=['C', 'F', 'I', 'L'], lastRow=profitSumRow, lastCol=6,
+    pageSetup(ws, dateCols=[], gapCols=['C', 'F', 'I', 'L'], lastRow=profitSumRow, lastCol=12,
               setWidthCols=['A', 'B', 'D', 'G', 'J'], setWidthValue=[10, 23, 20, 20, 20], trans=trans)
 
     # def textLen(value):
