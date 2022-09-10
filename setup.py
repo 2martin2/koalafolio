@@ -26,7 +26,7 @@ setuptools.setup(
                       'openpyxl',
                       'pandas',
                       'pillow>=6.2.0',
-                      'pycoingecko',
+                      'pycoingecko<=2.3.0',
                       'pycryptodomex',
                       'pykrakenapi',
                       'pyqt5',
