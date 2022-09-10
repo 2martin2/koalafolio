@@ -10,8 +10,6 @@ import PyQt5.QtCore as qtcore
 import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import koalafolio.gui.ScrollableTable as sTable
-import QThreads
-
 
 qt = qtcore.Qt
 
