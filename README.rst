@@ -56,7 +56,7 @@ trade import
    - okex (csv)
    - poloniex (csv)
    - exodus (v1/txs/.json)
-   - others could work as well but not test
+   - others could work as well but not tested
    - csv template can be created for manual import
    
  import trades from exchanges using their API:
