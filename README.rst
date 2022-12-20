@@ -1,19 +1,15 @@
 pycryptoportfolio
 ******************
 
-|Language grade: Python| |Total alerts|
-
-.. |Total alerts| image:: https://img.shields.io/lgtm/alerts/g/2martin2/koalafolio.svg?logo=lgtm&logoWidth=18
-   :target: https://lgtm.com/projects/g/2martin2/koalafolio/alerts/
-.. |Language grade: Python| image:: https://img.shields.io/lgtm/grade/python/g/2martin2/koalafolio.svg?logo=lgtm&logoWidth=18
-   :target: https://lgtm.com/projects/g/2martin2/koalafolio/context:python
-
-|pypi version| |pypi downloads|
+|pypi version| |Language grade: Python| |pypi downloads|
 
 .. |pypi version| image:: https://img.shields.io/pypi/v/koalafolio
    :target: https://pypi.org/project/koalafolio/
 .. |pypi downloads| image:: https://img.shields.io/pypi/dm/koalafolio
    :target: https://pypi.org/project/koalafolio/#files
+.. |Language grade: Python| image:: https://app.codacy.com/project/badge/Grade/981a1e11dfdc4369889ff797d37537d9
+   :target: https://www.codacy.com/gh/2martin2/koalafolio/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=2martin2/koalafolio&amp;utm_campaign=Badge_Grade
+
 
 portfolio for cryptocoins with profit export for tax
 
