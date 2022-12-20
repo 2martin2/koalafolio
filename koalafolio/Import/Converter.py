@@ -11,6 +11,11 @@ import koalafolio.gui.QLogger as logger
 
 localLogger = logger.globalLogger
 
+
+def stringToFloat(numberString):
+    return float((pat.NUMBER_REGEX.match(numberString).group(1)).replace(',', '.'))
+
+
 def exodusJsonToDataFrame(data):
     # txId, error, date, confirmations, meta, token, coinAmount, coinName, feeAmount, to, toCoin
     # toCoin: coin, coinAmount, fiatAmount,
@@ -68,14 +73,15 @@ def exodusJsonToDataFrame(data):
                 newDict['FEECURRENCY'] = amountMatch.group(9)
                 # newDict['feeAmount'] = dict['feeAmount']
 
-        keys = ['DATE','TYPE','OUTAMOUNT','OUTCURRENCY','FEEAMOUNT','FEECURRENCY','OUTTXID',
-                'OUTTXURL','INAMOUNT','INCURRENCY','INTXID','INTXURL','ORDERID']
+        keys = ['DATE', 'TYPE', 'OUTAMOUNT', 'OUTCURRENCY', 'FEEAMOUNT', 'FEECURRENCY', 'OUTTXID',
+                'OUTTXURL', 'INAMOUNT', 'INCURRENCY', 'INTXID', 'INTXURL', 'ORDERID']
         for key in keys:
             if key not in newDict:
                 newDict[key] = 'nan'
         newDictList.append(newDict)
 
     return pandas.DataFrame(newDictList)
+
 
 # %% exodus [DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID]
 #             0     1       2         3         4           5         6        7        8       9         10      11     12
@@ -183,7 +189,9 @@ def modelCallback_kucoin(headernames, dataFrame):
 
 # %% krakenapi model: "txid","ordertxid","pair","dtime","type","ordertype","price","cost","fee","vol","margin","misc","postxid","time"
 def modelCallback_krakenapi(headernames, dataFrame):
-    return modelCallback_kraken(headernames, dataFrame) # call kraken callback since difference in header is not relevant for parsing
+    return modelCallback_kraken(headernames,
+                                dataFrame)  # call kraken callback since difference in header is not relevant for parsing
+
 
 # %% kraken model: ["txid","ordertxid","pair","time","type","ordertype","price","cost","fee","vol","margin","misc","ledgers"]
 def modelCallback_kraken(headernames, dataFrame):
@@ -197,7 +205,7 @@ def modelCallback_kraken(headernames, dataFrame):
     COIN_PAIR_REGEX_2 = re.compile('^([a-z|A-Z]{3})([a-z|A-Z]{3})$')
     COIN_PAIR_REGEX_3 = re.compile('^([a-z|A-Z]{4})([a-z|A-Z]{3})$')
 
-    rowsToDelete =[]
+    rowsToDelete = []
 
     for rowIndex, rowObject in dataFrame.iterrows():
         coinPairMatch = COIN_PAIR_REGEX.match(dataFrame[headernames[2]][rowIndex])
@@ -322,7 +330,7 @@ def modelCallback_poloniex(headernames, dataFrame):
     for row, rowObject in dataFrame.iterrows():
         coinSub = re.match(r'^(.*)/.*$', dataFrame[headernames[1]][row]).group(1).upper()
         coinMain = re.match(r'^.*/(.*)$', dataFrame[headernames[1]][row]).group(1).upper()
-        feeProz = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[7]][row]).group(1)))
+        feeProz = abs(stringToFloat(dataFrame[headernames[7]][row]))
         # get sign
         if re.match(r'^.*?(SELL).*?$', dataFrame[headernames[3]][row], re.IGNORECASE):
             feecoin = coinMain
@@ -366,7 +374,6 @@ def modelCallback_poloniex(headernames, dataFrame):
 # model bittrex [Uuid	Exchange	TimeStamp	OrderType	Limit	Quantity	QuantityRemaining
 # Commission	Price	PricePerUnit	IsConditional	Condition	ConditionTarget	ImmediateOrCancel	Closed]
 def modelCallback_bittrex(headernames, dataFrame):
-
     for row, rowObject in dataFrame.iterrows():
         dataFrame.at[row, headernames[5]] = dataFrame[headernames[5]][row] - dataFrame[headernames[6]][row]
 
@@ -430,11 +437,11 @@ def modelCallback_0(headernames, dataFrame, useLocalTime=False):
         if isinstance(dataFrame[headernames[4]][row], numbers.Number):  # if amount is number
             amount = abs(dataFrame[headernames[4]][row])
         else:  # now number so use regex to extract the number
-            amount = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[4]][row]).group(1)))
+            amount = abs(stringToFloat(dataFrame[headernames[4]][row]))
         if isinstance(dataFrame[headernames[3]][row], numbers.Number):  # if price is number
             price = abs(dataFrame[headernames[3]][row] * amount)
         else:  # no number so use regex
-            price = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[3]][row]).group(1)) * amount)
+            price = abs(stringToFloat(dataFrame[headernames[3]][row]) * amount)
         # get sign
         if re.match(r'^.*?(SELL).*?$', dataFrame[headernames[1]][row], re.IGNORECASE):
             tempTrade_sub.amount = -amount
@@ -517,12 +524,12 @@ def modelCallback_2(headernames, dataFrame):
         if isinstance(dataFrame[headernames[3]][row], numbers.Number):  # if amount is number
             amount = abs(dataFrame[headernames[3]][row])
         else:  # now number so use regex to extract the number
-            amount = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[3]][row]).group(1)))
+            amount = abs(stringToFloat(dataFrame[headernames[3]][row]))
         # get amount main
         if isinstance(dataFrame[headernames[4]][row], numbers.Number):  # if price is number
             price = abs(dataFrame[headernames[4]][row])
         else:  # no number so use regex
-            price = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[4]][row]).group(1)))
+            price = abs(stringToFloat(dataFrame[headernames[4]][row]))
         # get sign
         if re.match(r'^.*?(SELL).*?$', dataFrame[headernames[1]][row], re.IGNORECASE):
             tempTrade_sub.amount = -amount
@@ -585,7 +592,7 @@ def modelCallback_3(headernames, dataFrame):
         if isinstance(dataFrame[headernames[3]][row], numbers.Number):  # if amount is number
             amount = dataFrame[headernames[3]][row]
         else:  # now number so use regex to extract the number
-            amount = float(pat.NUMBER_REGEX.match(dataFrame[headernames[3]][row]).group(1))
+            amount = stringToFloat(dataFrame[headernames[3]][row])
         if amount:
             tempTrade_sub.amount = amount
         else:
@@ -664,17 +671,17 @@ def modelCallback_4(headernames, dataFrame):
             if isinstance(dataFrame[headernames[4]][row], numbers.Number):  # if amount is number
                 amount_wo_fees = abs(dataFrame[headernames[4]][row])
             else:  # now number so use regex to extract the number
-                amount_wo_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[4]][row]).group(1)))
+                amount_wo_fees = abs(stringToFloat(dataFrame[headernames[4]][row]))
             # get price wo fees
             if isinstance(dataFrame[headernames[3]][row], numbers.Number):  # if price is number
                 price_wo_fees = abs(dataFrame[headernames[3]][row])
             else:  # no number so use regex
-                price_wo_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[3]][row]).group(1)))
+                price_wo_fees = abs(stringToFloat(dataFrame[headernames[3]][row]))
             # get amount w fees
             if isinstance(dataFrame[headernames[6]][row], numbers.Number):  # if amount is number
                 amount_w_fees = abs(dataFrame[headernames[6]][row])
             else:  # now number so use regex to extract the number
-                amount_w_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[6]][row]).group(1)))
+                amount_w_fees = abs(stringToFloat(dataFrame[headernames[6]][row]))
             # get price w fees
             if headernames[9]:  # if fidor fee included
                 mainFeeIndex = 9
@@ -683,7 +690,7 @@ def modelCallback_4(headernames, dataFrame):
             if isinstance(dataFrame[headernames[mainFeeIndex]][row], numbers.Number):  # if price is number
                 price_w_fees = abs(dataFrame[headernames[mainFeeIndex]][row])
             else:  # no number so use regex
-                price_w_fees = abs(float(pat.NUMBER_REGEX.match(dataFrame[headernames[mainFeeIndex]][row]).group(1)))
+                price_w_fees = abs(stringToFloat(dataFrame[headernames[mainFeeIndex]][row]))
             # get sign
             if isBuy == True:
                 tempTrade_sub.amount = amount_wo_fees
@@ -755,12 +762,12 @@ def modelCallback_5(headernames, dataFrame):
         # get amount
         if isinstance(dataFrame[headernames[3]][row], numbers.Number):  # if amount is number
             amount = dataFrame[headernames[3]][row]
-        else:  # now number so use regex to extract the number
-            amount = float(pat.NUMBER_REGEX.match(dataFrame[headernames[3]][row]).group(1))
+        else:  # no number so use regex to extract the number
+            amount = stringToFloat(dataFrame[headernames[3]][row])
         if isinstance(dataFrame[headernames[2]][row], numbers.Number):  # if price is number
             price = dataFrame[headernames[2]][row] * amount * -1
         else:  # no number so use regex
-            price = float(pat.NUMBER_REGEX.match(dataFrame[headernames[2]][row]).group(1)) * amount * -1
+            price = stringToFloat(dataFrame[headernames[2]][row]) * amount * -1
         tempTrade_sub.amount = amount
         tempTrade_main.amount = price
         # set id
@@ -791,6 +798,7 @@ def modelCallback_5(headernames, dataFrame):
             localLogger.warning('error in Converter: ' + str(ex))
 
     return tradeList, feeList, skippedRows
+
 
 # %% model template1:
 # "date","type","buy amount","buy cur","sell amount","sell cur",("exchange"),("fee amount"),("fee currency"),("buy wallet"), ("sell wallet")
@@ -898,6 +906,7 @@ def modelCallback_Template1(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
+
 # %% model tradeList:
 # 'date', 'type', 'coin', 'amount', 'id', 'tradePartnerId', 'valueLoaded', 'exchange', 'externId', 'wallet'
 #   0       1       2       3         4          5               6          7           8              9
@@ -916,7 +925,6 @@ def modelCallback_TradeList(headernames, dataFrame):
             trade.tradeType = dataFrame[headernames[1]][row]
             trade.coin = dataFrame[headernames[2]][row]
             trade.amount = float(dataFrame[headernames[3]][row])
-
 
             trade.valueLoaded = False
             if headernames[6]:
@@ -978,6 +986,7 @@ def modelCallback_TradeList(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
+
 # %% model rotki:
 #   timestamp,  location,   pair,   trade_type, amount, rate,   fee,    fee_currency,   link
 #       0           1        2          3           4     5       6            7          8
@@ -1003,6 +1012,7 @@ def modelCallback_Rotki(headernames, dataFrame):
 
 
 dmyDateRegex = re.compile(r'^.*\d{1,2}\.\d{1,2}\.\d{2,4}.*$')
+
 
 # %% functions
 def convertDate(dateString, useLocalTime=False):
@@ -1032,7 +1042,7 @@ def convertDate(dateString, useLocalTime=False):
                         groups = tempMatch.group
                         hour = groups(5)
                         if groups(7).upper() == 'PM':
-                            hour = str(int(groups(5))+12)
+                            hour = str(int(groups(5)) + 12)
                             if hour == '24':
                                 hour = '00'
                         dateString = ""
@@ -1088,6 +1098,7 @@ def convertDate(dateString, useLocalTime=False):
         timestamp = timestamp.replace(microsecond=0)
     return timestamp
 
+
 def roundTime(dt=None, roundToS=60):
     if dt is None:
         dt = datetime.datetime.now()
@@ -1095,15 +1106,16 @@ def roundTime(dt=None, roundToS=60):
         if roundToS < 10:
             dt = roundTime(dt, roundToS=1)
         seconds = (dt.replace(tzinfo=None) - dt.min).seconds
-        rounding = (seconds+roundToS/2) // roundToS * roundToS
-        return dt + datetime.timedelta(0, rounding-seconds, -dt.microsecond)
+        rounding = (seconds + roundToS / 2) // roundToS * roundToS
+        return dt + datetime.timedelta(0, rounding - seconds, -dt.microsecond)
     else:
-        roundTo = roundToS*1000000
+        roundTo = roundToS * 1000000
         if dt is None:
             dt = datetime.datetime.now()
         microseconds = (dt.replace(tzinfo=None) - dt.min).microseconds
-        rounding = (microseconds+roundTo/2) // roundTo * roundTo
-        return dt + datetime.timedelta(0, 0, rounding-microseconds)
+        rounding = (microseconds + roundTo / 2) // roundTo * roundTo
+        return dt + datetime.timedelta(0, 0, rounding - microseconds)
+
 
 def roundTimeMin(dt=None):
     if dt is None:
@@ -1145,7 +1157,7 @@ def createFee(date, amountStr, maincoin, exchange, subcoin=None, wallet='', feeI
         for stdcoin in stdcoins:
             if stdcoin in feeMatch.group(4).upper():
                 fee.coin = stdcoin  # use this coin as fee coin
-        amount = - abs(float(pat.NUMBER_REGEX.match(amountStr).group(1)))
+        amount = - abs(stringToFloat(amountStr))
     fee.amount = amount
     fee.exchange = exchange
     fee.wallet = wallet

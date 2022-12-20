@@ -455,6 +455,7 @@ QPushButton:disabled {
 QTreeView{
     border: 0px solid BACKGROUND;
     background: BACKGROUND;
+    border-radius: 2px;
 }
 
 /* statusbar list view */
@@ -470,6 +471,7 @@ QTableView QTableCornerButton::section {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT, stop:1 PRIMARY);
     border: 1px solid PRIMARY_DARK;
+    border-radius: 2px;
 }
 
 /* header of all tablels/trees and lists */
@@ -479,6 +481,7 @@ QHeaderView::section {
     color: TEXT_HIGHLIGHTED;
     padding-left: 4px;
     border: 1px solid PRIMARY_DARK;
+    border-radius: 2px;
 }
 QHeaderView::section:hover {
     background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
@@ -498,26 +501,28 @@ QHeaderView::section:hover {
 QScrollBar:horizontal, QScrollBar:vertical{
     border: 1px solid qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT, stop:1 PRIMARY);
+    border-radius: 1px;
 }
 QScrollBar:horizontal{
-    height: 10px;
-    margin: 0px 10px 0px 10px;
+    height: 8px;
+    margin: 0px 8px 0px 8px;
 }
 QScrollBar:vertical {
-    width: 10px;
-    margin: 10px 0px 10px 0px;
+    width: 8px;
+    margin: 8px 0px 8px 0px;
 }
 
 QScrollBar::handle:horizontal, QScrollBar::handle:vertical {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT, stop:1 PRIMARY);
-    border: 0px solid PRIMARY_DARK
+    border: 0px solid PRIMARY_DARK;
+    border-radius: 1px;
 }
 QScrollBar::handle:horizontal {
-    min-width: 10px;
+    min-width: 8px;
 }
 QScrollBar::handle:vertical {
-    min-height: 10px;
+    min-height: 8px;
 }
 
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal, QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
@@ -525,12 +530,13 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal, QScrollBar::ad
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT, stop:1 PRIMARY);
     subcontrol-origin: margin;
+    border-radius: 1px;
 }
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
-    width: 10px;
+    width: 8px;
 }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 10px;
+    height: 8px;
 }
 QScrollBar::add-line:horizontal {
     subcontrol-position: right;
