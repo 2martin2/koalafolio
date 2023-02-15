@@ -203,7 +203,7 @@ def modelCallback_kraken(headernames, dataFrame):
 
     COIN_PAIR_REGEX = re.compile('^[XZ]([a-z|A-Z]{3,})[XZ]([a-z|A-Z]{3,})$')
     COIN_PAIR_REGEX_2 = re.compile('^([a-z|A-Z]{3})([a-z|A-Z]{3})$')
-    COIN_PAIR_REGEX_3 = re.compile('^([a-z|A-Z]{4})([a-z|A-Z]{3})$')
+    COIN_PAIR_REGEX_3 = re.compile('^([a-z|A-Z]{4,})([a-z|A-Z]{3})$')
 
     rowsToDelete = []
 
