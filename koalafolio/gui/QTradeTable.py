@@ -139,6 +139,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                     localLogger.warning('error creating trades backup in QTradeContainer: ' + str(ex))
             try:  # save trades
                 self.toCsv(os.path.join(self.dataPath, 'Trades.csv'))
+                localLogger.info("trades saved")
             except Exception as ex:
                 localLogger.error('error saving trades in QTradeContainer: ' + str(ex))
 
