@@ -40,7 +40,13 @@ class CoinGeckoAPIProxy(pycoingecko.CoinGeckoAPI):
 
 
 cg = CoinGeckoAPIProxy()
-coinsList = cg.get_coins_list()
+try:
+    coinsList = cg.get_coins_list()
+except Exception as e:
+    # todo: create lokal copy of coinsList as backup
+    logger.globalLogger.error("coinsList from coingecko can not be loaded: " + str(e))
+    coinsList = []
+
 coinSymbolToIdDict = {} # id=bitcoin, symbol=btc
 for coin in coinsList:
     coinSymbolToIdDict[coin['symbol'].upper()] = coin['id']
