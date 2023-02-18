@@ -27,11 +27,11 @@ def _get_latest_data(data_directory: Path) -> Tuple[Dict[str, Any], Dict[str, An
     try:
         # we need to download and save the contracts from github
         response = requests.get(
-            'https://raw.githubusercontent.com/rotki/rotki/develop/rotkehlchen/data/eth_contracts.json')  # noqa: E501
+            'https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/eth_contracts.json')  # noqa: E501
         remote_contract_data = response.text
         # we need to download and save the abi from github
         response2 = requests.get(
-            'https://raw.githubusercontent.com/rotki/rotki/develop/rotkehlchen/data/eth_abi.json')
+            'https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/eth_abi.json')
         remote_abi_data = response2.text
 
         # Make sure directory exists

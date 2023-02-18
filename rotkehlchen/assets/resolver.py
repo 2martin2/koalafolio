@@ -49,7 +49,7 @@ def _get_latest_assets(data_directory: Path) -> Dict[str, Any]:
 
     our_downloaded_meta = data_directory / 'assets' / 'all_assets.meta'
     try:
-        response = requests.get('https://raw.githubusercontent.com/rotki/rotki/develop/rotkehlchen/data/all_assets.meta')  # noqa: E501
+        response = requests.get('https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/all_assets.meta')  # noqa: E501
         remote_meta = response.json()
         if our_downloaded_meta.is_file():
             local_meta_file = our_downloaded_meta
@@ -60,7 +60,7 @@ def _get_latest_assets(data_directory: Path) -> Dict[str, Any]:
 
         if not local_meta or local_meta['version'] < remote_meta['version']:
             # we need to download and save the new assets from github
-            response = requests.get('https://raw.githubusercontent.com/rotki/rotki/develop/rotkehlchen/data/all_assets.json')  # noqa: E501
+            response = requests.get('https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/all_assets.json')  # noqa: E501
             remote_asset_data = response.text
 
             # Make sure directory exists
