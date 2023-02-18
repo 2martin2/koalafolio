@@ -465,7 +465,7 @@ class ImportPreviewPage(SubPage):
                 self.controller.skippedRows += skippedRows
                 self.controller.filesImported += 1
                 self.infoLabel.setText(
-                    'header is valid, ' + str(skippedRows) + ' rows skipped, ' + str(importedRows) + ' rows imported')
+                    'header is valid, ' + str(skippedRows) + ' rows skipped, ' + str(importedRows) + ' elements imported')
             else:
                 self.controller.filesNotImported += 1
                 self.infoLabel.setText('unknowen header, no trades imported')
