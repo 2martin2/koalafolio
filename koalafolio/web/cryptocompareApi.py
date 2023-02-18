@@ -74,7 +74,7 @@ def getCoinPrices(coins):
     try:
         response = cryptcomp.get_price(ccCoins, [key for key in core.CoinValue()], full=True, proxies=proxies, timeout=10)
     except Exception as ex:
-        logger.globalLogger.warning('error loading prices: ' + str(ex))
+        logger.globalLogger.warning('error loading prices with exception: ' + str(ex))
         return {}
     if response and 'RAW' in response:
         prices = {}
@@ -85,9 +85,9 @@ def getCoinPrices(coins):
         return prices
     else:
         if response:
-            logger.globalLogger.warning('error loading prices: ' + str(response))
+            logger.globalLogger.warning('error loading prices, api response: ' + str(response))
         else:
-            logger.globalLogger.warning('error loading prices')
+            logger.globalLogger.warning('error loading prices, no response from cryptocompare api')
         return {}
 
 def getIcon(coin, *args, **kwargs):
