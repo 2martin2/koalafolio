@@ -861,9 +861,9 @@ class CoinBalancePrimitive:
         else:
             if abs(1 - (self.balance / self.tradeMatcher.getBuyAmountLeft())) > 0.01:  # more than 1% error
                 hasAmountDismatch = True
-        # if hasAmountDismatch:
-        #     logger.globalLogger.warning('coin amount of matched trades do not fit portfolio balance of coin: ' + self.coinname + '; looks like imported trades are incomplete or inconsistent.')
-        #     logger.globalLogger.warning("portfolio balance: " + str(self.balance) + '; matched trades balance: ' + str(self.tradeMatcher.getBuyAmountLeft()))
+        if hasAmountDismatch:
+            logger.globalLogger.warning('coin amount of matched trades do not fit portfolio balance of coin: ' + self.coinname + '; looks like imported trades are incomplete or inconsistent.')
+            logger.globalLogger.warning("portfolio balance: " + str(self.balance) + '; matched trades balance: ' + str(self.tradeMatcher.getBuyAmountLeft()))
         self.initialValue = self.tradeMatcher.getInitialPrice().mult(self.balance)
 
     def getInitialPrice(self):
@@ -968,14 +968,14 @@ class CoinWallet(CoinBalancePrimitive):
         else:
             if abs(1 - (self.balance / self.tradeMatcher.getBuyAmountLeft())) > 0.01:  # more than 1% error
                 hasAmountDismatch = True
-        # if hasAmountDismatch:
-        #     # something is wrong. balance should be equal
-        #     if self.walletname == "DEFAULT":
-        #         coinname = self.coinname
-        #     else:
-        #         coinname = self.coinname + ' ' + self.walletname
-        #     logger.globalLogger.warning('coin amount of matched trades do not fit portfolio balance of coin: ' + coinname + '; looks like imported trades are incomplete or inconsistent.')
-        #     logger.globalLogger.warning("portfolio balance: " + str(self.balance) + '; matched trades balance: ' + str(self.tradeMatcher.getBuyAmountLeft()))
+        if hasAmountDismatch:
+            # something is wrong. balance should be equal
+            if self.walletname == "DEFAULT":
+                coinname = self.coinname
+            else:
+                coinname = self.coinname + ' ' + self.walletname
+            logger.globalLogger.warning('coin amount of matched trades do not fit portfolio balance of coin: ' + coinname + '; looks like imported trades are incomplete or inconsistent.')
+            logger.globalLogger.warning("portfolio balance: " + str(self.balance) + '; matched trades balance: ' + str(self.tradeMatcher.getBuyAmountLeft()))
         self.mult = self.tradeMatcher.getInitialPrice().mult(self.balance)
         self.initialValue = self.mult
 
