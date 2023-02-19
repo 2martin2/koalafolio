@@ -18,8 +18,8 @@ localLogger = logger.globalLogger
 
 
 class WebApiInterface(qtcore.QObject):
-    coinPricesLoaded = qtcore.pyqtSignal([dict])
-    coinIconsLoaded = qtcore.pyqtSignal([dict])
+    coinPricesLoaded = qtcore.pyqtSignal([dict, list])
+    coinIconsLoaded = qtcore.pyqtSignal([dict, list])
     coinPriceChartsLoaded = qtcore.pyqtSignal([dict])
     historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
     changeHistTimerInterval = qtcore.pyqtSignal([int])
@@ -34,16 +34,17 @@ class WebApiInterface(qtcore.QObject):
         self.histApiFailedCounter = 0
 
     def loadPrices(self, coins: list):
-        print('loading new prices')
+        localLogger.info('loading new prices for coins: ' + str(len(coins)))
         if coins:
             if settings.mySettings.priceApiSwitch() == 'coingecko':
                 prices = coinGecko.getCoinPrices(coins)
             else:
                 prices = ccapi.getCoinPrices(coins)
 
-            self.coinPricesLoaded.emit(prices)
+            self.coinPricesLoaded.emit(prices, coins)
 
     def loadCoinIcons(self, coins: list):
+        # localLogger.info('loading new Icons for coins: ' + str(len(coins)))
         if coins:
             if settings.mySettings.priceApiSwitch() == 'coingecko':
                 icons = coinGecko.getIcons(coins)
@@ -58,10 +59,11 @@ class WebApiInterface(qtcore.QObject):
                         qpix = qtgui.QPixmap.fromImage(qim)
                         qicons[key] = qtgui.QIcon(qpix)
                 except KeyError:
-                    localLogger.warning('no icon available for ' + key)  # ignore invalid key
+                    # localLogger.warning('no icon returned for ' + key)  # ignore invalid key
+                    pass
                 except Exception as ex:
                     localLogger.error('error converting icon: ' + str(ex))
-            self.coinIconsLoaded.emit(qicons)
+            self.coinIconsLoaded.emit(qicons, coins)
 
     def loadHistoricalPricesEvent(self, tradeList):
         #print("histPrices event trigger next call")
@@ -72,7 +74,7 @@ class WebApiInterface(qtcore.QObject):
         self.loadHistoricalPrices(tradeList)
 
     def loadHistoricalPrices(self, tradeList):
-        print("loading next 100 hist prices")
+        localLogger.info("loading next 100 hist prices")
         newTrades = False
         # copy trades to buffer
         for trade in tradeList:
@@ -138,8 +140,8 @@ class WebApiInterface(qtcore.QObject):
 
 # %% threads
 class UpdatePriceThread(qtcore.QThread):
-    coinPricesLoaded = qtcore.pyqtSignal([dict])
-    coinIconsLoaded = qtcore.pyqtSignal([dict])
+    coinPricesLoaded = qtcore.pyqtSignal([dict, list])
+    coinIconsLoaded = qtcore.pyqtSignal([dict, list])
     coinPriceChartsLoaded = qtcore.pyqtSignal([dict])
     historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
 
@@ -174,10 +176,10 @@ class UpdatePriceThread(qtcore.QThread):
             lambda tradeList: self.webApiInterface.loadHistoricalPricesEvent(tradeList))
 
         # load current prices for coins
-        self.coinList.PriceUpdateRequest.connect(lambda coins: self.webApiInterface.loadPrices(coins))
-        self.coinList.coinAdded.connect(lambda coins: self.webApiInterface.loadPrices(coins))
-        self.coinList.coinAdded.connect(lambda coins: self.webApiInterface.loadCoinIcons(coins))
-        self.coinList.coinAdded.connect(lambda coins: self.webApiInterface.loadcoinPriceCharts(coins, self.coinList))
+        self.coinList.triggerPriceUpdateForCoins.connect(lambda coins: self.webApiInterface.loadPrices(coins))
+        self.coinList.triggerApiUpdateForCoins.connect(lambda coins: self.webApiInterface.loadPrices(coins))
+        self.coinList.triggerApiUpdateForCoins.connect(lambda coins: self.webApiInterface.loadCoinIcons(coins))
+        self.coinList.triggerApiUpdateForCoins.connect(lambda coins: self.webApiInterface.loadcoinPriceCharts(coins, self.coinList))
         self.priceTimer.timeout.connect(lambda: self.webApiInterface.loadPrices(self.coinList.getCoinNames()))
         self.priceChartTimer.timeout.connect(
             lambda: self.webApiInterface.loadcoinPriceCharts(self.coinList.getCoinNames(), self.coinList))
@@ -188,7 +190,5 @@ class UpdatePriceThread(qtcore.QThread):
         self.priceChartTimer.start(int(settings.mySettings.priceUpdateInterval() * 1000))
         # trigger hist timer every 1s
         self.histTimer.start(1000)
-        # trigger hist timer every minute
-        #self.histTimer.start(60000)
         self.exec()
         self.deleteLater()

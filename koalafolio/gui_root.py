@@ -362,8 +362,8 @@ class PortfolioApp(qtwidgets.QWidget):
     def startThreads(self):
         self.logger.info('starting threads ...')
         self.priceThread = threads.UpdatePriceThread(self.coinList, self.tradeList)
-        self.priceThread.coinPricesLoaded.connect(lambda prices: self.coinList.setPrices(prices))
-        self.priceThread.coinIconsLoaded.connect(lambda icons: self.coinList.setIcons(icons))
+        self.priceThread.coinPricesLoaded.connect(lambda prices, coins: self.coinList.setPrices(prices, coins))
+        self.priceThread.coinIconsLoaded.connect(lambda icons, coins: self.coinList.setIcons(icons, coins))
         self.priceThread.coinPriceChartsLoaded.connect(lambda priceChartData: self.coinList.setPriceChartData(priceChartData))
         self.priceThread.historicalPricesLoaded.connect(lambda prices, tradesLeft:
                                                         self.tradeList.setHistPrices(prices, tradesLeft))

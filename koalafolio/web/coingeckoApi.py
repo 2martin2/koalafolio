@@ -64,7 +64,9 @@ def coinSymbolToId(coinSymbol):
     try:
         return coinSymbolToIdDict[coinSymbolSwap]
     except KeyError:
-        logger.globalLogger.warning('error loading coinGecko data for ' + str(coinSymbolSwap))
+        # ignore coin
+        pass
+        # logger.globalLogger.warning('error loading coinGecko data for ' + str(coinSymbolSwap))
     return None
 
 def coinSymbolsToIds(coinSymbols):
@@ -88,7 +90,9 @@ def coinIdToSymbol(coinId):
     try:
         return coinIdToSymbolDict[mappedCoinId]
     except KeyError:
-        logger.globalLogger.warning('error loading coinGecko data for ' + str(coinId))
+        # ignore coin
+        pass
+        # logger.globalLogger.warning('error loading coinGecko data for ' + str(coinId))
     return None
 
 

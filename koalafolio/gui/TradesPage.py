@@ -107,7 +107,7 @@ class TradesPage(Page):
 
     def reloadPrices(self):
         self.controller.tradeList.clearPriceFlag()
-        self.controller.tradeList.updatePrices(self.controller.tradeList)
+        self.controller.tradeList.updateHistPrices(self.controller.tradeList)
 
     def recalcIds(self):
         self.controller.tradeList.recalcIds()

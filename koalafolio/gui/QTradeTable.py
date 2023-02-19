@@ -102,7 +102,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
         self.changedNumberStack = []
         self.dataPath = dataPath
 
-        self.tradesAdded.connect(lambda tradeList: self.updatePrices(tradeList))
+        self.tradesAdded.connect(lambda tradeList: self.updateHistPrices(tradeList))
 
     def restoreTrades(self):
         if self.dataPath:
@@ -226,9 +226,17 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
     def deleteAllTrades(self):
         return self.deleteTrades(list(range(len(self.trades))))
 
-    def updatePrices(self, tradeList):
-        localLogger.info('loading historical prices. Can take some time (depending on api limitations)')
-        self.triggerHistPriceUpdate.emit(tradeList)
+    def updateHistPrices(self, tradeList):
+        for trade in tradeList:
+            if not trade.valueLoaded:
+                localLogger.info('loading historical prices. Can take some time (depending on api limitations)')
+                self.triggerHistPriceUpdate.emit(tradeList)
+                return
+
+    def setHistPrices(self, prices, tradesLeft):
+        localLogger.info(str(len(prices)) + " new hist prices recieved")
+        super(QTradeContainer, self).setHistPrices(prices)
+        self.pricesUpdatedCallback(tradesLeft)
 
     def pricesUpdatedCallback(self, tradesLeft):
         self.saveTrades()
@@ -241,14 +249,10 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                     self.triggerHistPriceUpdate.emit(self)
                     return
             # trigger priceUpdateFinished
-            localLogger.info('historical prices loaded')
+            localLogger.info('all historical prices loaded')
             self.histPriceUpdateFinished.emit()
         else:
-            localLogger.info('loading prices: ' + str(tradesLeft) + ' trades left')
-
-    def setHistPrices(self, prices, tradesLeft):
-        super(QTradeContainer, self).setHistPrices(prices)
-        self.pricesUpdatedCallback(tradesLeft)
+            localLogger.info('loading historical prices: ' + str(tradesLeft) + ' trades left')
 
 
 # %% Trade table model

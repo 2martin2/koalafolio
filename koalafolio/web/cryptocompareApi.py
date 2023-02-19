@@ -62,7 +62,7 @@ def getHistoricalPrice(trade):
                 logger.globalLogger.warning('error loading historical price for ' + str(coin))
     return {}
 
-def getCoinPrices(coins):
+def getCoinPrices(coins: list):
     ccCoins = []
     for coin in coins:
         ccCoins.append(coinSwapToCryptocompare(coin))
