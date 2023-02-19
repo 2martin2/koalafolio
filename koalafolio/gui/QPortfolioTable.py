@@ -370,7 +370,12 @@ class QPortfolioTableModel(QCoinContainer):
         self.saveCoins()
 
     def triggerPriceUpdate(self):
-        self.PriceUpdateRequest.emit(self.getCoinNames())
+        coinList = self.getCoinNames()
+        # devide coins list into packets of 1000 to prevent api errors
+        for i in range(0, len(coinList), 1000):
+            yield coinList[i:i + 1000]
+        for coins in coinList:
+            self.PriceUpdateRequest.emit(coins)
 
     def addCoin(self, coinname):
         newCoin = super(QPortfolioTableModel, self).addCoin(coinname)
