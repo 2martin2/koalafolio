@@ -10,19 +10,23 @@ import koalafolio.gui.QSettings as settings
 import koalafolio.web.cryptocompareApi as ccapi
 import koalafolio.web.coingeckoApi as coinGecko
 import koalafolio.PcpCore.core as core
-from PIL.ImageQt import ImageQt
 import koalafolio.gui.QLogger as logger
 import datetime
+import requests
+from PIL.ImageQt import ImageQt
+from PIL import Image
+from io import BytesIO
 
 localLogger = logger.globalLogger
 
 
 class WebApiInterface(qtcore.QObject):
-    coinPricesLoaded = qtcore.pyqtSignal([dict])
-    coinIconsLoaded = qtcore.pyqtSignal([dict])
+    coinPricesLoaded = qtcore.pyqtSignal([dict, list])
+    coinIconsLoaded = qtcore.pyqtSignal([dict, list])
     coinPriceChartsLoaded = qtcore.pyqtSignal([dict])
     historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
     changeHistTimerInterval = qtcore.pyqtSignal([int])
+    changeIconTimerInterval = qtcore.pyqtSignal([int])
     # historicalPriceUpdateFinished = qtcore.pyqtSignal()
 
     def __init__(self):
@@ -30,38 +34,106 @@ class WebApiInterface(qtcore.QObject):
 
         # self.histPrices = {}
         self.tradeBuffer = core.TradeList()
+        self.coinIconUrls = {}
+        self.coinIconUrls["ccapi"] = {}
+        self.coinIconUrls["coingecko"] = {}
+        self.coinIconUrls["merged"] = {}
 
         self.histApiFailedCounter = 0
 
     def loadPrices(self, coins: list):
-        print('loading new prices')
+        localLogger.info('loading new prices for coins: ' + str(len(coins)))
         if coins:
             if settings.mySettings.priceApiSwitch() == 'coingecko':
                 prices = coinGecko.getCoinPrices(coins)
             else:
                 prices = ccapi.getCoinPrices(coins)
 
-            self.coinPricesLoaded.emit(prices)
+            self.coinPricesLoaded.emit(prices, coins)
 
-    def loadCoinIcons(self, coins: list):
+    def loadCoinIcons(self):
+        qicons = {}
+        coins = []
+        # loop all iconUrl Dicts (coingecko, ccapi)
+        for api in self.coinIconUrls:
+            # check if buffer is not empty
+            if self.coinIconUrls[api]:
+                localLogger.info("loading coin Icons")
+                coinsInDict = list(self.coinIconUrls[api].keys())
+                # loop all coins in this url Dict
+                for coin in coinsInDict:
+                    # only load image if not already loaded
+                    if coin not in qicons:
+                        # get url and remove from buffer
+                        url = self.coinIconUrls[api].pop(coin)
+                        # load Image from url
+                        image = None
+                        try:
+                            image = self.getImage(url, coin)
+                        except ConnectionRefusedError:
+                            localLogger.info("ratelimit reached loading coin Icons, continue in 20s")
+                            # rate limit, readd coin to buffer and try again next time
+                            self.coinIconUrls[api][coin] = url
+                            # increase iconTimerInterval to 10s
+                            self.changeIconTimerInterval.emit(20000)
+                            # end this loop
+                            break
+                        except Exception as ex:
+                            # unknown error, ignore this url
+                            logger.globalLogger.warning(
+                                'error loading Icon for : ' + str(coin) + ", exception: " + str(ex))
+                        # save coin
+                        coins.append(coin)
+                        # convert image
+                        if image:
+                            qicons[coin] = self.imageToQIcon(image)
+        # if new qicons return them to main thread
+        if qicons:
+            self.coinIconsLoaded.emit(qicons, coins)
+
+    def loadCoinIconUrls(self, coins: list):
+        localLogger.info('adding coins to loadIconBuffer: ' + str(len(coins)))
+        # localLogger.info('loading new Icons for coins: ' + str(len(coins)))
         if coins:
             if settings.mySettings.priceApiSwitch() == 'coingecko':
-                icons = coinGecko.getIcons(coins)
-            else:
-                icons = ccapi.getIcons(coins)
-            qicons = {}
-            for key in coins:  # convert images to QIcon
-                try:
-                    if icons[key]:
-                        im = icons[key].convert("RGBA")
-                        qim = ImageQt(im)
-                        qpix = qtgui.QPixmap.fromImage(qim)
-                        qicons[key] = qtgui.QIcon(qpix)
-                except KeyError:
-                    localLogger.warning('no icon available for ' + key)  # ignore invalid key
-                except Exception as ex:
-                    localLogger.error('error converting icon: ' + str(ex))
-            self.coinIconsLoaded.emit(qicons)
+                UrlTemp = coinGecko.getIconUrls(coins)
+                for coin in UrlTemp:
+                    self.coinIconUrls["coingecko"][coin] = UrlTemp[coin]
+            elif settings.mySettings.priceApiSwitch() == 'cryptocompare':
+                UrlTemp = ccapi.getIconUrls(coins)
+                for coin in UrlTemp:
+                    self.coinIconUrls["ccapi"][coin] = UrlTemp[coin]
+            else: # mixed
+                UrlTemp = ccapi.getIconUrls(coins)
+                for coin in UrlTemp:
+                    self.coinIconUrls["merged"][coin] = UrlTemp[coin]
+                UrlTemp = coinGecko.getIconUrls(coins)
+                for coin in UrlTemp:
+                    if coin not in self.coinIconUrls["merged"]:
+                        self.coinIconUrls["merged"][coin] = UrlTemp[coin]
+        self.loadCoinIcons()
+
+
+    def getImage(self, url, coin):
+        try:
+            imageResponse = requests.get(url, proxies=settings.mySettings.proxies(), timeout=100)
+        except Exception as ex:
+            logger.globalLogger.warning('error in getImage for ' + str(coin) + ': ' + str(ex))
+            return None
+        if imageResponse.status_code == 200:
+            # request successful
+            return Image.open(BytesIO(imageResponse.content))
+        if imageResponse.status_code == 429:
+            raise ConnectionRefusedError(
+                "response code: " + str(imageResponse.status_code) + ", reason: " + str(imageResponse.reason))
+        raise ConnectionError(
+            "response code: " + str(imageResponse.status_code) + ", reason: " + str(imageResponse.reason))
+
+    def imageToQIcon(self, image):
+        im = image.convert("RGBA")
+        qim = ImageQt(im)
+        qpix = qtgui.QPixmap.fromImage(qim)
+        return qtgui.QIcon(qpix)
 
     def loadHistoricalPricesEvent(self, tradeList):
         #print("histPrices event trigger next call")
@@ -72,7 +144,7 @@ class WebApiInterface(qtcore.QObject):
         self.loadHistoricalPrices(tradeList)
 
     def loadHistoricalPrices(self, tradeList):
-        print("loading next 100 hist prices")
+        localLogger.info("loading next 100 hist prices")
         newTrades = False
         # copy trades to buffer
         for trade in tradeList:
@@ -138,8 +210,8 @@ class WebApiInterface(qtcore.QObject):
 
 # %% threads
 class UpdatePriceThread(qtcore.QThread):
-    coinPricesLoaded = qtcore.pyqtSignal([dict])
-    coinIconsLoaded = qtcore.pyqtSignal([dict])
+    coinPricesLoaded = qtcore.pyqtSignal([dict, list])
+    coinIconsLoaded = qtcore.pyqtSignal([dict, list])
     coinPriceChartsLoaded = qtcore.pyqtSignal([dict])
     historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
 
@@ -151,6 +223,7 @@ class UpdatePriceThread(qtcore.QThread):
         self.priceTimer = qtcore.QTimer()
         self.priceChartTimer = qtcore.QTimer()
         self.histTimer = qtcore.QTimer()
+        self.iconTimer = qtcore.QTimer()
 
         self.webApiInterface = WebApiInterface()
 
@@ -161,6 +234,10 @@ class UpdatePriceThread(qtcore.QThread):
         print("set histPriceTimer: " + str(interval))
         self.histTimer.setInterval(interval)
 
+    def setIconTimerInterval(self, interval):
+        print("set iconPriceTimer: " + str(interval))
+        self.iconTimer.setInterval(interval)
+
     def run(self):
         # return current price
         self.webApiInterface.coinPricesLoaded.connect(self.coinPricesLoaded)
@@ -169,26 +246,27 @@ class UpdatePriceThread(qtcore.QThread):
         # return hist prices
         self.webApiInterface.historicalPricesLoaded.connect(self.historicalPricesLoaded)
         self.webApiInterface.changeHistTimerInterval.connect(self.setHistTimerInterval)
+        self.webApiInterface.changeIconTimerInterval.connect(self.setIconTimerInterval)
         # load hist prices for trades
         self.tradeList.triggerHistPriceUpdate.connect(
             lambda tradeList: self.webApiInterface.loadHistoricalPricesEvent(tradeList))
 
         # load current prices for coins
-        self.coinList.PriceUpdateRequest.connect(lambda coins: self.webApiInterface.loadPrices(coins))
-        self.coinList.coinAdded.connect(lambda coins: self.webApiInterface.loadPrices(coins))
-        self.coinList.coinAdded.connect(lambda coins: self.webApiInterface.loadCoinIcons(coins))
-        self.coinList.coinAdded.connect(lambda coins: self.webApiInterface.loadcoinPriceCharts(coins, self.coinList))
+        self.coinList.triggerPriceUpdateForCoins.connect(lambda coins: self.webApiInterface.loadPrices(coins))
+        self.coinList.triggerApiUpdateForCoins.connect(lambda coins: self.webApiInterface.loadPrices(coins))
+        self.coinList.triggerApiUpdateForCoins.connect(lambda coins: self.webApiInterface.loadCoinIconUrls(coins))
+        self.coinList.triggerApiUpdateForCoins.connect(lambda coins: self.webApiInterface.loadcoinPriceCharts(coins, self.coinList))
         self.priceTimer.timeout.connect(lambda: self.webApiInterface.loadPrices(self.coinList.getCoinNames()))
         self.priceChartTimer.timeout.connect(
             lambda: self.webApiInterface.loadcoinPriceCharts(self.coinList.getCoinNames(), self.coinList))
         self.histTimer.timeout.connect(
             lambda: self.webApiInterface.loadHistoricalPricesTimer(self.webApiInterface.tradeBuffer))
+        self.iconTimer.timeout.connect(self.webApiInterface.loadCoinIcons)
 
         self.priceTimer.start(int(settings.mySettings.priceUpdateInterval() * 1000))
         self.priceChartTimer.start(int(settings.mySettings.priceUpdateInterval() * 1000))
+        self.iconTimer.start(10000)
         # trigger hist timer every 1s
         self.histTimer.start(1000)
-        # trigger hist timer every minute
-        #self.histTimer.start(60000)
         self.exec()
         self.deleteLater()

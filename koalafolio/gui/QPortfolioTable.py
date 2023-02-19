@@ -146,9 +146,10 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
 
 # %% portfolio coin container
 class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
-    # todo: limit max amount of coins passed to this. causes errors in ccapi
     coinAdded = qtcore.pyqtSignal([list])
-    PriceUpdateRequest = qtcore.pyqtSignal([list])
+    # use bulk event to load prices for several coins at once (faster)
+    triggerApiUpdateForCoins = qtcore.pyqtSignal([list])
+    triggerPriceUpdateForCoins = qtcore.pyqtSignal([list])
 
     def __init__(self, dataPath=None, *args, **kwargs):
         super(QCoinContainer, self).__init__(*args, **kwargs)
@@ -156,6 +157,25 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
         self.dataPath = dataPath
         self.coinDatabase = QCoinInfoDatabase(path=dataPath)
         # self.coinAdded.connect(self.saveCoins)
+        self.newCoins = []
+
+
+    def loadApiDataForNewCoins(self):
+        localLogger.info("loadCoinData, new Coins: " + str(len(self.newCoins)))  # + ", " + str(self.newCoins))
+        while self.newCoins:
+            coins = self.newCoins[-100:]
+            self.newCoins = self.newCoins[:-100]
+            # trigger data update for up to 100 coins to prevent api errors
+            self.triggerApiUpdateForCoins.emit(coins)
+
+    def loadPriceForAllCoins(self):
+        coinList = self.getCoinNames()
+        # devide coins list into packets of 1000 to prevent api errors
+        while coinList:
+            coins = coinList[-100:]
+            coinList = coinList[:-100]
+            # trigger price update for up to 100 coins
+            self.triggerPriceUpdateForCoins.emit(coins)
 
     def setPath(self, path):
         self.dataPath = path
@@ -171,7 +191,8 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
                     for wallet in self.coinDatabase.getCoinWallets(coin):
                         self.getCoinByName(coin).addWallet(wallet)
             self.coinDatabase.updateCoinInfo(self)
-        self.coinAdded.emit(self.getCoinNames())
+        self.loadApiDataForNewCoins()
+
 
     def saveCoins(self):
         if self.dataPath:
@@ -344,7 +365,12 @@ class QPortfolioTableModel(QCoinContainer):
         RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, qtcore.QModelIndex())
         self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
-    def setPrices(self, prices):
+    def setPrices(self, prices, coins):
+        missingCoins = []
+        for coin in coins:
+            if coin not in prices:
+                missingCoins.append(coin)
+        localLogger.info("prices returned from Api: " + str(len(prices)) + ", no price returned for: " + str(missingCoins))
         super(QPortfolioTableModel, self).setPrices(prices)
         self.pricesUpdated()
 
@@ -365,26 +391,25 @@ class QPortfolioTableModel(QCoinContainer):
         self.beginResetModel()
         super(QPortfolioTableModel, self).addTrades(trades)
         self.endResetModel()
-        #  load prices and icons of all coins (not necessary but faster)
-        # todo: only pass new coins
-        self.coinAdded.emit(self.getCoinNames())
+        self.loadApiDataForNewCoins
         self.saveCoins()
 
     def triggerPriceUpdate(self):
-        coinList = self.getCoinNames()
-        # devide coins list into packets of 1000 to prevent api errors
-        for i in range(0, len(coinList), 100):
-            yield coinList[i:i + 100]
-        for coins in coinList:
-            self.PriceUpdateRequest.emit(coins)
+        self.loadPriceForAllCoins()
 
     def addCoin(self, coinname):
         newCoin = super(QPortfolioTableModel, self).addCoin(coinname)
         # coin update will be done for all coins at once since it is much faster
         # self.coinAdded.emit([newCoin.coinname])
+        self.newCoins.append(newCoin.coinname)
         return newCoin
 
-    def setIcons(self, icons):
+    def setIcons(self, icons, coins):
+        localLogger.info("icons returned: " + str(len(icons)))
+        missingCoins = []
+        for coin in coins:
+            if coin not in icons:
+                missingCoins.append(coin)
         for coin in icons:
             try:
                 self.getCoinByName(coin).coinIcon = icons[coin]
