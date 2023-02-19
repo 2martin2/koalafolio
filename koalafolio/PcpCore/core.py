@@ -229,6 +229,7 @@ class Trade:
         self.amount = None
         self.value = CoinValue()
         self.valueLoaded = False
+        self.valueLoadingFailedCnt = 0
         self.tradePartnerId = ''
         self.exchange = ''
         self.wallet = ''
@@ -436,6 +437,8 @@ class TradeList:
                 for key in settings.mySettings.displayCurrencies():
                     if key not in prices[trade.tradeID]:
                         missingCoin = 1
+                        # increment FailedCnt of this trade, will be reset after Koala restart
+                        trade.valueLoadingFailedCnt += 1
                         break
                 if missingCoin == 0:
                     coinPrice = CoinValue()
@@ -1241,7 +1244,7 @@ class CoinList:
 
 
     def histPricesChanged(self):
-        pass
+        self.matchTrades()
 
     def histPriceUpdateFinished(self):
         self.matchTrades()

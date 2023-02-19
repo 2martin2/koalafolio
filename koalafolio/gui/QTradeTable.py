@@ -234,10 +234,13 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
         self.saveTrades()
         self.pricesUpdated.emit()
         if tradesLeft == 0:
+            # check if still Trades missing histValue and have not been tried yet
             for trade in self.trades:
-                if not trade.valueLoaded:
+                # do not try more than twice.
+                if not trade.valueLoaded and trade.valueLoadingFailedCnt < 2:
                     self.triggerHistPriceUpdate.emit(self)
                     return
+            # trigger priceUpdateFinished
             localLogger.info('historical prices loaded')
             self.histPriceUpdateFinished.emit()
         else:
