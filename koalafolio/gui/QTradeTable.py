@@ -438,7 +438,7 @@ class QTradeTableModel(QTradeContainer):
 
     def removeRows(self, position, rows, parent):
         for row in range(position+rows):
-            self.deleteTrades(self, row)
+            self.deleteTrades(row)
         return True
 
     def pricesUpdatedCallback(self, tradesLeft):

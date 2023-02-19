@@ -399,7 +399,7 @@ class PortfolioApp(qtwidgets.QWidget):
         event.accept()
 
     def printStatus(self, status, statusType='i'):
-        self.logList.addString(status)
+        self.logList.addString(status, statusType)
 
     # get TradeList
     def getTradeList(self):

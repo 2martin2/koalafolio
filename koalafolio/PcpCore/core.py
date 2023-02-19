@@ -1221,7 +1221,7 @@ class CoinList:
         return [coin.coinname for coin in self.coins]
 
     # set prices from dict
-    def setPrices(self, prices):
+    def setPrices(self, prices, coins):
         for coin in self.coins:
             price = CoinValue()
             change24h = CoinValue()
