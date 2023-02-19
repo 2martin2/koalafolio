@@ -410,8 +410,6 @@ class QPortfolioTableModel(QCoinContainer):
         for coin in coins:
             if coin not in icons:
                 missingCoins.append(coin)
-        localLogger.info(
-            "icons returned from Api: " + str(len(icons)))  # + ", no icon returned for: " + str(missingCoins))
         for coin in icons:
             try:
                 self.getCoinByName(coin).coinIcon = icons[coin]
