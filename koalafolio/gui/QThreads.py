@@ -36,32 +36,19 @@ class WebApiInterface(qtcore.QObject):
     def loadPrices(self, coins: list):
         print('loading new prices')
         if coins:
-            # devide coins list into packets of 500 to prevent api errors
-            for i in range(0, len(coins), 500):
-                yield coins[i:i + 500]
-            prices = {}
-            for subcoins in coins:
-                if settings.mySettings.priceApiSwitch() == 'coingecko':
-                    pricestmp = coinGecko.getCoinPrices(subcoins)
-                else:
-                    pricestmp = ccapi.getCoinPrices(subcoins)
-                prices = {**prices, **pricestmp}
+            if settings.mySettings.priceApiSwitch() == 'coingecko':
+                prices = coinGecko.getCoinPrices(coins)
+            else:
+                prices = ccapi.getCoinPrices(coins)
 
             self.coinPricesLoaded.emit(prices)
 
     def loadCoinIcons(self, coins: list):
-        print("coins size: " + str(len(coins)))
         if coins:
-            # devide coins list into packets of 500 to prevent api errors
-            for i in range(0, len(coins), 500):
-                yield coins[i:i + 500]
-            icons = []
-            for subcoins in coins:
-                if settings.mySettings.priceApiSwitch() == 'coingecko':
-                    iconstemp = coinGecko.getIcons(subcoins)
-                else:
-                    iconstemp = ccapi.getIcons(subcoins)
-                icons = {**icons, **iconstemp}
+            if settings.mySettings.priceApiSwitch() == 'coingecko':
+                icons = coinGecko.getIcons(coins)
+            else:
+                icons = ccapi.getIcons(coins)
             qicons = {}
             for key in coins:  # convert images to QIcon
                 try:

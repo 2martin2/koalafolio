@@ -146,6 +146,7 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
 
 # %% portfolio coin container
 class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
+    # todo: limit max amount of coins passed to this. causes errors in ccapi
     coinAdded = qtcore.pyqtSignal([list])
     PriceUpdateRequest = qtcore.pyqtSignal([list])
 
@@ -370,7 +371,12 @@ class QPortfolioTableModel(QCoinContainer):
         self.saveCoins()
 
     def triggerPriceUpdate(self):
-        self.PriceUpdateRequest.emit(self.getCoinNames())
+        coinList = self.getCoinNames()
+        # devide coins list into packets of 1000 to prevent api errors
+        for i in range(0, len(coinList), 100):
+            yield coinList[i:i + 100]
+        for coins in coinList:
+            self.PriceUpdateRequest.emit(coins)
 
     def addCoin(self, coinname):
         newCoin = super(QPortfolioTableModel, self).addCoin(coinname)
