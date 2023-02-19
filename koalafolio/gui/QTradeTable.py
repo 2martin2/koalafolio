@@ -139,6 +139,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                     localLogger.warning('error creating trades backup in QTradeContainer: ' + str(ex))
             try:  # save trades
                 self.toCsv(os.path.join(self.dataPath, 'Trades.csv'))
+                localLogger.info("trades saved")
             except Exception as ex:
                 localLogger.error('error saving trades in QTradeContainer: ' + str(ex))
 
@@ -233,10 +234,13 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
         self.saveTrades()
         self.pricesUpdated.emit()
         if tradesLeft == 0:
+            # check if still Trades missing histValue and have not been tried yet
             for trade in self.trades:
-                if not trade.valueLoaded:
+                # do not try more than twice.
+                if not trade.valueLoaded and trade.valueLoadingFailedCnt < 2:
                     self.triggerHistPriceUpdate.emit(self)
                     return
+            # trigger priceUpdateFinished
             localLogger.info('historical prices loaded')
             self.histPriceUpdateFinished.emit()
         else:

@@ -76,7 +76,7 @@ class ApiKeyModel(qtcore.QObject):
             else:
                 return None, None
         except KeyError as ex:
-            localLogger.error("api not supported: " + str(ex))
+            localLogger.error("api " + str(apiname) + " not part of database: " + str(ex))
             return None, None
 
 class ApiKeyView(qtwidgets.QWidget):

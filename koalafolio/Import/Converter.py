@@ -200,44 +200,36 @@ def modelCallback_kraken(headernames, dataFrame):
     # "x"	    "x"			"XETHZEUR"	"x"		"buy"	"limit"		170.25000	851.25000	1.36200	5.00000000	0.00000		""		"x"
     # "x"	    "x"			"XXBTZEUR"	"x"		"buy"	"limit"		5220.00000	3839.00171	6.14240	0.73544094	0.00000		""		"x"
     # "x"	    "x"			"ADAEUR"	"x"		"buy"	"limit"		0.0400000	1000.00171	1.14240	0.73544094	0.00000		""		"x"
+    # "x"	    "x"			"ADAUSDT"	"x"		"buy"	"limit"		0.0400000	1000.00171	1.14240	0.73544094	0.00000		""		"x"
+    # "x"	    "x"			"MATICUSDT"	"x"		"buy"	"limit"		0.0400000	1000.00171	1.14240	0.73544094	0.00000		""		"x"
+    # "x"	    "x"			"USDTZUSD"	"x"		"buy"	"limit"		0.0400000	1000.00171	1.14240	0.73544094	0.00000		""		"x"
 
-# try to parse Kraken Coin Pair. Not quite clear what type of patterns are used by Kraken.
-    COIN_PAIR_REGEX = re.compile('^[XZ]([a-z|A-Z]{3,})[XZ]([a-z|A-Z]{3,})$')
-    COIN_PAIR_REGEX_2 = re.compile('^(.+)(USD[TC])$')
-    COIN_PAIR_REGEX_3 = re.compile('^([a-z|A-Z|0-9]{2,})([a-z|A-Z]{3})$')
-    COIN_PAIR_REGEX_4 = re.compile('^(.+)([a-z|A-Z]{3})$')
+    # try to parse Kraken Coin Pair. Not quite clear how Kraken came up with this nonsense
+    COIN_PAIR_REGEX_LIST = []
+    COIN_PAIR_REGEX_LIST.append(re.compile('^[XZ]([a-z|A-Z|0-9]{3,})[XZ]([a-z|A-Z|0-9]{3,})$')) # all pars that are marked with X/Z like XETHZEUR -> ETH/EUR
+    COIN_PAIR_REGEX_LIST.append(re.compile('^(USDT)Z(USD)$'))  # explicit pattern for strange USDT/USD pair
+    COIN_PAIR_REGEX_LIST.append(re.compile('^([a-z|A-Z|0-9]+)(USD[TC])$')) # all USDT or USDC Pairs
+    COIN_PAIR_REGEX_LIST.append(re.compile('^([a-z|A-Z|0-9]+)([a-z|A-Z|0-9]{3})$')) # all Pairs with 3 digits for second coin like ADAEUR -> ADA/EUR
+    COIN_PAIR_REGEX_LIST.append(re.compile('^([a-z|A-Z|0-9]+)\.([a-z|A-Z|0-9]+)$')) # not sure if this is needed, parses ETH2.SETH -> ETH2/SETH
 
     rowsToDelete = []
 
     for rowIndex, rowObject in dataFrame.iterrows():
-        coinPairMatch = COIN_PAIR_REGEX.match(dataFrame[headernames[2]][rowIndex])
-        if coinPairMatch:
-            subcoin = coinPairMatch.group(1)
-            maincoin = coinPairMatch.group(2)
-            dataFrame.at[rowIndex, headernames[2]] = subcoin + '/' + maincoin
-        else:
-            coinPairMatch = COIN_PAIR_REGEX_2.match(dataFrame[headernames[2]][rowIndex])
+        coinPartternParsed = False
+        for coinPairRegex in COIN_PAIR_REGEX_LIST:
+            coinPairMatch = coinPairRegex.match(dataFrame[headernames[2]][rowIndex])
             if coinPairMatch:
                 subcoin = coinPairMatch.group(1)
                 maincoin = coinPairMatch.group(2)
                 dataFrame.at[rowIndex, headernames[2]] = subcoin + '/' + maincoin
-            else:
-                coinPairMatch = COIN_PAIR_REGEX_3.match(dataFrame[headernames[2]][rowIndex])
-                if coinPairMatch:
-                    subcoin = coinPairMatch.group(1)
-                    maincoin = coinPairMatch.group(2)
-                    dataFrame.at[rowIndex, headernames[2]] = subcoin + '/' + maincoin
-                else:
-                    coinPairMatch = COIN_PAIR_REGEX_4.match(dataFrame[headernames[2]][rowIndex])
-                    if coinPairMatch:
-                        subcoin = coinPairMatch.group(1)
-                        maincoin = coinPairMatch.group(2)
-                        dataFrame.at[rowIndex, headernames[2]] = subcoin + '/' + maincoin
-                    else:
-                        localLogger.error('kraken market pair does not fit the expected pattern: '
-                                          + dataFrame[headernames[2]][rowIndex])
-                        # remove row from data before next parsing step
-                        rowsToDelete.append(rowIndex)
+                coinPartternParsed = True
+                break
+
+        if not coinPartternParsed:
+            localLogger.error('kraken market pair does not fit the expected patterns: '
+                              + dataFrame[headernames[2]][rowIndex])
+            # remove row from data before next parsing step
+            rowsToDelete.append(rowIndex)
 
     # remove rows with wrong coinpair from dataframe
     dataFrame = dataFrame.drop(rowsToDelete)

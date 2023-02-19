@@ -70,25 +70,26 @@ def getCoinPrices(coins):
         proxies = settings.mySettings.proxies()
     else:
         proxies = {}
+
     # try to load price from cryptocompare
+    prices = {}
     try:
         response = cryptcomp.get_price(ccCoins, [key for key in core.CoinValue()], full=True, proxies=proxies, timeout=10)
     except Exception as ex:
-        logger.globalLogger.warning('error loading prices: ' + str(ex))
+        logger.globalLogger.warning('error loading current prices with exception: ' + str(ex))
         return {}
     if response and 'RAW' in response:
-        prices = {}
         for ccCoin in response['RAW']:
             coin = coinSwapFromCryptoCompare(ccCoin)
             prices[ccCoin] = response['RAW'][ccCoin]
             prices[coin] = response['RAW'][ccCoin]
-        return prices
     else:
         if response:
-            logger.globalLogger.warning('error loading prices: ' + str(response))
+            logger.globalLogger.warning('error loading current prices, api response: ' + str(response))
         else:
-            logger.globalLogger.warning('error loading prices')
-        return {}
+            logger.globalLogger.warning('error loading current prices, no response from cryptocompare api')
+
+    return prices
 
 def getIcon(coin, *args, **kwargs):
     if settings.mySettings.proxies():
@@ -111,11 +112,14 @@ def getIcons(coins, *args, **kwargs):
         proxies = settings.mySettings.proxies()
     else:
         proxies = {}
-    coinInfo = cryptcomp.get_coin_general_info(ccCoins, *args, **kwargs)
+    # get Icons from coingecko
     if settings.mySettings.priceApiSwitch() == 'mixed':
         icons = coinGecko.getIcons(coins)
     else:
         icons = {}
+
+    # get icons from cryptocompare
+    coinInfo = cryptcomp.get_coin_general_info(ccCoins, *args, **kwargs)
     try:
         for data in coinInfo['Data']:
             coin = coinSwapFromCryptoCompare(data['CoinInfo']['Name'])
