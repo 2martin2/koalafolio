@@ -405,6 +405,7 @@ class QPortfolioTableModel(QCoinContainer):
         return newCoin
 
     def setIcons(self, icons, coins):
+        localLogger.info("icons returned: " + str(len(icons)))
         missingCoins = []
         for coin in coins:
             if coin not in icons:

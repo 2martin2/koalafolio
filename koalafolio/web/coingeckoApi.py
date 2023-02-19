@@ -91,9 +91,8 @@ def coinIdToSymbol(coinId):
         return coinIdToSymbolDict[mappedCoinId]
     except KeyError:
         # ignore coin
-        pass
-        # logger.globalLogger.warning('error loading coinGecko data for ' + str(coinId))
-    return None
+        logger.globalLogger.warning('error loading coinGecko data for coinId' + str(coinId))
+    return coinId
 
 
 def coinIdsToSymbols(coinIds):
@@ -164,13 +163,19 @@ def getPriceChartData(coin, startTime: datetime.datetime) -> list:
             logger.globalLogger.warning('error loading priceChartData: ' + str(ex) + '; id: ' + str(coinId))
     return []
 
-def getImage(url):
+def getImage(url, coin):
     try:
         imageResponse = requests.get(url, proxies=settings.mySettings.proxies(), timeout=100)
     except Exception as ex:
         logger.globalLogger.warning('error in coinGecko getIcon for ' + str(coin) + ': ' + str(ex))
         return None
-    return Image.open(BytesIO(imageResponse.content))
+    if imageResponse.status_code == 200:
+        # request successful
+        return Image.open(BytesIO(imageResponse.content))
+    if imageResponse.status_code == 429:
+        raise ConnectionRefusedError("response code: " + str(imageResponse.status_code) + ", reason: " + str(imageResponse.reason))
+    raise ConnectionError(
+        "response code: " + str(imageResponse.status_code) + ", reason: " + str(imageResponse.reason))
 
 def getIcon(coin, *args, **kwargs):
     if settings.mySettings.proxies():
@@ -182,7 +187,7 @@ def getIcon(coin, *args, **kwargs):
         coinInfo = cg.get_coin_by_id(id=coinId, localization='false', tickers='false', market_data='false',
                                       community_data='false', developer_data='false', sparkline='false')
 
-        return getImage(coinInfo['image']['small'])
+        return getImage(coinInfo['image']['small'], coinId)
     return None
 
 def getIconsLoop(coins, *args, **kwargs):
@@ -194,6 +199,16 @@ def getIconsLoop(coins, *args, **kwargs):
     return icons
 
 def getIcons(coins, *args, **kwargs):
+    iconUrls = getIconUrls(coins)
+    icons = {}
+    for coinSymbol in iconUrls:
+        try:
+            icons[coinSymbol] = getImage(iconUrls[coinSymbol], coinSymbol)
+        except Exception as ex:
+            logger.globalLogger.warning('error loading coinGecko Icon for : ' + str(coinSymbol) + "exception: " + str(ex))
+    return icons
+
+def getIconUrls(coins, *args, **kwargs):
     if settings.mySettings.proxies():
         cg.proxies = settings.mySettings.proxies()
     else:
@@ -204,13 +219,14 @@ def getIcons(coins, *args, **kwargs):
     try:
         response = []
         for page in range(1, pages+1):
-            response += cg.get_coins_markets(ids=coinIds, vs_currency='btc', order='market_cap_desc',
-                                        per_page=250, page=page)
-        icons = {}
+            response += (cg.get_coins_markets(ids=coinIds, vs_currency='btc', order='market_cap_desc',
+                                        per_page=250, page=page))
+        iconUrls = {}
         for coinInfo in response:
+
             coinSymbol = coinIdToSymbol(coinInfo['id'])
-            icons[coinSymbol] = getImage(coinInfo['image'])
-        return icons
+            iconUrls[coinSymbol] = coinInfo['image']
+        return iconUrls
     except Exception as ex:
         logger.globalLogger.warning('error loading coinGecko Icons: ' + str(ex))
     return {}

@@ -108,6 +108,21 @@ def getIcon(coin, *args, **kwargs):
     return Image.open(BytesIO(imageResponse.content))
 
 def getIcons(coins, *args, **kwargs):
+    if settings.mySettings.proxies():
+        proxies = settings.mySettings.proxies()
+    else:
+        proxies = {}
+    iconUrls = getIconUrls(coins)
+    icons = {}
+    try:
+        for coin in iconUrls:
+                imageResponse = requests.get(iconUrls[coin], proxies=proxies, timeout=100)
+                icons[coin] = Image.open(BytesIO(imageResponse.content))
+    except Exception as ex:
+        logger.globalLogger.warning('error in getIcons: ' + str(ex))
+    return icons
+
+def getIconUrls(coins, *args, **kwargs):
     ccCoins = []
     for coin in coins:
         ccCoins.append(coinSwapToCryptocompare(coin))
@@ -115,12 +130,7 @@ def getIcons(coins, *args, **kwargs):
         proxies = settings.mySettings.proxies()
     else:
         proxies = {}
-    # get Icons from coingecko
-    if settings.mySettings.priceApiSwitch() == 'mixed':
-        icons = coinGecko.getIcons(coins)
-    else:
-        icons = {}
-
+    iconUrls = {}
     if len(ccCoins) >= 200:
         print("to many coins for cryptocompare api, using first 200")
         ccCoins = ccCoins[:200]
@@ -129,9 +139,7 @@ def getIcons(coins, *args, **kwargs):
     try:
         for data in coinInfo['Data']:
             coin = coinSwapFromCryptoCompare(data['CoinInfo']['Name'])
-            if coin not in icons:
-                imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'], proxies=proxies, timeout=100)
-                icons[coin] = Image.open(BytesIO(imageResponse.content))
+            iconUrls[coin] = cryptcomp.URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl']
     except Exception as ex:
         logger.globalLogger.warning('error in getIcons: ' + str(ex))
-    return icons
+    return iconUrls
