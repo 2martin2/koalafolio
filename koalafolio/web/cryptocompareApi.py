@@ -71,9 +71,9 @@ def getCoinPrices(coins):
     else:
         proxies = {}
 
-    if len(ccCoins) >= 1000:
-        print("to many coins for cryptocompare api, using first 1000")
-        ccCoins = ccCoins[:1000]
+    if len(ccCoins) >= 200:
+        print("to many coins for cryptocompare api, using first 200")
+        ccCoins = ccCoins[:200]
     # try to load price from cryptocompare
     prices = {}
     try:
@@ -121,9 +121,9 @@ def getIcons(coins, *args, **kwargs):
     else:
         icons = {}
 
-    if len(ccCoins) >= 1000:
-        print("to many coins for cryptocompare api, using first 1000")
-        ccCoins = ccCoins[:1000]
+    if len(ccCoins) >= 200:
+        print("to many coins for cryptocompare api, using first 200")
+        ccCoins = ccCoins[:200]
     # get icons from cryptocompare
     coinInfo = cryptcomp.get_coin_general_info(ccCoins, *args, **kwargs)
     try:
