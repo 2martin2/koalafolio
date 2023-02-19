@@ -553,7 +553,7 @@ class ImportFinishPage(SubPage):
             status += 'filesImported: ' + str(self.controller.filesImported) + '; '
             status += 'filesNotImported: ' + str(self.controller.filesNotImported) + '; '
             status += 'skippedRows: ' + str(self.controller.skippedRows) + '; '
-            status += 'importedRows: ' + str(self.controller.importedRows)
+            status += 'importedElements: ' + str(self.controller.importedRows)
             self.statusLabel.setText(status)
 
     def acceptTrades(self):
