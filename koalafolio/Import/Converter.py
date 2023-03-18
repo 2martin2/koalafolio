@@ -190,8 +190,10 @@ def modelCallback_kucoin(headernames, dataFrame):
 # %% krakenleders model: txid	refid	time	type	subtype	aclass	asset	amount	fee	balance
 def modelCallback_krakenledger(headernames, dataFrame):
     # txid	refid	time	        type	subtype	    aclass	    asset	amount	fee	    balance
-    # xxx	yyy	    8/20/22 6:56	trade		        currency	BTC     1	    0	    4,600
-    # xxx	yyy	    10/27/22 2:30	trade		        currency	BTC	    -1	    4.96	1,495.04
+    # xxx	yyy	    8/20/22 6:56	trade		        currency	XXBT     1	    0	    4,600
+    # xxx	yyy	    10/27/22 2:30	trade		        currency	XETH	-1	    4.96	1,495.04
+
+    # todo: convert Kraken asset name to usual coin ids
 
     headernames_m3 = []
     headernames_m3.append(headernames[2])  # date
