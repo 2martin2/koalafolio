@@ -193,7 +193,26 @@ def modelCallback_krakenledger(headernames, dataFrame):
     # xxx	yyy	    8/20/22 6:56	trade		        currency	XXBT     1	    0	    4,600
     # xxx	yyy	    10/27/22 2:30	trade		        currency	XETH	-1	    4.96	1,495.04
 
-    # todo: convert Kraken asset name to usual coin ids
+    # convert Kraken asset name to usual coin id
+    COIN_REGEX_LIST = []
+    COIN_REGEX_LIST.append(re.compile('^[XZ]([a-zA-Z0-9*]{3,})$'))  # all coins that start with X/Z like XETH -> ETH
+
+    rowsToDelete = []
+
+    for rowIndex, rowObject in dataFrame.iterrows():
+        if dataFrame[headernames[3]][rowIndex] != "trade":
+            print("remove type: " + dataFrame[headernames[3]][rowIndex])
+            rowsToDelete.append(rowIndex)
+            continue
+        for coinPairRegex in COIN_REGEX_LIST:
+            coinMatch = coinPairRegex.match(dataFrame[headernames[6]][rowIndex])
+            if coinMatch:
+                coin = coinMatch.group(1)
+                dataFrame.at[rowIndex, headernames[6]] = coin
+                break
+
+    # remove rows with wrong type from dataframe
+    dataFrame = dataFrame.drop(rowsToDelete)
 
     headernames_m3 = []
     headernames_m3.append(headernames[2])  # date
