@@ -144,7 +144,6 @@ class WebApiInterface(qtcore.QObject):
         self.loadHistoricalPrices(tradeList)
 
     def loadHistoricalPrices(self, tradeList):
-        localLogger.info("loading next 100 hist prices")
         newTrades = False
         # copy trades to buffer
         for trade in tradeList:
@@ -152,6 +151,11 @@ class WebApiInterface(qtcore.QObject):
                 if not trade in self.tradeBuffer:
                     self.tradeBuffer.addTrade(trade)
                     newTrades = True
+        numTradesToLoad = len(self.tradeBuffer)
+        if numTradesToLoad > 100:
+            localLogger.info("loading next 100 hist prices")
+        elif numTradesToLoad > 0:
+            localLogger.info("loading next " + str(numTradesToLoad) + " hist prices")
         histPrices = {}
         counter = 0
         loadingStopped = False
