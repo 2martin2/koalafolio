@@ -371,7 +371,7 @@ class QPortfolioTableModel(QCoinContainer):
             if coin not in prices:
                 missingCoins.append(coin)
         localLogger.info("prices returned from Api: " + str(len(prices)) + ", no price returned for: " + str(missingCoins))
-        super(QPortfolioTableModel, self).setPrices(prices)
+        super(QPortfolioTableModel, self).setPrices(prices, coins)
         self.pricesUpdated()
 
     def setPriceChartData(self, priceChartData):
@@ -391,7 +391,7 @@ class QPortfolioTableModel(QCoinContainer):
         self.beginResetModel()
         super(QPortfolioTableModel, self).addTrades(trades)
         self.endResetModel()
-        self.loadApiDataForNewCoins
+        self.loadApiDataForNewCoins()
         self.saveCoins()
 
     def triggerPriceUpdate(self):

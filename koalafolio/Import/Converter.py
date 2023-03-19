@@ -187,6 +187,53 @@ def modelCallback_kucoin(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
+# %% krakenleders model: txid	refid	time	type	subtype	aclass	asset	amount	fee	balance
+def modelCallback_krakenledger(headernames, dataFrame):
+    # txid	refid	time	        type	subtype	    aclass	    asset	amount	fee	    balance
+    # xxx	yyy	    8/20/22 6:56	trade		        currency	XXBT     1	    0	    4,600
+    # xxx	yyy	    10/27/22 2:30	trade		        currency	XETH	-1	    4.96	1,495.04
+
+    # convert Kraken asset name to usual coin id
+    COIN_REGEX_LIST = []
+    COIN_REGEX_LIST.append(re.compile('^[XZ]([a-zA-Z0-9*]{3,})$'))  # all coins that start with X/Z like XETH -> ETH
+
+    rowsToDelete = []
+
+    for rowIndex, rowObject in dataFrame.iterrows():
+        if dataFrame[headernames[3]][rowIndex] != "trade":
+            print("remove type: " + dataFrame[headernames[3]][rowIndex])
+            rowsToDelete.append(rowIndex)
+            continue
+        for coinPairRegex in COIN_REGEX_LIST:
+            coinMatch = coinPairRegex.match(dataFrame[headernames[6]][rowIndex])
+            if coinMatch:
+                coin = coinMatch.group(1)
+                dataFrame.at[rowIndex, headernames[6]] = coin
+                break
+
+    # remove rows with wrong type from dataframe
+    dataFrame = dataFrame.drop(rowsToDelete)
+
+    headernames_m3 = []
+    headernames_m3.append(headernames[2])  # date
+    headernames_m3.append(headernames[3])  # type
+    headernames_m3.append(headernames[6])  # coin
+    headernames_m3.append(headernames[7])  # amount
+    headernames_m3.append(headernames[0])  # id
+    headernames_m3.append(headernames[8])  # fee
+
+    tradeList, feeList, skippedRows = modelCallback_3(headernames_m3, dataFrame, useLocalTime=False)
+
+    for trade in tradeList:
+        trade.exchange = 'kraken'
+    for fee in feeList:
+        fee.exchange = 'kraken'
+
+    return tradeList, feeList, skippedRows
+
+    # %% model 3: Date, type, Coin, Amount, (id), (fee)
+    return modelCallback_3(headernames, dataFrame)
+
 # %% krakenapi model: "txid","ordertxid","pair","dtime","type","ordertype","price","cost","fee","vol","margin","misc","postxid","time"
 def modelCallback_krakenapi(headernames, dataFrame):
     return modelCallback_kraken(headernames,
@@ -206,7 +253,7 @@ def modelCallback_kraken(headernames, dataFrame):
 
     # try to parse Kraken Coin Pair. Not quite clear how Kraken came up with this nonsense
     COIN_PAIR_REGEX_LIST = []
-    COIN_PAIR_REGEX_LIST.append(re.compile('^[XZ]([a-z|A-Z|0-9]{3,})[XZ]([a-z|A-Z|0-9]{3,})$')) # all pars that are marked with X/Z like XETHZEUR -> ETH/EUR
+    COIN_PAIR_REGEX_LIST.append(re.compile('^[XZ]([a-z|A-Z|0-9]{3,})[XZ]([a-z|A-Z|0-9]{3,})$')) # all pairs that are marked with X/Z like XETHZEUR -> ETH/EUR
     COIN_PAIR_REGEX_LIST.append(re.compile('^(USDT)Z(USD)$'))  # explicit pattern for strange USDT/USD pair
     COIN_PAIR_REGEX_LIST.append(re.compile('^([a-z|A-Z|0-9]+)(USD[TC])$')) # all USDT or USDC Pairs
     COIN_PAIR_REGEX_LIST.append(re.compile('^([a-z|A-Z|0-9]+)([a-z|A-Z|0-9]{3})$')) # all Pairs with 3 digits for second coin like ADAEUR -> ADA/EUR
@@ -484,7 +531,7 @@ def modelCallback_0(headernames, dataFrame, useLocalTime=False):
 
 
 # %% model 1: Date, Type, Exchange, Average Price, Amount, (ID), (Total), (Fee), (FeeCoin)
-def modelCallback_1(headernames, dataFrame):
+def modelCallback_1(headernames, dataFrame, useLocalTime=False):
     headernames.append('')
     for row, rowObject in dataFrame.iterrows():
         coin_sub = re.match(r'^.*-(.*)$', dataFrame[headernames[2]][row]).group(1).upper()
@@ -493,11 +540,11 @@ def modelCallback_1(headernames, dataFrame):
 
     headernames.append('')  # exchange
 
-    return modelCallback_0(headernames, dataFrame)
+    return modelCallback_0(headernames, dataFrame, useLocalTime=useLocalTime)
 
 
 # %% model 2: Date, Type, Pair, Amount sub, Amount main, (id), (fee), (feecoin)
-def modelCallback_2(headernames, dataFrame):
+def modelCallback_2(headernames, dataFrame, useLocalTime=False):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
@@ -509,8 +556,8 @@ def modelCallback_2(headernames, dataFrame):
             tempTrade_sub.externId = str(dataFrame[headernames[5]][row])
             tempTrade_main.externId = str(dataFrame[headernames[5]][row])
         # get date
-        tempTrade_sub.date = convertDate(dataFrame[headernames[0]][row])
-        tempTrade_main.date = convertDate(dataFrame[headernames[0]][row])
+        tempTrade_sub.date = convertDate(dataFrame[headernames[0]][row], useLocalTime=useLocalTime)
+        tempTrade_main.date = convertDate(dataFrame[headernames[0]][row], useLocalTime=useLocalTime)
         # get type
         tempTrade_sub.tradeType = 'trade'
         tempTrade_main.tradeType = 'trade'
@@ -571,7 +618,7 @@ def modelCallback_2(headernames, dataFrame):
 
 
 # %% model 3: Date, type, Coin, Amount, (id), (fee)
-def modelCallback_3(headernames, dataFrame):
+def modelCallback_3(headernames, dataFrame, useLocalTime=False):
     tradeList = core.TradeList()
     feeList = core.TradeList()
     skippedRows = 0
@@ -581,7 +628,7 @@ def modelCallback_3(headernames, dataFrame):
         if headernames[4]:
             tempTrade_sub.externId = str(dataFrame[headernames[4]][row])
         # get date
-        tempTrade_sub.date = convertDate(dataFrame[headernames[0]][row])
+        tempTrade_sub.date = convertDate(dataFrame[headernames[0]][row], useLocalTime=useLocalTime)
         # get type
         tempTrade_sub.tradeType = 'trade'
         # get coin

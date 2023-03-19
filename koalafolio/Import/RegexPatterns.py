@@ -151,6 +151,18 @@ KRAKENAPI_TIME_REGEX = re.compile(r'^time$', re.IGNORECASE)
 KRAKENAPI_TYPE_REGEX = re.compile(r'^type$', re.IGNORECASE)
 KRAKENAPI_VOL_REGEX = re.compile(r'^vol$', re.IGNORECASE)
 
+# model kraken ledger [txid, refid, time, type, subtype, aclass, asset, amount, fee, balance]
+KRAKENLEDGER_TXID_REGEX = re.compile(r'^TXID$', re.IGNORECASE)
+KRAKENLEDGER_REFID_REGEX = re.compile(r'^REFID$', re.IGNORECASE)
+KRAKENLEDGER_TIME_REGEX = re.compile(r'^TIME$', re.IGNORECASE)
+KRAKENLEDGER_TYPE_REGEX = re.compile(r'^TYPE$', re.IGNORECASE)
+KRAKENLEDGER_SUBTYPE_REGEX = re.compile(r'^SUBTYPE$', re.IGNORECASE)
+KRAKENLEDGER_ACLASS_REGEX = re.compile(r'^ACLASS$', re.IGNORECASE)
+KRAKENLEDGER_ASSET_REGEX = re.compile(r'^ASSET$', re.IGNORECASE)
+KRAKENLEDGER_AMOUNT_REGEX = re.compile(r'^AMOUNT$', re.IGNORECASE)
+KRAKENLEDGER_FEE_REGEX = re.compile(r'^FEE$', re.IGNORECASE)
+KRAKENLEDGER_BALANCE_REGEX = re.compile(r'^BALANCE$', re.IGNORECASE)
+
 # model binance ['Date(UTC)', 'Market', 'Type', 'Price', 'Amount', 'Total', 'Fee', 'Fee Coin']
 BINANCE_DATE_REGEX = re.compile(r'^Date\(\w*\)$', re.IGNORECASE)
 BINANCE_MARKET_REGEX = re.compile(r'^Market$', re.IGNORECASE)
@@ -174,7 +186,7 @@ POLONIEX_ORDERNUMBER_REGEX = re.compile(r'^Order Number$', re.IGNORECASE)
 POLONIEX_BASETOTALLESSFEE_REGEX = re.compile(r'^Base Total Less Fee$', re.IGNORECASE)
 POLONIEX_QUOTETOTALLESSFEE_REGEX = re.compile(r'^Quote Total Less Fee$', re.IGNORECASE)
 
-# model bittrex [Uuid	Exchange	TimeStamp	OrderType	Limit	Quantity	QuantityRemaining	Commission	Price	PricePerUnit	IsConditional	Condition	ConditionTarget	ImmediateOrCancel	Closed]
+# model bittrex [Uuid, Exchange, TimeStamp, OrderType, Limit, Quantity, QuantityRemaining, Commission, Price, PricePerUnit, IsConditional, Condition, ConditionTarget, ImmediateOrCancel, Closed]
 BITTREX_UUID_REGEX = re.compile(r'^Uuid$', re.IGNORECASE)
 BITTREX_EXCHANGE_REGEX = re.compile(r'^Exchange$', re.IGNORECASE)
 BITTREX_TIMESTAMP_REGEX = re.compile(r'^TimeStamp$', re.IGNORECASE)

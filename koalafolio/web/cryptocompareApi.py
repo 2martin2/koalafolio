@@ -9,7 +9,6 @@ import koalafolio.PcpCore.logger as logger
 from PIL import Image
 from io import BytesIO
 import requests
-import koalafolio.web.coingeckoApi as coinGecko
 
 
 # coinList = cryptcomp.get_coin_list(format=True)
@@ -126,10 +125,6 @@ def getIconUrls(coins, *args, **kwargs):
     ccCoins = []
     for coin in coins:
         ccCoins.append(coinSwapToCryptocompare(coin))
-    if settings.mySettings.proxies():
-        proxies = settings.mySettings.proxies()
-    else:
-        proxies = {}
     iconUrls = {}
     if len(ccCoins) >= 200:
         print("to many coins for cryptocompare api, using first 200")
