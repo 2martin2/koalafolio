@@ -65,7 +65,7 @@ class Settings(configparser.ConfigParser):
         self['tax']['taxfreelimit'] = 'True'
         self['tax']['taxfreelimityears'] = '1'
         self['tax']['exportlanguage'] = 'en'
-        self['tax']['usewallettaxfreelimityears'] = 'True'
+        self['tax']['usewallettaxfreelimityears'] = 'False'
 
     def initDescriptions(self):
         self.descriptions = {}
@@ -225,7 +225,7 @@ class Settings(configparser.ConfigParser):
         try:
             tax['usewallettaxfreelimityears'] = self.getboolean('tax', 'usewallettaxfreelimityears')
         except ValueError:
-            tax['usewallettaxfreelimityears'] = True
+            tax['usewallettaxfreelimityears'] = False
         return tax
 
     def getTaxSetting(self, key):
