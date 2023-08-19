@@ -20,7 +20,7 @@ setuptools.setup(
     install_requires=['aiohttp>=3.8.5',
                       'base58check',
                       'bech32',
-                      'certifi>=2023.7.22'
+                      'certifi>=2023.7.22',
                       'coincurve',
                       'gevent',
                       'gql',
