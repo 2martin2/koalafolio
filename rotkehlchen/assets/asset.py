@@ -75,6 +75,7 @@ WORLD_TO_KRAKEN = {
     'BSV': 'BSV',
     'ETC': 'XETC',
     'ETH': 'XETH',
+    'ETHW': 'ETHW',
     'LTC': 'XLTC',
     'REP': 'XREP',
     'BTC': 'XXBT',
