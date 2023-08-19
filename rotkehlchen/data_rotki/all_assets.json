@@ -4677,6 +4677,14 @@
         "symbol": "ETH",
         "type": "own chain"
     },
+    "ETHW": {
+        "coingecko": "ethereum-pow-iou",
+        "forked": "ETH",
+        "name": "EthereumPOW",
+        "started": 1663224162,
+        "symbol": "ETHW",
+        "type": "own chain"
+    },
     "ETH2": {
         "coingecko": "ethereum",
         "cryptocompare": "ETH",
