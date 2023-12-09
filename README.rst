@@ -1,4 +1,4 @@
-pycryptoportfolio
+koalafolio
 ******************
 
 |pypi version| |Language grade: Python| |pypi downloads|

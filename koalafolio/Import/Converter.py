@@ -231,9 +231,6 @@ def modelCallback_krakenledger(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
-    # %% model 3: Date, type, Coin, Amount, (id), (fee)
-    return modelCallback_3(headernames, dataFrame)
-
 # %% krakenapi model: "txid","ordertxid","pair","dtime","type","ordertype","price","cost","fee","vol","margin","misc","postxid","time"
 def modelCallback_krakenapi(headernames, dataFrame):
     return modelCallback_kraken(headernames,

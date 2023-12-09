@@ -84,6 +84,9 @@ def kraken_to_world_pair(pair: str) -> TradePair:
         quote_asset_str = pair[3:]
     elif pair == 'ETHDAI':
         return trade_pair_from_assets(base=Asset('ETH'), quote=EthereumToken('DAI'))
+    elif pair[0:4] == 'ETHW':  # quick fix for ETHW pair
+        base_asset_str = pair[0:4]
+        quote_asset_str = pair[4:]
     elif pair[0:2] in KRAKEN_TO_WORLD:
         base_asset_str = pair[0:2]
         quote_asset_str = pair[2:]
@@ -642,6 +645,7 @@ class Kraken(ExchangeInterface):
                     f'Found kraken trade with unknown asset '
                     f'{e.asset_name}. Ignoring it.',
                 )
+                print("error at pair: " + str(raw_data['pair']))
                 continue
             except UnprocessableTradePair as e:
                 self.msg_aggregator.add_error(
