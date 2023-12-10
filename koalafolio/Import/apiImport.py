@@ -6,6 +6,7 @@ Created on Sun Sep  15 15:15:19 2019
 """
 import koalafolio.gui.QLogger as logger
 import koalafolio.web.exchanges as exchanges
+import koalafolio.web.chaindata as chaindata
 import pandas
 from Cryptodome.Cipher import AES
 import os
@@ -14,30 +15,54 @@ import json
 
 localLogger = logger.globalLogger
 
-apiNames = ["binance", "bittrex", "bitmex", "coinbase", "coinbasepro", "gemini", "poloniex", "kraken", ]
-apiHandle = {}
+# %% Trade
+class ApiModel:
+    def __init__(self, name='', type='', handle=None, note=''):
+        self.apiName = name
+        self.apiType = type
+        self.apiHandle = handle
+        self.apiNote = note
 
-apiHandle["binance"] = lambda key, secret, start, end: exchanges.getTradeHistoryBinance(key, secret, start, end)
-apiHandle["bittrex"] = lambda key, secret, start, end: exchanges.getTradeHistoryBittrex(key, secret, start, end)
-apiHandle["bitmex"] = lambda key, secret, start, end: exchanges.getTradeHistoryBitmex(key, secret, start, end)
-apiHandle["coinbase"] = lambda key, secret, start, end: exchanges.getTradeHistoryCoinbase(key, secret, start, end)
-apiHandle["coinbasepro"] = lambda key, secret, start, end: exchanges.getTradeHistoryCoinbasepro(key, secret, start, end)
-apiHandle["gemini"] = lambda key, secret, start, end: exchanges.getTradeHistoryGemini(key, secret, start, end)
-apiHandle["poloniex"] = lambda key, secret, start, end: exchanges.getTradeHistoryPoloniex(key, secret, start, end)
-apiHandle["kraken"] = lambda key, secret, start, end: exchanges.getTradeHistoryKraken(key, secret, start, end)
 
-apiNotes = {}
+apiNames = ["binance", "bittrex", "bitmex", "coinbase", "coinbasepro", "gemini", "poloniex", "kraken", "Cardano"]
+apiModels = {}
+
 for key in apiNames:
-    apiNotes[key] = "get trades from " + str(key)
-apiNotes["binance"] = "get trades from binance. Can take very long due to stupid api implementation of binance"
+    apiModels[key] = ApiModel(
+        name=str(key),
+        type="exchange",
+        handle=None,
+        note="get data from " + str(key)
+    )
 
-def getApiHistory(apiname, key, secret, start, end):
-    if apiname not in apiNames:
+# add special api note for binance api
+apiModels["binance"].apiNote = "get trades from binance. Can take very long due to stupid api implementation of binance"
+
+# set type of Cardano api
+apiModels["Cardano"].apiType = "chaindata"
+
+apiModels["binance"].apiHandle = lambda key, secret, start, end: exchanges.getTradeHistoryBinance(key, secret, start, end)
+apiModels["bittrex"].apiHandle = lambda key, secret, start, end: exchanges.getTradeHistoryBittrex(key, secret, start, end)
+apiModels["bitmex"].apiHandle = lambda key, secret, start, end: exchanges.getTradeHistoryBitmex(key, secret, start, end)
+apiModels["coinbase"].apiHandle = lambda key, secret, start, end: exchanges.getTradeHistoryCoinbase(key, secret, start, end)
+apiModels["coinbasepro"].apiHandle = lambda key, secret, start, end: exchanges.getTradeHistoryCoinbasepro(key, secret, start, end)
+apiModels["gemini"].apiHandle = lambda key, secret, start, end: exchanges.getTradeHistoryGemini(key, secret, start, end)
+apiModels["poloniex"].apiHandle = lambda key, secret, start, end: exchanges.getTradeHistoryPoloniex(key, secret, start, end)
+apiModels["kraken"].apiHandle = lambda key, secret, start, end: exchanges.getTradeHistoryKraken(key, secret, start, end)
+apiModels["Cardano"].apiHandle = lambda address, start, end: chaindata.getCardanoRewardsForAddress(address, start, end)
+
+def getApiHistory(apiname, type, start, end, key=None, secret=None, address=None):
+    if apiname not in apiModels:
         raise KeyError("invalid api name")
     else:
         localLogger.info("started requesting data from " + str(apiname))
         try:
-            return apiHandle[apiname](key, secret, start, end)
+            if type == "exchange":
+                return apiModels[apiname].apiHandle(key, secret, start, end)
+            elif type == "chaindata":
+                return apiModels[apiname].apiHandle(address, start, end)
+            else:
+                raise ValueError("invalid type in getApiHistory: " + str(type))
         except Exception as ex:
             localLogger.warning("could not load data from api (" + str(apiname) + "): " + str(ex))
             return pandas.DataFrame()
@@ -101,21 +126,17 @@ class ApiDatabase():
         else:
             localLogger.warning("invalid password")
 
-    def addKeys(self, pw, apiname, apikey, secret):
+    def addDBEntry(self, pw, apiname, newData):
         if not self.checkPw(pw):
             localLogger.warning("invalid password")
             return
-        newData = {}
-        newData["apiname"] = apiname
-        newData["apikey"] = apikey
-        newData["secret"] = secret
         if self.data is not None:
             self.data[apiname] = newData
             self.saveDatabase(pw)
         else:
             localLogger.warning("api database need be be unlocked before it can be changed")
 
-    def deleteKeys(self, pw, apiname):
+    def deleteDBEntry(self, pw, apiname):
         if not self.checkPw(pw):
             localLogger.warning("invalid password")
             return
