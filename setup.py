@@ -30,7 +30,7 @@ setuptools.setup(
                       'pillow>=6.2.0,<10.0.0',
                       'pycoingecko<=2.3.0',
                       'pycryptodomex',
-                      'pygments>=2.15.0'
+                      'pygments>=2.15.0',
                       'pykrakenapi',
                       'pyqt5',
                       'pyqtchart',
