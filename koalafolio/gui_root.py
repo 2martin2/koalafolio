@@ -266,6 +266,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.logger.info('data initialized')
 
     def connectSignals(self):
+        self.logger.info('initializing signals')
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))
         self.tradeList.tradesAdded.connect(lambda tradeList: self.coinList.addTrades(tradeList))
         self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.deleteTrades(tradeList))
