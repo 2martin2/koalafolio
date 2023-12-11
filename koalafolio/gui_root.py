@@ -265,7 +265,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))
         self.tradeList.tradesAdded.connect(lambda tradeList: self.coinList.addTrades(tradeList))
         self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.deleteTrades(tradeList))
-        self.tradeList.pricesUpdated.connect(self.coinList.histPricesChanged)
+        self.tradeList.histPricesUpdated.connect(self.coinList.histPricesChanged)
         self.tradeList.histPriceUpdateFinished.connect(self.coinList.histPriceUpdateFinished)
         self.settingsModel.displayCurrenciesChanged.connect(self.coinList.updateDisplayCurrencies)
         self.settingsModel.displayCurrenciesChanged.connect(self.tradeList.updateDisplayCurrencies)

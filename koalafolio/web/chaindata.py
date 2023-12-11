@@ -6,11 +6,26 @@ Created on 29.11.2020
 """
 
 import pandas
+import requests
+import koalafolio.PcpCore.settings as settings
 
+blockdaemonBaseURL = "https://svc.blockdaemon.com/"
+cardanoBaseURL = blockdaemonBaseURL + "reporting/staking/v1/cardano/mainnet/delegator/history/"
 
 def getCardanoRewardsForAddress(address, start, end):
-    # pass None as database for now. Can cause errors. Will be catched in getApiHistory
-    # api = binance.Binance(api_key=key, secret=secret.encode(),
-    #                              database=None, msg_aggregator=user_messages.MessagesAggregator())
-    # return getTradesFromApi(api, start, end)
-    return pandas.DataFrame()
+    payload = {
+        "fromTime": int(start),
+        "toTime": int(end),
+        "timeUnit": "epoch"
+    }
+
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "X-API-Key": settings.mySettings['api']['blockdaemon/apikey']
+    }
+
+    response = requests.post(cardanoBaseURL + str(address), json=payload, headers=headers)
+    rewards = response.json()['rewards']
+
+    return pandas.DataFrame.from_dict(rewards)

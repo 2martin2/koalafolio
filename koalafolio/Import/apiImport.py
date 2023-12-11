@@ -55,7 +55,7 @@ def getApiHistory(apiname, type, start, end, key=None, secret=None, address=None
     if apiname not in apiModels:
         raise KeyError("invalid api name")
     else:
-        localLogger.info("started requesting data from " + str(apiname))
+        localLogger.info("requesting data from " + str(apiname))
         try:
             if type == "exchange":
                 return apiModels[apiname].apiHandle(key, secret, start, end)

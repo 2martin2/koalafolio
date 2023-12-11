@@ -352,15 +352,24 @@ class QPortfolioTableModel(QCoinContainer):
                                              value.taxLimitYears)
         return True
 
-    def histPricesChanged(self):
-        super(QPortfolioTableModel, self).histPricesChanged()
+    def histPricesChanged(self, coins):
+        super(QPortfolioTableModel, self).histPricesChanged(coins)
         self.pricesUpdated()
+        # update all DelegateItems of the updated coins
+        for coinname in coins:
+            row = self.getCoinIndexByName(coinname)
+            parent = self.index(row, 0, qtcore.QModelIndex())
+            ChildStartIndex = self.index(0, 3, parent)
+            ChildEndIndex = self.index(self.rowCount(parent)-1, 3, parent)
+            self.dataChanged.emit(ChildStartIndex, ChildEndIndex)
+
 
     def histPriceUpdateFinished(self):
         super(QPortfolioTableModel, self).histPriceUpdateFinished()
         self.pricesUpdated()
 
     def pricesUpdated(self):
+        # update all rows
         RowStartIndex = self.index(0, 2, qtcore.QModelIndex())
         RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, qtcore.QModelIndex())
         self.dataChanged.emit(RowStartIndex, RowEndIndex)

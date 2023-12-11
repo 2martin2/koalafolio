@@ -144,6 +144,33 @@ def modelCallback_exodus(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
+# %% Blockdaemon Cardano [currency,return,timeEnd,timeStart,startingBalance,timeAggregation,address,metadata]
+def modelCallback_blockdaemonCardano(headernames, dataFrame):
+    # address, currency, metadata, return, startingBalance, timeAggregation, timeEnd, timeStart
+    # str, ADA, {'epoch': xxx}, xxx, xxx, epoch, yyyy-mm-ddThh:mm:ssZ, yyyy-mm-ddThh:mm:ssZ
+
+    # convert numbers
+    for row, rowObject in dataFrame.iterrows():
+        dataFrame.at[row, headernames[1]] = float(dataFrame[headernames[1]][row])
+
+    dataFrame['type'] = 'reward'
+
+    headernames_t1 = [
+        headernames[2],  # date
+        'type',  # type
+        headernames[1],  # buy_amount
+        headernames[0],  # buy_cur
+        '',  # sell_amount
+        '',  # sell_cur
+        '',  # exchange
+        '',  # fee_amount
+        '',  # fee_currency
+        '',  # buy_wallet
+        ''  # sell_wallet
+    ]
+
+    return modelCallback_Template1(headernames_t1, dataFrame)
+
 
 # %% kucoin model: [orderCreatedAt,id,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,orderStatus]
 def modelCallback_kucoin(headernames, dataFrame):
@@ -1137,7 +1164,7 @@ def convertDate(dateString, useLocalTime=False):
             myTimezone = tzlocal.get_localzone()
             timestamp = timestamp.astimezone(myTimezone)
     else:
-        raise SyntaxError("date format not supported")
+        raise SyntaxError("date format not supported: " + str(dateString))
     if timestamp.microsecond:
         timestamp = timestamp.replace(microsecond=0)
     return timestamp
