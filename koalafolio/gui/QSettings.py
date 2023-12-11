@@ -230,6 +230,4 @@ class QSettings(settings.Settings):
             raise KeyError('invalid key ' + key + ' for gui settings')
 
 
-
-
 mySettings = QSettings()

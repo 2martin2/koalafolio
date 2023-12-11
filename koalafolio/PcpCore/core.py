@@ -429,7 +429,12 @@ class TradeList:
         for trade in self.trades:
             trade.updateValue()
 
-    def setHistPrices(self, prices):
+    def setHistPrices(self, prices) -> list:
+        updatedCoins = []
+        def saveCoin(trade):
+            if trade.coin not in updatedCoins:
+                updatedCoins.append(trade.coin)
+
         for trade in self.trades:
             if trade.tradeID in prices:
                 # check if all needed currencies are included in loaded price. Otherwise skip the trade
@@ -450,6 +455,8 @@ class TradeList:
                         trade.valueLoaded = True
                     except KeyError:
                         trade.valueLoaded = False
+                    # save coin of updated trade
+                    saveCoin(trade)
 
         for trade in self.trades:
             # get partner trade
@@ -461,17 +468,26 @@ class TradeList:
                     # use partner value if value update was not possible or if trade has a fiat partner
                     if (not trade.valueLoaded) or partner.isFiat():
                         trade.setValueAll(partner.getValue().mult(-1))
+                        # save coin of updated trade
+                        saveCoin(trade)
                         trade.valueLoaded = True
                     # if value is 0 and partner value not
                     elif trade.getValue() == CoinValue() and partner.getValue() != CoinValue():
                         trade.setValueAll(partner.getValue().mult(-1))
+                        # save coin of updated trade
+                        saveCoin(trade)
                     # if both values loaded and both trades are crypto use the same value
                     elif not trade.isFiat():
                         # use value of bought coin
                         if trade.amount > 0:  # this is a buy trade
                             partner.setValueAll(trade.getValue().mult(-1))
+                            # save coin of updated trade
+                            saveCoin(partner)
                         else:  # this is a sell trade
                             trade.setValueAll(partner.getValue().mult(-1))
+                            # save coin of updated trade
+                            saveCoin(trade)
+        return updatedCoins
 
     def updateValues(self):
         # load values of all trades
@@ -1214,7 +1230,19 @@ class CoinList:
         for coin in self:
             if coin.coinname == name:
                 return coin
+        # coin not found
         raise KeyError
+
+    # return index of specific coin
+    def getCoinIndexByName(self, name: str) -> int:
+        index = 0
+        for coin in self:
+            if coin.coinname == name:
+                return index
+            index += 1
+        # coin not found
+        raise KeyError
+
 
     # get List of coinnames
     def getCoinNames(self):
@@ -1242,9 +1270,12 @@ class CoinList:
                 pass
 
 
-    def histPricesChanged(self):
-        self.matchTrades()
+    def histPricesChanged(self, coins):
+        # match changed coins
+        for coin in coins:
+            self.getCoinByName(coin).matchTrades()
 
+# todo: check if this is actually needed. matching from histPricesChanged should be sufficient
     def histPriceUpdateFinished(self):
         self.matchTrades()
 

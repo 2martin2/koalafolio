@@ -29,6 +29,7 @@ class SettingsModelItem():
 # settings model
 class SettingsModel(qtcore.QAbstractItemModel):
     displayCurrenciesChanged = qtcore.pyqtSignal([list])
+    useWalletTaxFreeLimitYearsChanged = qtcore.pyqtSignal()
 
     def __init__(self, settings, *args, **kwargs):
         super(SettingsModel, self).__init__(*args, **kwargs)
@@ -120,6 +121,8 @@ class SettingsModel(qtcore.QAbstractItemModel):
     def itemChanged(self, item):
         if item.parentKey.lower() == 'currency' and item.key.lower() == 'defaultdisplaycurrencies':
             self.displayCurrenciesChanged.emit(self.settings.displayCurrencies())
+        if item.parentKey.lower() == 'tax' and item.key.lower() == 'usewallettaxfreelimityears':
+            self.useWalletTaxFreeLimitYearsChanged.emit()
 
     def resetDefault(self):
         self.beginResetModel()

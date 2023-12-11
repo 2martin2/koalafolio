@@ -101,6 +101,17 @@ EXODUS_INTXID_REGEX = re.compile(r'^INTXID$', re.IGNORECASE)
 EXODUS_INTXURL_REGEX = re.compile(r'^INTXURL$', re.IGNORECASE)
 EXODUS_ORDERID_REGEX = re.compile(r'^ORDERID$', re.IGNORECASE)
 
+# model Blockdaemon Cardano [currency,return,timeEnd,timeStart,startingBalance,timeAggregation,address,metadata]
+BLOCKDAEMON_ADDRESS_REGEX = re.compile(r'^ADDRESS$', re.IGNORECASE)
+BLOCKDAEMON_CURRENCY_REGEX = re.compile(r'^CURRENCY$', re.IGNORECASE)
+BLOCKDAEMON_METADATA_REGEX = re.compile(r'^METADATA$', re.IGNORECASE)
+BLOCKDAEMON_RETURN_REGEX = re.compile(r'^RETURN$', re.IGNORECASE)
+BLOCKDAEMON_STARTINGBALANCE_REGEX = re.compile(r'^STARTINGBALANCE$', re.IGNORECASE)
+BLOCKDAEMON_TIMEAGGREGATION_REGEX = re.compile(r'^TIMEAGGREGATION$', re.IGNORECASE)
+BLOCKDAEMON_TIMEEND_REGEX = re.compile(r'^TIMEEND$', re.IGNORECASE)
+BLOCKDAEMON_TIMESTART_REGEX = re.compile(r'^TIMESTART$', re.IGNORECASE)
+BLOCKDAEMON_EPOCH_REGEX = re.compile(r'^EPOCH$', re.IGNORECASE)
+
 # model kucoin [orderCreatedAt,id,clientOid,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,remark,tags,orderStatus]
 KUCOIN_ORDERCREATEDAT_REGEX = re.compile(r'^orderCreatedAt$', re.IGNORECASE)
 KUCOIN_ID_REGEX = re.compile(r'^id$', re.IGNORECASE)

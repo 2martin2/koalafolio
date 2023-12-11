@@ -57,7 +57,8 @@ index = -1
 # %% exodus [DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID]
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
-IMPORT_MODEL_LIST[index].modelHeaders = ['DATE', 'TYPE', 'OUTAMOUNT', 'OUTCURRENCY', 'FEEAMOUNT', 'FEECURRENCY', 'OUTTXID', 'OUTTXURL',
+IMPORT_MODEL_LIST[index].modelHeaders = ['DATE', 'TYPE', 'OUTAMOUNT', 'OUTCURRENCY', 'FEEAMOUNT', 'FEECURRENCY',
+                                         'OUTTXID', 'OUTTXURL',
                                          'INAMOUNT', 'INCURRENCY', 'INTXID', 'INTXURL', 'ORDERID']
 IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.EXODUS_DATE_REGEX, pat.EXODUS_TYPE_REGEX,
                                               pat.EXODUS_OUTAMOUNT_REGEX, pat.EXODUS_OUTCURRENCY_REGEX,
@@ -69,6 +70,23 @@ IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.EXODUS_DATE_REGEX, pat.EXODUS_
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_exodus
 
+# Blockdaemon Cardano [currency,return,timeEnd,timeStart,startingBalance,timeAggregation,address,metadata]
+index = index + 1
+IMPORT_MODEL_LIST.append(Importmodel())
+IMPORT_MODEL_LIST[index].modelHeaders = ['currency', 'return', 'timeEnd', 'timeStart', 'startingBalance',
+                                         'timeAggregation', 'address', 'metadata']
+IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.BLOCKDAEMON_CURRENCY_REGEX,
+                                              pat.BLOCKDAEMON_RETURN_REGEX,
+                                              pat.BLOCKDAEMON_TIMEEND_REGEX]
+IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded + [
+    pat.BLOCKDAEMON_TIMESTART_REGEX,
+    pat.BLOCKDAEMON_STARTINGBALANCE_REGEX,
+    pat.BLOCKDAEMON_TIMEAGGREGATION_REGEX,
+    pat.BLOCKDAEMON_ADDRESS_REGEX,
+    pat.BLOCKDAEMON_METADATA_REGEX
+]
+IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_blockdaemonCardano
+
 # kucoin [orderCreatedAt,id,clientOid,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,remark,tags,orderStatus]
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
@@ -79,7 +97,8 @@ IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.KUCOIN_ORDERCREATEDAT_REGEX, p
                                               pat.KUCOIN_STOPPRICE_REGEX,
                                               pat.KUCOIN_PRICE_REGEX, pat.KUCOIN_SIZE_REGEX, pat.KUCOIN_DEALSIZE_REGEX,
                                               pat.KUCOIN_DEALFUNDS_REGEX,
-                                              pat.KUCOIN_AVERAGEPRICE_REGEX, pat.KUCOIN_FEE_REGEX, pat.KUCOIN_FEECURRENCY_REGEX,
+                                              pat.KUCOIN_AVERAGEPRICE_REGEX, pat.KUCOIN_FEE_REGEX,
+                                              pat.KUCOIN_FEECURRENCY_REGEX,
                                               pat.KUCOIN_ORDERSTATUS_REGEX]
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_kucoin
@@ -116,7 +135,8 @@ IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_krakenapi
 # %% krakenledger [txid, refid, time, type, subtype, aclass, asset, amount, fee, balance]
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
-IMPORT_MODEL_LIST[index].modelHeaders = ['txid', 'refid', 'time', 'type', 'subtype', 'aclass', 'asset', 'amount', 'fee', 'balance']
+IMPORT_MODEL_LIST[index].modelHeaders = ['txid', 'refid', 'time', 'type', 'subtype', 'aclass', 'asset', 'amount', 'fee',
+                                         'balance']
 IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.KRAKENLEDGER_TXID_REGEX, pat.KRAKENLEDGER_REFID_REGEX,
                                               pat.KRAKENLEDGER_TIME_REGEX, pat.KRAKENLEDGER_TYPE_REGEX,
                                               pat.KRAKENLEDGER_SUBTYPE_REGEX, pat.KRAKENLEDGER_ACLASS_REGEX,
@@ -153,9 +173,9 @@ IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_poloniex
 # model bittrex [Uuid	Exchange	TimeStamp	OrderType	Limit	Quantity	QuantityRemaining	Commission	Price	PricePerUnit	IsConditional	Condition	ConditionTarget	ImmediateOrCancel	Closed]
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
-IMPORT_MODEL_LIST[index].modelHeaders = ['Uuid','Exchange','TimeStamp','OrderType','Limit','Quantity',
-                                         'QuantityRemaining','Commission','Price','PricePerUnit','IsConditional',
-                                         'Condition','ConditionTarget','ImmediateOrCancel','Closed']
+IMPORT_MODEL_LIST[index].modelHeaders = ['Uuid', 'Exchange', 'TimeStamp', 'OrderType', 'Limit', 'Quantity',
+                                         'QuantityRemaining', 'Commission', 'Price', 'PricePerUnit', 'IsConditional',
+                                         'Condition', 'ConditionTarget', 'ImmediateOrCancel', 'Closed']
 IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.BITTREX_UUID_REGEX, pat.BITTREX_EXCHANGE_REGEX,
                                               pat.BITTREX_TIMESTAMP_REGEX, pat.BITTREX_ORDERTYPE_REGEX,
                                               pat.BITTREX_LIMIT_REGEX, pat.BITTREX_QUANTITY_REGEX,
@@ -256,7 +276,6 @@ IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNe
                                              pat.TEMPLATE1_FEE_CURRENCY_REGEX, pat.TEMPLATE1_BUY_WALLET_REGEX,
                                              pat.TEMPLATE1_SELL_WALLET_REGEX]
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_Template1
-
 
 # %% model tradeList: 'date', 'type', 'coin', 'amount', 'id', 'tradePartnerId', 'valueLoaded', 'exchange', 'externId', 'wallet'
 index = index + 1

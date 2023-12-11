@@ -89,7 +89,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
     tradesRemoved = qtcore.pyqtSignal('PyQt_PyObject')
     triggerHistPriceUpdate = qtcore.pyqtSignal('PyQt_PyObject')
     #    tradeChanged = qtcore.pyqtSignal('PyQt_PyObject')
-    pricesUpdated = qtcore.pyqtSignal()
+    histPricesUpdated = qtcore.pyqtSignal(list)
     histPriceUpdateFinished = qtcore.pyqtSignal()
 
     def __init__(self, dataPath=None, *args, **kwargs):
@@ -233,14 +233,14 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                 self.triggerHistPriceUpdate.emit(tradeList)
                 return
 
-    def setHistPrices(self, prices, tradesLeft):
+    def setHistPrices(self, prices, tradesLeft=None):
         localLogger.info(str(len(prices)) + " new hist prices recieved")
-        super(QTradeContainer, self).setHistPrices(prices)
-        self.pricesUpdatedCallback(tradesLeft)
+        updatedCoins = super(QTradeContainer, self).setHistPrices(prices)
+        self.histPricesUpdatedCallback(updatedCoins, tradesLeft)
 
-    def pricesUpdatedCallback(self, tradesLeft):
+    def histPricesUpdatedCallback(self, updatedCoins, tradesLeft):
         self.saveTrades()
-        self.pricesUpdated.emit()
+        self.histPricesUpdated.emit(updatedCoins)
         if tradesLeft == 0:
             # check if still Trades missing histValue and have not been tried yet
             for trade in self.trades:
@@ -441,11 +441,11 @@ class QTradeTableModel(QTradeContainer):
             self.deleteTrades(row)
         return True
 
-    def pricesUpdatedCallback(self, tradesLeft):
-        super(QTradeTableModel, self).pricesUpdatedCallback(tradesLeft)
+    def histPricesUpdatedCallback(self, updatedCoins, tradesLeft):
+        super(QTradeTableModel, self).histPricesUpdatedCallback(updatedCoins, tradesLeft)
         if self.pricesShowen:
             RowStartIndex = self.index(0, self.firstValueColumn)
-            RowEndIndex = self.index(len(self.trades) - 1, len(self.header) - 1)
+            RowEndIndex = self.index(len(self.trades) - 1, len(self.header) - 1, qtcore.QModelIndex())
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def updateDisplayCurrencies(self, keys):

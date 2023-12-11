@@ -5,7 +5,7 @@ with open('README.rst', encoding="utf-8") as f:
 
 setuptools.setup(
     name='koalafolio',
-    version='0.11.18',
+    version='0.12.0',
     description='portfolio app for crypto trading and tax reporting',
     long_description=readme,
     long_description_content_type='text/x-rst',
@@ -17,12 +17,12 @@ setuptools.setup(
     python_requires='>=3.7',
     packages=setuptools.find_packages(),
     classifiers=['Programming Language :: Python :: 3'],
-    install_requires=['aiohttp>=3.8.5',
+    install_requires=['aiohttp>=3.9.0',
                       'base58check',
                       'bech32',
                       'certifi>=2023.7.22',
                       'coincurve',
-                      'gevent',
+                      'gevent>=23.9.0',
                       'gql',
                       'krakenex',
                       'openpyxl',

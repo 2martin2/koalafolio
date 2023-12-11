@@ -26,33 +26,33 @@ def exodusJsonToDataFrame(data):
     # convert dict
     newDictList = []
     for row in range(len(data)):
-        dict = data[row]
+        mydict = data[row]
         newDict = {}
 
-        amountMatch = amountRegex.match(dict['coinAmount'])
+        amountMatch = amountRegex.match(mydict['coinAmount'])
         if amountMatch:
             amount = float(amountMatch.group(1))
-            newDict['DATE'] = dict['date']
+            newDict['DATE'] = mydict['date']
             if amount >= 0:  # input
                 newDict['TYPE'] = 'deposit'
                 newDict['INAMOUNT'] = amount
                 newDict['INCURRENCY'] = amountMatch.group(9)
-                newDict['INTXID'] = dict['txId']
+                newDict['INTXID'] = mydict['txId']
             else:  # output
                 newDict['TYPE'] = 'withdrawal'
                 newDict['OUTAMOUNT'] = amount
                 newDict['OUTCURRENCY'] = amountMatch.group(9)
-                newDict['OUTTXID'] = dict['txId']
+                newDict['OUTTXID'] = mydict['txId']
 
-        if 'toCoin' in dict:  # trade
-            amountMatch = amountRegex.match(dict['toCoin']['coinAmount'])
+        if 'toCoin' in mydict:  # trade
+            amountMatch = amountRegex.match(mydict['toCoin']['coinAmount'])
             if amountMatch:
                 amount = float(amountMatch.group(1))
                 newDict['TYPE'] = 'exchange'
                 newDict['INAMOUNT'] = amount
                 newDict['INCURRENCY'] = amountMatch.group(9)
-                newDict['INTXID'] = dict['meta']['shapeshiftOrderId']
-                newDict['ORDERID'] = dict['meta']['shapeshiftOrderId']
+                newDict['INTXID'] = mydict['meta']['shapeshiftOrderId']
+                newDict['ORDERID'] = mydict['meta']['shapeshiftOrderId']
 
         # do not use fromCoin since these trades are already included in toCoin
         # if 'fromCoin' in dict:
@@ -65,8 +65,8 @@ def exodusJsonToDataFrame(data):
         #         newDict['OUTTXID'] = dict['meta']['shapeshiftOrderId']
         #         newDict['ORDERID'] = dict['meta']['shapeshiftOrderId']
 
-        if 'feeAmount' in dict:  # fee
-            amountMatch = amountRegex.match(dict['feeAmount'])
+        if 'feeAmount' in mydict:  # fee
+            amountMatch = amountRegex.match(mydict['feeAmount'])
             if amountMatch:
                 amount = float(amountMatch.group(1))
                 newDict['FEEAMOUNT'] = amount
@@ -143,6 +143,33 @@ def modelCallback_exodus(headernames, dataFrame):
             feeList.addTrade(fee)
 
     return tradeList, feeList, skippedRows
+
+# %% Blockdaemon Cardano [currency,return,timeEnd,timeStart,startingBalance,timeAggregation,address,metadata]
+def modelCallback_blockdaemonCardano(headernames, dataFrame):
+    # address, currency, metadata, return, startingBalance, timeAggregation, timeEnd, timeStart
+    # str, ADA, {'epoch': xxx}, xxx, xxx, epoch, yyyy-mm-ddThh:mm:ssZ, yyyy-mm-ddThh:mm:ssZ
+
+    # convert numbers
+    for row, rowObject in dataFrame.iterrows():
+        dataFrame.at[row, headernames[1]] = float(dataFrame[headernames[1]][row])
+
+    dataFrame['type'] = 'reward'
+
+    headernames_t1 = [
+        headernames[2],  # date
+        'type',  # type
+        headernames[1],  # buy_amount
+        headernames[0],  # buy_cur
+        '',  # sell_amount
+        '',  # sell_cur
+        '',  # exchange
+        '',  # fee_amount
+        '',  # fee_currency
+        '',  # buy_wallet
+        ''  # sell_wallet
+    ]
+
+    return modelCallback_Template1(headernames_t1, dataFrame)
 
 
 # %% kucoin model: [orderCreatedAt,id,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,orderStatus]
@@ -1137,7 +1164,7 @@ def convertDate(dateString, useLocalTime=False):
             myTimezone = tzlocal.get_localzone()
             timestamp = timestamp.astimezone(myTimezone)
     else:
-        raise SyntaxError("date format not supported")
+        raise SyntaxError("date format not supported: " + str(dateString))
     if timestamp.microsecond:
         timestamp = timestamp.replace(microsecond=0)
     return timestamp

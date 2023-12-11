@@ -352,15 +352,23 @@ class QPortfolioTableModel(QCoinContainer):
                                              value.taxLimitYears)
         return True
 
-    def histPricesChanged(self):
-        super(QPortfolioTableModel, self).histPricesChanged()
+    def histPricesChanged(self, coins):
+        super(QPortfolioTableModel, self).histPricesChanged(coins)
         self.pricesUpdated()
+        # update all DelegateItems of the updated coins
+        for coinname in coins:
+            row = self.getCoinIndexByName(coinname)
+            parent = self.index(row, 0, qtcore.QModelIndex())
+            ChildStartIndex = self.index(0, 3, parent)
+            ChildEndIndex = self.index(self.rowCount(parent)-1, 3, parent)
+            self.dataChanged.emit(ChildStartIndex, ChildEndIndex)
 
     def histPriceUpdateFinished(self):
         super(QPortfolioTableModel, self).histPriceUpdateFinished()
         self.pricesUpdated()
 
     def pricesUpdated(self):
+        # update all rows
         RowStartIndex = self.index(0, 2, qtcore.QModelIndex())
         RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, qtcore.QModelIndex())
         self.dataChanged.emit(RowStartIndex, RowEndIndex)
@@ -383,7 +391,7 @@ class QPortfolioTableModel(QCoinContainer):
         if coin:
             row = self.coins.index(coin)
             RowStartIndex = self.index(row, 0)
-            RowEndIndex = self.index(row, len(self.header) - 1)
+            RowEndIndex = self.index(row, len(self.header) - 1, qtcore.QModelIndex())
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     # emit layout changed when coin is added
@@ -435,6 +443,14 @@ class QPortfolioTableModel(QCoinContainer):
         self.clearCoins()
         self.restoreCoins()
         self.triggerViewReset.emit()
+
+    def taxYearWalletChanged(self):
+        # update all DelegateItems
+        for row in range(self.rowCount(qtcore.QModelIndex())):
+            parent = self.index(row, 0, qtcore.QModelIndex())
+            ChildStartIndex = self.index(0, 0, parent)
+            ChildEndIndex = self.index(self.rowCount(parent) - 1, 3, parent)
+            self.dataChanged.emit(ChildStartIndex, ChildEndIndex)
 
 
 class QTableSortingModel(fTable.SortFilterProxyModel):
@@ -727,6 +743,8 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 editor.setData(index.data())
                 return
             if index.column() == 3:  # chart
+                # clear data before adding new changes
+                editor.clearData()
                 data = index.data()
                 # get settings
                 taxfreelimityears = 0
@@ -896,9 +914,18 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
     def setData(self, data):
         self.walletname = data.walletname
         self.notesTextedit.setText(data.notes)
-        self.timeLimitBox.setCheckState(data.taxLimitEnabled)
-        self.timeLimitBox.setTristate(False)
-        self.timeLimitEdit.setValue(data.taxLimitYears)
+        if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):
+            self.timeLimitBox.setEnabled(True)
+            self.timeLimitEdit.setEnabled(True)
+            self.timeLimitBox.setCheckState(data.taxLimitEnabled)
+            self.timeLimitBox.setTristate(False)
+            self.timeLimitEdit.setValue(data.taxLimitYears)
+        else:
+            self.timeLimitBox.setEnabled(False)
+            self.timeLimitEdit.setEnabled(False)
+            self.timeLimitBox.setCheckState(settings.mySettings.getTaxSetting('taxfreelimit'))
+            self.timeLimitBox.setTristate(False)
+            self.timeLimitEdit.setValue(settings.mySettings.getTaxSetting('taxfreelimityears'))
 
     def getData(self):
         return QWalletPropertiesData(walletname=self.walletname,
@@ -907,10 +934,11 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
                                      taxLimitYears=self.timeLimitEdit.value())
 
     def timeLimitCheckBoxChanged(self):
-        if self.timeLimitBox.isChecked():
-            self.timeLimitEdit.setEnabled(True)
-        else:
-            self.timeLimitEdit.setEnabled(False)
+        if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):
+            if self.timeLimitBox.isChecked():
+                self.timeLimitEdit.setEnabled(True)
+            else:
+                self.timeLimitEdit.setEnabled(False)
 
     def eventFilter(self, object: 'QObject', event: 'QEvent') -> bool:
         if object is None:
