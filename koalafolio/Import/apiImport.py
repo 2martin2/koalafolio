@@ -17,9 +17,9 @@ localLogger = logger.globalLogger
 
 # %% Trade
 class ApiModel:
-    def __init__(self, name='', type='', handle=None, note=''):
+    def __init__(self, name='', apitype='', handle=None, note=''):
         self.apiName = name
-        self.apiType = type
+        self.apiType = apitype
         self.apiHandle = handle
         self.apiNote = note
 
@@ -30,7 +30,7 @@ apiModels = {}
 for key in apiNames:
     apiModels[key] = ApiModel(
         name=str(key),
-        type="exchange",
+        apitype="exchange",
         handle=None,
         note="get data from " + str(key)
     )
@@ -51,18 +51,19 @@ apiModels["poloniex"].apiHandle = lambda key, secret, start, end: exchanges.getT
 apiModels["kraken"].apiHandle = lambda key, secret, start, end: exchanges.getTradeHistoryKraken(key, secret, start, end)
 apiModels["Cardano"].apiHandle = lambda address, start, end: chaindata.getCardanoRewardsForAddress(address, start, end)
 
-def getApiHistory(apiname, type, start, end, key=None, secret=None, address=None):
+
+def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, address=None):
     if apiname not in apiModels:
         raise KeyError("invalid api name")
     else:
         localLogger.info("requesting data from " + str(apiname))
         try:
-            if type == "exchange":
-                return apiModels[apiname].apiHandle(key, secret, start, end)
-            elif type == "chaindata":
+            if apitype == "exchange":
+                return apiModels[apiname].apiHandle(apikey, secret, start, end)
+            elif apitype == "chaindata":
                 return apiModels[apiname].apiHandle(address, start, end)
             else:
-                raise ValueError("invalid type in getApiHistory: " + str(type))
+                raise ValueError("invalid type in getApiHistory: " + str(apitype))
         except Exception as ex:
             localLogger.warning("could not load data from api (" + str(apiname) + "): " + str(ex))
             return pandas.DataFrame()

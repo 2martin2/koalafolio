@@ -226,13 +226,13 @@ class ImportSelectPage(SubPage):
         else:
             localLogger.info('please select at least one valid file')
 
-    def importFromApi(self, api, type, start, end, key, secret, address):
+    def importFromApi(self, api, apitype, start, end, apikey, secret, address):
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
         self.controller.filesNotImported = 0
         self.controller.filesImported = 0
         self.controller.clearNewTrades()
-        content = apiImport.getApiHistory(api, type, start, end, key=key, secret=secret, address=address)
+        content = apiImport.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret, address=address)
 
         if not content.empty:
             tradeListTemp, feeListTemp, match, skippedRows = importer.convertTradesSingle(
@@ -254,9 +254,8 @@ class ImportSelectPage(SubPage):
         else:
             localLogger.info("no data received from api")
 
-
-    def saveFromApi(self, api, type, start, end, key, secret, address):
-        content = apiImport.getApiHistory(api, type, start, end, key=key, secret=secret, address=address)
+    def saveFromApi(self, api, apitype, start, end, apikey, secret, address):
+        content = apiImport.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret, address=address)
         if not content.empty:
             self.saveCsvFileDialog.setDefaultSuffix("csv")
             filename = api + '_api.csv'
