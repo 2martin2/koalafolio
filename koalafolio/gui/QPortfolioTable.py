@@ -736,6 +736,8 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 editor.setData(index.data())
                 return
             if index.column() == 3:  # chart
+                # clear data before adding new changes
+                editor.clearData()
                 data = index.data()
                 # get settings
                 taxfreelimityears = 0
