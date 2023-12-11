@@ -383,7 +383,7 @@ class QPortfolioTableModel(QCoinContainer):
         if coin:
             row = self.coins.index(coin)
             RowStartIndex = self.index(row, 0)
-            RowEndIndex = self.index(row, len(self.header) - 1)
+            RowEndIndex = self.index(row, len(self.header) - 1, qtcore.QModelIndex())
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     # emit layout changed when coin is added

@@ -445,7 +445,7 @@ class QTradeTableModel(QTradeContainer):
         super(QTradeTableModel, self).pricesUpdatedCallback(tradesLeft)
         if self.pricesShowen:
             RowStartIndex = self.index(0, self.firstValueColumn)
-            RowEndIndex = self.index(len(self.trades) - 1, len(self.header) - 1)
+            RowEndIndex = self.index(len(self.trades) - 1, len(self.header) - 1, qtcore.QModelIndex())
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def updateDisplayCurrencies(self, keys):

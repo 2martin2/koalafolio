@@ -26,33 +26,33 @@ def exodusJsonToDataFrame(data):
     # convert dict
     newDictList = []
     for row in range(len(data)):
-        dict = data[row]
+        mydict = data[row]
         newDict = {}
 
-        amountMatch = amountRegex.match(dict['coinAmount'])
+        amountMatch = amountRegex.match(mydict['coinAmount'])
         if amountMatch:
             amount = float(amountMatch.group(1))
-            newDict['DATE'] = dict['date']
+            newDict['DATE'] = mydict['date']
             if amount >= 0:  # input
                 newDict['TYPE'] = 'deposit'
                 newDict['INAMOUNT'] = amount
                 newDict['INCURRENCY'] = amountMatch.group(9)
-                newDict['INTXID'] = dict['txId']
+                newDict['INTXID'] = mydict['txId']
             else:  # output
                 newDict['TYPE'] = 'withdrawal'
                 newDict['OUTAMOUNT'] = amount
                 newDict['OUTCURRENCY'] = amountMatch.group(9)
-                newDict['OUTTXID'] = dict['txId']
+                newDict['OUTTXID'] = mydict['txId']
 
-        if 'toCoin' in dict:  # trade
-            amountMatch = amountRegex.match(dict['toCoin']['coinAmount'])
+        if 'toCoin' in mydict:  # trade
+            amountMatch = amountRegex.match(mydict['toCoin']['coinAmount'])
             if amountMatch:
                 amount = float(amountMatch.group(1))
                 newDict['TYPE'] = 'exchange'
                 newDict['INAMOUNT'] = amount
                 newDict['INCURRENCY'] = amountMatch.group(9)
-                newDict['INTXID'] = dict['meta']['shapeshiftOrderId']
-                newDict['ORDERID'] = dict['meta']['shapeshiftOrderId']
+                newDict['INTXID'] = mydict['meta']['shapeshiftOrderId']
+                newDict['ORDERID'] = mydict['meta']['shapeshiftOrderId']
 
         # do not use fromCoin since these trades are already included in toCoin
         # if 'fromCoin' in dict:
@@ -65,8 +65,8 @@ def exodusJsonToDataFrame(data):
         #         newDict['OUTTXID'] = dict['meta']['shapeshiftOrderId']
         #         newDict['ORDERID'] = dict['meta']['shapeshiftOrderId']
 
-        if 'feeAmount' in dict:  # fee
-            amountMatch = amountRegex.match(dict['feeAmount'])
+        if 'feeAmount' in mydict:  # fee
+            amountMatch = amountRegex.match(mydict['feeAmount'])
             if amountMatch:
                 amount = float(amountMatch.group(1))
                 newDict['FEEAMOUNT'] = amount

@@ -25,8 +25,6 @@ class QLogModel(qtcore.QAbstractListModel):
 
     def addString(self, message, messageType):
         row = len(self.stringList)
-        # RowStartIndex = self.index(row, row)
-        # RowEndIndex = self.index(row, row)
         self.beginInsertRows(qtcore.QModelIndex(), row, row+1)
         self.stringList.append(message)
         self.messageType.append(messageType)
