@@ -90,6 +90,7 @@ class PortfolioApp(qtwidgets.QWidget):
 
         # init gui
         self.layoutUI()
+        self.connectSignals()
         self.show()
         self.showFrame(self.PORTFOLIOPAGEINDEX)
         # gui and data initialized
@@ -262,14 +263,21 @@ class PortfolioApp(qtwidgets.QWidget):
         self.tradeList = ttable.QTradeTableModel(self.dataPath)
         self.coinList = ptable.QPortfolioTableModel(self.dataPath)
 
+        self.logger.info('data initialized')
+
+    def connectSignals(self):
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))
         self.tradeList.tradesAdded.connect(lambda tradeList: self.coinList.addTrades(tradeList))
         self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.deleteTrades(tradeList))
         self.tradeList.histPricesUpdated.connect(self.coinList.histPricesChanged)
         self.tradeList.histPriceUpdateFinished.connect(self.coinList.histPriceUpdateFinished)
         self.settingsModel.displayCurrenciesChanged.connect(self.coinList.updateDisplayCurrencies)
+        self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(self.coinList.taxYearWalletChanged)
+        self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(self.exportPage.taxYearWalletChanged)
         self.settingsModel.displayCurrenciesChanged.connect(self.tradeList.updateDisplayCurrencies)
-        self.logger.info('data initialized')
+
+        self.logger.info('signals initialized')
+
 
     # setup layout
     def layoutUI(self):

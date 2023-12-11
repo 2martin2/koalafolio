@@ -130,10 +130,7 @@ class QExportProfitFrame(QExportFrame):
         # use wallet tax free limit
         self.useWalletTaxLimitLabel = qtwidgets.QLabel("use wallet tax year limit", self)
         self.useWalletTaxLimitBox = qtwidgets.QCheckBox(self)
-        if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):
-            self.useWalletTaxLimitBox.setCheckState(qt.Checked)
-        else:
-            self.useWalletTaxLimitBox.setCheckState(qt.Unchecked)
+        self.taxYearWalletChanged()
 
         self.optionsLayout.addWidget(self.useWalletTaxLimitBox, 3, 0)
         self.optionsLayout.addWidget(self.useWalletTaxLimitLabel, 3, 1)
@@ -219,6 +216,12 @@ class QExportProfitFrame(QExportFrame):
             self.timeLimitEdit.setEnabled(False)
         else:
             self.timeLimitEdit.setEnabled(True)
+
+    def taxYearWalletChanged(self):
+        if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):
+            self.useWalletTaxLimitBox.setCheckState(qt.Checked)
+        else:
+            self.useWalletTaxLimitBox.setCheckState(qt.Unchecked)
 
     def exportProfit(self):
         self.fileDialog.setDefaultSuffix("xlsx")
@@ -307,3 +310,6 @@ class ExportPage(qpages.Page):
 
     def refresh(self):
         pass
+
+    def taxYearWalletChanged(self):
+        self.exportProfitFrame.taxYearWalletChanged()
