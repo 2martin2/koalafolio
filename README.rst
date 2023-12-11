@@ -68,6 +68,10 @@ trade import
    - poloniex
    - kraken
 
+ import Rewards of Staking Address
+  supported Chains
+   - Cardano
+
 optional arguments
 _____________________
   -h, --help            show this help message and exit
