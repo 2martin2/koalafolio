@@ -120,9 +120,9 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
                             importedRows = len(tradeListTemp.trades) + len(feeListTemp.trades)
                             localLogger.info('imported trades: ' + str(importedRows)
                                              + '; skipped trades: ' + str(skippedRows))
+                            self.tradesAdded.emit(self)
             except Exception as ex:
                 localLogger.warning('error parsing trades: ' + str(ex))
-        self.tradesAdded.emit(self)
 
     def saveTrades(self):
         if self.dataPath:
