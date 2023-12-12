@@ -105,7 +105,7 @@ class BaseDatabase():
         # check path
         if os.path.exists(path):
             # set path
-            self.filepath = os.path.join(path, self.filename)
+            self.filepath = os.path.join(path, self.filename).replace('\\', '/')
             if os.path.isfile(self.filepath):
                 self.databaseFound = True
             else:
