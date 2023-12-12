@@ -157,7 +157,8 @@ class ImportSelectPage(SubPage):
         self.fileLayout.addLayout(self.horzButtonLayout)
 
         # api import
-        self.apiModel = qApiImport.ApiKeyModel(controller.controller.apiDatabase)
+        self.apiModel = qApiImport.ApiKeyModel(controller.controller.apiUserDatabase,
+                                               controller.controller.apiDefaultDatabase.data)
         self.apiView = qApiImport.ApiKeyView(parent=self)
         self.apiView.setModel(self.apiModel)
         self.apiView.importFromApi.connect(self.importFromApi)

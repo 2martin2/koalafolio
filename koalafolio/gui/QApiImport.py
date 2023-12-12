@@ -24,10 +24,11 @@ class ApiKeyModel(qtcore.QObject):
     databaseWritten = qtcore.pyqtSignal()
     databaseRemoved = qtcore.pyqtSignal()
 
-    def __init__(self, database, *args, **kwargs):
+    def __init__(self, database, defaultdata, *args, **kwargs):
         super(ApiKeyModel, self).__init__(*args, **kwargs)
 
         self.database = database
+        self.defaultApiKeys = defaultdata
         self.databaseApiNameModel = qtcore.QStringListModel()
         self.databaseUnlocked.connect(self.loadDatabaseApiNames)
         self.databaseWritten.connect(self.loadDatabaseApiNames)
@@ -49,18 +50,22 @@ class ApiKeyModel(qtcore.QObject):
         if data is not None:
             self.databaseUnlocked.emit()
 
+    def isDataBaseLocked(self) -> bool:
+        return self.database.databaseLocked
+
     def createDatabase(self, pw):
         self.database.createDatabase(pw)
         self.databaseUnlocked.emit()
 
-    def addDBEntry(self, pw, apiname, key=None, secret=None, address=None):
+    def addDBEntry(self, pw, apiname, apikey=None, secret=None, address=None):
         apitype = self.getApiType(apiname)
         newData = {}
         newData["apiname"] = apiname
         if apitype == "exchange":
-            newData["apikey"] = key
+            newData["apikey"] = apikey
             newData["secret"] = secret
         elif apitype == "chaindata":
+            newData["apikey"] = apikey
             newData["address"] = address
         self.database.addDBEntry(pw, apiname, newData)
         self.databaseWritten.emit()
@@ -76,33 +81,39 @@ class ApiKeyModel(qtcore.QObject):
         self.database.deleteDatabase()
         self.databaseRemoved.emit()
 
-    def getApiKeys(self, apiname):
-        try:
-            data = self.database.data[apiname]
-            if data is not None:
-                return data["apikey"], data["secret"]
-            else:
-                return None, None
-        except KeyError as ex:
-            localLogger.error("api " + str(apiname) + " not part of database: " + str(ex))
-            return None, None
+    def getApiKeyAndSecret(self, apiname: str) -> tuple[str, str]:
+        if apiname in self.database.data:
+            try:
+                data = self.database.data[apiname]
+                if data is not None:
+                    return data["apikey"], data["secret"]
+                else:
+                    return "", ""
+            except KeyError as ex:
+                localLogger.error("api " + str(apiname) + " not part of database. ex: " + str(ex))
+        return "", ""
 
-    def getApiAddress(self, apiname):
-        try:
-            data = self.database.data[apiname]
-            if data is not None:
-                return data["address"]
-            else:
-                return None
-        except KeyError as ex:
-            localLogger.error("api " + str(apiname) + " not part of database: " + str(ex))
-            return None
+    def getApiKeyAndAddress(self, apiname) -> tuple[str, str]:
+        if apiname in self.database.data:
+            try:
+                data = self.database.data[apiname]
+                if data is not None:
+                    return data["apikey"], data["address"]
+            except KeyError as ex:
+                localLogger.error("api " + str(apiname) + " not part of database. ex: " + str(ex))
+        return "", ""
 
     def getApiType(self, apiname):
         return self.apiModels[apiname].apiType
 
     def getApiNote(self, apiname):
         return self.apiModels[apiname].apiNote
+
+    def getDefaultApikey(self, apiname):
+        if apiname in self.defaultApiKeys:
+            return self.defaultApiKeys[apiname]
+        else:
+            return ""
 
 
 class ApiKeyView(qtwidgets.QWidget):
@@ -139,6 +150,9 @@ class ApiKeyView(qtwidgets.QWidget):
         self.startDateInput = qtwidgets.QDateTimeEdit(datetime.datetime(year=today.year - 1, month=1, day=1), self)
         self.endDateLabel = qtwidgets.QLabel('end: ', self)
         self.endDateInput = qtwidgets.QDateTimeEdit(today, self)
+        self.keyLabel = qtwidgets.QLabel('key: ', self)
+        self.keyInput = qtwidgets.QLineEdit(self)
+        self.keyInput.setEchoMode(qtwidgets.QLineEdit.Password)
 
         self.directApiGridLayout = qtwidgets.QGridLayout()
         self.directApiGridLayout.addWidget(self.directApiSelectLabel, 0, 0)
@@ -147,6 +161,8 @@ class ApiKeyView(qtwidgets.QWidget):
         self.directApiGridLayout.addWidget(self.startDateInput, 1, 1)
         self.directApiGridLayout.addWidget(self.endDateLabel, 2, 0)
         self.directApiGridLayout.addWidget(self.endDateInput, 2, 1)
+        self.directApiGridLayout.addWidget(self.keyLabel, 3, 0)
+        self.directApiGridLayout.addWidget(self.keyInput, 3, 1)
         self.directApiGridLayout.setColumnStretch(1, 100)
 
         self.directApiNote = qtwidgets.QLabel('select api from dropdown', self)
@@ -173,26 +189,21 @@ class ApiKeyView(qtwidgets.QWidget):
         self.vLayout.addStretch()
         self.vLayout.addLayout(self.directApiHorzButtonLayout)
 
-    # init UI for axchange api with key secret pair
+    # init UI for exchange api with key secret pair
     def initApiExchangeUI(self):
         self.apiExchangeFrame = controls.StyledFrame(self)
 
-        self.keyLabel = qtwidgets.QLabel('key: ', self.apiExchangeFrame)
-        self.keyInput = qtwidgets.QLineEdit(self.apiExchangeFrame)
-        self.keyInput.setEchoMode(qtwidgets.QLineEdit.Password)
         self.secretLabel = qtwidgets.QLabel('secret: ', self.apiExchangeFrame)
         self.secretInput = qtwidgets.QLineEdit(self.apiExchangeFrame)
         self.secretInput.setEchoMode(qtwidgets.QLineEdit.Password)
 
         self.apiExchangeGridLayout = qtwidgets.QGridLayout(self.apiExchangeFrame)
-        self.apiExchangeGridLayout.addWidget(self.keyLabel, 0, 0)
-        self.apiExchangeGridLayout.addWidget(self.keyInput, 0, 1)
-        self.apiExchangeGridLayout.addWidget(self.secretLabel, 1, 0)
-        self.apiExchangeGridLayout.addWidget(self.secretInput, 1, 1)
+        self.apiExchangeGridLayout.addWidget(self.secretLabel, 0, 0)
+        self.apiExchangeGridLayout.addWidget(self.secretInput, 0, 1)
 
         return self.apiExchangeFrame
 
-    # init UI for Chaindata UI with address
+    # init UI for Chaindata UI with apikey and address
     def initApiChaindataUI(self):
         self.apiChaindataFrame = controls.StyledFrame(self)
 
@@ -320,7 +331,7 @@ class ApiKeyView(qtwidgets.QWidget):
 
         return self.apiFrame
 
-    def setModel(self, model):
+    def setModel(self, model: ApiKeyModel):
         self.model = model
         # connect signals
         model.databaseUnlocked.connect(self.databaseUnlocked)
@@ -422,9 +433,9 @@ class ApiKeyView(qtwidgets.QWidget):
         apiname = self.apiSelectDropdown.currentText()
         apitype = self.model.getApiType(apiname)
         if apitype == "exchange":
-            key, secret = self.model.getApiKeys(apiname)
+            apikey, secret = self.model.getApiKeyAndSecret(apiname)
         elif apitype == "chaindata":
-            address = self.model.getApiAddress(apiname)
+            apikey, address = self.model.getApiKeyAndAddress(apiname)
         try:
             index = self.directApiSelectDropdown.model().stringList().index(apiname)
         except ValueError:
@@ -432,23 +443,25 @@ class ApiKeyView(qtwidgets.QWidget):
         else:
             self.directApiSelectDropdown.setCurrentIndex(index)
             if apitype == "exchange":
-                self.keyInput.setText(key)
+                self.keyInput.setText(apikey)
                 self.secretInput.setText(secret)
             elif apitype == "chaindata":
+                self.keyInput.setText(apikey)
                 self.addressInput.setText(address)
 
     def saveApiEntry(self):
         apiname = self.directApiSelectDropdown.currentText()
         apitype = self.model.getApiType(apiname)
         if apitype == "exchange":
-            key = self.keyInput.text()
+            apikey = self.keyInput.text()
             secret = self.secretInput.text()
-            if key and secret:
-                self.model.addDBEntry(self.pwInput.text(), apiname, key=key, secret=secret)
+            if apikey and secret:
+                self.model.addDBEntry(self.pwInput.text(), apiname, apikey=apikey, secret=secret)
         elif apitype == "chaindata":
+            apikey = self.keyInput.text()
             address = self.addressInput.text()
-            if address:
-                self.model.addDBEntry(self.pwInput.text(), apiname, address=address)
+            if apikey and address:
+                self.model.addDBEntry(self.pwInput.text(), apiname, apikey=apikey, address=address)
 
     def deleteDBEntry(self):
         apiname = self.apiSelectDropdown.currentText()
@@ -466,11 +479,27 @@ class ApiKeyView(qtwidgets.QWidget):
         self.addressInput.clear()
         self.keyInput.clear()
         self.secretInput.clear()
+        apiname = self.directApiSelectDropdown.currentText()
         # update note
-        self.directApiNote.setText(self.model.getApiNote(self.directApiSelectDropdown.currentText()))
+        self.directApiNote.setText(self.model.getApiNote(apiname))
         # update Api UI depending on selected Api Type
-        type = self.model.getApiType(self.directApiSelectDropdown.currentText())
+        type = self.model.getApiType(apiname)
         if type == "exchange":
             self.stackedContentLayoutApi.setCurrentIndex(0)
+            if not self.model.isDataBaseLocked():
+                apikey, secret = self.model.getApiKeyAndSecret(apiname)
+                self.keyInput.setText(apikey)
+                self.secretInput.setText(secret)
         elif type == "chaindata":
             self.stackedContentLayoutApi.setCurrentIndex(1)
+            if not self.model.isDataBaseLocked():
+                apikey, address = self.model.getApiKeyAndAddress(apiname)
+                if apikey:
+                    self.keyInput.setText(apikey)
+                else:  # no key in database
+                    # set apikey to default key from apiDefaultDB
+                    self.keyInput.setText(self.model.getDefaultApikey(apiname))
+                self.addressInput.setText(address)
+            else:
+                # set apikey to default key from apiDefaultDB
+                self.keyInput.setText(self.model.getDefaultApikey(apiname))

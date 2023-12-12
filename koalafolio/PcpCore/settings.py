@@ -66,9 +66,6 @@ class Settings(configparser.ConfigParser):
         self['tax']['taxfreelimityears'] = '1'
         self['tax']['exportlanguage'] = 'en'
         self['tax']['usewallettaxfreelimityears'] = 'False'
-        # api settings
-        self['api'] = {}
-        self['api']['blockdaemon/apikey'] = 'zpka_caa3211b7aa54ba2a0da6e4786991b11_5ee71ea8'
 
     def initDescriptions(self):
         self.descriptions = {}
@@ -102,10 +99,6 @@ class Settings(configparser.ConfigParser):
         self.descriptions['tax']['taxfreelimityears'] = 'number of years until trades are tax free. (e.g. 1 year in Germany). Only used if usewallettaxfreelimityears is False'
         self.descriptions['tax']['exportlanguage'] = 'default language of tax report'
         self.descriptions['tax']['usewallettaxfreelimityears'] = 'True: use seperate taxfreelimityears for every wallet. False: use global setting taxfreelimityears.'
-        # api settings
-        self.descriptions['api'] = {}
-        self.descriptions['api']['blockdaemon/apikey'] = 'api key for blockdaemon api for staking rewards (can be created at https://app.blockdaemon.com)'
-
 
     def saveSettings(self):
         try:

@@ -12,7 +12,7 @@ import koalafolio.PcpCore.settings as settings
 blockdaemonBaseURL = "https://svc.blockdaemon.com/"
 cardanoBaseURL = blockdaemonBaseURL + "reporting/staking/v1/cardano/mainnet/delegator/history/"
 
-def getCardanoRewardsForAddress(address, start, end):
+def getCardanoRewardsForAddress(apikey: str, address: str, start: int, end: int) -> pandas.DataFrame:
     payload = {
         "fromTime": int(start),
         "toTime": int(end),
@@ -22,7 +22,7 @@ def getCardanoRewardsForAddress(address, start, end):
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "X-API-Key": settings.mySettings['api']['blockdaemon/apikey']
+        "X-API-Key": apikey
     }
 
     response = requests.post(cardanoBaseURL + str(address), json=payload, headers=headers)
