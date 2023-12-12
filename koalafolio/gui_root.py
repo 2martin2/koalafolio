@@ -90,7 +90,6 @@ class PortfolioApp(qtwidgets.QWidget):
 
         # init gui
         self.layoutUI()
-        self.connectSignals()
         self.show()
         self.showFrame(self.PORTFOLIOPAGEINDEX)
         # gui and data initialized
@@ -211,7 +210,8 @@ class PortfolioApp(qtwidgets.QWidget):
         self.styleSheetHandler.setPath(self.dataPath)
         self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
         style.myStyle = self.styleSheetHandler
-        self.apiDatabase = apiImport.ApiDatabase(path=self.dataPath)
+        self.apiUserDatabase = apiImport.ApiUserDatabase(path=self.dataPath)
+        self.apiDefaultDatabase = apiImport.ApiDefaultDatabase(path=self.appPath)
         try:
             # Initialize the AssetResolver singleton
             resolver.AssetResolver(data_directory=Path(self.dataPath))
@@ -263,10 +263,6 @@ class PortfolioApp(qtwidgets.QWidget):
         self.tradeList = ttable.QTradeTableModel(self.dataPath)
         self.coinList = ptable.QPortfolioTableModel(self.dataPath)
 
-        self.logger.info('data initialized')
-
-    def connectSignals(self):
-        self.logger.info('initializing signals')
         self.logger.newLogMessage.connect(lambda status, statusType: self.logList.addString(status, statusType))
         self.tradeList.tradesAdded.connect(lambda tradeList: self.coinList.addTrades(tradeList))
         self.tradeList.tradesRemoved.connect(lambda tradeList: self.coinList.deleteTrades(tradeList))
@@ -274,10 +270,9 @@ class PortfolioApp(qtwidgets.QWidget):
         self.tradeList.histPriceUpdateFinished.connect(self.coinList.histPriceUpdateFinished)
         self.settingsModel.displayCurrenciesChanged.connect(self.coinList.updateDisplayCurrencies)
         self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(self.coinList.taxYearWalletChanged)
-        self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(self.exportPage.taxYearWalletChanged)
         self.settingsModel.displayCurrenciesChanged.connect(self.tradeList.updateDisplayCurrencies)
 
-        self.logger.info('signals initialized')
+        self.logger.info('data initialized')
 
 
     # setup layout
@@ -345,6 +340,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.tradesPage = TradesPage(parent=self, controller=self)
         self.importPage = ImportPage(parent=self, controller=self)
         self.exportPage = exportpage.ExportPage(parent=self, controller=self)
+        self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(self.exportPage.taxYearWalletChanged)
         self.settingsPage = pages.SettingsPage(parent=self, controller=self)
         self.pages = [self.portfolioPage, self.tradesPage, self.importPage, self.exportPage, self.settingsPage]
         self.stackedContentLayout = qtwidgets.QStackedLayout()
