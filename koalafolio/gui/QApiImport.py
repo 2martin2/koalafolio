@@ -483,14 +483,14 @@ class ApiKeyView(qtwidgets.QWidget):
         # update note
         self.directApiNote.setText(self.model.getApiNote(apiname))
         # update Api UI depending on selected Api Type
-        type = self.model.getApiType(apiname)
-        if type == "exchange":
+        apitype = self.model.getApiType(apiname)
+        if apitype == "exchange":
             self.stackedContentLayoutApi.setCurrentIndex(0)
             if not self.model.isDataBaseLocked():
                 apikey, secret = self.model.getApiKeyAndSecret(apiname)
                 self.keyInput.setText(apikey)
                 self.secretInput.setText(secret)
-        elif type == "chaindata":
+        elif apitype == "chaindata":
             self.stackedContentLayoutApi.setCurrentIndex(1)
             if not self.model.isDataBaseLocked():
                 apikey, address = self.model.getApiKeyAndAddress(apiname)
