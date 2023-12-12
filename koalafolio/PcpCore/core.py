@@ -481,8 +481,8 @@ class TradeList:
                 # use partner value if value update was not possible or if trade has a fiat partner
                 if (not trade.valueLoaded) or partner.isFiat():
                     trade.setValueAll(partner.getValue().mult(-1))
-                    return True
                     trade.valueLoaded = True
+                    return True
                 # if value is 0 and partner value not
                 elif trade.getValue() == CoinValue() and partner.getValue() != CoinValue():
                     trade.setValueAll(partner.getValue().mult(-1))
