@@ -15,7 +15,7 @@ import koalafolio.PcpCore.logger as logger
 
 dictRegex = re.compile(r'^\{ *(\'.+\' *\: *\'.+\' *\, *)* *\'.+\' *\: *\'.+\'\ *}$')
 
-VERSION = '0.12.0'
+VERSION = '0.12.1'
 
 class Settings(configparser.ConfigParser):
     def __init__(self, *args, **kwargs):
