@@ -435,59 +435,65 @@ class TradeList:
             if trade.coin not in updatedCoins:
                 updatedCoins.append(trade.coin)
 
-        for trade in self.trades:
-            if trade.tradeID in prices:
-                # check if all needed currencies are included in loaded price. Otherwise skip the trade
+        # loop through all trades with new price
+        for tradeId in prices:
+            trade = self.getTradeById(tradeId)
+            # check if trade found
+            if trade:
+                # check if all needed currencies are included in loaded price. Otherwise don't use this price
                 missingCoin = 0
                 for key in settings.mySettings.displayCurrencies():
-                    if key not in prices[trade.tradeID]:
+                    if key not in prices[tradeId]:
                         missingCoin = 1
                         # increment FailedCnt of this trade, will be reset after Koala restart
                         trade.valueLoadingFailedCnt += 1
-                        break
                 if missingCoin == 0:
                     coinPrice = CoinValue()
-                    coinPrice.fromDict(prices[trade.tradeID])
+                    coinPrice.fromDict(prices[tradeId])
                     coinVal = coinPrice.mult(trade.amount)
                     try:
                         for key in settings.mySettings.displayCurrencies():
                             trade.value[key] = coinVal[key]
                         trade.valueLoaded = True
+                        # save coin of updated trade
+                        saveCoin(trade)
+                        # check partner trade
+                        partner = self.getTradeById(trade.tradePartnerId)
+                        if partner:
+                            if self.checkAndDoPriceUpdateForTrade(partner):
+                                saveCoin(partner)
                     except KeyError:
                         trade.valueLoaded = False
-                    # save coin of updated trade
+
+                # check if price of partner trade should be used
+                if self.checkAndDoPriceUpdateForTrade(trade):
                     saveCoin(trade)
 
-        for trade in self.trades:
-            # get partner trade
-            partner = self.getTradeById(trade.tradePartnerId)
-            # check valid partner
-            if partner:
-                # check value of partner
-                if partner.valueLoaded:
-                    # use partner value if value update was not possible or if trade has a fiat partner
-                    if (not trade.valueLoaded) or partner.isFiat():
-                        trade.setValueAll(partner.getValue().mult(-1))
-                        # save coin of updated trade
-                        saveCoin(trade)
-                        trade.valueLoaded = True
-                    # if value is 0 and partner value not
-                    elif trade.getValue() == CoinValue() and partner.getValue() != CoinValue():
-                        trade.setValueAll(partner.getValue().mult(-1))
-                        # save coin of updated trade
-                        saveCoin(trade)
-                    # if both values loaded and both trades are crypto use the same value
-                    elif not trade.isFiat():
-                        # use value of bought coin
-                        if trade.amount > 0:  # this is a buy trade
-                            partner.setValueAll(trade.getValue().mult(-1))
-                            # save coin of updated trade
-                            saveCoin(partner)
-                        else:  # this is a sell trade
-                            trade.setValueAll(partner.getValue().mult(-1))
-                            # save coin of updated trade
-                            saveCoin(trade)
         return updatedCoins
+
+    # check if trade value should be taken from partner trade or not
+    def checkAndDoPriceUpdateForTrade(self, trade: Trade) -> bool:
+        partner = self.getTradeById(trade.tradePartnerId)
+        # check valid partner
+        if partner:
+            # check if partner is loaded and has a value != 0
+            if partner.valueLoaded and partner.getValue() != CoinValue():
+                # use partner value if value update was not possible or if trade has a fiat partner
+                if (not trade.valueLoaded) or partner.isFiat():
+                    trade.setValueAll(partner.getValue().mult(-1))
+                    return True
+                    trade.valueLoaded = True
+                # if value is 0 and partner value not
+                elif trade.getValue() == CoinValue() and partner.getValue() != CoinValue():
+                    trade.setValueAll(partner.getValue().mult(-1))
+                    return True
+                # if both values loaded and both trades are crypto use the same value
+                elif not trade.isFiat():
+                    # use value of bought coin
+                    if trade.amount < 0:  # this is a sell trade
+                        trade.setValueAll(partner.getValue().mult(-1))
+                        return True
+        return False
 
     def updateValues(self):
         # load values of all trades
@@ -1174,20 +1180,28 @@ class CoinList:
                 return coin
 
     def addTrades(self, trades):
+        coins = []
         for trade in trades:
+            if trade.coin not in coins:
+                coins.append(trade.coin)
             self.addTrade(trade)
-        self.matchTrades()
+        for coin in coins:
+            self.getCoinByName(coin).matchTrades()
         return self
 
     def deleteTrades(self, trades):
+        coins = []
         for trade in trades:
+            if trade.coin not in coins:
+                coins.append(trade.coin)
             self.removeTrade(trade)
         # remove all empty coins
         # indexes = [index for index in range(len(self.coins)) if not self.coins[index].trades]
         # indexes.sort(reverse=True)
         # for index in indexes:
         #     self.coins.pop(index)
-        self.matchTrades()
+        for coin in coins:
+            self.getCoinByName(coin).matchTrades()
         return self
 
     def reloadTrades(self, trades):
@@ -1277,7 +1291,8 @@ class CoinList:
 
 # todo: check if this is actually needed. matching from histPricesChanged should be sufficient
     def histPriceUpdateFinished(self):
-        self.matchTrades()
+        pass
+        #self.matchTrades()
 
     # update current value of all coins
     def updateCurrentValues(self):

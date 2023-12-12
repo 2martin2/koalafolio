@@ -193,7 +193,6 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
             self.coinDatabase.updateCoinInfo(self)
         self.loadApiDataForNewCoins()
 
-
     def saveCoins(self):
         if self.dataPath:
             if os.path.isfile(os.path.join(self.dataPath, 'Coins.csv')):
