@@ -564,8 +564,7 @@ class ApiKeyView(qtwidgets.QWidget):
             addressList = addressModel.stringList()
             # remove All Item
             addressList.pop(0)
-            if apikey:
-                self.model.addDBEntry(self.pwInput.text(), apiname, apikey=apikey, addressList=addressList)
+            self.model.addDBEntry(self.pwInput.text(), apiname, apikey=apikey, addressList=addressList)
 
     def deleteDBEntry(self):
         apiname = self.apiSelectDropdown.currentText()
