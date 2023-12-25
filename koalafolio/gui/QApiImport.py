@@ -475,48 +475,40 @@ class ApiKeyView(qtwidgets.QWidget):
             self.model.createDatabase(pw)
 
     def directImportFromApi(self):
-        apiname = self.directApiSelectDropdown.currentText()
-        apitype = self.model.getApiType(apiname)
-        addressIndex = self.addressSelectDropdown.currentIndex()
-        if apitype == "chaindata" and addressIndex == 0:
-            addressList = self.addressSelectDropdown.model().stringList()[1:]
-            self.importFromApi.emit(apiname,
-                                    apitype,
-                                    self.startDateInput.dateTime().toSecsSinceEpoch(),
-                                    self.endDateInput.dateTime().toSecsSinceEpoch(),
-                                    self.keyInput.text(),
-                                    self.secretInput.text(),
-                                    addressList)
-        else:
-            self.importFromApi.emit(apiname,
-                                    apitype,
-                                    self.startDateInput.dateTime().toSecsSinceEpoch(),
-                                    self.endDateInput.dateTime().toSecsSinceEpoch(),
-                                    self.keyInput.text(),
-                                    self.secretInput.text(),
-                                    [self.addressSelectDropdown.currentText()])
+        apiname, apitype, addressIndex, addressList, apikey, apisecret = self.prepareApiData()
+        self.importFromApi.emit(apiname,
+                                apitype,
+                                self.startDateInput.dateTime().toSecsSinceEpoch(),
+                                self.endDateInput.dateTime().toSecsSinceEpoch(),
+                                apikey,
+                                apisecret,
+                                addressList)
 
     def directSaveFromApi(self):
+        apiname, apitype, addressIndex, addressList, apikey, apisecret = self.prepareApiData()
+        self.saveFromApi.emit(apiname,
+                              apitype,
+                              self.startDateInput.dateTime().toSecsSinceEpoch(),
+                              self.endDateInput.dateTime().toSecsSinceEpoch(),
+                              apikey,
+                              apisecret,
+                              addressList)
+
+    def prepareApiData(self):
         apiname = self.directApiSelectDropdown.currentText()
         apitype = self.model.getApiType(apiname)
         addressIndex = self.addressSelectDropdown.currentIndex()
-        if apitype == "chaindata" and addressIndex == 0:
-            addressList = self.addressSelectDropdown.model().stringList()[1:]
-            self.saveFromApi.emit(apiname,
-                                  apitype,
-                                  self.startDateInput.dateTime().toSecsSinceEpoch(),
-                                  self.endDateInput.dateTime().toSecsSinceEpoch(),
-                                  self.keyInput.text(),
-                                  self.secretInput.text(),
-                                  addressList)
-        else:
-            self.saveFromApi.emit(apiname,
-                                  apitype,
-                                  self.startDateInput.dateTime().toSecsSinceEpoch(),
-                                  self.endDateInput.dateTime().toSecsSinceEpoch(),
-                                  self.keyInput.text(),
-                                  self.secretInput.text(),
-                                  [self.addressSelectDropdown.currentText()])
+        addressList = []
+        apikey = self.keyInput.text()
+        apisecret = self.secretInput.text()
+        if apitype == "chaindata":
+            if not apikey:
+                apikey = self.model.getDefaultApikey(apiname)
+            if addressIndex == 0:
+                addressList = self.addressSelectDropdown.model().stringList()[1:]
+            else:
+                addressList = [self.addressSelectDropdown.currentText()]
+        return apiname, apitype, addressIndex, addressList, apikey, apisecret
 
     def unlockDb(self):
         pw = self.pwInput.text()
@@ -610,14 +602,8 @@ class ApiKeyView(qtwidgets.QWidget):
                 apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
                 if apikey:
                     self.keyInput.setText(apikey)
-                else:  # no key in database
-                    # set apikey to default key from apiDefaultDB
-                    self.keyInput.setText(self.model.getDefaultApikey(apiname))
                 for address in addressList:
                     self.model.addAddress(apiname, address)
-            else:
-                # set apikey to default key from apiDefaultDB
-                self.keyInput.setText(self.model.getDefaultApikey(apiname))
 
     def addChainAddress(self):
         # switch to AddressAddUI

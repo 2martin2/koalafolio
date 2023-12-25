@@ -14,6 +14,7 @@ import koalafolio.gui.QTradeTable as ttable
 import koalafolio.gui.FilterableTable as ftable
 import os
 import re
+import pandas
 import koalafolio.gui.QSettings as settings
 import datetime
 from pathlib import Path
