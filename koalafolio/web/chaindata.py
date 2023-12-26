@@ -7,7 +7,7 @@ Created on 29.11.2020
 
 import pandas
 import requests
-import logger
+import koalafolio.gui.QLogger as logger
 
 localLogger = logger.globalLogger
 
