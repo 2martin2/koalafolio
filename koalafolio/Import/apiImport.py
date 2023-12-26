@@ -23,30 +23,37 @@ class ApiModel:
         self.apiHandle = handle
         self.apiNote = note
 
+apiNamesBlockdaemon = chaindata.apinames
 
-apiNames = ["binance", "bittrex", "bitmex", "coinbase", "coinbasepro", "gemini", "poloniex", "kraken", "Cardano"]
+apiNames = ["binance",
+            "bittrex",
+            "bitmex",
+            "coinbase",
+            "coinbasepro",
+            "gemini",
+            "poloniex",
+            "kraken"] \
+           + apiNamesBlockdaemon
+
+# create apiModels
 apiModels = {}
-
-for key in apiNames:
-    apiModels[key] = ApiModel(
-        name=str(key),
+for apiname in apiNames:
+    apiModels[apiname] = ApiModel(
+        name=str(apiname),
         apitype="exchange",
         handle=None,
-        note="get data from " + str(key) + ". "
+        note="get data from " + str(apiname) + ". "
     )
+    if apiname in apiNamesBlockdaemon:  # apitype is blockdaemon chaindata
+        apiModels[apiname].apiType = "chaindata"
+        apiModels[apiname].apiNote += "Koala provides default api key for blockdaemon api.\n" \
+                                  "However it is recommended to create your own key for privacy reasons.\n" \
+                                  "Key can be created at https://app.blockdaemon.com (Login->workspace->API Suite->Connect.\n" \
+                                  "More Infos can be found in their documentation: https://docs.blockdaemon.com/"
 
 # add special api note for binance api
 apiModels["binance"].apiNote = "get trades from binance. Can take very long due to stupid api implementation of binance"
 
-# set type of Cardano api
-apiModels["Cardano"].apiType = "chaindata"
-
-for key in apiModels:
-    if apiModels[key].apiType == "chaindata":
-        apiModels[key].apiNote += "Koala provides default api key for blockdaemon api.\n" \
-                                  "However it is recommended to create your own key for privacy reasons.\n" \
-                                  "Key can be created at https://app.blockdaemon.com (Login->workspace->API Suite->Connect.\n" \
-                                  "More Infos can be found in their documentation: https://docs.blockdaemon.com/"
 
 
 apiModels["binance"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryBinance(apikey, secret, start, end)
@@ -57,7 +64,9 @@ apiModels["coinbasepro"].apiHandle = lambda apikey, secret, start, end: exchange
 apiModels["gemini"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryGemini(apikey, secret, start, end)
 apiModels["poloniex"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryPoloniex(apikey, secret, start, end)
 apiModels["kraken"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryKraken(apikey, secret, start, end)
-apiModels["Cardano"].apiHandle = lambda apikey, address, start, end: chaindata.getCardanoRewardsForAddress(apikey, address, start, end)
+for apiname in apiModels:
+    if apiModels[apiname].apiType == "chaindata":
+        apiModels[apiname].apiHandle = lambda apiname, apikey, address, start, end: chaindata.getBlockdaemonRewardsForAddress(apiname, apikey, address, start, end)
 
 
 def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, address=None):
@@ -69,7 +78,7 @@ def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, addres
             if apitype == "exchange":
                 return apiModels[apiname].apiHandle(apikey, secret, start, end)
             elif apitype == "chaindata":
-                return apiModels[apiname].apiHandle(apikey, address, int(start), int(end))
+                return apiModels[apiname].apiHandle(apiname, apikey, address, int(start), int(end))
             else:
                 raise ValueError("invalid type in getApiHistory: " + str(apitype))
         except Exception as ex:
@@ -213,8 +222,8 @@ class ApiDefaultDatabase(BaseDatabase):
 
             # create
             # self.createDatabase(self.pw)
-            # newKey = "somekey"
-            # self.addDBEntry(self.pw, apiname="Cardano", newData=newKey)
+            # newKey = "some_key"
+            # self.addDBEntry(self.pw, apiname="blockdaemon", newData=newKey)
 
             # read database
             self.readDatabase(self.pw)

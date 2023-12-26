@@ -503,7 +503,7 @@ class ApiKeyView(qtwidgets.QWidget):
         apisecret = self.secretInput.text()
         if apitype == "chaindata":
             if not apikey:
-                apikey = self.model.getDefaultApikey(apiname)
+                apikey = self.model.getDefaultApikey("blockdaemon")
             if addressIndex == 0:
                 addressList = self.addressSelectDropdown.model().stringList()[1:]
             else:
@@ -528,26 +528,26 @@ class ApiKeyView(qtwidgets.QWidget):
 
     def loadApiEntry(self):
         apiname = self.apiSelectDropdown.currentText()
+        apiname = apiname.lower()
+        if not apiname in self.model.apiModels:
+            localLogger.warning("invalid apiname in db apiname: " + str(apiname))
+            return
         apitype = self.model.getApiType(apiname)
         if apitype == "exchange":
             apikey, secret = self.model.getApiKeyAndSecret(apiname)
         elif apitype == "chaindata":
             apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
-        try:
-            index = self.directApiSelectDropdown.model().stringList().index(apiname)
-        except ValueError:
-            pass
-        else:
-            self.directApiSelectDropdown.setCurrentIndex(index)
-            if apitype == "exchange":
-                self.keyInput.setText(apikey)
-                self.secretInput.setText(secret)
-            elif apitype == "chaindata":
-                self.keyInput.setText(apikey)
-                addressModel: qtcore.QStringListModel
-                addressModel = self.model.getAddressModel(apiname)
-                addressList = ["All(" + str(len(addressList)) + ")"] + addressList
-                addressModel.setStringList(addressList)
+        index = self.directApiSelectDropdown.model().stringList().index(apiname)
+        self.directApiSelectDropdown.setCurrentIndex(index)
+        if apitype == "exchange":
+            self.keyInput.setText(apikey)
+            self.secretInput.setText(secret)
+        elif apitype == "chaindata":
+            self.keyInput.setText(apikey)
+            addressModel: qtcore.QStringListModel
+            addressModel = self.model.getAddressModel(apiname)
+            addressList = ["All(" + str(len(addressList)) + ")"] + addressList
+            addressModel.setStringList(addressList)
 
     def saveApiEntry(self):
         apiname = self.directApiSelectDropdown.currentText()
