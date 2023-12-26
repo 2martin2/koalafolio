@@ -6,7 +6,6 @@ Created on Fri Aug 24 09:44:38 2018
 """
 import openpyxl
 import openpyxl.styles.borders as xlborders
-import koalafolio.PcpCore.settings as settings
 import pytz
 from dateutil.relativedelta import relativedelta
 import koalafolio.PcpCore.core as core
