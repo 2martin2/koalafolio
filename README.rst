@@ -68,9 +68,15 @@ trade import
    - poloniex
    - kraken
 
- import Rewards of Staking Address
-  supported Chains
+ import Rewards from Staking Address
+  supported Chains (Blockdaemon Api)
    - Cardano
+   - Ethereum
+   - Solana
+   - Polkadot
+   - Polygon
+   - Near
+   - Avalanche
 
 optional arguments
 _____________________
