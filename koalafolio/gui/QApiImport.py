@@ -29,17 +29,32 @@ class ApiKeyModel(qtcore.QObject):
 
         self.database = database
         self.defaultApiKeys = defaultdata
+
+        self.apiModels = apiImport.apiModels
+
         self.databaseApiNameModel = qtcore.QStringListModel()
         self.databaseUnlocked.connect(self.loadDatabaseApiNames)
         self.databaseWritten.connect(self.loadDatabaseApiNames)
 
         self.apiSelectModel = qtcore.QStringListModel()
         self.refreshApiNames()
-
-        self.apiModels = apiImport.apiModels
+        self.addressSelectModels = {}
+        self.initAddressSelectModels()
+        self.refreshAddressSelectModels()
 
     def refreshApiNames(self):
         self.apiSelectModel.setStringList(apiImport.apiNames)
+
+    def initAddressSelectModels(self):
+        # add QStringListModel in addressSelectModels for each exchange api
+        for apiname in self.apiModels:
+            if self.apiModels[apiname].apiType == "chaindata":
+                self.addressSelectModels[apiname] = qtcore.QStringListModel()
+
+    def refreshAddressSelectModels(self):
+        # set default String List for addressSelectModels
+        for apiname in self.addressSelectModels:
+            self.addressSelectModels[apiname].setStringList(["All(0)"])
 
     def lockDatabase(self):
         self.database.lockDatabase()
@@ -53,11 +68,11 @@ class ApiKeyModel(qtcore.QObject):
     def isDataBaseLocked(self) -> bool:
         return self.database.databaseLocked
 
-    def createDatabase(self, pw):
+    def createDatabase(self, pw: str):
         self.database.createDatabase(pw)
         self.databaseUnlocked.emit()
 
-    def addDBEntry(self, pw, apiname, apikey=None, secret=None, address=None):
+    def addDBEntry(self, pw: str, apiname: str, apikey: str = None, secret: str = None, addressList: list = []):
         apitype = self.getApiType(apiname)
         newData = {}
         newData["apiname"] = apiname
@@ -66,7 +81,7 @@ class ApiKeyModel(qtcore.QObject):
             newData["secret"] = secret
         elif apitype == "chaindata":
             newData["apikey"] = apikey
-            newData["address"] = address
+            newData["address"] = addressList
         self.database.addDBEntry(pw, apiname, newData)
         self.databaseWritten.emit()
 
@@ -93,15 +108,19 @@ class ApiKeyModel(qtcore.QObject):
                 localLogger.error("api " + str(apiname) + " not part of database. ex: " + str(ex))
         return "", ""
 
-    def getApiKeyAndAddress(self, apiname) -> tuple[str, str]:
+    def getApiKeyAndAddressList(self, apiname) -> tuple[str, list]:
         if apiname in self.database.data:
             try:
                 data = self.database.data[apiname]
                 if data is not None:
-                    return data["apikey"], data["address"]
+                    addressList = data["address"]
+                    # support old version where only single address as str was saved, convert to list
+                    if isinstance(addressList, str):
+                        addressList = [addressList]
+                    return data["apikey"], addressList
             except KeyError as ex:
                 localLogger.error("api " + str(apiname) + " not part of database. ex: " + str(ex))
-        return "", ""
+        return "", []
 
     def getApiType(self, apiname):
         return self.apiModels[apiname].apiType
@@ -115,10 +134,42 @@ class ApiKeyModel(qtcore.QObject):
         else:
             return ""
 
+    def getAddressModel(self, apiname: str):
+        return self.addressSelectModels[apiname]
+
+    # append new Address to existing StringListModel for currently selected Api
+    def addAddress(self, apiname: str, address: str):
+        model: qtcore.QStringListModel
+        model = self.addressSelectModels[apiname]
+        addressList = model.stringList()
+        if not address:
+            localLogger.warning("no valid address")
+        elif address in addressList:
+            localLogger.warning("address already present")
+        else:  # address valid and not present
+            # append new Address
+            addressList.append(address)
+            # update All Item
+            addressList[0] = "All(" + str(model.rowCount()) + ")"
+            # add new List to Model
+            model.setStringList(addressList)
+
+    # remove currently selected Address from StringListModel of currently selected Api
+    def removeAddress(self, apiname: str, index: int):
+        # don't remove default All Item
+        if index > 0:
+            model: qtcore.QStringListModel
+            model = self.addressSelectModels[apiname]
+            model.removeRow(index)
+            # update All Item
+            addressList = model.stringList()
+            addressList[0] = "All(" + str(model.rowCount() - 1) + ")"
+            model.setStringList(addressList)
+
 
 class ApiKeyView(qtwidgets.QWidget):
-    importFromApi = qtcore.pyqtSignal([str, str, int, int, str, str, str])
-    saveFromApi = qtcore.pyqtSignal([str, str, int, int, str, str, str])
+    importFromApi = qtcore.pyqtSignal([str, str, int, int, str, str, list])
+    saveFromApi = qtcore.pyqtSignal([str, str, int, int, str, str, list])
 
     def __init__(self, *args, **kwargs):
         super(ApiKeyView, self).__init__(*args, **kwargs)
@@ -133,7 +184,8 @@ class ApiKeyView(qtwidgets.QWidget):
         # stacked Layout for api layout (switch exchange and chaindata UI)
         self.stackedContentLayoutApi = qtwidgets.QStackedLayout()
         self.stackedContentLayoutApi.addWidget(self.initApiExchangeUI())
-        self.stackedContentLayoutApi.addWidget(self.initApiChaindataUI())
+        self.stackedContentLayoutApi.addWidget(self.initApiChaindataUISelectAddress())
+        self.stackedContentLayoutApi.addWidget(self.initApiChaindataUIAddAddress())
 
         self.databaseLocked()
 
@@ -204,17 +256,45 @@ class ApiKeyView(qtwidgets.QWidget):
         return self.apiExchangeFrame
 
     # init UI for Chaindata UI with apikey and address
-    def initApiChaindataUI(self):
-        self.apiChaindataFrame = controls.StyledFrame(self)
+    def initApiChaindataUISelectAddress(self):
+        self.apiChaindataFrameSelectAddress = controls.StyledFrame(self)
 
-        self.addressLabel = qtwidgets.QLabel('address: ', self.apiChaindataFrame)
-        self.addressInput = qtwidgets.QLineEdit(self.apiChaindataFrame)
+        self.addressLabel = qtwidgets.QLabel('address: ', self.apiChaindataFrameSelectAddress)
+        self.addressSelectDropdown = qtwidgets.QComboBox(self.apiChaindataFrameSelectAddress)
 
-        self.apiChaindataGridLayout = qtwidgets.QGridLayout(self.apiChaindataFrame)
-        self.apiChaindataGridLayout.addWidget(self.addressLabel, 0, 0)
-        self.apiChaindataGridLayout.addWidget(self.addressInput, 0, 1)
+        self.addressInputAddButton = qtwidgets.QPushButton('+', self.apiChaindataFrameSelectAddress)
+        self.addressInputAddButton.clicked.connect(self.addChainAddress)
+        self.addressInputRemoveButton = qtwidgets.QPushButton('-', self.apiChaindataFrameSelectAddress)
+        self.addressInputRemoveButton.clicked.connect(self.removeChainAddress)
 
-        return self.apiChaindataFrame
+        self.apiChaindataGridLayoutSelectAddress = qtwidgets.QGridLayout(self.apiChaindataFrameSelectAddress)
+        self.apiChaindataGridLayoutSelectAddress.addWidget(self.addressLabel, 0, 0)
+        self.apiChaindataGridLayoutSelectAddress.addWidget(self.addressSelectDropdown, 0, 1)
+        self.apiChaindataGridLayoutSelectAddress.addWidget(self.addressInputAddButton, 0, 2)
+        self.apiChaindataGridLayoutSelectAddress.addWidget(self.addressInputRemoveButton, 0, 3)
+        self.apiChaindataGridLayoutSelectAddress.setColumnStretch(1, 100)
+
+        return self.apiChaindataFrameSelectAddress
+
+    def initApiChaindataUIAddAddress(self):
+        self.apiChaindataFrameAddAddress = controls.StyledFrame(self)
+
+        self.addressLabelNewAddress = qtwidgets.QLabel('address: ', self.apiChaindataFrameAddAddress)
+        self.addressInputNewAddress = qtwidgets.QLineEdit(self.apiChaindataFrameAddAddress)
+
+        self.addressInputFinishButton = qtwidgets.QPushButton(chr(10003), self.apiChaindataFrameAddAddress)
+        self.addressInputFinishButton.clicked.connect(self.saveNewChainAddress)
+        self.addressInputCancelButton = qtwidgets.QPushButton('x', self.apiChaindataFrameAddAddress)
+        self.addressInputCancelButton.clicked.connect(self.cancelNewChainAddress)
+
+        self.apiChaindataGridLayoutAddAddress = qtwidgets.QGridLayout(self.apiChaindataFrameAddAddress)
+        self.apiChaindataGridLayoutAddAddress.addWidget(self.addressLabelNewAddress, 0, 0)
+        self.apiChaindataGridLayoutAddAddress.addWidget(self.addressInputNewAddress, 0, 1)
+        self.apiChaindataGridLayoutAddAddress.addWidget(self.addressInputFinishButton, 0, 2)
+        self.apiChaindataGridLayoutAddAddress.addWidget(self.addressInputCancelButton, 0, 3)
+        self.apiChaindataGridLayoutAddAddress.setColumnStretch(1, 100)
+
+        return self.apiChaindataFrameAddAddress
 
     def initNewDbUI(self):
         self.newDbFrame = controls.StyledFrame(self)
@@ -342,6 +422,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.apiSelectDropdown.setModel(model.databaseApiNameModel)
         self.directApiSelectDropdown.setModel(model.apiSelectModel)
         self.directApiSelectDropdown.setCurrentIndex(0)
+
         # set model
         if self.model.database.databaseFound:
             self.stackedContentLayoutDB.setCurrentIndex(1)
@@ -394,24 +475,40 @@ class ApiKeyView(qtwidgets.QWidget):
             self.model.createDatabase(pw)
 
     def directImportFromApi(self):
-        apiname = self.directApiSelectDropdown.currentText()
+        apiname, apitype, addressIndex, addressList, apikey, apisecret = self.prepareApiData()
         self.importFromApi.emit(apiname,
-                                self.model.getApiType(apiname),
+                                apitype,
                                 self.startDateInput.dateTime().toSecsSinceEpoch(),
                                 self.endDateInput.dateTime().toSecsSinceEpoch(),
-                                self.keyInput.text(),
-                                self.secretInput.text(),
-                                self.addressInput.text())
+                                apikey,
+                                apisecret,
+                                addressList)
 
     def directSaveFromApi(self):
-        apiname = self.directApiSelectDropdown.currentText()
+        apiname, apitype, addressIndex, addressList, apikey, apisecret = self.prepareApiData()
         self.saveFromApi.emit(apiname,
-                              self.model.getApiType(apiname),
+                              apitype,
                               self.startDateInput.dateTime().toSecsSinceEpoch(),
                               self.endDateInput.dateTime().toSecsSinceEpoch(),
-                              self.keyInput.text(),
-                              self.secretInput.text(),
-                              self.addressInput.text())
+                              apikey,
+                              apisecret,
+                              addressList)
+
+    def prepareApiData(self):
+        apiname = self.directApiSelectDropdown.currentText()
+        apitype = self.model.getApiType(apiname)
+        addressIndex = self.addressSelectDropdown.currentIndex()
+        addressList = []
+        apikey = self.keyInput.text()
+        apisecret = self.secretInput.text()
+        if apitype == "chaindata":
+            if not apikey:
+                apikey = self.model.getDefaultApikey("blockdaemon")
+            if addressIndex == 0:
+                addressList = self.addressSelectDropdown.model().stringList()[1:]
+            else:
+                addressList = [self.addressSelectDropdown.currentText()]
+        return apiname, apitype, addressIndex, addressList, apikey, apisecret
 
     def unlockDb(self):
         pw = self.pwInput.text()
@@ -431,23 +528,26 @@ class ApiKeyView(qtwidgets.QWidget):
 
     def loadApiEntry(self):
         apiname = self.apiSelectDropdown.currentText()
+        apiname = apiname.lower()
+        if not apiname in self.model.apiModels:
+            localLogger.warning("invalid apiname in db apiname: " + str(apiname))
+            return
         apitype = self.model.getApiType(apiname)
         if apitype == "exchange":
             apikey, secret = self.model.getApiKeyAndSecret(apiname)
         elif apitype == "chaindata":
-            apikey, address = self.model.getApiKeyAndAddress(apiname)
-        try:
-            index = self.directApiSelectDropdown.model().stringList().index(apiname)
-        except ValueError:
-            pass
-        else:
-            self.directApiSelectDropdown.setCurrentIndex(index)
-            if apitype == "exchange":
-                self.keyInput.setText(apikey)
-                self.secretInput.setText(secret)
-            elif apitype == "chaindata":
-                self.keyInput.setText(apikey)
-                self.addressInput.setText(address)
+            apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
+        index = self.directApiSelectDropdown.model().stringList().index(apiname)
+        self.directApiSelectDropdown.setCurrentIndex(index)
+        if apitype == "exchange":
+            self.keyInput.setText(apikey)
+            self.secretInput.setText(secret)
+        elif apitype == "chaindata":
+            self.keyInput.setText(apikey)
+            addressModel: qtcore.QStringListModel
+            addressModel = self.model.getAddressModel(apiname)
+            addressList = ["All(" + str(len(addressList)) + ")"] + addressList
+            addressModel.setStringList(addressList)
 
     def saveApiEntry(self):
         apiname = self.directApiSelectDropdown.currentText()
@@ -459,9 +559,12 @@ class ApiKeyView(qtwidgets.QWidget):
                 self.model.addDBEntry(self.pwInput.text(), apiname, apikey=apikey, secret=secret)
         elif apitype == "chaindata":
             apikey = self.keyInput.text()
-            address = self.addressInput.text()
-            if apikey and address:
-                self.model.addDBEntry(self.pwInput.text(), apiname, apikey=apikey, address=address)
+            addressModel: qtcore.QStringListModel
+            addressModel = self.model.getAddressModel(apiname)
+            addressList = addressModel.stringList()
+            # remove All Item
+            addressList.pop(0)
+            self.model.addDBEntry(self.pwInput.text(), apiname, apikey=apikey, addressList=addressList)
 
     def deleteDBEntry(self):
         apiname = self.apiSelectDropdown.currentText()
@@ -476,7 +579,7 @@ class ApiKeyView(qtwidgets.QWidget):
     # callback if selected Api is changed
     def directApiSelectDropdownChanged(self):
         # remove previous Input from InputBoxes
-        self.addressInput.clear()
+        self.addressInputNewAddress.clear()
         self.keyInput.clear()
         self.secretInput.clear()
         apiname = self.directApiSelectDropdown.currentText()
@@ -492,14 +595,36 @@ class ApiKeyView(qtwidgets.QWidget):
                 self.secretInput.setText(secret)
         elif apitype == "chaindata":
             self.stackedContentLayoutApi.setCurrentIndex(1)
+            self.addressSelectDropdown.setModel(self.model.getAddressModel(apiname))
+            self.addressSelectDropdown.setCurrentIndex(0)
             if not self.model.isDataBaseLocked():
-                apikey, address = self.model.getApiKeyAndAddress(apiname)
+                apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
                 if apikey:
                     self.keyInput.setText(apikey)
-                else:  # no key in database
-                    # set apikey to default key from apiDefaultDB
-                    self.keyInput.setText(self.model.getDefaultApikey(apiname))
-                self.addressInput.setText(address)
-            else:
-                # set apikey to default key from apiDefaultDB
-                self.keyInput.setText(self.model.getDefaultApikey(apiname))
+                for address in addressList:
+                    self.model.addAddress(apiname, address)
+
+    def addChainAddress(self):
+        # switch to AddressAddUI
+        self.stackedContentLayoutApi.setCurrentIndex(2)
+        self.addressInputNewAddress.clear()
+
+    def removeChainAddress(self):
+        # remove selected Address from ComboBoxModel
+        apiname = self.directApiSelectDropdown.currentText()
+        index = self.addressSelectDropdown.currentIndex()
+        self.model.removeAddress(apiname, index)
+        self.addressSelectDropdown.setCurrentIndex(0)
+
+    def saveNewChainAddress(self):
+        # add new Address to ComboBoxModel
+        apiname = self.directApiSelectDropdown.currentText()
+        address = self.addressInputNewAddress.text()
+        self.model.addAddress(apiname, address)
+        self.addressSelectDropdown.setCurrentIndex(self.addressSelectDropdown.count() - 1)
+        # switch to AddressSelectUI
+        self.stackedContentLayoutApi.setCurrentIndex(1)
+
+    def cancelNewChainAddress(self):
+        # switch to AddressSelectUI
+        self.stackedContentLayoutApi.setCurrentIndex(1)

@@ -14,6 +14,7 @@ import koalafolio.gui.QTradeTable as ttable
 import koalafolio.gui.FilterableTable as ftable
 import os
 import re
+import pandas
 import koalafolio.gui.QSettings as settings
 import datetime
 from pathlib import Path
@@ -227,13 +228,13 @@ class ImportSelectPage(SubPage):
         else:
             localLogger.info('please select at least one valid file')
 
-    def importFromApi(self, api, apitype, start, end, apikey, secret, address):
+    def importFromApi(self, api, apitype, start, end, apikey, secret, addressList):
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
         self.controller.filesNotImported = 0
         self.controller.filesImported = 0
         self.controller.clearNewTrades()
-        content = apiImport.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret, address=address)
+        content = self.getApiContent(api, apitype, start, end, apikey, secret, addressList)
 
         if not content.empty:
             tradeListTemp, feeListTemp, match, skippedRows = importer.convertTradesSingle(
@@ -255,8 +256,8 @@ class ImportSelectPage(SubPage):
         else:
             localLogger.info("no data received from api")
 
-    def saveFromApi(self, api, apitype, start, end, apikey, secret, address):
-        content = apiImport.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret, address=address)
+    def saveFromApi(self, api, apitype, start, end, apikey, secret, addressList):
+        content = self.getApiContent(api, apitype, start, end, apikey, secret, addressList)
         if not content.empty:
             self.saveCsvFileDialog.setDefaultSuffix("csv")
             filename = api + '_api.csv'
@@ -267,6 +268,23 @@ class ImportSelectPage(SubPage):
                 localLogger.warning("invalid path: " + str(pathReturn[0]))
         else:
             localLogger.info("no data received from api")
+
+    def getApiContent(self, api, apitype, start, end, apikey, secret, addressList):
+        if apitype == "chaindata":
+            content = None
+            for address in addressList:
+                newContent = apiImport.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret,
+                                                  address=address)
+                if not newContent.empty:
+                    if content is None:
+                        content = newContent
+                    else:
+                        content = content.merge(newContent)
+            if content is None:
+                content = pandas.DataFrame()
+        else:
+            content = apiImport.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret, address="")
+        return content
 
     # skip preview and show import finished page
     def showImportFinishedFrame(self):
