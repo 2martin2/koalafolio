@@ -13,7 +13,19 @@ koalafolio
 
 portfolio for cryptocoins with profit export for tax
 
-.. image:: koalaExample.png
+.. image:: https://gitea.com/2martin2/koalafolio/raw/branch/master/koalaExample.png
+
+Installation with Pip
+----------------------
+
+ - (opt) install python_ > 3.7 (check with python --version or python3 --version or python3.x --version)
+ - (opt) install pip (check with pip --version or pip3 --version)
+ - (opt) install microsoft build tools https://visualstudio.microsoft.com/de/visual-cpp-build-tools/
+ - install koalafolio for python 3!: (pip install koalafolio or pip3 install koalafolio or python3.x -m pip install koalafolio)
+ - run koalafolio from terminal (koalafolio or python -m koalafolio)
+ - (opt) update koalafolio (pip install koalafolio --upgrade)
+
+.. _python: https://www.python.org/downloads/
 
 Installation with PipEnv
 -------------------------
@@ -25,17 +37,7 @@ Installation with PipEnv
  - use pipenv to install dependencies
  - run gui_root.py
  
-Installation with Pip
-----------------------
-   
- - (opt) install python_ > 3.7 (check with python --version or python3 --version or python3.x --version)
- - (opt) install pip (check with pip --version or pip3 --version)
- - (opt) install microsoft build tools https://visualstudio.microsoft.com/de/visual-cpp-build-tools/
- - install koalafolio for python 3!: (pip install koalafolio or pip3 install koalafolio or python3.x -m pip install koalafolio)
- - run koalafolio from terminal (koalafolio or python -m koalafolio)
- - (opt) update koalafolio (pip install koalafolio --upgrade)
-   
-.. _python: https://www.python.org/downloads/
+
    
 trade import
 -------------
