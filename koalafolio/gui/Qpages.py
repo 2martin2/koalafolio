@@ -57,15 +57,15 @@ class SettingsPage(Page):
         self.appPathLabel.setContentsMargins(0, 0, 10, 0)
         self.dataPathLabel.setContentsMargins(0, 0, 10, 0)
 
-        self.githubButton = qtwidgets.QPushButton("github")
-        self.githubButton.clicked.connect(lambda: webbrowser.open('https://github.com/2martin2/koalafolio'))
+        self.repoButton = qtwidgets.QPushButton("repo")
+        self.repoButton.clicked.connect(lambda: webbrowser.open('https://gitea.com/2martin2/koalafolio'))
 
         self.labelLayout = qtwidgets.QHBoxLayout()
         self.labelLayout.addWidget(self.appPathPreButton)
         self.labelLayout.addWidget(self.appPathLabel)
         self.labelLayout.addWidget(self.dataPathPreButton)
         self.labelLayout.addWidget(self.dataPathLabel)
-        self.labelLayout.addWidget(self.githubButton)
+        self.labelLayout.addWidget(self.repoButton)
         self.labelLayout.addStretch()
         self.vertLayout.addLayout(self.labelLayout)
 

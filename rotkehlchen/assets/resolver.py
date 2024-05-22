@@ -40,7 +40,7 @@ asset_type_mapping = {
 def _get_latest_assets(data_directory: Path) -> Dict[str, Any]:
     """Gets the latest assets either locally or from the remote
 
-    Checks the remote (github) and if there is a newer file there it pulls it,
+    Checks the remote (gitea) and if there is a newer file there it pulls it,
     saves it and its md5 hash locally and returns the new assets.
 
     If there is no new file (same hash) or if there is any problem contacting the remote
@@ -49,7 +49,7 @@ def _get_latest_assets(data_directory: Path) -> Dict[str, Any]:
 
     our_downloaded_meta = data_directory / 'assets' / 'all_assets.meta'
     try:
-        response = requests.get('https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/all_assets.meta')  # noqa: E501
+        response = requests.get('https://gitea.com/2martin2/koalafolio/raw/branch/master/rotkehlchen/data_rotki/all_assets.meta')  # noqa: E501
         remote_meta = response.json()
         if our_downloaded_meta.is_file():
             local_meta_file = our_downloaded_meta
@@ -59,8 +59,8 @@ def _get_latest_assets(data_directory: Path) -> Dict[str, Any]:
             local_meta = None
 
         if not local_meta or local_meta['version'] < remote_meta['version']:
-            # we need to download and save the new assets from github
-            response = requests.get('https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/all_assets.json')  # noqa: E501
+            # we need to download and save the new assets from remote
+            response = requests.get('https://gitea.com/2martin2/koalafolio/raw/branch/master/rotkehlchen/data_rotki/all_assets.json')  # noqa: E501
             remote_asset_data = response.text
 
             # Make sure directory exists

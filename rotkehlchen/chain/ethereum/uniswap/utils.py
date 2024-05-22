@@ -142,7 +142,7 @@ def get_latest_lp_addresses(data_directory: Path) -> List[ChecksumEthAddress]:
     our_downloaded_meta = data_directory / 'assets' / 'uniswapv2_lp_tokens.meta'
     our_builtin_meta = root_dir / 'data' / 'uniswapv2_lp_tokens.meta'
     try:
-        response = requests.get('https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/uniswapv2_lp_tokens.meta')  # noqa: E501
+        response = requests.get('https://gitea.com/2martin2/koalafolio/raw/branch/master/rotkehlchen/data_rotki/uniswapv2_lp_tokens.meta')  # noqa: E501
         remote_meta = response.json()
         if our_downloaded_meta.is_file():
             local_meta_file = our_downloaded_meta
@@ -153,8 +153,8 @@ def get_latest_lp_addresses(data_directory: Path) -> List[ChecksumEthAddress]:
             local_meta = json.loads(f.read())
 
         if local_meta['version'] < remote_meta['version']:
-            # we need to download and save the new assets from github
-            response = requests.get('https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/uniswapv2_lp_tokens.json')  # noqa: E501
+            # we need to download and save the new assets from remote
+            response = requests.get('https://gitea.com/2martin2/koalafolio/raw/branch/master/rotkehlchen/data_rotki/uniswapv2_lp_tokens.json')  # noqa: E501
             remote_data = response.text
 
             # Make sure directory exists

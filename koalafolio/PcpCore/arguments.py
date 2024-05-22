@@ -13,7 +13,7 @@ import koalafolio.PcpCore.settings as settings
 def parse_arguments():
     # create parser
     parser = argparse.ArgumentParser(prog="koalafolio",
-                                     description=" visit https://github.com/2martin2/koalafolio for more information")
+                                     description=" visit https://gitea.com/2martin2/koalafolio for more information")
     # add arguments to the parser
     parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s ' + str(settings.VERSION),

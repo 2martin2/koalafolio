@@ -5,13 +5,13 @@ with open('README.rst', encoding="utf-8") as f:
 
 setuptools.setup(
     name='koalafolio',
-    version='0.12.4',
+    version='0.12.5',
     description='portfolio app for crypto trading and tax reporting',
     long_description=readme,
     long_description_content_type='text/x-rst',
-    url='https://github.com/2martin2/koalafolio',
+    url='https://gitea.com/2martin2/koalafolio',
     author='2martin2',
-    author_email='2martin2@proton.me',
+    author_email='koala+pypi@slmail.me',
     keywords='crypto cryptocoins tax portfolio tracking',
     license='GPL-3.0',
     python_requires='>=3.7',
