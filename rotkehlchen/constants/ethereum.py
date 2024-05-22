@@ -25,13 +25,13 @@ def _get_latest_data(data_directory: Path) -> Tuple[Dict[str, Any], Dict[str, An
     our_downloaded_contracts = data_directory / 'assets' / 'eth_contracts.json'
     our_downloaded_abi_entries = data_directory / 'assets' / 'eth_abi.json'
     try:
-        # we need to download and save the contracts from github
+        # we need to download and save the contracts from remote
         response = requests.get(
-            'https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/eth_contracts.json')  # noqa: E501
+            'https://gitea.com/2martin2/koalafolio/raw/branch/master/rotkehlchen/data_rotki/eth_contracts.json')  # noqa: E501
         remote_contract_data = response.text
-        # we need to download and save the abi from github
+        # we need to download and save the abi from remote
         response2 = requests.get(
-            'https://raw.githubusercontent.com/2martin2/koalafolio/develop/rotkehlchen/data_rotki/eth_abi.json')
+            'https://gitea.com/2martin2/koalafolio/raw/branch/master/rotkehlchen/data_rotki/eth_abi.json')
         remote_abi_data = response2.text
 
         # Make sure directory exists
