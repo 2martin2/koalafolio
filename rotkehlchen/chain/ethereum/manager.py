@@ -12,7 +12,6 @@ from eth_typing import BlockNumber
 from eth_utils.address import to_checksum_address
 from typing_extensions import Literal
 from web3 import HTTPProvider, Web3
-from web3._utils.abi import get_abi_output_types
 from web3._utils.contracts import find_matching_event_abi
 from web3._utils.filters import construct_event_filter_params
 from web3.datastructures import MutableAttributeDict
@@ -478,12 +477,12 @@ class EthereumManager():
                 f'with arguments: {str(arguments)} via etherscan. Returned 0x result',
             )
 
-        fn_abi = contract._find_matching_fn_abi(
-            fn_identifier=method_name,
-            args=arguments,
-        )
-        output_types = get_abi_output_types(fn_abi)
-        output_data = web3.codec.decode_abi(output_types, bytes.fromhex(result[2:]))
+        # Find the matching function ABI
+        fn_abi = contract.get_function_by_name(method_name).abi
+
+        # Extract output types correctly
+        output_types = [output["type"] for output in fn_abi["outputs"]]
+        output_data = web3.codec.decode(output_types, bytes.fromhex(result[2:]))
 
         if len(output_data) == 1:
             return output_data[0]
