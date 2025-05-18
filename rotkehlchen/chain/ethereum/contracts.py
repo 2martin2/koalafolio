@@ -1,9 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
 
-from eth_typing.abi import Decodable
 from typing_extensions import Literal
 from web3 import Web3
-from web3._utils.abi import get_abi_output_types
 
 from rotkehlchen.typing import ChecksumEthAddress
 
@@ -56,16 +54,18 @@ class EthereumContract(NamedTuple):
         contract = WEB3.eth.contract(address=self.address, abi=self.abi)
         return contract.encodeABI(method_name, args=arguments if arguments else [])
 
-    def decode(
-            self,
-            result: Decodable,
-            method_name: str,
-            arguments: Optional[List[Any]] = None,
-    ) -> Tuple[Any, ...]:
-        contract = WEB3.eth.contract(address=self.address, abi=self.abi)
-        fn_abi = contract._find_matching_fn_abi(
-            fn_identifier=method_name,
-            args=arguments if arguments else [],
-        )
-        output_types = get_abi_output_types(fn_abi)
-        return WEB3.codec.decode_abi(output_types, result)
+    def decode(self,
+               result,
+               method_name: str,
+               arguments=None
+               ) -> Tuple[Any, ...]:
+        contract = Web3.eth.contract(address=self.address, abi=self.abi)
+
+        # Find the matching function ABI
+        fn_abi = contract.get_function_by_name(method_name).abi
+
+        # Extract output types correctly
+        output_types = [output["type"] for output in fn_abi["outputs"]]
+
+        # Decode ABI using Web3's codec
+        return Web3.codec.decode(output_types, result)
