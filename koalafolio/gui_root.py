@@ -421,6 +421,14 @@ def main():
     coreSettings.mySettings = settings.mySettings
     qtwidgets.QApplication.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
     app = qtwidgets.QApplication(sys.argv)
+    
+    # Create and show splash screen
+    splash_pixmap = qtgui.QPixmap(os.path.join(application_path, 'graphics', 'KoalaIcon.ico'))
+    splash = qtwidgets.QSplashScreen(splash_pixmap)
+    splash.setWindowFlags(qtcore.Qt.FramelessWindowHint)
+    splash.show()
+    app.processEvents()  # Process events to make sure splash is displayed immediately
+    
     try:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         app_icon = qtgui.QIcon()
@@ -429,8 +437,13 @@ def main():
         app.setApplicationName('koalafolio')
     except Exception as ex:
         print(str(ex))
+    
+    # Initialize main window
     window = PortfolioApp(userDataPath=args.datadir, username=args.username)
-
+    
+    # Close splash when main window is ready
+    splash.finish(window)
+    
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
