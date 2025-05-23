@@ -1,1 +1,4 @@
-pipenv run pyinstaller koalafolio/gui_root.py --onefile --windowed --icon=koalafolio/KoalaIcon.ico --name=koalafolio --distpath koalafolio/dist --add-binary %LocalAppData%\Programs\Python\Python310\Lib\site-packages\coincurve\libsecp256k1.dll;coincurve
+rem todo: exe needs graphics and Import/defaultApiData.db relative to exe path.
+rem Include of these files in .spec does not work with single file mode.
+rem When they are copied to dist folder manually, it works.
+pipenv run pyinstaller koalafolio.spec
