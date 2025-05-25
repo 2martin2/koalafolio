@@ -13,10 +13,13 @@ import pandas as pd
 import ast
 from typing import Dict
 import unittest
-
+from pathlib import Path
 
 # Add parent directory to path to import koalafolio modules
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+project_root = Path(__file__).parents[2]
+sys.path.append(str(project_root))
+test_root = Path(__file__).parents[3] / "koalafolio_testdata"
+testdata_path = test_root / Path(__file__).stem
 
 from koalafolio.web import exchanges
 
@@ -26,18 +29,28 @@ class TestExchanges(unittest.TestCase):
 
     def setUp(self):
         """Set up test environment"""
-        # Calculate timestamps for one year ago until today
-        now = datetime.datetime.now()
-        one_year_ago = now - datetime.timedelta(days=5*365)
+        self.test_start_time = datetime.datetime.now()
+        self.test_data_dir = testdata_path
+        # Check if test data directory exists
+        if not os.path.exists(self.test_data_dir):
+            raise unittest.SkipTest(f"Test data directory not found: {self.test_data_dir}")
+        self.test_data_out_dir = testdata_path / f"out_{self.test_start_time.strftime('%Y%m%d_%H%M%S')}"
+        # create out dir if it does not exist
+        if not os.path.exists(self.test_data_out_dir):
+            os.makedirs(self.test_data_out_dir)
+        self.output_file = self.test_data_out_dir / \
+                           f"test_exchanges_results_{self.test_start_time.strftime('%Y%m%d_%H%M%S')}.json"
+
+        # Calculate timestamps for 5 year span
+        now = self.test_start_time
+        some_years_ago = now - datetime.timedelta(days=5*365)
         
         self.end_ts = int(time.mktime(now.timetuple()))
-        self.start_ts = int(time.mktime(one_year_ago.timetuple()))
-        
-        # Create output directory for CSV files
-        self.output_dir = os.path.dirname(os.path.abspath(__file__))
+        self.start_ts = int(time.mktime(some_years_ago.timetuple()))
 
-        file_path = "D:\git\koalafolio_testdata\exchanges.csv"
-        self.load_api_keys(file_path)
+        self.load_api_keys(self.test_data_dir /"input.csv")
+
+        # self.settings = settings.mySettings.setPath(test_root)
 
     def load_api_keys(self, file_path: str) -> Dict[str, Dict[str, str]]:
         """Load API keys from text file
@@ -46,18 +59,16 @@ class TestExchanges(unittest.TestCase):
             file_path: Path to text file with API keys
             
         """
-        
         # Dictionary to store API keys
         self.api_keys = {}
-        
         try:
             with open(file_path, 'r') as f:
                 content = f.read()
                 self.api_keys = ast.literal_eval(content)
             
-            print(f"Loaded {len(self.api_keys)} API keys from {file_path}")
+            print(f"TEST test_exchanges: Loaded {len(self.api_keys)} API keys from {file_path}")
         except Exception as e:
-            print(f"Error loading API keys: {e}")
+            print(f"TEST test_exchanges: Error loading API keys: {e}")
     
     def save_trades_to_csv(self, exchange_name: str, trades_df: pd.DataFrame):
         """Save trades to CSV file
@@ -67,12 +78,10 @@ class TestExchanges(unittest.TestCase):
             trades_df: DataFrame with trades
         """
         if not trades_df.empty:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{exchange_name}_trades_{timestamp}.csv"
-            filepath = os.path.join(self.output_dir, filename)
+            filename = f"{exchange_name}_ccxt_trades.txt"
             
-            trades_df.to_csv(filepath, index=False)
-            print(f"Saved {len(trades_df)} trades to {filepath}")
+            trades_df.to_csv(self.test_data_out_dir / filename, index=False)
+            print(f"TEST test_exchanges: Saved {len(trades_df)} trades to {self.test_data_out_dir / filename}")
             
     def runTest(self):
         """Run all tests"""
@@ -80,36 +89,21 @@ class TestExchanges(unittest.TestCase):
             api_data = self.api_keys[apiname]
             key = api_data['apikey']
             secret = api_data['secret']
-            print(f"Testing {apiname} API...")
+            print(f"TEST test_exchanges: Testing {apiname} API...")
             try:
+                # log time needed for getTradeHistoryCall
+                start_time = time.time()
                 result = exchanges.getTradeHistoryCcxt(apiname, key, secret, self.start_ts, self.end_ts)
-                self.assertIsInstance(result, pd.DataFrame)
-                print(f"{apiname} API test successful. Got {len(result)} trades.")
+                end_time = time.time()
+                print(f"TEST test_exchanges: {apiname} API test successful. Got {len(result)} trades.")
                 self.save_trades_to_csv(apiname, result)
+                print(f"TEST test_exchanges: {apiname} API test took {end_time - start_time:.2f} seconds")
+                self.assertIsInstance(result, pd.DataFrame)
             except Exception as e:
-                print(f"{apiname} API test failed: {e}")
+                print(f"TEST test_exchanges: {apiname} API test failed: {e}")
 
-
-def run_tests(file_path: str):
-    """Run all tests with API keys from text file
-    
-    Args:
-        file_path: Path to text file with Test API keys
-    """
-    # Create test suite
-    suite = unittest.TestSuite()
-    test = TestExchanges()
-    
-    # Load API keys
-    test.load_api_keys(file_path)
-    
-    # Add test methods
-    suite.addTest(test)
-    
-    # Run tests
-    unittest.TextTestRunner().run(suite)
 
 
 if __name__ == "__main__":
     # run test with test data
-    run_tests()
+    unittest.main()
