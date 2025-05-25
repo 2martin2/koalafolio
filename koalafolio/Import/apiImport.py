@@ -23,14 +23,14 @@ class ApiModel:
         self.apiNote = note
 
 apiNamesBlockdaemon = chaindata.apinames
-apiNamesxxct = exchanges.exchangenames
+apiNamesCcxt = exchanges.exchangenames
 
-apiNames = apiNamesxxct \
+apiNames = apiNamesCcxt \
            + apiNamesBlockdaemon
 
 # create apiModels
 apiModels = {}
-for apiname in apiNamesxxct:
+for apiname in apiNamesCcxt:
     apiModels[apiname] = ApiModel(
         name=str(apiname),
         apitype="exchange",

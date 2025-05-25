@@ -10,6 +10,7 @@ TYPE_REGEX_PATTERN = r'^(((transaction)|(trade)|(order)|())( *|_)((typ(|e))|(sid
 FEE_REGEX_PATTERN = r'^((fee(|s))|(commission)(|paid))$'  # fee
 FEECOIN_REGEX_PATTERN = r'^(((fee)|(commission))(| *)((coin)|(currency)))|(coin\.3)$'  # feecoin
 STATUS_REGEX_PATTERN = r'^(status)$'
+EXCHANGE_REGEX_PATTERN = r'^exchange$'
 
 # model 0
 PAIR_REGEX_PATTERN_0 = r'^(((trading)|)(| *)(pair)|(symbol)|(currency(|s))|(market)|(coins)|(instrument))$'  # coinpair
@@ -83,6 +84,17 @@ ROTKI_FEE_REGEX = re.compile(r'^fee$', re.IGNORECASE)
 ROTKI_FEE_CURRENCY_REGEX = re.compile(r'^fee_currency$', re.IGNORECASE)
 ROTKI_LINK_REGEX = re.compile(r'^link$', re.IGNORECASE)
 ROTKI_NOTES_REGEX = re.compile(r'^notes$', re.IGNORECASE)
+
+# %% model CCXT: timestamp, location, pair, trade_type, amount, rate, fee, fee_currency, link
+CCXT_TIMESTAMP_REGEX = re.compile(r'^timestamp$', re.IGNORECASE)
+CCXT_LOCATION_REGEX = re.compile(r'^location$', re.IGNORECASE)
+CCXT_PAIR_REGEX = re.compile(r'^pair$', re.IGNORECASE)
+CCXT_TRADE_TYPE_REGEX = re.compile(r'^trade_type$', re.IGNORECASE)
+CCXT_AMOUNT_REGEX = re.compile(r'^amount$', re.IGNORECASE)
+CCXT_RATE_REGEX = re.compile(r'^rate$', re.IGNORECASE)
+CCXT_FEE_REGEX = re.compile(r'^fee$', re.IGNORECASE)
+CCXT_FEE_CURRENCY_REGEX = re.compile(r'^fee_currency$', re.IGNORECASE)
+CCXT_LINK_REGEX = re.compile(r'^link$', re.IGNORECASE)
 
 # %% regex # XXX_$1_REGEX = re.compile\(r\'\^$1\$\'\)
 
@@ -221,6 +233,7 @@ TYPE_REGEX = re.compile(TYPE_REGEX_PATTERN, re.IGNORECASE)
 FEE_REGEX = re.compile(FEE_REGEX_PATTERN, re.IGNORECASE)
 FEECOIN_REGEX = re.compile(FEECOIN_REGEX_PATTERN, re.IGNORECASE)
 STATUS_REGEX = re.compile(STATUS_REGEX_PATTERN, re.IGNORECASE)
+EXCHANGE_REGEX = re.compile(EXCHANGE_REGEX_PATTERN, re.IGNORECASE)
 
 # model 0
 PAIR_REGEX_0 = re.compile(PAIR_REGEX_PATTERN_0, re.IGNORECASE)

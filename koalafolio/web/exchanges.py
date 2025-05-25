@@ -25,19 +25,19 @@ exchangenames = [
 ]
 
 # timestamp,  location,   pair,   trade_type, amount, rate,   fee,    fee_currency,   link
-def tradesToDataframe(trades):
+def tradesToDataframe(ccxtTrades):
     trades = []
-    for trade in trades:
+    for ccxtTrade in ccxtTrades:
         trade = {}
-        trade['timestamp'] = datetime.datetime.fromtimestamp(trade.timestamp)
-        trade['location'] = str(trade.location)
-        trade['pair'] = str(trade.pair)
-        trade['trade_type'] = str(trade.trade_type)
-        trade['amount'] = float(trade.amount)
-        trade['rate'] = float(trade.rate)
-        trade['fee'] = float(trade.fee)
-        trade['fee_currency'] = str(trade.fee_currency.symbol)
-        trade['link'] = str(trade.link)
+        trade['timestamp'] = datetime.datetime.fromtimestamp(ccxtTrade.timestamp)
+        trade['location'] = str(ccxtTrade.location)
+        trade['pair'] = str(ccxtTrade.pair)
+        trade['trade_type'] = str(ccxtTrade.trade_type)
+        trade['amount'] = float(ccxtTrade.amount)
+        trade['rate'] = float(ccxtTrade.rate)
+        trade['fee'] = float(ccxtTrade.fee)
+        trade['fee_currency'] = str(ccxtTrade.fee_currency.symbol)
+        trade['link'] = str(ccxtTrade.link)
         trades.append(trade)
     return pandas.DataFrame(trades)
 

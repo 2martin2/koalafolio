@@ -12,6 +12,7 @@ import koalafolio.gui.QLogger as logger
 localLogger = logger.globalLogger
 
 
+
 def stringToFloat(numberString):
     return float((pat.NUMBER_REGEX.match(numberString).group(1)).replace(',', '.'))
 
@@ -214,7 +215,7 @@ def modelCallback_kucoin(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% krakenleders model: txid	refid	time	type	subtype	aclass	asset	amount	fee	balance
+# %% krakenledgers model: txid	refid	time	type	subtype	aclass	asset	amount	fee	balance
 def modelCallback_krakenledger(headernames, dataFrame):
     # txid	refid	time	        type	subtype	    aclass	    asset	amount	fee	    balance
     # xxx	yyy	    8/20/22 6:56	trade		        currency	XXBT     1	    0	    4,600
@@ -228,7 +229,7 @@ def modelCallback_krakenledger(headernames, dataFrame):
 
     for rowIndex, rowObject in dataFrame.iterrows():
         if dataFrame[headernames[3]][rowIndex] != "trade":
-            print("remove type: " + dataFrame[headernames[3]][rowIndex])
+            localLogger.debug("remove type from KrakenLedger: " + dataFrame[headernames[3]][rowIndex])
             rowsToDelete.append(rowIndex)
             continue
         for coinPairRegex in COIN_REGEX_LIST:
@@ -1058,11 +1059,18 @@ def modelCallback_TradeList(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-# %% model rotki:
-#   timestamp,  location,   pair,   trade_type, amount, rate,   fee,    fee_currency,   link
-#       0           1        2          3           4     5       6            7          8
-def modelCallback_Rotki(headernames, dataFrame):
-    # seperate coin pair
+# %% CCXT model: timestamp, location, pair, trade_type, amount, rate, fee, fee_currency, link
+def modelCallback_ccxt(headernames, dataFrame):
+    """
+    Converter for ccxt trade format from exchanges.py
+
+    Args:
+        headernames: List of header names matched from the model
+        dataFrame: Pandas DataFrame with trade data
+
+    Returns:
+        tuple: (TradeList, FeeList, skipped_rows)
+    """
 
     headernames_m0 = []
     headernames_m0.append(headernames[0])  # date
@@ -1154,6 +1162,7 @@ def convertDate(dateString, useLocalTime=False):
                 timestamp = timestamp.replace(tzinfo=myTimezone)
             #    timestamp = myTimezone.localize(timestamp)
             #                myTimezone = datetime.timezone.now().astimezone().tzinfo
+            #                timestamp = timestamp.replace(tzingo=myTimezone)
             #                timestamp = timestamp.replace(tzingo=myTimezone)
             else:  # use UTC
                 timestamp = timestamp.replace(tzinfo=pytz.UTC)
