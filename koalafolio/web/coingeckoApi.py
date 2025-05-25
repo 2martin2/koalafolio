@@ -4,12 +4,10 @@
 import pycoingecko
 import json
 import math
-# import datetime
 import koalafolio.PcpCore.core as core
 import koalafolio.PcpCore.settings as settings
 import koalafolio.PcpCore.logger as logger
-from PIL import Image
-from io import BytesIO
+from PyQt5.QtGui import QImage, QPixmap, QIcon
 import requests
 import datetime
 
@@ -171,7 +169,7 @@ def getImage(url, coin):
         return None
     if imageResponse.status_code == 200:
         # request successful
-        return Image.open(BytesIO(imageResponse.content))
+        return imageResponse.content
     if imageResponse.status_code == 429:
         raise ConnectionRefusedError("response code: " + str(imageResponse.status_code) + ", reason: " + str(imageResponse.reason))
     raise ConnectionError(
@@ -186,8 +184,7 @@ def getIcon(coin, *args, **kwargs):
     if coinId is not None:
         coinInfo = cg.get_coin_by_id(id=coinId, localization='false', tickers='false', market_data='false',
                                       community_data='false', developer_data='false', sparkline='false')
-
-        return getImage(coinInfo['image']['small'], coinId)
+        return imageToIcon(getImage(coinInfo['image']['small'], coinId))
     return None
 
 def getIconsLoop(coins, *args, **kwargs):
@@ -203,7 +200,7 @@ def getIcons(coins, *args, **kwargs):
     icons = {}
     for coinSymbol in iconUrls:
         try:
-            icons[coinSymbol] = getImage(iconUrls[coinSymbol], coinSymbol)
+            icons[coinSymbol] = imageToIcon(getImage(iconUrls[coinSymbol], coinSymbol))
         except Exception as ex:
             logger.globalLogger.warning('error loading coinGecko Icon for : ' + str(coinSymbol) + "exception: " + str(ex))
     return icons
@@ -230,6 +227,14 @@ def getIconUrls(coins, *args, **kwargs):
     except Exception as ex:
         logger.globalLogger.warning('error loading coinGecko Icons: ' + str(ex))
     return {}
+
+def imageToIcon(imagedata):
+    # Convert to QImage
+    q_image = QImage()
+    q_image.loadFromData(imagedata)
+    # Convert to QPixmap
+    qpix = QPixmap.fromImage(q_image)
+    return QIcon(qpix)
 
 
 

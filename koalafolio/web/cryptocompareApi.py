@@ -2,12 +2,10 @@
 
 
 import koalafolio.web.cryptocompare as cryptcomp
-# import datetime
 import koalafolio.PcpCore.core as core
+from PyQt5.QtGui import QImage, QPixmap, QIcon
 import koalafolio.PcpCore.settings as settings
 import koalafolio.PcpCore.logger as logger
-from PIL import Image
-from io import BytesIO
 import requests
 
 
@@ -104,7 +102,11 @@ def getIcon(coin, *args, **kwargs):
     except Exception as ex:
         logger.globalLogger.warning('error in getIcon: ' + str(ex))
         return None
-    return Image.open(BytesIO(imageResponse.content))
+    q_image = QImage()
+    q_image.loadFromData(imageResponse.content)
+    # Convert to QPixmap
+    qpix = QPixmap.fromImage(q_image)
+    return QIcon(qpix)
 
 def getIcons(coins, *args, **kwargs):
     if settings.mySettings.proxies():
@@ -116,7 +118,12 @@ def getIcons(coins, *args, **kwargs):
     try:
         for coin in iconUrls:
                 imageResponse = requests.get(iconUrls[coin], proxies=proxies, timeout=100)
-                icons[coin] = Image.open(BytesIO(imageResponse.content))
+                q_image = QImage()
+                q_image.loadFromData(imageResponse.content)
+                # convert to QPixmap
+                qpix = QPixmap.fromImage(q_image)
+                # convert to QIcon
+                icons[coin] = QIcon(qpix)
     except Exception as ex:
         logger.globalLogger.warning('error in getIcons: ' + str(ex))
     return icons

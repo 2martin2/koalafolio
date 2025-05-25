@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 
 # import koalafolio.web.cryptocompare as cryptcomp
-import requests, datetime
-from PIL import Image
-from PIL.ImageQt import ImageQt
-from io import BytesIO
-from PyQt5 import QtGui as qtgui
+import requests
+from PyQt5.QtGui import QImage, QPixmap, QIcon
 
 
 proxies = None
@@ -44,11 +41,9 @@ coinList = query_cryptocompare(URL_COIN_LIST)
 coinInfo = query_cryptocompare(URL_COIN_GENERAL, params={'fsyms': ['BTC','EUR','ETH'], 'tsym': 'USD'})
 for data in coinInfo['Data']:
   imageResponse = requests.get(URL_CRYPTOCOMPARE + data['CoinInfo']['ImageUrl'])
-  coinIcon = Image.open(BytesIO(imageResponse.content))
-  # im = coinIcon.convert("RGBA")
-  # # data = im.tobytes("raw", "RGBA")
-  # # data2 = imageResponse.content
-  # # qim = qtgui.QImage(data, im.size[0], im.size[1], qtgui.QImage.Format_ARGB32)
-  # qim = ImageQt(im)
-  # qpix = qtgui.QPixmap.fromImage(qim)
-  # qicon = qtgui.QIcon(qpix)
+  imagedata = imageResponse.content
+  q_image = QImage()
+  q_image.loadFromData(imagedata)
+  # Convert to QPixmap
+  qpix = QPixmap.fromImage(q_image)
+  qicon = QIcon(qpix)
