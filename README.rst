@@ -62,7 +62,6 @@ trade import
  import trades from exchanges using their API:
   supported exchanges:
    - binance
-   - bittrex
    - bitmex
    - coinbase
    - coinbasepro
