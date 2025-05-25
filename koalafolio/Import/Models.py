@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pandas
-from typing_extensions import Tuple
-
+from typing import Tuple
 import koalafolio.Import.RegexPatterns as pat
 import koalafolio.Import.Converter as converter
 import koalafolio.PcpCore.core as core
