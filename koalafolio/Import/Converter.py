@@ -144,8 +144,8 @@ def modelCallback_exodus(headernames, dataFrame):
 
     return tradeList, feeList, skippedRows
 
-# %% Blockdaemon Cardano [currency,return,timeEnd,timeStart,startingBalance,timeAggregation,address,metadata]
-def modelCallback_blockdaemonCardano(headernames, dataFrame):
+# %% Blockdaemon [currency,return,timeEnd,timeStart,startingBalance,timeAggregation,address,metadata]
+def modelCallback_blockdaemon(headernames, dataFrame):
     # address, currency, metadata, return, startingBalance, timeAggregation, timeEnd, timeStart
     # str, ADA, {'epoch': xxx}, xxx, xxx, epoch, yyyy-mm-ddThh:mm:ssZ, yyyy-mm-ddThh:mm:ssZ
 

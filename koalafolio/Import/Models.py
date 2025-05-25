@@ -70,7 +70,7 @@ IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.EXODUS_DATE_REGEX, pat.EXODUS_
 IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_exodus
 
-# Blockdaemon Cardano [currency,return,timeEnd,timeStart,startingBalance,timeAggregation,address,metadata]
+# Blockdaemon [currency,return,timeEnd,timeStart,startingBalance,timeAggregation,address,metadata]
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())
 IMPORT_MODEL_LIST[index].modelHeaders = ['currency', 'return', 'timeEnd', 'timeStart', 'startingBalance',
@@ -85,7 +85,7 @@ IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNe
     pat.BLOCKDAEMON_ADDRESS_REGEX,
     pat.BLOCKDAEMON_METADATA_REGEX
 ]
-IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_blockdaemonCardano
+IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_blockdaemon
 
 # kucoin [orderCreatedAt,id,clientOid,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,remark,tags,orderStatus]
 index = index + 1
