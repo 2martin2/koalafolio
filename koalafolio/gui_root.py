@@ -19,6 +19,8 @@ import koalafolio.gui.QLogger as logger
 import koalafolio.PcpCore.arguments as arguments
 import koalafolio.PcpCore.settings as coreSettings
 import koalafolio.gui.QSettings as settings
+import koalafolio.gui.QStyle as style
+import koalafolio.exp.QTranslate as translator
 
 # Defer heavy imports - will be imported when needed
 # import koalafolio.gui.QLoggerWidget as loggerwidget
@@ -29,8 +31,6 @@ import koalafolio.gui.QSettings as settings
 # import koalafolio.gui.QTradeTable as ttable
 # import koalafolio.gui.QThreads as threads
 # import koalafolio.gui.SettingsPage as settingsPage
-# import koalafolio.gui.QStyle as style
-# import koalafolio.exp.QTranslate as translator
 # import koalafolio.Import.apiImport as apiImport
 # import requests
 # from koalafolio.gui.TradesPage import TradesPage
@@ -116,7 +116,7 @@ class VersionCheckThread(qtcore.QThread):
 def lazy_import_heavy_modules():
     """Import heavy modules when actually needed"""
     global loggerwidget, pages, exportpage, controls, ptable, ttable, threads
-    global settingsPage, style, translator, apiImport, resolver, ethereum
+    global settingsPage, apiImport
     global TradesPage, ImportPage, PortfolioPage
 
     import koalafolio.gui.QLoggerWidget as loggerwidget
@@ -127,8 +127,6 @@ def lazy_import_heavy_modules():
     import koalafolio.gui.QTradeTable as ttable
     import koalafolio.gui.QThreads as threads
     import koalafolio.gui.SettingsPage as settingsPage
-    import koalafolio.gui.QStyle as style
-    import koalafolio.exp.QTranslate as translator
     import koalafolio.Import.apiImport as apiImport
     from koalafolio.gui.TradesPage import TradesPage
     from koalafolio.gui.ImportPage import ImportPage
@@ -355,23 +353,21 @@ class PortfolioApp(qtwidgets.QWidget):
         # valid data path, create user data
         #self.logger = logger.globalLogger.setPath(self.dataPath)
         self.settings = settings.mySettings.setPath(self.dataPath)
+        self.styleSheetHandler = style.StyleSheetHandler(self)
+        self.styleSheetHandler.setPath(self.dataPath)
+        self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
+        style.myStyle = self.styleSheetHandler
+        qtcore.QTimer.singleShot(500, self.initDBComponents)
 
-        # Defer heavy initialization until after UI is shown
-        qtcore.QTimer.singleShot(500, self.initHeavyComponents)
-
-    def initHeavyComponents(self):
-        """Initialize heavy components in background"""
+    def initDBComponents(self):
+        """Initialize db components in background"""
         try:
-            self.styleSheetHandler = style.StyleSheetHandler(self)
-            self.styleSheetHandler.setPath(self.dataPath)
-            self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
-            style.myStyle = self.styleSheetHandler
             self.apiUserDatabase = apiImport.ApiUserDatabase(path=self.dataPath)
             self.apiDefaultDatabase = apiImport.ApiDefaultDatabase(path=self.appPath)
 
-            self.logger.info('heavy components initialized')
+            self.logger.info('databases initialized')
         except Exception as ex:
-            logger.globalLogger.error('error initializing heavy components: ' + str(ex))
+            logger.globalLogger.error('error initializing db components: ' + str(ex))
 
 
     # setup window style
@@ -405,23 +401,9 @@ class PortfolioApp(qtwidgets.QWidget):
             self.logger.error('window style is invalid: ' + str(ex))
             self.logger.info('using window style Fusion')
             self.setStyle(qtwidgets.QStyleFactory.create('Fusion'))
-
-        # Defer stylesheet loading until styleSheetHandler is ready
-        if hasattr(self, 'styleSheetHandler') and self.styleSheetHandler:
-            self.styleSheetHandler.loadSheet(self.settings['window']['stylesheetname'])
-        else:
-            # Schedule stylesheet loading for later
-            qtcore.QTimer.singleShot(600, self.loadStyleSheet)
-
+        # load stylesheet
+        self.styleSheetHandler.loadSheet(self.settings['window']['stylesheetname'])
         self.logger.info('style initialized')
-
-    def loadStyleSheet(self):
-        """Load stylesheet when styleSheetHandler is ready"""
-        if hasattr(self, 'styleSheetHandler') and self.styleSheetHandler:
-            self.styleSheetHandler.loadSheet(self.settings['window']['stylesheetname'])
-        else:
-            # Try again later if not ready
-            qtcore.QTimer.singleShot(200, self.loadStyleSheet)
 
     def initData(self):
         self.logger.info('initializing data ...')
@@ -502,29 +484,18 @@ class PortfolioApp(qtwidgets.QWidget):
         self.statusbar = controls.StatusBar(self, height=80, dataPath=self.dataPath)
         self.statusbar.setModel(self.logList)
 
-        # %%  stacked Layout for content frames with lazy loading
-        from koalafolio.gui.LazyPageLoader import LazyPageLoader, PlaceholderPage
-
-        self.pageLoader = LazyPageLoader(parent=self)
-        self.pageLoader.pageLoaded.connect(self.onPageLoaded)
-
-        # Create placeholder pages initially
-        self.portfolioPage = PlaceholderPage("Portfolio", self)
-        self.tradesPage = PlaceholderPage("Trades", self)
-        self.importPage = PlaceholderPage("Import", self)
-        self.exportPage = PlaceholderPage("Export", self)
-        self.settingsPage = PlaceholderPage("Settings", self)
-
+        # %%  stacked Layout for content frames
+        self.portfolioPage = PortfolioPage(parent=self, controller=self)
+        self.tradesPage = TradesPage(parent=self, controller=self)
+        self.importPage = ImportPage(parent=self, controller=self)
+        self.exportPage = exportpage.ExportPage(parent=self, controller=self)
+        self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(self.exportPage.taxYearWalletChanged)
+        self.settingsPage = pages.SettingsPage(parent=self, controller=self)
         self.pages = [self.portfolioPage, self.tradesPage, self.importPage, self.exportPage, self.settingsPage]
-        self.page_classes = ['PortfolioPage', 'TradesPage', 'ImportPage', 'ExportPage', 'SettingsPage']
-
         self.stackedContentLayout = qtwidgets.QStackedLayout()
         for page in self.pages:
             # stacked content layout
             self.stackedContentLayout.addWidget(page)
-
-        # Load the first page immediately
-        self.pageLoader.loadPage(self.PORTFOLIOPAGEINDEX, self.page_classes[self.PORTFOLIOPAGEINDEX])
 
         # put frames in vertical layout
         self.verticalFrameLayout = qtwidgets.QVBoxLayout()
@@ -553,50 +524,8 @@ class PortfolioApp(qtwidgets.QWidget):
         self.priceThread.start()
         self.logger.info('threads started')
 
-    def onPageLoaded(self, page_index, page_widget):
-        """Handle when a page is loaded by the lazy loader"""
-        try:
-            # Get the current index before replacement
-            current_index = self.stackedContentLayout.currentIndex()
-
-            # Replace placeholder with actual page
-            old_page = self.pages[page_index]
-            self.pages[page_index] = page_widget
-
-            # Replace in stacked layout - use the correct method
-            # Remove the old widget first
-            self.stackedContentLayout.removeWidget(old_page)
-
-            # Insert the new widget at the correct position
-            self.stackedContentLayout.insertWidget(page_index, page_widget)
-
-            # If this was the currently displayed page, make sure it's still current
-            if current_index == page_index:
-                self.stackedContentLayout.setCurrentIndex(page_index)
-
-            # Clean up old page
-            old_page.deleteLater()
-
-            # Connect signals if needed
-            if page_index == self.EXPORTPAGEINDEX and hasattr(self, 'settingsModel'):
-                self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(page_widget.taxYearWalletChanged)
-
-            self.logger.info(f'Page {self.page_classes[page_index]} loaded successfully at index {page_index}')
-        except Exception as ex:
-            self.logger.error(f'Error handling loaded page: {ex}')
-            import traceback
-            traceback.print_exc()
-
     def showFrame(self, pageIndex):
         """Show a frame for the given page index"""
-        # Load page if not already loaded
-        if not self.pageLoader.isPageLoaded(pageIndex) and not self.pageLoader.isPageLoading(pageIndex):
-            self.pageLoader.loadPage(pageIndex, self.page_classes[pageIndex])
-
-        # Set the current index immediately (even if it's a placeholder)
-        self.stackedContentLayout.setCurrentIndex(pageIndex)
-
-        # Refresh the frame if it has the method
         frame = self.pages[pageIndex]
         if hasattr(frame, 'refresh'):
             frame.refresh()
