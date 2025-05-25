@@ -9,10 +9,11 @@ import shutil
 import os.path
 
 
-class Logger():
+class Logger:
     def __init__(self):
         self.filePath = None
         # self.logFile = None
+        self.debugMode = False
 
     def warning(self, message):
         warning = "## Warning: " + message + " !"
@@ -30,6 +31,12 @@ class Logger():
         info = "# Info: " + message
         print(info)
         self.printToFile(info)
+
+    def debug(self, message):
+        if self.debugMode:
+            debug = "# Debug: " + message
+            print(debug)
+            self.printToFile(debug)
 
     def setPath(self, dir):
         self.filePath = os.path.join(dir, 'logfile.txt')
