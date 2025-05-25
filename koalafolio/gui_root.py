@@ -5,39 +5,134 @@ Created on Sun Sep 16 09:57:14 2018
 @author: Martin
 """
 
+# Core imports - needed immediately
 import PyQt5.QtGui as qtgui
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
-
-import koalafolio.PcpCore.logger as coreLogger
-import koalafolio.gui.QLogger as logger
-import koalafolio.gui.QLoggerWidget as loggerwidget
-import koalafolio.gui.Qpages as pages
-import koalafolio.gui.QExportPage as exportpage
-import koalafolio.gui.Qcontrols as controls
-import koalafolio.gui.QPortfolioTable as ptable
-import koalafolio.gui.QTradeTable as ttable
-import koalafolio.gui.QThreads as threads
-import koalafolio.PcpCore.arguments as arguments
 import sys
 import os
+from pathlib import Path
+
+# Essential application imports
+import koalafolio.PcpCore.logger as coreLogger
+import koalafolio.gui.QLogger as logger
+import koalafolio.PcpCore.arguments as arguments
 import koalafolio.PcpCore.settings as coreSettings
 import koalafolio.gui.QSettings as settings
-import koalafolio.gui.SettingsPage as settingsPage
-import koalafolio.gui.QStyle as style
-import koalafolio.exp.QTranslate as translator
-import koalafolio.Import.apiImport as apiImport
-from pathlib import Path
-import rotkehlchen.assets.resolver as resolver
-import rotkehlchen.constants.ethereum as ethereum
-import requests
-from koalafolio.gui.TradesPage import TradesPage
-from koalafolio.gui.ImportPage import ImportPage
-from koalafolio.gui.PortfolioPage import PortfolioPage
+
+# Defer heavy imports - will be imported when needed
+# import koalafolio.gui.QLoggerWidget as loggerwidget
+# import koalafolio.gui.Qpages as pages
+# import koalafolio.gui.QExportPage as exportpage
+# import koalafolio.gui.Qcontrols as controls
+# import koalafolio.gui.QPortfolioTable as ptable
+# import koalafolio.gui.QTradeTable as ttable
+# import koalafolio.gui.QThreads as threads
+# import koalafolio.gui.SettingsPage as settingsPage
+# import koalafolio.gui.QStyle as style
+# import koalafolio.exp.QTranslate as translator
+# import koalafolio.Import.apiImport as apiImport
+# import requests
+# from koalafolio.gui.TradesPage import TradesPage
+# from koalafolio.gui.ImportPage import ImportPage
+# from koalafolio.gui.PortfolioPage import PortfolioPage
 
 
 qt = qtcore.Qt
 # %% constants
+
+
+# %% Custom splash screen with better text positioning
+class CustomSplashScreen(qtwidgets.QSplashScreen):
+    """Custom splash screen with improved text positioning"""
+
+    def __init__(self, pixmap):
+        super().__init__(pixmap)
+        self.message = ""
+        self.text_color = qtcore.Qt.white
+        self.text_alignment = qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter
+
+        # Set larger font (30% bigger)
+        font = self.font()
+        current_size = font.pointSize()
+        if current_size <= 0:
+            current_size = 12
+        new_size = int(current_size * 1.3)
+        font.setPointSize(new_size)
+        font.setBold(True)
+        self.setFont(font)
+
+    def showMessage(self, message, alignment=None, color=None):
+        """Override to store message and trigger repaint"""
+        self.message = message
+        if alignment is not None:
+            self.text_alignment = alignment
+        if color is not None:
+            self.text_color = color
+        self.repaint()
+
+    def drawContents(self, painter):
+        """Custom drawing to position text higher"""
+        if not self.message:
+            return
+
+        painter.setPen(self.text_color)
+        painter.setFont(self.font())
+
+        # Calculate text position - move up by one text height
+        font_metrics = painter.fontMetrics()
+        text_height = font_metrics.height()
+
+        # Get the rectangle for drawing
+        rect = self.rect()
+
+        # Move the bottom up by one text height plus some padding
+        adjusted_rect = qtcore.QRect(rect.x(), rect.y(),
+                                   rect.width(), rect.height() - text_height - 10)
+
+        painter.drawText(adjusted_rect, self.text_alignment, self.message)
+
+
+# %% Background version check thread
+class VersionCheckThread(qtcore.QThread):
+    versionChecked = qtcore.pyqtSignal(str)
+
+    def __init__(self, package_name='koalafolio'):
+        super().__init__()
+        self.package_name = package_name
+
+    def run(self):
+        try:
+            import requests
+            response = requests.get(f'https://pypi.org/pypi/{self.package_name}/json', timeout=5)
+            latest_version = str(response.json()['info']['version'])
+            self.versionChecked.emit(latest_version)
+        except Exception as ex:
+            logger.globalLogger.warning(f'Could not check latest version: {ex}')
+            self.versionChecked.emit('')
+
+
+# %% Lazy import helper functions
+def lazy_import_heavy_modules():
+    """Import heavy modules when actually needed"""
+    global loggerwidget, pages, exportpage, controls, ptable, ttable, threads
+    global settingsPage, style, translator, apiImport, resolver, ethereum
+    global TradesPage, ImportPage, PortfolioPage
+
+    import koalafolio.gui.QLoggerWidget as loggerwidget
+    import koalafolio.gui.Qpages as pages
+    import koalafolio.gui.QExportPage as exportpage
+    import koalafolio.gui.Qcontrols as controls
+    import koalafolio.gui.QPortfolioTable as ptable
+    import koalafolio.gui.QTradeTable as ttable
+    import koalafolio.gui.QThreads as threads
+    import koalafolio.gui.SettingsPage as settingsPage
+    import koalafolio.gui.QStyle as style
+    import koalafolio.exp.QTranslate as translator
+    import koalafolio.Import.apiImport as apiImport
+    from koalafolio.gui.TradesPage import TradesPage
+    from koalafolio.gui.ImportPage import ImportPage
+    from koalafolio.gui.PortfolioPage import PortfolioPage
 
 
 # %% variables
@@ -63,44 +158,98 @@ class PortfolioApp(qtwidgets.QWidget):
     startRefresh = qtcore.pyqtSignal()
     endRefresh = qtcore.pyqtSignal()
 
-    def __init__(self, parent=None, userDataPath = "", username=""):
+    def __init__(self, parent=None, userDataPath = "", username="", splash=None):
         super(PortfolioApp, self).__init__(parent=parent)
 
         self.userDataPath = userDataPath
         self.username = username
+        self.splash = splash
+        self.latestVersion = ""
+        self.heavy_modules_loaded = False
+        self.data_loaded = False
 
         self.setObjectName("MainWindow")
 
+        # Update splash
+        if self.splash:
+            self.splash.showMessage("Initializing environment...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
+            qtwidgets.QApplication.processEvents()
+
         self.initEnv()
+
+        if self.splash:
+            self.splash.showMessage("Setting up window...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
+            qtwidgets.QApplication.processEvents()
+
         self.initWindow()
+
+        # Start version check in background (non-blocking)
+        self.versionCheckThread = VersionCheckThread()
+        self.versionCheckThread.versionChecked.connect(self.onVersionChecked)
+        self.versionCheckThread.start()
+
+        if self.splash:
+            self.splash.showMessage("Loading modules...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
+            qtwidgets.QApplication.processEvents()
+
+        # Load heavy modules
+        lazy_import_heavy_modules()
+        self.heavy_modules_loaded = True
+
+        if self.splash:
+            self.splash.showMessage("Initializing data models...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
+            qtwidgets.QApplication.processEvents()
 
         # init data
         self.initData()
 
-        # get latest version from pypi
-        package = 'koalafolio'
-        response = requests.get(f'https://pypi.org/pypi/{package}/json')
-        self.latestVersion = str(response.json()['info']['version'])
-        
-        if self.settings['general']['version'] != self.latestVersion:
-            self.logger.info('new version ' + self.latestVersion + ' available. Install with \"pip install koalafolio --upgrade\"')
+        if self.splash:
+            self.splash.showMessage("Setting up interface...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
+            qtwidgets.QApplication.processEvents()
 
         # init style
         self.initStyle()
 
         # init gui
         self.layoutUI()
+
+        if self.splash:
+            self.splash.showMessage("Starting application...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
+            qtwidgets.QApplication.processEvents()
+
         self.show()
         self.showFrame(self.PORTFOLIOPAGEINDEX)
-        # gui and data initialized
 
-        # start the background threads
-        self.startThreads()
-        self.coinList.restoreCoins()
-        self.tradeList.restoreTrades()
-
+        # Start background initialization
+        self.startBackgroundInitialization()
 
         self.logger.info('application initialized')
+
+    def onVersionChecked(self, latest_version):
+        """Handle version check result"""
+        self.latestVersion = latest_version
+        if latest_version and self.settings['general']['version'] != latest_version:
+            self.logger.info('new version ' + latest_version + ' available. Install with "pip install koalafolio --upgrade"')
+
+    def startBackgroundInitialization(self):
+        """Start background threads and data loading"""
+        # Use QTimer to defer heavy operations until after UI is shown
+        qtcore.QTimer.singleShot(100, self.loadDataInBackground)
+
+    def loadDataInBackground(self):
+        """Load data in background after UI is ready"""
+        try:
+            # start the background threads
+            self.startThreads()
+
+            # Load data asynchronously
+            qtcore.QTimer.singleShot(200, lambda: self.coinList.restoreCoins())
+            qtcore.QTimer.singleShot(300, lambda: self.tradeList.restoreTrades())
+
+            self.data_loaded = True
+            self.logger.info('background data loading completed')
+        except Exception as ex:
+            self.logger.error(f'Error in background initialization: {ex}')
 
     def reinit(self):
         self.startRefresh.emit()
@@ -206,19 +355,23 @@ class PortfolioApp(qtwidgets.QWidget):
         # valid data path, create user data
         #self.logger = logger.globalLogger.setPath(self.dataPath)
         self.settings = settings.mySettings.setPath(self.dataPath)
-        self.styleSheetHandler = style.StyleSheetHandler(self)
-        self.styleSheetHandler.setPath(self.dataPath)
-        self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
-        style.myStyle = self.styleSheetHandler
-        self.apiUserDatabase = apiImport.ApiUserDatabase(path=self.dataPath)
-        self.apiDefaultDatabase = apiImport.ApiDefaultDatabase(path=self.appPath)
+
+        # Defer heavy initialization until after UI is shown
+        qtcore.QTimer.singleShot(500, self.initHeavyComponents)
+
+    def initHeavyComponents(self):
+        """Initialize heavy components in background"""
         try:
-            # Initialize the AssetResolver singleton
-            resolver.AssetResolver(data_directory=Path(self.dataPath))
-            # init eth data
-            ethereum.EthereumConstants(data_directory=Path(self.dataPath))
+            self.styleSheetHandler = style.StyleSheetHandler(self)
+            self.styleSheetHandler.setPath(self.dataPath)
+            self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
+            style.myStyle = self.styleSheetHandler
+            self.apiUserDatabase = apiImport.ApiUserDatabase(path=self.dataPath)
+            self.apiDefaultDatabase = apiImport.ApiDefaultDatabase(path=self.appPath)
+
+            self.logger.info('heavy components initialized')
         except Exception as ex:
-            logger.globalLogger.error('could not initialize api backend: ' + str(ex))
+            logger.globalLogger.error('error initializing heavy components: ' + str(ex))
 
 
     # setup window style
@@ -252,9 +405,23 @@ class PortfolioApp(qtwidgets.QWidget):
             self.logger.error('window style is invalid: ' + str(ex))
             self.logger.info('using window style Fusion')
             self.setStyle(qtwidgets.QStyleFactory.create('Fusion'))
-        # load stylesheet
-        self.styleSheetHandler.loadSheet(self.settings['window']['stylesheetname'])
+
+        # Defer stylesheet loading until styleSheetHandler is ready
+        if hasattr(self, 'styleSheetHandler') and self.styleSheetHandler:
+            self.styleSheetHandler.loadSheet(self.settings['window']['stylesheetname'])
+        else:
+            # Schedule stylesheet loading for later
+            qtcore.QTimer.singleShot(600, self.loadStyleSheet)
+
         self.logger.info('style initialized')
+
+    def loadStyleSheet(self):
+        """Load stylesheet when styleSheetHandler is ready"""
+        if hasattr(self, 'styleSheetHandler') and self.styleSheetHandler:
+            self.styleSheetHandler.loadSheet(self.settings['window']['stylesheetname'])
+        else:
+            # Try again later if not ready
+            qtcore.QTimer.singleShot(200, self.loadStyleSheet)
 
     def initData(self):
         self.logger.info('initializing data ...')
@@ -335,18 +502,29 @@ class PortfolioApp(qtwidgets.QWidget):
         self.statusbar = controls.StatusBar(self, height=80, dataPath=self.dataPath)
         self.statusbar.setModel(self.logList)
 
-        # %%  stacked Layout for content frames
-        self.portfolioPage = PortfolioPage(parent=self, controller=self)
-        self.tradesPage = TradesPage(parent=self, controller=self)
-        self.importPage = ImportPage(parent=self, controller=self)
-        self.exportPage = exportpage.ExportPage(parent=self, controller=self)
-        self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(self.exportPage.taxYearWalletChanged)
-        self.settingsPage = pages.SettingsPage(parent=self, controller=self)
+        # %%  stacked Layout for content frames with lazy loading
+        from koalafolio.gui.LazyPageLoader import LazyPageLoader, PlaceholderPage
+
+        self.pageLoader = LazyPageLoader(parent=self)
+        self.pageLoader.pageLoaded.connect(self.onPageLoaded)
+
+        # Create placeholder pages initially
+        self.portfolioPage = PlaceholderPage("Portfolio", self)
+        self.tradesPage = PlaceholderPage("Trades", self)
+        self.importPage = PlaceholderPage("Import", self)
+        self.exportPage = PlaceholderPage("Export", self)
+        self.settingsPage = PlaceholderPage("Settings", self)
+
         self.pages = [self.portfolioPage, self.tradesPage, self.importPage, self.exportPage, self.settingsPage]
+        self.page_classes = ['PortfolioPage', 'TradesPage', 'ImportPage', 'ExportPage', 'SettingsPage']
+
         self.stackedContentLayout = qtwidgets.QStackedLayout()
         for page in self.pages:
             # stacked content layout
             self.stackedContentLayout.addWidget(page)
+
+        # Load the first page immediately
+        self.pageLoader.loadPage(self.PORTFOLIOPAGEINDEX, self.page_classes[self.PORTFOLIOPAGEINDEX])
 
         # put frames in vertical layout
         self.verticalFrameLayout = qtwidgets.QVBoxLayout()
@@ -375,11 +553,54 @@ class PortfolioApp(qtwidgets.QWidget):
         self.priceThread.start()
         self.logger.info('threads started')
 
+    def onPageLoaded(self, page_index, page_widget):
+        """Handle when a page is loaded by the lazy loader"""
+        try:
+            # Get the current index before replacement
+            current_index = self.stackedContentLayout.currentIndex()
+
+            # Replace placeholder with actual page
+            old_page = self.pages[page_index]
+            self.pages[page_index] = page_widget
+
+            # Replace in stacked layout - use the correct method
+            # Remove the old widget first
+            self.stackedContentLayout.removeWidget(old_page)
+
+            # Insert the new widget at the correct position
+            self.stackedContentLayout.insertWidget(page_index, page_widget)
+
+            # If this was the currently displayed page, make sure it's still current
+            if current_index == page_index:
+                self.stackedContentLayout.setCurrentIndex(page_index)
+
+            # Clean up old page
+            old_page.deleteLater()
+
+            # Connect signals if needed
+            if page_index == self.EXPORTPAGEINDEX and hasattr(self, 'settingsModel'):
+                self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(page_widget.taxYearWalletChanged)
+
+            self.logger.info(f'Page {self.page_classes[page_index]} loaded successfully at index {page_index}')
+        except Exception as ex:
+            self.logger.error(f'Error handling loaded page: {ex}')
+            import traceback
+            traceback.print_exc()
+
     def showFrame(self, pageIndex):
         """Show a frame for the given page index"""
-        frame = self.pages[pageIndex]
-        frame.refresh()
+        # Load page if not already loaded
+        if not self.pageLoader.isPageLoaded(pageIndex) and not self.pageLoader.isPageLoading(pageIndex):
+            self.pageLoader.loadPage(pageIndex, self.page_classes[pageIndex])
+
+        # Set the current index immediately (even if it's a placeholder)
         self.stackedContentLayout.setCurrentIndex(pageIndex)
+
+        # Refresh the frame if it has the method
+        frame = self.pages[pageIndex]
+        if hasattr(frame, 'refresh'):
+            frame.refresh()
+
         # reset color of all buttons in sidebar
         # for buttonIndex in range(len(self.sidebarButtons)):
         #     button = self.sidebarButtons[buttonIndex]
@@ -421,14 +642,26 @@ def main():
     coreSettings.mySettings = settings.mySettings
     qtwidgets.QApplication.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
     app = qtwidgets.QApplication(sys.argv)
-    
-    # Create and show splash screen
-    splash_pixmap = qtgui.QPixmap(os.path.join(application_path, 'graphics', 'KoalaIcon.ico'))
-    splash = qtwidgets.QSplashScreen(splash_pixmap)
-    splash.setWindowFlags(qtcore.Qt.FramelessWindowHint)
+
+    # Create and show splash screen with better styling
+    try:
+        splash_pixmap = qtgui.QPixmap(os.path.join(application_path, 'graphics', 'KoalaIcon.ico'))
+        if splash_pixmap.isNull():
+            # Fallback to PNG if ICO is not found
+            splash_pixmap = qtgui.QPixmap(os.path.join(application_path, 'KoalaIcon.png'))
+    except:
+        # Create a simple colored splash if no icon is found
+        splash_pixmap = qtgui.QPixmap(300, 200)
+        splash_pixmap.fill(qtcore.Qt.darkGray)
+
+    splash = CustomSplashScreen(splash_pixmap)
+    splash.setWindowFlags(qtcore.Qt.FramelessWindowHint | qtcore.Qt.WindowStaysOnTopHint)
+    splash.showMessage("Loading Koalafolio...",
+                      qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter,
+                      qtcore.Qt.white)
     splash.show()
     app.processEvents()  # Process events to make sure splash is displayed immediately
-    
+
     try:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         app_icon = qtgui.QIcon()
@@ -437,13 +670,13 @@ def main():
         app.setApplicationName('koalafolio')
     except Exception as ex:
         print(str(ex))
-    
-    # Initialize main window
-    window = PortfolioApp(userDataPath=args.datadir, username=args.username)
-    
+
+    # Initialize main window with splash reference
+    window = PortfolioApp(userDataPath=args.datadir, username=args.username, splash=splash)
+
     # Close splash when main window is ready
     splash.finish(window)
-    
+
     sys.exit(app.exec_())
 
 if __name__ == '__main__':

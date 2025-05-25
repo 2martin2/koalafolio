@@ -20,54 +20,31 @@ class ApiModel:
     def __init__(self, name='', apitype='', handle=None, note=''):
         self.apiName = name
         self.apiType = apitype
-        self.apiHandle = handle
         self.apiNote = note
 
 apiNamesBlockdaemon = chaindata.apinames
+apiNamesxxct = exchanges.exchangenames
 
-apiNames = ["binance",
-            "bittrex",
-            "bitmex",
-            "coinbase",
-            "coinbasepro",
-            "gemini",
-            "poloniex",
-            "kraken"] \
+apiNames = apiNamesxxct \
            + apiNamesBlockdaemon
 
 # create apiModels
 apiModels = {}
-for apiname in apiNames:
+for apiname in apiNamesxxct:
     apiModels[apiname] = ApiModel(
         name=str(apiname),
         apitype="exchange",
-        handle=None,
         note="get data from " + str(apiname) + ". "
     )
-    if apiname in apiNamesBlockdaemon:  # apitype is blockdaemon chaindata
-        apiModels[apiname].apiType = "chaindata"
-        apiModels[apiname].apiNote += "Koala provides default api key for blockdaemon api.\n" \
-                                  "However it is recommended to create your own key for privacy reasons.\n" \
-                                  "Key can be created at https://app.blockdaemon.com (Login->workspace->API Suite->Connect.\n" \
-                                  "More Infos can be found in their documentation: https://docs.blockdaemon.com/"
-
-# add special api note for binance api
-apiModels["binance"].apiNote = "get trades from binance. Can take very long due to stupid api implementation of binance"
-
-
-
-apiModels["binance"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryBinance(apikey, secret, start, end)
-apiModels["bittrex"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryBittrex(apikey, secret, start, end)
-apiModels["bitmex"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryBitmex(apikey, secret, start, end)
-apiModels["coinbase"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryCoinbase(apikey, secret, start, end)
-apiModels["coinbasepro"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryCoinbasepro(apikey, secret, start, end)
-apiModels["gemini"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryGemini(apikey, secret, start, end)
-apiModels["poloniex"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryPoloniex(apikey, secret, start, end)
-apiModels["kraken"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryKraken(apikey, secret, start, end)
-for apiname in apiModels:
-    if apiModels[apiname].apiType == "chaindata":
-        apiModels[apiname].apiHandle = lambda apiname, apikey, address, start, end: chaindata.getBlockdaemonRewardsForAddress(apiname, apikey, address, start, end)
-
+for apiname in apiNamesBlockdaemon:  # apitype is blockdaemon chaindata
+    apiModels[apiname] = ApiModel(
+        name=str(apiname),
+        apitype="chaindata",
+        note=   "Koala provides default api key for blockdaemon api.\n" \
+                "However it is recommended to create your own key.\n" \
+                "Key can be created at https://app.blockdaemon.com (Login->workspace->API Suite->Connect.\n" \
+                "More Infos can be found in their documentation: https://docs.blockdaemon.com/"
+        )
 
 def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, address=None):
     if apiname not in apiModels:
@@ -76,9 +53,9 @@ def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, addres
         localLogger.info("requesting data from " + str(apiname))
         try:
             if apitype == "exchange":
-                return apiModels[apiname].apiHandle(apikey, secret, start, end)
+                return exchanges.getTradeHistoryCcxt(apiname, apikey, secret, start, end)
             elif apitype == "chaindata":
-                return apiModels[apiname].apiHandle(apiname, apikey, address, int(start), int(end))
+                return chaindata.getBlockdaemonRewardsForAddress(apiname, apikey, address, start, end)
             else:
                 raise ValueError("invalid type in getApiHistory: " + str(apitype))
         except Exception as ex:
