@@ -69,7 +69,7 @@ class StyleSheetHandler():
     def checkFiles(self):
         try:
             allFiles = [f for f in os.listdir(self.stylePath) if os.path.isfile(os.path.join(self.stylePath, f))]
-            filePattern = re.compile("^(.*)\.qss$", re.IGNORECASE)
+            filePattern = re.compile(r"^(.*)\.qss$", re.IGNORECASE)
             for file in allFiles:
                 fileMatch = filePattern.match(file)
                 if fileMatch:

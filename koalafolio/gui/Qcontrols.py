@@ -19,7 +19,7 @@ localLogger = logger.globalLogger
 qt = qtcore.Qt
 # %% constants
 PATHREGEX = r"^\w:((\\|/)\w+)*(|.\w+)$"
-FLOATREGEX = "^([\+\-]|)(\d*)(.(\d*)|)((e[\+\-]\d*)|)$"
+FLOATREGEX = r"^([\+\-]|)(\d*)(.(\d*)|)((e[\+\-]\d*)|)$"
 
 # %% variables
 pathRegexCompiled = re.compile(PATHREGEX, re.IGNORECASE | re.MULTILINE)
@@ -328,7 +328,7 @@ def floatToString(f, n):
             return sMatch[1] + sMatch[2] + sMatch[5]
         if sMatch[2] != '0':  # 12.3456789
             return sMatch[1] + sMatch[2] + sMatch[3][0:n - len(sMatch[2]) + 1] + sMatch[5]
-        zeroMatch = re.match("^(0*)(\d*?)$", sMatch[4])
+        zeroMatch = re.match(r"^(0*)(\d*?)$", sMatch[4])
         return sMatch[1] + sMatch[2] + '.' + zeroMatch[1] + zeroMatch[2][0:n].rstrip('0') + sMatch[5]  # 0.000000001234
     except Exception as ex:
         localLogger.warning('error converting float to string: ' + str(ex) + ', string is ' + s)

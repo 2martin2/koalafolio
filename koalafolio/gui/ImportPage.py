@@ -110,7 +110,7 @@ class ImportSelectPage(SubPage):
 
         # file types
         filetypes = settings.mySettings['import']['importFileTypes']
-        self.filePattern = re.compile("^.*\." + filetypes + "$", re.IGNORECASE)
+        self.filePattern = re.compile(r"^.*\." + filetypes + "$", re.IGNORECASE)
 
         # Left Frame
         self.fileFrame = controls.StyledFrame(self)
@@ -177,7 +177,7 @@ class ImportSelectPage(SubPage):
     def refresh(self):
         # file types
         filetypes = settings.mySettings['import']['importFileTypes']
-        self.filePattern = re.compile("^.*\." + filetypes + "$", re.IGNORECASE)
+        self.filePattern = re.compile(r"^.*\." + filetypes + "$", re.IGNORECASE)
 
         self.controller.skippedRows = 0
         self.controller.importedRows = 0

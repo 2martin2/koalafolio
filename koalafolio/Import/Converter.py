@@ -23,7 +23,7 @@ def exodusJsonToDataFrame(data):
 
     # DATE,TYPE,OUTAMOUNT,OUTCURRENCY,FEEAMOUNT,FEECURRENCY,OUTTXID,OUTTXURL,INAMOUNT,INCURRENCY,INTXID,INTXURL,ORDERID
 
-    amountRegex = re.compile('^((-|\+|)(\d+)((\.\d+)|)((e(-|\+|)\d+)|)) (\w+)$')
+    amountRegex = re.compile(r'^((-|\+|)(\d+)((\.\d+)|)((e(-|\+|)\d+)|)) (\w+)$')
     # convert dict
     newDictList = []
     for row in range(len(data)):
@@ -278,11 +278,11 @@ def modelCallback_kraken(headernames, dataFrame):
 
     # try to parse Kraken Coin Pair. Not quite clear how Kraken came up with this nonsense
     COIN_PAIR_REGEX_LIST = []
-    COIN_PAIR_REGEX_LIST.append(re.compile('^[XZ]([a-z|A-Z|0-9]{3,})[XZ]([a-z|A-Z|0-9]{3,})$')) # all pairs that are marked with X/Z like XETHZEUR -> ETH/EUR
-    COIN_PAIR_REGEX_LIST.append(re.compile('^(USDT)Z(USD)$'))  # explicit pattern for strange USDT/USD pair
-    COIN_PAIR_REGEX_LIST.append(re.compile('^([a-z|A-Z|0-9]+)(USD[TC])$')) # all USDT or USDC Pairs
-    COIN_PAIR_REGEX_LIST.append(re.compile('^([a-z|A-Z|0-9]+)([a-z|A-Z|0-9]{3})$')) # all Pairs with 3 digits for second coin like ADAEUR -> ADA/EUR
-    COIN_PAIR_REGEX_LIST.append(re.compile('^([a-z|A-Z|0-9]+)\.([a-z|A-Z|0-9]+)$')) # not sure if this is needed, parses ETH2.SETH -> ETH2/SETH
+    COIN_PAIR_REGEX_LIST.append(re.compile(r'^[XZ]([a-z|A-Z|0-9]{3,})[XZ]([a-z|A-Z|0-9]{3,})$')) # all pairs that are marked with X/Z like XETHZEUR -> ETH/EUR
+    COIN_PAIR_REGEX_LIST.append(re.compile(r'^(USDT)Z(USD)$'))  # explicit pattern for strange USDT/USD pair
+    COIN_PAIR_REGEX_LIST.append(re.compile(r'^([a-z|A-Z|0-9]+)(USD[TC])$')) # all USDT or USDC Pairs
+    COIN_PAIR_REGEX_LIST.append(re.compile(r'^([a-z|A-Z|0-9]+)([a-z|A-Z|0-9]{3})$')) # all Pairs with 3 digits for second coin like ADAEUR -> ADA/EUR
+    COIN_PAIR_REGEX_LIST.append(re.compile(r'^([a-z|A-Z|0-9]+)\.([a-z|A-Z|0-9]+)$')) # not sure if this is needed, parses ETH2.SETH -> ETH2/SETH
 
     rowsToDelete = []
 

@@ -17,7 +17,7 @@ localLogger = logger.globalLogger
 def loadTrades(mypath):
     allfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
     filetypes = settings.mySettings['import']['importFileTypes']
-    filePattern = re.compile("^.*\." + filetypes + "$", re.IGNORECASE)
+    filePattern = re.compile(r"^.*\." + filetypes + "$", re.IGNORECASE)
     allfilespath = [os.path.join(mypath, f) for f in allfiles if filePattern.match(str(f))]
 
     return loadTradesFromFiles(allfilespath)
