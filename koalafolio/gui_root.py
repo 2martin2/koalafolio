@@ -529,7 +529,7 @@ class PortfolioApp(qtwidgets.QWidget):
         frame = self.pages[pageIndex]
         if hasattr(frame, 'refresh'):
             frame.refresh()
-
+        self.stackedContentLayout.setCurrentIndex(pageIndex)
         # reset color of all buttons in sidebar
         # for buttonIndex in range(len(self.sidebarButtons)):
         #     button = self.sidebarButtons[buttonIndex]
