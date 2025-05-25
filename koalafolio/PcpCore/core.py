@@ -221,7 +221,7 @@ class CoinValue():
 class Trade:
     def __init__(self):
         self.tradeID = ''
-        self.approxID = ''
+        self.approxIDs = []
         self.externId = ''
         self.date = None
         self.tradeType = ''
@@ -242,21 +242,33 @@ class Trade:
     def checkApproximateEquality(self, trade):
         return self.generateApproximateID() == trade.generateApproximateID()
 
-    def generateApproximateID(self):
-        myDate = converter.roundTimeMin(self.date)
+    def generateApproximateIDs(self):
+        # round amount
         try:
-            myAmount = round(self.amount, -int( math.floor(math.log10(abs(self.amount)))) + 5)
+            tempAmount = round(self.amount, -int(math.floor(math.log10(abs(self.amount)))) + 5)
         except ValueError:
-            myAmount = self.amount
-        tradeString = str(str(myDate) + str(self.tradeType) + str(self.coin) + str(myAmount))
-        self.approxID = hashlib.sha1(tradeString.encode()).hexdigest()
-        return self.approxID
+            tempAmount = self.amount
+        # get the timezone offset of the date and round it to 2 times this offset
+        # to make sure trades with wrong timezone interpretation are detected as possible duplicate
+        tempDates = [self.date]
+        offset = self.date.utcoffset()
+        tempDates.append(self.date + offset)
+        tempDates.append(self.date - offset)
+        # convert all dates to timestamps in minutes, ignore seconds/ms etc.
+        for tempdate in tempDates:
+            tempdate = tempdate.timestamp() // 60
+            tradeString = str(str(tempdate) + str(self.tradeType) +
+                              str(self.coin) + str(tempAmount))
+            self.approxIDs.append(hashlib.sha1(tradeString.encode()).hexdigest())
+        return self.approxIDs
 
-    def getApproximateID(self):
-        if self.approxID:
-            return self.approxID
-        else:
-            return self.generateApproximateID()
+    def getApproximateIDs(self):
+        # check if approxIds is empty
+        if not self.approxIDs:
+            # calculate approxIDs
+            return self.generateApproximateIDs()
+        # return existing IDs
+        return self.approxIDs
 
     def __eq__(self, other):
         return self.tradeID == other.tradeID
@@ -533,6 +545,8 @@ class TradeList:
 
     def toCsv(self, path):
         # self.toDataFrameComplete().to_csv(path)
+        # write header and trades to csv file, sorted by the date
+        self.trades.sort(key=lambda x: x.date, reverse=False)
         with open(path, 'w') as file:
             file.write(','.join(Trade().getHeaderComplete()) + '\n')
             for trade in self:
@@ -544,8 +558,11 @@ class TradeList:
 
     def checkApproximateEquality(self, trade):
         for t in self.trades:
-            if trade.getApproximateID() == t.getApproximateID():
-                return True
+            # compare each approxId with each other
+            for approxId1 in trade.getApproximateIDs():
+                for approxId2 in t.getApproximateIDs():
+                    if approxId1 == approxId2:
+                        return True
         return False
 
     def recalcIds(self):
