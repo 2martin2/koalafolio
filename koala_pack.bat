@@ -1,4 +1,9 @@
-rem todo: exe needs graphics and Import/defaultApiData.db relative to exe path.
-rem Include of these files in .spec does not work with single file mode.
-rem When they are copied to dist folder manually, it works.
-pipenv run pyinstaller koalafolio.spec
+pipenv run pyinstaller koalafolio/gui_root.py ^
+--windowed ^
+--icon=koalafolio/KoalaIcon.ico ^
+--name=koalafolio ^
+--distpath dist ^
+--add-data "koalafolio/Import/defaultApiData.db;Import" ^
+--add-data "koalafolio/koalaicon.ico;." ^
+--add-data "koalafolio/koalaicon.png;." ^
+--add-data "koalafolio/graphics/;graphics"

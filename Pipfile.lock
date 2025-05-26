@@ -112,6 +112,7 @@
                 "sha256:d46d99d028ad4a566f980bc8790099288824212c0f21a275d546be403cbcb7bc",
                 "sha256:d9c8db3b45fb114739bc3daae85ceb03b2bcb11f11f2d1eae25b00b989cd306a",
                 "sha256:dbcff7b1dce09bb430e0035cdbf734a69a0c87c753e6cd2c7e87dca46e3f2443",
+                "sha256:e3f0a2b4d7fb16c0d584d9b8860f1e46d39f7d93372b25a6f80c10015a7acdab",
                 "sha256:e76898841d4e655ac5e7e2f1e146d9e56ee1ffd2ce2dd31b41ab23bcfb29b209",
                 "sha256:e898963e18f8734ee5f8772367beb29791ca861e0e1f7ddfeb90e75c7a6c7c83",
                 "sha256:f4f06d93c08670b8deb6e965578c804eecd85450319f403ed5695e7105ca4f38",
@@ -1570,6 +1571,7 @@
                 "sha256:49f7af965996f26d43c8ae34539c8d99c5042fbff34302ea151eaa9c207cd257",
                 "sha256:95a60484590d24103af13b686121328cc2736bee85de8936383111e421b9edc0"
             ],
+            "index": "pypi",
             "markers": "python_version >= '3.9'",
             "version": "==80.8.0"
         },

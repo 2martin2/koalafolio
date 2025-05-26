@@ -134,8 +134,9 @@ def lazy_import_heavy_modules():
 
 
 # %% variables
-if getattr(sys, 'frozen', False):
+if getattr(sys, 'frozen', False):  # running as pyinstaller executable
     application_path = os.path.dirname(sys.executable)
+    internal_dir = os.path.join(application_path, "_internal")  # Check for _internal
     running_mode = 'Frozen/executable'
 else:
     try:
@@ -145,6 +146,19 @@ else:
     except NameError:
         application_path = os.getcwd()
         running_mode = 'Interactive'
+
+def getResourcePath(relative_path) -> os.path:
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    base_path = getattr(sys, '_MEIPASS', application_path)
+    if running_mode == 'Frozen/executable':
+        base_path = internal_dir
+        # Check where the files are stored
+        internalPath = os.path.join(internal_dir, relative_path)
+        if os.path.exists(internalPath):
+            return internalPath
+        else:
+            return os.path.join(application_path, relative_path)  # Try the exe folder
+    return os.path.join(base_path, relative_path)
 
 # %% classes
 class PortfolioApp(qtwidgets.QWidget):
@@ -249,6 +263,24 @@ class PortfolioApp(qtwidgets.QWidget):
         except Exception as ex:
             self.logger.error(f'Error in background initialization: {ex}')
 
+    def initGraphics(self):
+        self.buttonPortfolio.setStyleSheet("QPushButton {border-image: url(" +
+                                           os.path.join(self.graphicsPath, 'portfolio.png').replace('\\', '/') +
+                                           ") 0 15 0 15 stretch;}")
+        self.buttonTrades.setStyleSheet("QPushButton {border-image: url(" +
+                                        os.path.join(self.graphicsPath, 'trades.png').replace('\\', '/') +
+                                        ") 0 15 0 15 stretch;}")
+        self.buttonImport.setStyleSheet("QPushButton {border-image: url(" +
+                                        os.path.join(self.graphicsPath, 'import.png').replace('\\', '/') +
+                                        ") 0 15 0 15 stretch;}")
+        self.buttonExport.setStyleSheet("QPushButton {border-image: url(" +
+                                        os.path.join(self.graphicsPath, 'export.png').replace('\\', '/') +
+                                        ") 0 15 0 15 stretch;}")
+        self.buttonSettings.setStyleSheet("QPushButton {border-image: url(" +
+                                          os.path.join(self.graphicsPath, 'settings.png').replace('\\', '/') +
+                                          ") 0 15 0 15 stretch;}")
+
+
     def reinit(self):
         self.startRefresh.emit()
         # delete button styles before style update, otherwise qt will crash
@@ -258,27 +290,15 @@ class PortfolioApp(qtwidgets.QWidget):
         self.buttonExport.setStyleSheet("")
         self.buttonSettings.setStyleSheet("")
         self.initStyle()
-        self.buttonPortfolio.setStyleSheet("QPushButton {border-image: url(" +
-                                           os.path.join(self.appPath, 'graphics', 'portfolio.png').replace('\\', '/') +
-                                           ") 0 15 0 15 stretch;}")
-        self.buttonTrades.setStyleSheet("QPushButton {border-image: url(" +
-                                        os.path.join(self.appPath, 'graphics', 'trades.png').replace('\\', '/') +
-                                        ") 0 15 0 15 stretch;}")
-        self.buttonImport.setStyleSheet("QPushButton {border-image: url(" +
-                                        os.path.join(self.appPath, 'graphics', 'import.png').replace('\\', '/') +
-                                        ") 0 15 0 15 stretch;}")
-        self.buttonExport.setStyleSheet("QPushButton {border-image: url(" +
-                                        os.path.join(self.appPath, 'graphics', 'export.png').replace('\\', '/') +
-                                        ") 0 15 0 15 stretch;}")
-        self.buttonSettings.setStyleSheet("QPushButton {border-image: url(" +
-                                          os.path.join(self.appPath, 'graphics', 'settings.png').replace('\\', '/') +
-                                          ") 0 15 0 15 stretch;}")
+        self.initGraphics()
         self.endRefresh.emit()
 
     # load environment/ settings
     def initEnv(self):
         # handle paths
         self.appPath = application_path
+        self.graphicsPath = getResourcePath('graphics')
+        self.ImportPath = getResourcePath('Import')
 
         if self.username:
             dataFolderName = "Data_" + str(self.username)
@@ -363,7 +383,7 @@ class PortfolioApp(qtwidgets.QWidget):
         """Initialize db components in background"""
         try:
             self.apiUserDatabase = apiImport.ApiUserDatabase(path=self.dataPath)
-            self.apiDefaultDatabase = apiImport.ApiDefaultDatabase(path=self.appPath)
+            self.apiDefaultDatabase = apiImport.ApiDefaultDatabase(path=self.ImportPath)
 
             self.logger.info('databases initialized')
         except Exception as ex:
@@ -443,21 +463,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.buttonExport = qtwidgets.QPushButton("", self.sidebarFrame)
         self.buttonSettings = qtwidgets.QPushButton("", self.sidebarFrame)
 
-        self.buttonPortfolio.setStyleSheet("QPushButton {border-image: url(" +
-                                           os.path.join(self.appPath, 'graphics', 'portfolio.png').replace('\\', '/') +
-                                           ") 0 15 0 15 stretch;}")
-        self.buttonTrades.setStyleSheet("QPushButton {border-image: url(" +
-                                           os.path.join(self.appPath, 'graphics', 'trades.png').replace('\\', '/') +
-                                           ") 0 15 0 15 stretch;}")
-        self.buttonImport.setStyleSheet("QPushButton {border-image: url(" +
-                                           os.path.join(self.appPath, 'graphics', 'import.png').replace('\\', '/') +
-                                           ") 0 15 0 15 stretch;}")
-        self.buttonExport.setStyleSheet("QPushButton {border-image: url(" +
-                                           os.path.join(self.appPath, 'graphics', 'export.png').replace('\\', '/') +
-                                           ") 0 15 0 15 stretch;}")
-        self.buttonSettings.setStyleSheet("QPushButton {border-image: url(" +
-                                           os.path.join(self.appPath, 'graphics', 'settings.png').replace('\\', '/') +
-                                           ") 0 15 0 15 stretch;}")
+        self.initGraphics()
 
         self.buttonPortfolio.setToolTip('portfolio')
         self.buttonTrades.setToolTip('trades')
@@ -574,10 +580,10 @@ def main():
 
     # Create and show splash screen with better styling
     try:
-        splash_pixmap = qtgui.QPixmap(os.path.join(application_path, 'graphics', 'KoalaIcon.ico'))
+        splash_pixmap = qtgui.QPixmap(getResourcePath('graphics/KoalaIcon.ico'))
         if splash_pixmap.isNull():
             # Fallback to PNG if ICO is not found
-            splash_pixmap = qtgui.QPixmap(os.path.join(application_path, 'KoalaIcon.png'))
+            splash_pixmap = qtgui.QPixmap(getResourcePath('graphics/KoalaIcon.png'))
     except:
         # Create a simple colored splash if no icon is found
         splash_pixmap = qtgui.QPixmap(300, 200)
@@ -594,7 +600,7 @@ def main():
     try:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         app_icon = qtgui.QIcon()
-        app_icon.addFile(os.path.join(application_path, 'KoalaIcon.png'), qtcore.QSize(256, 256))
+        app_icon.addFile(getResourcePath('graphics/KoalaIcon.png'), qtcore.QSize(256, 256))
         app.setWindowIcon(app_icon)
         app.setApplicationName('koalafolio')
     except Exception as ex:

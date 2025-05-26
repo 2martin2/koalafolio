@@ -193,7 +193,6 @@ class ApiUserDatabase(BaseDatabase):
 class ApiDefaultDatabase(BaseDatabase):
     def __init__(self, path: str=None):
         if path:
-            path = os.path.join(path, 'Import').replace('\\', '/')
             super(ApiDefaultDatabase, self).__init__(dbname='defaultApiData.db', path=path, loggingenabled=False)
             self.pw = "koala"
 
