@@ -14,15 +14,8 @@ import koalafolio.gui.QLogger as logger
 
 localLogger = logger.globalLogger
 
-exchangenames = [
-    "binance",
-    "bitmex",
-    "coinbase",
-    "coinbasepro",
-    "gemini",
-    "poloniex",
-    "kraken"
-]
+# Get all exchanges supported by CCXT that support fetchMyTrades
+exchangenames = [exchange_id for exchange_id in ccxt.exchanges if getattr(ccxt, exchange_id)().has.get('fetchMyTrades', False)]
 
 # timestamp,  location,   pair,   trade_type, amount, rate,   fee,    fee_currency,   link
 def tradesToDataframe(ccxtTrades):
@@ -98,7 +91,7 @@ class ccxtExchange:
         self.exchange = exchange_class({
             'apiKey': self.api_key,
             'secret': self.api_secret,
-            'enableRateLimit': True,  # Respect exchange rate limits
+            'enableRateLimit': False,  # Respect exchange rate limits
         })
     
     def validate_api_credentials(self):
