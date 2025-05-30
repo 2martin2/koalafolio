@@ -8,8 +8,8 @@ Created on Wen Oct 01 15:36:21 2019
 import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import koalafolio.gui.QLogger as logger
-import koalafolio.gui.QSettings as settings
 import koalafolio.gui.Qcontrols as controls
+from koalafolio.gui.widgets.QCompleterComboBox import QCompleterComboBox
 import koalafolio.Import.apiImport as apiImport
 import datetime
 
@@ -36,13 +36,15 @@ class ApiKeyModel(qtcore.QObject):
         self.databaseUnlocked.connect(self.loadDatabaseApiNames)
         self.databaseWritten.connect(self.loadDatabaseApiNames)
 
-        self.apiSelectModel = qtcore.QStringListModel()
+
+        self.apiSelectModel = qtcore.QStringListModel()  # model for ComboBox
         self.refreshApiNames()
         self.addressSelectModels = {}
         self.initAddressSelectModels()
         self.refreshAddressSelectModels()
 
     def refreshApiNames(self):
+        print("refreshing api names")
         self.apiSelectModel.setStringList(apiImport.apiNames)
 
     def initAddressSelectModels(self):
@@ -194,7 +196,7 @@ class ApiKeyView(qtwidgets.QWidget):
                                                   self.newDbFrame)
 
         self.directApiSelectLabel = qtwidgets.QLabel("API: ", self)
-        self.directApiSelectDropdown = qtwidgets.QComboBox(self)
+        self.directApiSelectDropdown = QCompleterComboBox(parent=self)
         self.directApiSelectDropdown.currentTextChanged.connect(self.directApiSelectDropdownChanged)
 
         today = datetime.datetime.now()
@@ -378,7 +380,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.lockedStateLayout.addStretch()
 
         self.apiSelectLabel = qtwidgets.QLabel("API: ", self.apiFrame)
-        self.apiSelectDropdown = qtwidgets.QComboBox(self.apiFrame)
+        self.apiSelectDropdown = QCompleterComboBox(parent=self.apiFrame)
 
         self.apiGridLayout = qtwidgets.QGridLayout()
         self.apiGridLayout.addWidget(self.apiSelectLabel, 0, 0)
@@ -419,9 +421,8 @@ class ApiKeyView(qtwidgets.QWidget):
         model.databaseWritten.connect(self.databaseWritten)
         model.databaseRemoved.connect(self.databaseRemoved)
         # set dropdown models
-        self.apiSelectDropdown.setModel(model.databaseApiNameModel)
-        self.directApiSelectDropdown.setModel(model.apiSelectModel)
-        self.directApiSelectDropdown.setCurrentIndex(0)
+        self.apiSelectDropdown.setModel(model=model.databaseApiNameModel)
+        self.directApiSelectDropdown.setModel(model=model.apiSelectModel)
 
         # set model
         if self.model.database.databaseFound:
@@ -439,6 +440,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.loadApiEntryButton.setEnabled(True)
         self.deleteDBEntryButton.setEnabled(True)
         self.apiSelectDropdown.setCurrentIndex(0)
+        self.apiSelectDropdown.setEnabled(True)
         self.lockedStateLabel.setText("database is unlocked")
 
     def databaseLocked(self):
@@ -448,6 +450,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.deleteDBEntryButton.setDisabled(True)
         self.pwInput.setEnabled(True)
         self.unlockDbButton.setEnabled(True)
+        self.apiSelectDropdown.setDisabled(True)
         self.lockedStateLabel.setText("database is locked")
 
     def databaseWritten(self):
@@ -578,31 +581,33 @@ class ApiKeyView(qtwidgets.QWidget):
 
     # callback if selected Api is changed
     def directApiSelectDropdownChanged(self):
-        # remove previous Input from InputBoxes
-        self.addressInputNewAddress.clear()
-        self.keyInput.clear()
-        self.secretInput.clear()
+        # check if api from dropdown exists in model, else ignore
         apiname = self.directApiSelectDropdown.currentText()
-        # update note
-        self.directApiNote.setText(self.model.getApiNote(apiname))
-        # update Api UI depending on selected Api Type
-        apitype = self.model.getApiType(apiname)
-        if apitype == "exchange":
-            self.stackedContentLayoutApi.setCurrentIndex(0)
-            if not self.model.isDataBaseLocked():
-                apikey, secret = self.model.getApiKeyAndSecret(apiname)
-                self.keyInput.setText(apikey)
-                self.secretInput.setText(secret)
-        elif apitype == "chaindata":
-            self.stackedContentLayoutApi.setCurrentIndex(1)
-            self.addressSelectDropdown.setModel(self.model.getAddressModel(apiname))
-            self.addressSelectDropdown.setCurrentIndex(0)
-            if not self.model.isDataBaseLocked():
-                apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
-                if apikey:
+        if apiname in self.model.apiModels:
+            # remove previous Input from InputBoxes
+            self.addressInputNewAddress.clear()
+            self.keyInput.clear()
+            self.secretInput.clear()
+            # update note
+            self.directApiNote.setText(self.model.getApiNote(apiname))
+            # update Api UI depending on selected Api Type
+            apitype = self.model.getApiType(apiname)
+            if apitype == "exchange":
+                self.stackedContentLayoutApi.setCurrentIndex(0)
+                if not self.model.isDataBaseLocked():
+                    apikey, secret = self.model.getApiKeyAndSecret(apiname)
                     self.keyInput.setText(apikey)
-                for address in addressList:
-                    self.model.addAddress(apiname, address)
+                    self.secretInput.setText(secret)
+            elif apitype == "chaindata":
+                self.stackedContentLayoutApi.setCurrentIndex(1)
+                self.addressSelectDropdown.setModel(self.model.getAddressModel(apiname))
+                self.addressSelectDropdown.setCurrentIndex(0)
+                if not self.model.isDataBaseLocked():
+                    apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
+                    if apikey:
+                        self.keyInput.setText(apikey)
+                    for address in addressList:
+                        self.model.addAddress(apiname, address)
 
     def addChainAddress(self):
         # switch to AddressAddUI

@@ -449,8 +449,6 @@ QPushButton:disabled {
     color: TEXT_HIGHLIGHTED;
 }
 
-
-
 /* import and settings treeview */
 QTreeView{
     border: 0px solid BACKGROUND;
@@ -576,5 +574,11 @@ background-color: BACKGROUND;
 selection-background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 PRIMARY, stop: 0.4 PRIMARY_MIDLIGHT, stop:1 PRIMARY);
 selection-color: TEXT_NORMAL;
+}
+
+QAbstractItemView#StyledCompleterPopup{
+    background-color: BACKGROUND;
+    color: TEXT_NORMAL; /* Text color */
+    border: 1px solid PRIMARY; 
 }
 """

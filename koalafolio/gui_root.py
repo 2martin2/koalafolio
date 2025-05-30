@@ -11,7 +11,6 @@ import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import sys
 import os
-from pathlib import Path
 
 # Essential application imports
 import koalafolio.PcpCore.logger as coreLogger
@@ -22,6 +21,7 @@ import koalafolio.gui.QSettings as settings
 import koalafolio.gui.QStyle as style
 import koalafolio.exp.QTranslate as translator
 
+from koalafolio.gui.widgets.QCompleterComboBox import StyledCompleter
 # Defer heavy imports - will be imported when needed
 # import koalafolio.gui.QLoggerWidget as loggerwidget
 # import koalafolio.gui.Qpages as pages
@@ -169,6 +169,7 @@ class PortfolioApp(qtwidgets.QWidget):
     SETTINGSPAGEINDEX = 4
     startRefresh = qtcore.pyqtSignal()
     endRefresh = qtcore.pyqtSignal()
+    styleSheetChanged = qtcore.pyqtSignal(str)
 
     def __init__(self, parent=None, userDataPath = "", username="", splash=None):
         super(PortfolioApp, self).__init__(parent=parent)
@@ -424,6 +425,8 @@ class PortfolioApp(qtwidgets.QWidget):
         # load stylesheet
         self.styleSheetHandler.loadSheet(self.settings['window']['stylesheetname'])
         self.logger.info('style initialized')
+        self.styleSheetChanged.connect(StyledCompleter.updateAllStyles)
+        self.styleSheetChanged.emit(self.styleSheet())
 
     def initData(self):
         self.logger.info('initializing data ...')
