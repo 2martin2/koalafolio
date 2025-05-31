@@ -14,43 +14,46 @@ import koalafolio.gui.QLogger as logger
 
 localLogger = logger.globalLogger
 
-# Get all exchanges supported by CCXT that support fetchMyTrades
-exchangenames = [exchange_id for exchange_id in ccxt.exchanges if getattr(ccxt, exchange_id)().has.get('fetchMyTrades', False)]
+# static class for static data
+class ExchangesStatic:
+    SUPPORTED_EXCHANGES = [exchange_id for exchange_id in ccxt.exchanges if getattr(ccxt, exchange_id)().has.get('fetchMyTrades', False)]
 
-# timestamp,  location,   pair,   trade_type, amount, rate,   fee,    fee_currency,   link
-def tradesToDataframe(ccxtTrades):
-    trades = []
-    for ccxtTrade in ccxtTrades:
-        trade = {}
-        trade['timestamp'] = datetime.datetime.fromtimestamp(ccxtTrade.timestamp)
-        trade['location'] = str(ccxtTrade.location)
-        trade['pair'] = str(ccxtTrade.pair)
-        trade['trade_type'] = str(ccxtTrade.trade_type)
-        trade['amount'] = float(ccxtTrade.amount)
-        trade['rate'] = float(ccxtTrade.rate)
-        trade['fee'] = float(ccxtTrade.fee)
-        trade['fee_currency'] = str(ccxtTrade.fee_currency.symbol)
-        trade['link'] = str(ccxtTrade.link)
-        trades.append(trade)
-    return pandas.DataFrame(trades)
+    # convert ccxtTrades to Dataframe
+    @staticmethod
+    def tradesToDataframe(ccxtTrades):
+        # timestamp,  location,   pair,   trade_type, amount, rate,   fee,    fee_currency,   link
+        trades = []
+        for ccxtTrade in ccxtTrades:
+            trade = {}
+            trade['timestamp'] = datetime.datetime.fromtimestamp(ccxtTrade.timestamp)
+            trade['location'] = str(ccxtTrade.location)
+            trade['pair'] = str(ccxtTrade.pair)
+            trade['trade_type'] = str(ccxtTrade.trade_type)
+            trade['amount'] = float(ccxtTrade.amount)
+            trade['rate'] = float(ccxtTrade.rate)
+            trade['fee'] = float(ccxtTrade.fee)
+            trade['fee_currency'] = str(ccxtTrade.fee_currency.symbol)
+            trade['link'] = str(ccxtTrade.link)
+            trades.append(trade)
+        return pandas.DataFrame(trades)
 
-def getTradeHistoryCcxt(apiname, key, secret, start, end):
-    # Handle different secret encoding requirements for different exchanges
-    api_secret = secret
-    if isinstance(secret, str) and apiname.lower() != 'binance':
-        api_secret = secret.encode()
-    
-    api = ccxtExchange(apiname, api_key=key, api_secret=api_secret)
-    iskeyValid, checkKeyMsg = api.validate_api_credentials()
-    if iskeyValid:
-        trades = api.query_trade_history(start_ts=start, end_ts=end)
-        tradesDF = tradesToDataframe(trades)
-        return tradesDF
-    localLogger.warning("api key is invalid for " + str(api.__class__.__name__) + ": " + checkKeyMsg)
-    return pandas.DataFrame()
+    # get trade history from exchange
+    @staticmethod
+    def getTradeHistoryCcxt(apiname, key, secret, start, end):
+        # Handle different secret encoding requirements for different exchanges
+        api_secret = secret
+        if isinstance(secret, str) and apiname.lower() != 'binance':
+            api_secret = secret.encode()
 
-# todo: implement ccxt api for all current exchanges:
-# binance, bitmex, coinbase, coinbasepro, gemini, poloniex, kraken
+        api = ccxtExchange(apiname, api_key=key, api_secret=api_secret)
+        iskeyValid, checkKeyMsg = api.validate_api_credentials()
+        if iskeyValid:
+            trades = api.query_trade_history(start_ts=start, end_ts=end)
+            tradesDF = ExchangesStatic.tradesToDataframe(trades)
+            return tradesDF
+        localLogger.warning("api key is invalid for " + str(api.__class__.__name__) + ": " + checkKeyMsg)
+        return pandas.DataFrame()
+
 
 class Trade:
     """Simple class to represent a trade in the format expected by tradesToDataframe"""
@@ -65,10 +68,11 @@ class Trade:
         self.fee_currency = type('obj', (object,), {'symbol': fee_currency})
         self.link = link
 
+
 class ccxtExchange:
     """CCXT Exchange wrapper for koalafolio"""
     
-    SUPPORTED_EXCHANGES = exchangenames
+    SUPPORTED_EXCHANGES = ExchangesStatic.SUPPORTED_EXCHANGES
     
     def __init__(self, exchange_name, api_key=None, api_secret=None):
         """

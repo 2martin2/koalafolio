@@ -4,16 +4,59 @@ Created on Sun Sep  15 15:15:19 2019
 
 @author: Martin
 """
-import koalafolio.gui.QLogger as logger
-import koalafolio.web.exchanges as exchanges
-import koalafolio.web.chaindata as chaindata
+from koalafolio.web.exchanges import ExchangesStatic
+from koalafolio.web.chaindata import ChaindataStatic
 import pandas
 from Cryptodome.Cipher import AES
 import os
 import hashlib
 import json
 
-localLogger = logger.globalLogger
+from koalafolio.gui.QLogger import globalLogger
+localLogger = globalLogger
+
+
+# staic class for static data
+class ApiImportStatic:
+    SUPPORTED_APIS = ExchangesStatic.SUPPORTED_EXCHANGES + ChaindataStatic.SUPPORTED_CHAINS
+    @staticmethod
+    def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, address=None):
+        if apiname not in ApiImportStatic.SUPPORTED_APIS:
+            raise KeyError("invalid api name")
+        else:
+            localLogger.info("requesting data from " + str(apiname))
+            try:
+                if apitype == "exchange":
+                    return ExchangesStatic.getTradeHistoryCcxt(apiname, apikey, secret, start, end)
+                elif apitype == "chaindata":
+                    return ChaindataStatic.getBlockdaemonRewardsForAddress(apiname, apikey, address, start, end)
+                else:
+                    raise ValueError("invalid type in getApiHistory: " + str(apitype))
+            except Exception as ex:
+                localLogger.warning("could not load data from api (" + str(apiname) + "): " + str(ex))
+                return pandas.DataFrame()
+
+    # get dict of ApiModels
+    @staticmethod
+    def getApiModels():
+        apiModels = {}
+        for apiname in ExchangesStatic.SUPPORTED_EXCHANGES:
+            apiModels[apiname] = ApiModel(
+                name=str(apiname),
+                apitype="exchange",
+                note="get data from " + str(apiname) + ". "
+            )
+        for apiname in ChaindataStatic.SUPPORTED_CHAINS:  # apitype is blockdaemon chaindata
+            apiModels[apiname] = ApiModel(
+                name=str(apiname),
+                apitype="chaindata",
+                note="Koala provides default api key for blockdaemon api.\n" \
+                     "However it is recommended to create your own key.\n" \
+                     "Key can be created at https://app.blockdaemon.com (Login->workspace->API Suite->Connect.\n" \
+                     "More Infos can be found in their documentation: https://docs.blockdaemon.com/"
+            )
+        return apiModels
+
 
 # %% Trade
 class ApiModel:
@@ -22,48 +65,15 @@ class ApiModel:
         self.apiType = apitype
         self.apiNote = note
 
-apiNamesBlockdaemon = chaindata.apinames
-apiNamesCcxt = exchanges.exchangenames
-
-apiNames = apiNamesCcxt \
-           + apiNamesBlockdaemon
-
-# create apiModels
-apiModels = {}
-for apiname in apiNamesCcxt:
-    apiModels[apiname] = ApiModel(
-        name=str(apiname),
-        apitype="exchange",
-        note="get data from " + str(apiname) + ". "
-    )
-for apiname in apiNamesBlockdaemon:  # apitype is blockdaemon chaindata
-    apiModels[apiname] = ApiModel(
-        name=str(apiname),
-        apitype="chaindata",
-        note=   "Koala provides default api key for blockdaemon api.\n" \
-                "However it is recommended to create your own key.\n" \
-                "Key can be created at https://app.blockdaemon.com (Login->workspace->API Suite->Connect.\n" \
-                "More Infos can be found in their documentation: https://docs.blockdaemon.com/"
-        )
-
-def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, address=None):
-    if apiname not in apiModels:
-        raise KeyError("invalid api name")
-    else:
-        localLogger.info("requesting data from " + str(apiname))
-        try:
-            if apitype == "exchange":
-                return exchanges.getTradeHistoryCcxt(apiname, apikey, secret, start, end)
-            elif apitype == "chaindata":
-                return chaindata.getBlockdaemonRewardsForAddress(apiname, apikey, address, start, end)
-            else:
-                raise ValueError("invalid type in getApiHistory: " + str(apitype))
-        except Exception as ex:
-            localLogger.warning("could not load data from api (" + str(apiname) + "): " + str(ex))
-            return pandas.DataFrame()
+    def toDict(self):
+        return {
+            "apiName": self.apiName,
+            "apiType": self.apiType,
+            "apiNote": self.apiNote
+        }
 
 
-class BaseDatabase():
+class BaseDatabase:
     def __init__(self, dbname: str, path: str=None, loggingenabled: bool=False):
 
         self.databaseFound = False

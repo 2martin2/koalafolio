@@ -7,14 +7,20 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QComboBox, QPushButton, QHBoxLayout, QVBoxLayout,
     QDialog, QCheckBox, QDialogButtonBox, QFormLayout, QMenu, QAction, QWidgetAction
 )
-from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractListModel, QModelIndex, QVariant, QPoint
+from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractListModel, QModelIndex, QVariant, QPoint, pyqtSignal
 from koalafolio.gui.widgets.QCompleterComboBox import QCompleterComboBoxView
 
-class StringPropertyListModel(QAbstractListModel):
-    def __init__(self, string_list, properties_list, parent=None):
+class QStringPropertyListModel(QAbstractListModel):
+    def __init__(self, string_list=[], properties_list=[], parent=None):
         super().__init__(parent)
         self._strings = string_list
         self._properties = properties_list
+
+    def setDataFromDict(self, dataDict, string_key="name", properties_keys=["type"]):
+        self.beginResetModel()
+        self._strings = [item[string_key] for item in dataDict]
+        self._properties = [{key: item.get(key, None) for key in properties_keys} for item in dataDict]
+        self.endResetModel()
 
     def rowCount(self, parent=QModelIndex()):
         return len(self._strings)
@@ -52,7 +58,14 @@ class FilterProxyModel(QSortFilterProxyModel):
                 return False
         return True
 
-class FilterableComboBoxView(QWidget):
+
+class QFilterableComboBoxView(QWidget):
+    currentTextChanged = pyqtSignal([str])
+    currentIndexChanged = pyqtSignal([int])
+    activated = pyqtSignal([int])
+    editTextChanged = pyqtSignal([str])
+    highlighted = pyqtSignal([int])
+
     def __init__(self, label_text="", parent=None):
         super().__init__(parent)
         self.proxyModel = FilterProxyModel(self)
@@ -61,6 +74,13 @@ class FilterableComboBoxView(QWidget):
 
         self.label = QLabel(label_text, self)
         self.combobox = QCompleterComboBoxView(self)
+        # map signals from QComboBox to parent widget
+        self.combobox.currentTextChanged.connect(self.currentTextChanged)
+        self.combobox.currentIndexChanged.connect(self.currentIndexChanged)
+        self.combobox.activated.connect(self.activated)
+        self.combobox.editTextChanged.connect(self.editTextChanged)
+        self.combobox.highlighted.connect(self.highlighted)
+
         self.combobox.setModel(self.proxyModel)
 
         self.filter_buttons = {}  # key: QPushButton
@@ -68,9 +88,10 @@ class FilterableComboBoxView(QWidget):
 
         layout = QHBoxLayout(self)
         layout.addWidget(self.label)
-        layout.addWidget(self.combobox)
         self.filter_buttons_layout = QHBoxLayout()
         layout.addLayout(self.filter_buttons_layout)
+        # add combobox with maximum span
+        layout.addWidget(self.combobox, 1)
         self.setLayout(layout)
 
     def setModel(self, model):
@@ -78,6 +99,15 @@ class FilterableComboBoxView(QWidget):
         self.generateFilterProperties(model)
         self.createFilterButtons()
         self.createFilterMenus()
+        model.modelReset.connect(self.onModelReset)
+
+    def onModelReset(self):
+        self.generateFilterProperties(self.proxyModel.sourceModel())
+        self.createFilterButtons()
+        self.createFilterMenus()
+
+    def currentText(self):
+        return self.combobox.currentText()
 
     def generateFilterProperties(self, model):
         # Only accept key: list properties
@@ -89,6 +119,7 @@ class FilterableComboBoxView(QWidget):
                     self.filter_properties[key] = []
                 if value not in self.filter_properties[key]:
                     self.filter_properties[key].append(value)
+        print(f"filter_properties: {self.filter_properties}")
         # At start, all values are enabled
         self.active_filter_values = {k: set(v) for k, v in self.filter_properties.items()}
 
@@ -115,6 +146,7 @@ class FilterableComboBoxView(QWidget):
         menu = QMenu(self)
         menu.setSeparatorsCollapsible(False)
         actions = {}
+        max_width = 0
 
         # Add Select All checkbox at the top using QWidgetAction
         select_all_widget = QCheckBox("Select All", menu)
@@ -122,6 +154,8 @@ class FilterableComboBoxView(QWidget):
         select_all_action.setDefaultWidget(select_all_widget)
         menu.addAction(select_all_action)
         menu.addSeparator()
+        select_all_widget.adjustSize()
+        max_width = max(max_width, select_all_widget.sizeHint().width())
 
         # Add value checkboxes using QWidgetAction
         for value in values:
@@ -131,6 +165,8 @@ class FilterableComboBoxView(QWidget):
             action.setDefaultWidget(cb)
             menu.addAction(action)
             actions[value] = cb
+            cb.adjustSize()
+            max_width = max(max_width, cb.sizeHint().width())
 
         def update_select_all_state():
             all_checked = all(cb.isChecked() for cb in actions.values())
@@ -157,17 +193,27 @@ class FilterableComboBoxView(QWidget):
         select_all_widget.toggled.connect(on_select_all_toggled)
         update_select_all_state()
 
-        # Keep a reference to the menu to prevent garbage collection
-        def on_menu_about_to_hide():
-            self._current_menu = None
-        menu.aboutToHide.connect(on_menu_about_to_hide)
+        # Set menu width to fit content
+        menu.setFixedWidth(max_width + 5)
 
+        # When menu is about to hide, if nothing is checked, check all and update filter
+        def on_menu_about_to_hide():
+            if not any(cb.isChecked() for cb in actions.values()):
+                for cb in actions.values():
+                    cb.blockSignals(True)
+                    cb.setChecked(True)
+                    cb.blockSignals(False)
+                update_filters()
+            self._current_menu = None
+
+        menu.aboutToHide.connect(on_menu_about_to_hide)
         return menu
         
     def open_filter_popup(self, key):
         menu = self.filter_menus[key]
         button = self.filter_buttons[key]
         self._current_menu = menu
+        menu.setMinimumWidth(button.width())
         menu.exec_(button.mapToGlobal(button.rect().bottomLeft()))
         
     def model(self):
@@ -176,22 +222,18 @@ class FilterableComboBoxView(QWidget):
 # Simple test window with default data
 def main():
     app = QApplication(sys.argv)
-    string_list = ["Apple", "Banana", "Carrot", "Date", "Eggplant"]
-    properties_list = [
-        {"type": "Fruit", "color": "red"},
-        {"type": "Fruit", "color": "yellow"},
-        {"type": "Vegetable", "color": "orange"},
-        {"type": "Fruit", "color": "orange"},
-        {"type": "Vegetable", "color": "yellow"},
+    stringPropertiesData_list = [
+        {"name": "Apple", "type": "Fruit", "color": "red"},
+        {"name": "Banana", "type": "Fruit", "color": "yellow"},
+        {"name": "Carrot", "type": "Vegetable", "color": "orange"},
+        {"name": "Date", "type": "Fruit", "color": "orange"},
+        {"name": "Eggplant", "type": "Vegetable", "color": "yellow"}
     ]
-    filter_properties = {
-        "type": ["Fruit", "Vegetable"],
-        "organic": True  # just a placeholder, type is bool
-    }
-    model = StringPropertyListModel(string_list, properties_list)
+    model = QStringPropertyListModel()
+    model.setDataFromDict(stringPropertiesData_list, string_key="name", properties_keys=["type", "color"])
     window = QWidget()
     layout = QVBoxLayout(window)
-    filterable = FilterableComboBoxView(label_text="Select:", parent=window)
+    filterable = QFilterableComboBoxView(label_text="Select:", parent=window)
     filterable.setModel(model)
     layout.addWidget(filterable)
     window.setWindowTitle("Filterable ComboBox Test")
