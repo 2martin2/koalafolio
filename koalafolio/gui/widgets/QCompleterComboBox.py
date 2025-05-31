@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtWidgets import QComboBox, QCompleter
-from PyQt5.QtCore import QStringListModel, Qt, QEvent
+from PyQt5.QtCore import QStringListModel, Qt, QEvent, QSortFilterProxyModel, QTimer
 
 
 class StyledCompleter(QCompleter):
@@ -57,75 +57,112 @@ class StyledCompleter(QCompleter):
         return super().eventFilter(obj, event)
 
 
-class QCompleterComboBox(QComboBox):
+class PrefixFilterProxyModel(QSortFilterProxyModel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._filter_text = ""
+
+    def setFilterText(self, text):
+        self._filter_text = text
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if not self._filter_text:
+            return True
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        data = self.sourceModel().data(index, Qt.DisplayRole)
+        if data.lower().startswith(self._filter_text.lower()):
+            print(f"Filtering row {source_row}: {data} matches filter '{self._filter_text}'")
+        return data.lower().startswith(self._filter_text.lower())
+
+
+class QCompleterComboBoxView(QComboBox):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setEditable(True)
         self.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)  # Prevent adding new items
 
-        self.original_items = []
+        # Set up proxy filter model
+        self.proxyModel = PrefixFilterProxyModel(self)
 
         # Set up completer
         completer = StyledCompleter(parent=self)
-        completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        completer.setCompletionMode(QCompleter.CompletionMode.UnfilteredPopupCompletion)
         completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)  # Case-insensitive matching
+        completer.setModel(self.proxyModel)
         self.setCompleter(completer)
-
-        # Initialize model
-        self.completerModel = QStringListModel()
-        self.completer().setModel(self.completerModel)
 
         # Connect text input changes and enter key press
         self.lineEdit().textEdited.connect(self._handle_text_edited)
         self.lineEdit().returnPressed.connect(self.select_first_completion)
 
+        self.activated.connect(self._on_activated)
+        self.currentIndexChanged.connect(self._on_current_index_changed)
+
+    # def currentText(self):
+    #     # call data with current index
+    #     return self.model().data(self.model().index(self.currentIndex(), 0), Qt.DisplayRole)
+
+    def _on_activated(self, index):
+        # Get the display text from the model and set it to the line edit
+        text = self.model().data(self.model().index(index, 0), Qt.DisplayRole)
+        self.lineEdit().setText(text)
+
+    def _on_current_index_changed(self, index):
+        # Get the display text from the model and set it to the line edit
+        text = self.model().data(self.model().index(index, 0), Qt.DisplayRole)
+        self.lineEdit().setText(text)
+
+    def addItem(self, text, userData = ...):
+        # raise notImplemented
+        raise NotImplementedError("Use setModel() to set a model with items.")
+
+    def addItems(self, items):
+        # raise notImplemented
+        raise NotImplementedError("Use setModel() to set a model with items.")
+
     def setModel(self, model):
         super().setModel(model)
-        model.modelReset.connect(self.update_original_items)
-        self.update_original_items()
-
-    def update_original_items(self):
-        self.original_items = self.model().stringList()
-        # self.completerModel.setStringList(self.original_items)
-        self.update_filter(self.lineEdit().text())
+        self.proxyModel.setSourceModel(model)
 
     def _handle_text_edited(self, text):
+        # Only show completer popup if user is actually typing
         if self.lineEdit().hasFocus():
             self.update_filter(text)
-            # Only show completer popup if user is actually typing
-            self.completer().complete()
+            # process completer after the event loop has processed the text change
+            # self._show_completer()
+            QTimer.singleShot(0, self._show_completer)
+
+    def _show_completer(self):
+        self.completer().complete()
 
     def update_filter(self, text: str):
-        """Filter items strictly by prefix match"""
-        filtered_items = [item for item in self.original_items if item.lower().startswith(text.lower())]
-        # Update completer's model
-        self.completerModel.setStringList(filtered_items)
+        self.proxyModel.setFilterText(text)
 
     def getFirstCompletion(self):
-        """ Get the first completion item """
-        current_suggestions = self.completerModel.stringList()
-        if current_suggestions:
-            return current_suggestions[0]
+        if self.proxyModel.rowCount() > 0:
+            index = self.proxyModel.index(0, 0)
+            return self.proxyModel.data(index, Qt.DisplayRole)
         return ""
 
     def select_first_completion(self):
+        print("select_first_completion called")
         completer = self.completer()
         if not completer:
             return
-        # Get the completer's model
         completerModel = completer.completionModel()
         if not completerModel or completerModel.rowCount() == 0:
             self.clearEditText()
+            print("No completions available, clearing edit text.")
             return
-        # get the index of the current selection of the completer popup
         index = completer.popup().currentIndex()
-        # check if index is valid
         if not index.isValid():
-            # if not, get the first item in the list
             index = completerModel.index(0, 0)
         if index.isValid():
             # Replace with suggestion
-            self.setCurrentText(completerModel.data(index, Qt.DisplayRole))
+            data = completerModel.data(index, Qt.DisplayRole)
+            print(f"Setting current text to: {data}")
+            QTimer.singleShot(0, lambda: self.setCurrentText(data))
 
     def showPopup(self):
         # update current index based on current text
@@ -137,8 +174,31 @@ class QCompleterComboBox(QComboBox):
         super().showPopup()
 
     def focusOutEvent(self, event):
+        print("focusOutEvent called")
         super().focusOutEvent(event)
         # try to set completer text if current text is not in model
-        if self.lineEdit().text() not in self.original_items:
+        print("current text: ", self.currentText())
+        if self.findText(self.currentText()) == -1:
             self.select_first_completion()
+
+# create a test window with the QCompleterComboBoxView and a dummy QStringListModel
+# for testing and run it if this file is run directly
+if __name__ == "__main__":
+    from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
+    from PyQt5.QtCore import QStringListModel
+
+    app = QApplication([])
+
+    window = QWidget()
+    layout = QVBoxLayout(window)
+
+    model = QStringListModel(["Apple", "Banana", "Cherry", "Date", "Fig", "Grape"])
+    combo = QCompleterComboBoxView()
+    combo.setModel(model)
+
+    layout.addWidget(combo)
+    window.setLayout(layout)
+    window.show()
+
+    app.exec_()
 

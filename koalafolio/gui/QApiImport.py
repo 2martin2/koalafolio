@@ -9,7 +9,7 @@ import PyQt5.QtWidgets as qtwidgets
 import PyQt5.QtCore as qtcore
 import koalafolio.gui.QLogger as logger
 import koalafolio.gui.Qcontrols as controls
-from koalafolio.gui.widgets.QCompleterComboBox import QCompleterComboBox
+from koalafolio.gui.widgets.QCompleterComboBox import QCompleterComboBoxView
 import koalafolio.Import.apiImport as apiImport
 import datetime
 
@@ -196,7 +196,7 @@ class ApiKeyView(qtwidgets.QWidget):
                                                   self.newDbFrame)
 
         self.directApiSelectLabel = qtwidgets.QLabel("API: ", self)
-        self.directApiSelectDropdown = QCompleterComboBox(parent=self)
+        self.directApiSelectDropdown = QCompleterComboBoxView(parent=self)
         self.directApiSelectDropdown.currentTextChanged.connect(self.directApiSelectDropdownChanged)
 
         today = datetime.datetime.now()
@@ -380,7 +380,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.lockedStateLayout.addStretch()
 
         self.apiSelectLabel = qtwidgets.QLabel("API: ", self.apiFrame)
-        self.apiSelectDropdown = QCompleterComboBox(parent=self.apiFrame)
+        self.apiSelectDropdown = QCompleterComboBoxView(parent=self.apiFrame)
 
         self.apiGridLayout = qtwidgets.QGridLayout()
         self.apiGridLayout.addWidget(self.apiSelectLabel, 0, 0)
