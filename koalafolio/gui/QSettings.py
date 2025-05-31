@@ -9,10 +9,9 @@ Created on Thu Oct  4 15:15:19 2018
 
 
 import koalafolio.gui.QLogger as logger
-import PyQt5.QtCore as qtcore
+from PyQt5.QtCore import QRect, Qt
 import koalafolio.PcpCore.settings as settings
 
-qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 
@@ -47,8 +46,8 @@ class QSettings(settings.Settings):
         self['gui']['filteruseregex'] = 'True'
         self['gui']['portfolio_sort_row'] = '3'
         self['gui']['trade_sort_row'] = '2'
-        self['gui']['portfolio_sort_dir'] = (str(qt.DescendingOrder))
-        self['gui']['trade_sort_dir'] = str(qt.AscendingOrder)
+        self['gui']['portfolio_sort_dir'] = (str(Qt.DescendingOrder))
+        self['gui']['trade_sort_dir'] = str(Qt.AscendingOrder)
         self['gui']['tooltipsenabled'] = 'True'
         self['gui']['performancechartindex'] = '0'
         self['gui']['tradeseditlock'] = 'True'
@@ -109,18 +108,18 @@ class QSettings(settings.Settings):
             localLogger.info('using default window geometry')
             size = [1200, 800]
             pos = [200, 200]
-        windowProperties['geometry'] = qtcore.QRect(pos[0], pos[1], size[0], size[1])
+        windowProperties['geometry'] = QRect(pos[0], pos[1], size[0], size[1])
         try:
-            state = qt.WindowState(int(self['window']['windowstate']))
+            state = Qt.WindowState(int(self['window']['windowstate']))
         except Exception as ex:
             localLogger.error('error parsing window state: ' + str(ex))
             localLogger.info('using default window state')
-            state = qt.WindowNoState
+            state = Qt.WindowNoState
         windowProperties['state'] = state
         return windowProperties
 
     def setWindowProperties(self, geometry, state):
-        if state == qt.WindowNoState:  # only set window size if window is in normal state
+        if state == Qt.WindowNoState:  # only set window size if window is in normal state
             self['window']['windowpos'] = str(geometry.x()) + ',' + str(geometry.y())
             self['window']['windowSize'] = str(geometry.width()) + 'x' + str(geometry.height())
         self['window']['windowState'] = str(int(state))
@@ -177,11 +176,11 @@ class QSettings(settings.Settings):
         try:
             gui['portfolio_sort_dir'] = self.getint('gui', 'portfolio_sort_dir')
         except ValueError:
-            gui['portfolio_sort_dir'] = qt.AscendingOrder
+            gui['portfolio_sort_dir'] = Qt.AscendingOrder
         try:
             gui['trade_sort_dir'] = self.getint('gui', 'trade_sort_dir')
         except ValueError:
-            gui['trade_sort_dir'] = qt.AscendingOrder
+            gui['trade_sort_dir'] = Qt.AscendingOrder
         try:
             gui['tooltipsenabled'] = self.getboolean('gui', 'tooltipsenabled')
         except ValueError:

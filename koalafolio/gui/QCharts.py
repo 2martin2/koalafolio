@@ -6,9 +6,9 @@ Created on Sun Mar 10 10:39:51 2019
 """
 
 
-import PyQt5.QtGui as qtgui
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
+from PyQt5.QtGui import QBrush, QColor, QFont, QPainter, QPen
+from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QWidget
+from PyQt5.QtCore import QMargins, QPoint, QSize, Qt
 import PyQt5.QtChart as qtchart
 import koalafolio.gui.Qcontrols as controls
 import koalafolio.gui.QSettings as settings
@@ -17,30 +17,29 @@ import datetime
 import koalafolio.gui.QLogger as logger
 import os
 
-qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 # container for switchable charts
-class ChartCont(qtwidgets.QFrame):
+class ChartCont(QFrame):
     def __init__(self, appPath='', *args, **kwargs):
         super(ChartCont, self).__init__(*args, **kwargs)
 
         self.setObjectName('ChartCont')
         self.setContentsMargins(0, 0, 0, 0)
-        self.setFrameShape(qtwidgets.QFrame.StyledPanel)
+        self.setFrameShape(QFrame.StyledPanel)
 
         self.appPath = appPath
 
         self.charts = []
         self.chartIndex = None
 
-        self.rightButton = qtwidgets.QPushButton('', self)
+        self.rightButton = QPushButton('', self)
         self.rightButton.clicked.connect(self.rightButtonClicked)
-        self.leftButton = qtwidgets.QPushButton('', self)
+        self.leftButton = QPushButton('', self)
         self.leftButton.clicked.connect(self.leftButtonClicked)
         self.setButtonStyle()
         for button in [self.leftButton, self.rightButton]:
-            button.setFixedSize(qtcore.QSize(20, 20))
+            button.setFixedSize(QSize(20, 20))
         self.updateButtonPosition()
 
     def clearButtonStyle(self):
@@ -57,12 +56,12 @@ class ChartCont(qtwidgets.QFrame):
                                            ") 0 15 0 15 stretch;}")
 
     def updateButtonPosition(self, height=20):
-        leftPos = qtcore.QPoint(5, 5)
-        rightPos = qtcore.QPoint(self.width() - self.rightButton.width() - 5, 5)
+        leftPos = QPoint(5, 5)
+        rightPos = QPoint(self.width() - self.rightButton.width() - 5, 5)
         self.rightButton.move(rightPos)
         self.leftButton.move(leftPos)
         for button in [self.leftButton, self.rightButton]:
-            button.setFixedSize(qtcore.QSize(20, height))
+            button.setFixedSize(QSize(20, height))
             button.raise_()
 
     def addChart(self, chart):
@@ -105,13 +104,13 @@ class ChartCont(qtwidgets.QFrame):
 
 
 # labeled donut/pie chart
-class LabeledDonatChart(qtwidgets.QFrame):
+class LabeledDonatChart(QFrame):
     def __init__(self, width, height, numberLabels=3, heading='', *args, **kwargs):
         super(LabeledDonatChart, self).__init__(*args, **kwargs)
 
         # widget properties
         self.setObjectName('LabeledDonatChart')
-        self.setFrameShape(qtwidgets.QFrame.StyledPanel)
+        self.setFrameShape(QFrame.StyledPanel)
         self.setFixedWidth(width)
         self.setFixedHeight(height)
         self.setContentsMargins(0, 0, 0, 0)
@@ -123,14 +122,14 @@ class LabeledDonatChart(qtwidgets.QFrame):
         self.chart.setBackgroundVisible(False)
         self.chart.addSeries(self.series)
         self.chart.legend().hide()
-        self.chart.setMargins(qtcore.QMargins(0, 0, 0, 0))
+        self.chart.setMargins(QMargins(0, 0, 0, 0))
         self.chart.setMinimumWidth(width)
         self.chart.setMinimumHeight(height)
 
         self.chartView = LabeledChartView(width, height, numberLabels, heading, self.chart, self)
-        self.chartView.setRenderHint(qtgui.QPainter.Antialiasing)
+        self.chartView.setRenderHint(QPainter.Antialiasing)
 
-        self.layout = qtwidgets.QHBoxLayout(self)
+        self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.addWidget(self.chartView)
 
@@ -166,8 +165,8 @@ class LabeledChartView(qtchart.QChartView):
         self.setMinimumWidth(width)
         self.setObjectName('LabeledChartView')
 
-        self.heading = qtwidgets.QLabel(heading, self)
-        self.heading.setFont(qtgui.QFont("Arial", 12))
+        self.heading = QLabel(heading, self)
+        self.heading.setFont(QFont("Arial", 12))
         if heading:
             self.heading.setVisible(True)
         else:
@@ -175,26 +174,26 @@ class LabeledChartView(qtchart.QChartView):
         self.heading.setMargin(3)
         self.heading.adjustSize()
         self.heading.setObjectName('heading')
-        headingPos = qtcore.QPoint(int(self.width()/2 - self.heading.width()/2), 5)
+        headingPos = QPoint(int(self.width()/2 - self.heading.width()/2), 5)
         self.heading.move(headingPos)
-        # self.labels = [qtwidgets.QLabel('', self) for num in range(numberLabels)]
+        # self.labels = [QLabel('', self) for num in range(numberLabels)]
         # for label in self.labels:
-        #     label.setFont(qtgui.QFont("Arial", 12))
+        #     label.setFont(QFont("Arial", 12))
         #     label.setVisible(False)
         #     label.setMargin(0)
         #     label.adjustSize()
         self.labels = []
         self.setLabelCount(numberLabels)
 
-        self.setColor(qtgui.QColor(255, 255, 255))
-        self.labelAlignment = qt.AlignRight
+        self.setColor(QColor(255, 255, 255))
+        self.labelAlignment = Qt.AlignRight
 
     def setLabelCount(self, numLabels):
         if self.labels:
             if len(self.labels) < numLabels:
                 for index in range(len(self.labels), numLabels):
-                    self.labels.append(qtwidgets.QLabel('', self))
-                    self.labels[-1].setFont(qtgui.QFont("Arial", 12))
+                    self.labels.append(QLabel('', self))
+                    self.labels[-1].setFont(QFont("Arial", 12))
                     self.labels[-1].setVisible(False)
                     self.labels[-1].setMargin(0)
                     self.labels[-1].adjustSize()
@@ -207,9 +206,9 @@ class LabeledChartView(qtchart.QChartView):
                     label.setStyleSheet('')
                     label.deleteLater()
         else:
-            self.labels = [qtwidgets.QLabel('', self) for num in range(numLabels)]
+            self.labels = [QLabel('', self) for num in range(numLabels)]
             for label in self.labels:
-                label.setFont(qtgui.QFont("Arial", 12))
+                label.setFont(QFont("Arial", 12))
                 label.setVisible(False)
                 label.setMargin(0)
                 label.adjustSize()
@@ -219,7 +218,7 @@ class LabeledChartView(qtchart.QChartView):
 
     def updateLabelPos(self):
         center = self.geometry().center()
-        origins = [qtcore.QPoint(center) for label in self.labels]
+        origins = [QPoint(center) for label in self.labels]
         for origin, col in zip(origins, range(len(origins))):
             for label in self.labels[0:col]:  # put label underneath each other
                 origin.setY(int(origin.y() + label.height()))
@@ -228,11 +227,11 @@ class LabeledChartView(qtchart.QChartView):
             # move labels left to have them in the center
             origin.setX(int(origin.x() - self.labels[col].width()/2 + 2))
 
-        if self.labelAlignment == qt.AlignLeft:
+        if self.labelAlignment == Qt.AlignLeft:
             maxWidth = max([label.width() for label in self.labels])
             for label, origin in zip(self.labels, origins):
                 origin.setX(int(origin.x() - (maxWidth - label.width())/2))
-        elif self.labelAlignment == qt.AlignRight:
+        elif self.labelAlignment == Qt.AlignRight:
             maxWidth = max([label.width() for label in self.labels])
             for label, origin in zip(self.labels, origins):
                 origin.setX(int(origin.x() + (maxWidth - label.width())/2))
@@ -247,7 +246,7 @@ class LabeledChartView(qtchart.QChartView):
         super(LabeledChartView, self).resizeEvent(event)
         self.updateLabelPos()
 
-    def setText(self, texts, alignment=qt.AlignRight):
+    def setText(self, texts, alignment=Qt.AlignRight):
         self.labelAlignment = alignment
         for label, text in zip(self.labels, texts):
             label.setText(text)
@@ -302,16 +301,16 @@ class LabeledChartView(qtchart.QChartView):
             label.setStyleSheet("")
 
 
-class HorizontalStackedBarChart(qtwidgets.QWidget):
+class HorizontalStackedBarChart(QWidget):
     def __init__(self, width, height, *args, **kwargs):
         super(HorizontalStackedBarChart, self).__init__(*args, **kwargs)
 
-        self.chartColor = qtgui.QColor(*settings.mySettings.getColor('NEUTRAL'))
+        self.chartColor = QColor(*settings.mySettings.getColor('NEUTRAL'))
 
         self.chart = qtchart.QChart()
         self.chart.setBackgroundVisible(False)
         self.chart.legend().setVisible(True)
-        self.chart.legend().setAlignment(qt.AlignRight)
+        self.chart.legend().setAlignment(Qt.AlignRight)
         self.chart.legend().setLabelColor(self.chartColor)
         # self.chart.setTheme(qtchart.QChart.ChartThemeDark)
 
@@ -319,23 +318,23 @@ class HorizontalStackedBarChart(qtwidgets.QWidget):
         self.barAxisCat = qtchart.QBarCategoryAxis()
         self.barAxisCat.append(categories)
         self.barAxisCat.setLabelsColor(self.chartColor)
-        self.barAxisCat.setLabelsFont(qtgui.QFont('Arial', 8))
+        self.barAxisCat.setLabelsFont(QFont('Arial', 8))
         # self.barAxisCat.setLabelsAngle(-90)
-        self.barAxisCat.setGridLinePen(qtgui.QPen(qtgui.QBrush(), 0))
-        self.chart.addAxis(self.barAxisCat, qt.AlignLeft)
+        self.barAxisCat.setGridLinePen(QPen(QBrush(), 0))
+        self.chart.addAxis(self.barAxisCat, Qt.AlignLeft)
         # self.barAxisVal = qtchart.QValueAxis()
-        # self.barAxisVal.setGridLinePen(qtgui.QPen(qtgui.QBrush(), 0))
+        # self.barAxisVal.setGridLinePen(QPen(QBrush(), 0))
         # self.barAxisVal.setLabelsColor(self.chartColor)
-        # self.barAxisVal.setLabelsFont(qtgui.QFont('Arial', 8))
+        # self.barAxisVal.setLabelsFont(QFont('Arial', 8))
         # self.barAxisVal.setLabelsAngle(-45)
-        # self.chart.addAxis(self.barAxisVal, qt.AlignLeft)
+        # self.chart.addAxis(self.barAxisVal, Qt.AlignLeft)
 
         self.chartView = qtchart.QChartView(self.chart)
-        self.chartView.setRenderHint(qtgui.QPainter.Antialiasing)
+        self.chartView.setRenderHint(QPainter.Antialiasing)
         self.chartView.setFixedHeight(height)
         self.chartView.setFixedWidth(width)
 
-        self.layout = qtwidgets.QHBoxLayout(self)
+        self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.addWidget(self.chartView)
 
@@ -364,13 +363,13 @@ class HorizontalStackedBarChart(qtwidgets.QWidget):
             set.setLabelColor(color)
 
 
-class ProfitPerYearWidget(qtwidgets.QFrame):
+class ProfitPerYearWidget(QFrame):
     def __init__(self, width, height, *args, **kwargs):
         super(ProfitPerYearWidget, self).__init__(*args, **kwargs)
 
-        self.chartColor = qtgui.QColor(*settings.mySettings.getColor('NEUTRAL'))
+        self.chartColor = QColor(*settings.mySettings.getColor('NEUTRAL'))
 
-        self.layout = qtwidgets.QGridLayout(self)
+        self.layout = QGridLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setContentsMargins(0, 0, 0, 0)
 
@@ -386,31 +385,31 @@ class ProfitPerYearWidget(qtwidgets.QFrame):
         self.headings = []
         self.labels = {}
         for y in dict:
-            self.yLabels.append(qtwidgets.QLabel(str(y), self))
+            self.yLabels.append(QLabel(str(y), self))
             self.labels[y] = {}
             for key in dict[y]:
-                self.labels[y][key] = qtwidgets.QLabel(controls.floatToString(dict[y][key], 4), self)
+                self.labels[y][key] = QLabel(controls.floatToString(dict[y][key], 4), self)
         for label in dict[list(dict)[0]]:
-            self.headings.append(qtwidgets.QLabel(label, self))
+            self.headings.append(QLabel(label, self))
 
         for label, row in zip(self.yLabels, range(1, len(self.yLabels)+1)):
-            label.setFont(qtgui.QFont('Arial', 9))
+            label.setFont(QFont('Arial', 9))
             label.adjustSize()
-            self.layout.addWidget(label, row, 0, qt.AlignRight | qt.AlignVCenter)
+            self.layout.addWidget(label, row, 0, Qt.AlignRight | Qt.AlignVCenter)
         for label, col in zip(self.headings, range(1, len(self.headings)+1)):
-            label.setFont(qtgui.QFont('Arial', 9))
+            label.setFont(QFont('Arial', 9))
             label.adjustSize()
-            self.layout.addWidget(label, 0, col, qt.AlignBottom | qt.AlignHCenter)
+            self.layout.addWidget(label, 0, col, Qt.AlignBottom | Qt.AlignHCenter)
         for y, row in zip(self.labels, range(1, len(self.yLabels)+1)):
             for key, col in zip(self.labels[y], range(1, len(self.headings)+1)):
-                self.labels[y][key].setFont(qtgui.QFont('Arial', 11))
+                self.labels[y][key].setFont(QFont('Arial', 11))
                 self.labels[y][key].adjustSize()
                 if dict[y][key] >= 0:
                     color = style.myStyle.getQColor('POSITIV')
                 else:
                     color = style.myStyle.getQColor('NEGATIV')
                 self.labels[y][key].setStyleSheet('QLabel {color: ' + color.name() + '}')
-                self.layout.addWidget(self.labels[y][key], row, col, qt.AlignCenter)
+                self.layout.addWidget(self.labels[y][key], row, col, Qt.AlignCenter)
 
     def setColor(self, colors):
         for color, set in zip(colors, self.sets):
@@ -418,14 +417,14 @@ class ProfitPerYearWidget(qtwidgets.QFrame):
             set.setLabelColor(color)
 
 
-class BuyTimelineChartCont(qtwidgets.QWidget):
+class BuyTimelineChartCont(QWidget):
     def __init__(self, *args, **kwargs):
         super(BuyTimelineChartCont, self).__init__(*args, **kwargs)
 
         # chart
         self.chart = qtchart.QChart()
         # self.chart.legend().hide()
-        self.chart.legend().setAlignment(qt.AlignRight)
+        self.chart.legend().setAlignment(Qt.AlignRight)
         self.chart.legend().setLabelColor(style.myStyle.getQColor("TEXT_NORMAL"))
         self.chart.setBackgroundVisible(False)
 
@@ -436,27 +435,27 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         self.xAxis.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.xAxis.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.xAxis.setLabelsColor(style.myStyle.getQColor("TEXT_NORMAL"))
-        self.chart.addAxis(self.xAxis, qt.AlignBottom)
+        self.chart.addAxis(self.xAxis, Qt.AlignBottom)
 
         # balance axis
         self.yAxisBalance = qtchart.QValueAxis()
         self.yAxisBalance.setLabelFormat("%.2f")
         self.yAxisBalance.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.yAxisBalance.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
-        self.chart.addAxis(self.yAxisBalance, qt.AlignLeft)
+        self.chart.addAxis(self.yAxisBalance, Qt.AlignLeft)
 
         # price axis
         self.yAxisPrice = qtchart.QValueAxis()
         self.yAxisPrice.setLabelFormat("%.2f")
         self.yAxisPrice.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.yAxisPrice.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
-        self.chart.addAxis(self.yAxisPrice, qt.AlignRight)
+        self.chart.addAxis(self.yAxisPrice, Qt.AlignRight)
 
         # chartview
         self.chartView = qtchart.QChartView(self.chart)
-        self.chartView.setRenderHint(qtgui.QPainter.Antialiasing)
+        self.chartView.setRenderHint(QPainter.Antialiasing)
 
-        self.layout = qtwidgets.QHBoxLayout(self)
+        self.layout = QHBoxLayout(self)
         self.layout.addWidget(self.chartView)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
@@ -486,7 +485,7 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
             if isinstance(date, datetime.datetime):
                 date = date.timestamp() * 1000
             series.append(date, val)
-        pen = qtgui.QPen(qColor)
+        pen = QPen(qColor)
         pen.setWidth(lineWidth)
         series.setPen(pen)
         self.chart.addSeries(series)
@@ -518,8 +517,8 @@ class BuyTimelineChartCont(qtwidgets.QWidget):
         else:
             raise ValueError
 
-    def minimumSizeHint(self) -> qtcore.QSize:
-        return qtcore.QSize(0, 0)
+    def minimumSizeHint(self) -> QSize:
+        return QSize(0, 0)
 
-    def sizeHint(self) -> qtcore.QSize:
-        return qtcore.QSize(0, 0)
+    def sizeHint(self) -> QSize:
+        return QSize(0, 0)

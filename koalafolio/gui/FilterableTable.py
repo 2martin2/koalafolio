@@ -5,7 +5,7 @@ Created on 11.04.2021
 @author: Martin
 """
 
-import PyQt5.QtCore as qtcore
+from PyQt5.QtCore import QModelIndex, QSortFilterProxyModel, Qt, pyqtSignal
 import re
 import koalafolio.gui.QLogger as logger
 import koalafolio.gui.FilterableHeader as filterableHeader
@@ -13,16 +13,13 @@ import koalafolio.gui.ScrollableTable as sTable
 
 localLogger = logger.globalLogger
 
-qt = qtcore.Qt
-
-
 # proxy model for sorting and filtering tables
-class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
+class SortFilterProxyModel(QSortFilterProxyModel):
     """proxy model that can be filtered by regex and sorted """
     def __init__(self, *args, **kwargs):
         super(SortFilterProxyModel, self).__init__(*args, **kwargs)
         self.filters = {}
-        self.setFilterCaseSensitivity(qt.CaseInsensitive)
+        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.useRegex = True
 
         self.sortedRow = 0
@@ -64,7 +61,7 @@ class SortFilterProxyModel(qtcore.QSortFilterProxyModel):
 class FilterableTableView(sTable.QScrollableTableView):
     """Table View with Filterable Header"""
     # filterActivated Signal: [filterboxIndex, filterText]
-    filterActivated = qtcore.pyqtSignal([int, str])
+    filterActivated = pyqtSignal([int, str])
     def __init__(self, *args, **kwargs):
         super(FilterableTableView, self).__init__(*args, **kwargs)
 
@@ -83,7 +80,7 @@ class FilterableTableView(sTable.QScrollableTableView):
         self.filterActivated.connect(lambda index, text: model.setFilterByColumn(index, text))
 
     def initFilterBoxes(self):
-        self.horizontalHeader().setFilterBoxes(self.model().columnCount(qtcore.QModelIndex()))
+        self.horizontalHeader().setFilterBoxes(self.model().columnCount(QModelIndex()))
 
     def clearFilters(self, checked):
         """clear all Filters of horizontal header"""
@@ -99,7 +96,7 @@ class FilterableTableView(sTable.QScrollableTableView):
 class FilterableTreeView(sTable.QScrollableTreeView):
     """Table View with Filterable Header"""
     # filterActivated Signal: [filterboxIndex, filterText]
-    filterActivated = qtcore.pyqtSignal([int, str])
+    filterActivated = pyqtSignal([int, str])
     def __init__(self, *args, **kwargs):
         super(FilterableTreeView, self).__init__(*args, **kwargs)
 
@@ -118,7 +115,7 @@ class FilterableTreeView(sTable.QScrollableTreeView):
         self.filterActivated.connect(lambda index, text: model.setFilterByColumn(index, text))
 
     def initFilterBoxes(self):
-        self.header().setFilterBoxes(self.model().columnCount(qtcore.QModelIndex()))
+        self.header().setFilterBoxes(self.model().columnCount(QModelIndex()))
 
     def clearFilters(self, checked):
         """clear all Filters of horizontal header"""

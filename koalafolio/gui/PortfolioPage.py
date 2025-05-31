@@ -7,9 +7,9 @@ Created on 11.04.2021
 
 
 
-import PyQt5.QtGui as qtgui
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QCheckBox, QHBoxLayout, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt5.QtCore import Qt, pyqtSignal
 import PyQt5.QtChart as qtchart
 import koalafolio.gui.Qcontrols as controls
 import koalafolio.gui.QCharts as charts
@@ -21,17 +21,16 @@ import koalafolio.gui.QLogger as logger
 import koalafolio.gui.QPortfolioTable as ptable
 from koalafolio.gui.Qpages import Page
 
-qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 
 # %% portfolio overview
-class PortfolioOverview(qtwidgets.QWidget):
-    expandTable = qtcore.pyqtSignal()
-    collapseTable = qtcore.pyqtSignal()
-    hideLowBalanceChanged = qtcore.pyqtSignal()
-    hideLowValueChanged = qtcore.pyqtSignal()
-    searchBoxTextChanged = qtcore.pyqtSignal([str])
+class PortfolioOverview(QWidget):
+    expandTable = pyqtSignal()
+    collapseTable = pyqtSignal()
+    hideLowBalanceChanged = pyqtSignal()
+    hideLowValueChanged = pyqtSignal()
+    searchBoxTextChanged = pyqtSignal([str])
 
     def __init__(self, controller, height=200, *args, **kwargs):
         super(PortfolioOverview, self).__init__(*args, **kwargs)
@@ -41,13 +40,13 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.height = height
         self.setFixedHeight(self.height)
         self.setContentsMargins(0, 0, 0, 0)
-        self.horzLayout = qtwidgets.QHBoxLayout(self)
+        self.horzLayout = QHBoxLayout(self)
         self.horzLayout.setContentsMargins(0, 0, 0, 0)
 
         # profit table
-        self.profitTable = qtwidgets.QTableWidget()
-        self.profitTable.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
-        self.profitTable.setEditTriggers(qtwidgets.QAbstractItemView.NoEditTriggers)
+        self.profitTable = QTableWidget()
+        self.profitTable.setSelectionMode(QAbstractItemView.NoSelection)
+        self.profitTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.profitTable.setColumnCount(4)
         self.profitTable.setHorizontalHeaderLabels(["profit", "tax profit", "fees", "fiat profit"])
         self.profitTable.horizontalHeaderItem(0).setToolTip("profit per year")
@@ -55,7 +54,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.profitTable.horizontalHeaderItem(2).setToolTip("fees per year")
         self.profitTable.horizontalHeaderItem(3).setToolTip("fiat profit per year")
         self.profitTable.horizontalHeader().setVisible(True)
-        self.profitTable.setSizeAdjustPolicy(qtwidgets.QAbstractScrollArea.AdjustToContents)
+        self.profitTable.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
         # tax value chart
         self.currentValueChart = charts.LabeledDonatChart(self.height, self.height, 3,
@@ -83,27 +82,27 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.horzLayout.addWidget(self.perfChartCont)
 
         # table controls
-        self.searchBox = qtwidgets.QLineEdit(parent=self)
+        self.searchBox = QLineEdit(parent=self)
         self.searchBox.setPlaceholderText('search')
         self.searchBox.textChanged.connect(self.searchBoxTextChanged)
-        self.expandAllButton = qtwidgets.QPushButton("expand", self)
+        self.expandAllButton = QPushButton("expand", self)
         self.expandAllButton.clicked.connect(self.expandTable)
-        self.collapseAllButton = qtwidgets.QPushButton("collapse", self)
+        self.collapseAllButton = QPushButton("collapse", self)
         self.collapseAllButton.clicked.connect(self.collapseTable)
-        self.hideLowBalanceCheckBox = qtwidgets.QCheckBox("hide low balance", parent=self)
+        self.hideLowBalanceCheckBox = QCheckBox("hide low balance", parent=self)
         if settings.mySettings.getGuiSetting('hidelowbalancecoins'):
-            self.hideLowBalanceCheckBox.setCheckState(qt.Checked)
+            self.hideLowBalanceCheckBox.setCheckState(Qt.Checked)
         else:
-            self.hideLowBalanceCheckBox.setCheckState(qt.Unchecked)
+            self.hideLowBalanceCheckBox.setCheckState(Qt.Unchecked)
         self.hideLowBalanceCheckBox.stateChanged.connect(lambda state: self.emitHideLowBalanceChanged(state))
-        self.hideLowValueCheckBox = qtwidgets.QCheckBox("hide low value", parent=self)
+        self.hideLowValueCheckBox = QCheckBox("hide low value", parent=self)
         if settings.mySettings.getGuiSetting('hidelowvaluecoins'):
-            self.hideLowValueCheckBox.setCheckState(qt.Checked)
+            self.hideLowValueCheckBox.setCheckState(Qt.Checked)
         else:
-            self.hideLowValueCheckBox.setCheckState(qt.Unchecked)
+            self.hideLowValueCheckBox.setCheckState(Qt.Unchecked)
         self.hideLowValueCheckBox.stateChanged.connect(lambda state: self.emitHideLowValueChanged(state))
 
-        self.controlsLayout = qtwidgets.QHBoxLayout()
+        self.controlsLayout = QHBoxLayout()
         self.controlsLayout.addStretch()
         self.controlsLayout.addWidget(self.searchBox)
         self.controlsLayout.addWidget(self.hideLowBalanceCheckBox)
@@ -112,7 +111,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.controlsLayout.addWidget(self.collapseAllButton)
         self.controlsLayout.addStretch()
 
-        self.centerVertLayout = qtwidgets.QVBoxLayout()
+        self.centerVertLayout = QVBoxLayout()
         self.centerVertLayout.addWidget(self.profitTable)
         self.centerVertLayout.addStretch()
         self.centerVertLayout.addLayout(self.controlsLayout)
@@ -131,9 +130,9 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.refresh()
 
     def refresh(self):
-        self.negColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
-        self.posColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
-        self.neutrColor = qtgui.QColor(*settings.mySettings.getColor('TEXT_NORMAL'))
+        self.negColor = QColor(*settings.mySettings.getColor('NEGATIV'))
+        self.posColor = QColor(*settings.mySettings.getColor('POSITIV'))
+        self.neutrColor = QColor(*settings.mySettings.getColor('TEXT_NORMAL'))
 
     def setModel(self, model):
         self.model = model
@@ -142,14 +141,14 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.coinTableChangedSlot()
 
     def emitHideLowBalanceChanged(self, state):
-        if state == qt.Checked:
+        if state == Qt.Checked:
             settings.mySettings.setGuiSetting('hidelowbalancecoins', True)
         else:
             settings.mySettings.setGuiSetting('hidelowbalancecoins', False)
         self.hideLowBalanceChanged.emit()
 
     def emitHideLowValueChanged(self, state):
-        if state == qt.Checked:
+        if state == Qt.Checked:
             settings.mySettings.setGuiSetting('hidelowvaluecoins', True)
         else:
             settings.mySettings.setGuiSetting('hidelowvaluecoins', False)
@@ -291,7 +290,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.currentFiatValueChart.chartView.setText(
             [controls.floatToString(totalInvestFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
              controls.floatToString(hypotheticalCoinValueNoFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName,
-             controls.floatToString(totalReturnFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName], qt.AlignCenter)
+             controls.floatToString(totalReturnFiat[taxCoinName], numberOfDecimals) + ' ' + taxCoinName], Qt.AlignCenter)
 
         self.currentFiatValueChart.setLabelToolTip(['fiat invest', 'current value', 'fiat return'])
 
@@ -318,13 +317,13 @@ class PortfolioOverview(qtwidgets.QWidget):
         self.profitTable.setRowCount(len(years))
         self.profitTable.setVerticalHeaderLabels(years)
         for year, row in zip(realizedProfitPerYear, range(len(realizedProfitPerYear))):
-            self.profitTable.setItem(row, 0, qtwidgets.QTableWidgetItem(
+            self.profitTable.setItem(row, 0, QTableWidgetItem(
                 controls.floatToString(realizedProfitPerYear[year][taxCoinName] + rewardPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
-            self.profitTable.setItem(row, 1, qtwidgets.QTableWidgetItem(
+            self.profitTable.setItem(row, 1, QTableWidgetItem(
                 controls.floatToString(taxProfitPerYear[year][taxCoinName] + rewardPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
-            self.profitTable.setItem(row, 2, qtwidgets.QTableWidgetItem(
+            self.profitTable.setItem(row, 2, QTableWidgetItem(
                 controls.floatToString(paidFeesPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
-            self.profitTable.setItem(row, 3, qtwidgets.QTableWidgetItem(
+            self.profitTable.setItem(row, 3, QTableWidgetItem(
                 controls.floatToString(fiatPerYear[year][taxCoinName], 5) + ' ' + taxCoinName))
 
 
@@ -361,8 +360,8 @@ class PortfolioOverview(qtwidgets.QWidget):
         color = [255, 75, 225]
         for slice in pieSeries.slices():
             color = style.nextColor(color, 55)
-            slice.setBrush(qtgui.QColor(*tuple(color)))
-            slice.setLabelColor(qtgui.QColor(*tuple(color)))
+            slice.setBrush(QColor(*tuple(color)))
+            slice.setLabelColor(QColor(*tuple(color)))
             slice.setLabelPosition(qtchart.QPieSlice.LabelOutside)
 
         pieSeries.setHoleSize(0.6)
@@ -371,7 +370,7 @@ class PortfolioOverview(qtwidgets.QWidget):
         for coin in hypotheticalCoinValueNoFiat:
             portfolioChartLabels.append(controls.floatToString(hypotheticalCoinValueNoFiat[coin],
                                                                numberOfDecimals) + ' ' + coin)
-        self.portfolioChart.chartView.setText(portfolioChartLabels, qt.AlignCenter)
+        self.portfolioChart.chartView.setText(portfolioChartLabels, Qt.AlignCenter)
         self.portfolioChart.chartView.setColor(self.neutrColor, False)
 
     def displayCurrenciesChangedSlot(self):
@@ -389,7 +388,7 @@ class PortfolioPage(Page):
     # initial layout ob the Page
     def layoutUI(self):
         # main layout
-        self.mainLayout = qtwidgets.QHBoxLayout(self)
+        self.mainLayout = QHBoxLayout(self)
 
         # portfolio coinDataFrame
         # adding parent here causes crash in setStyleSheet call??!
@@ -419,7 +418,7 @@ class PortfolioPage(Page):
             lambda text: self.coinTableView.model().setFilterByColumn(0, text))
 
         # layout
-        self.verticalLayout = qtwidgets.QVBoxLayout()
+        self.verticalLayout = QVBoxLayout()
         self.verticalLayout.addWidget(self.coinDataFrame)
         self.verticalLayout.addWidget(self.coinTableView)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)

@@ -5,25 +5,24 @@ Created on Sun Sep 16 20:17:51 2018
 @author: Martin
 """
 
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
+from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PyQt5.QtCore import Qt
 import koalafolio.gui.QSettings as settings
 import koalafolio.gui.SettingsPage as settingsPage
 import koalafolio.gui.QLogger as logger
 import webbrowser
 
-qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 
 # %% styled Page
-class Page(qtwidgets.QFrame):
+class Page(QFrame):
     def __init__(self, parent, controller):
         super(Page, self).__init__(parent=parent)
         self.controller = controller
         self.setObjectName("QPage")
-        self.setFrameShape(qtwidgets.QFrame.StyledPanel)
-        self.setFrameShadow(qtwidgets.QFrame.Raised)
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setFrameShadow(QFrame.Raised)
         self.setContentsMargins(0, 0, 0, 10)
         self.setLineWidth(2)
         self.setMidLineWidth(3)
@@ -41,26 +40,26 @@ class SettingsPage(Page):
     def __init__(self, parent, controller):
         super(SettingsPage, self).__init__(parent=parent, controller=controller)
 
-        self.vertLayout = qtwidgets.QVBoxLayout(self)
+        self.vertLayout = QVBoxLayout(self)
 
         # path label
-        self.appPathPreButton = qtwidgets.QPushButton("app path: ")
+        self.appPathPreButton = QPushButton("app path: ")
         self.appPathPreButton.clicked.connect(lambda: webbrowser.open('file:///' + controller.appPath))
-        self.appPathLabel = qtwidgets.QLabel(controller.appPath)
-        self.dataPathPreButton = qtwidgets.QPushButton("data path: ")
+        self.appPathLabel = QLabel(controller.appPath)
+        self.dataPathPreButton = QPushButton("data path: ")
         self.dataPathPreButton.clicked.connect(lambda: webbrowser.open('file:///' + controller.dataPath))
-        self.dataPathLabel = qtwidgets.QLabel(controller.dataPath)
-        self.appPathLabel.setTextInteractionFlags(qt.TextSelectableByMouse)
-        self.dataPathLabel.setTextInteractionFlags(qt.TextSelectableByMouse)
+        self.dataPathLabel = QLabel(controller.dataPath)
+        self.appPathLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.dataPathLabel.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.appPathPreButton.setContentsMargins(10, 0, 0, 0)
         self.dataPathPreButton.setContentsMargins(10, 0, 0, 0)
         self.appPathLabel.setContentsMargins(0, 0, 10, 0)
         self.dataPathLabel.setContentsMargins(0, 0, 10, 0)
 
-        self.repoButton = qtwidgets.QPushButton("repo")
+        self.repoButton = QPushButton("repo")
         self.repoButton.clicked.connect(lambda: webbrowser.open('https://gitea.com/2martin2/koalafolio'))
 
-        self.labelLayout = qtwidgets.QHBoxLayout()
+        self.labelLayout = QHBoxLayout()
         self.labelLayout.addWidget(self.appPathPreButton)
         self.labelLayout.addWidget(self.appPathLabel)
         self.labelLayout.addWidget(self.dataPathPreButton)
@@ -77,17 +76,17 @@ class SettingsPage(Page):
         self.settingsView.header().setStretchLastSection(True)
 
         # buttons
-        self.resetDefaultButton = qtwidgets.QPushButton("reset to default", self)
-        self.reloadButton = qtwidgets.QPushButton("reload", self)
-        self.saveButton = qtwidgets.QPushButton("save", self)
-        self.saveRefreshButton = qtwidgets.QPushButton("save and reload", self)
+        self.resetDefaultButton = QPushButton("reset to default", self)
+        self.reloadButton = QPushButton("reload", self)
+        self.saveButton = QPushButton("save", self)
+        self.saveRefreshButton = QPushButton("save and reload", self)
 
         self.resetDefaultButton.clicked.connect(self.resetDefaultSettings)
         self.reloadButton.clicked.connect(self.reloadSettings)
         self.saveButton.clicked.connect(self.saveSettings)
         self.saveRefreshButton.clicked.connect(self.saveRefreshSettings)
 
-        self.horzButtonLayout = qtwidgets.QHBoxLayout()
+        self.horzButtonLayout = QHBoxLayout()
         self.horzButtonLayout.addStretch()
         self.horzButtonLayout.addWidget(self.resetDefaultButton)
         self.horzButtonLayout.addWidget(self.reloadButton)

@@ -5,7 +5,7 @@ Created on Sun Sep 16 09:57:14 2018
 @author: Martin
 """
 
-import PyQt5.QtGui as qtgui
+from PyQt5.QtGui import QColor
 import koalafolio.gui.QLogger as logger
 import os
 import re
@@ -97,20 +97,20 @@ class StyleSheetHandler():
         colors = settings.mySettings.getColors()
         self.QColors = {}
         for colorName in colors:
-            self.QColors[colorName] = qtgui.QColor(*colors[colorName])
+            self.QColors[colorName] = QColor(*colors[colorName])
             # calculate light/ dark colors
             colorNameBitLight = colorName + '_BITLIGHT'
-            self.QColors[colorNameBitLight] = qtgui.QColor(*chnageLightness(colors[colorName], 2))
+            self.QColors[colorNameBitLight] = QColor(*chnageLightness(colors[colorName], 2))
             colorNameBitDark = colorName + '_BITDARK'
-            self.QColors[colorNameBitDark] = qtgui.QColor(*chnageLightness(colors[colorName], -2))
+            self.QColors[colorNameBitDark] = QColor(*chnageLightness(colors[colorName], -2))
             colorNameMidLight = colorName + '_MIDLIGHT'
-            self.QColors[colorNameMidLight] = qtgui.QColor(*chnageLightness(colors[colorName], 10))
+            self.QColors[colorNameMidLight] = QColor(*chnageLightness(colors[colorName], 10))
             colorNameMidDark = colorName + '_MIDDARK'
-            self.QColors[colorNameMidDark] = qtgui.QColor(*chnageLightness(colors[colorName], -10))
+            self.QColors[colorNameMidDark] = QColor(*chnageLightness(colors[colorName], -10))
             colorNameLight = colorName + '_LIGHT'
-            self.QColors[colorNameLight] = qtgui.QColor(*chnageLightness(colors[colorName], 25))
+            self.QColors[colorNameLight] = QColor(*chnageLightness(colors[colorName], 25))
             colorNameDark = colorName + '_DARK'
-            self.QColors[colorNameDark] = qtgui.QColor(*chnageLightness(colors[colorName], -25))
+            self.QColors[colorNameDark] = QColor(*chnageLightness(colors[colorName], -25))
 
     def replaceColors(self):
         self.updateColor()

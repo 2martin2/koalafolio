@@ -9,11 +9,10 @@ Created on Thu Oct  4 15:15:19 2018
 
 
 import koalafolio.gui.QLogger as logger
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
+from PyQt5.QtWidgets import QLineEdit, QStyledItemDelegate
+from PyQt5.QtCore import QAbstractItemModel, QSize, QVariant, Qt, pyqtSignal
 import koalafolio.gui.ScrollableTable as sTable
 
-qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 class SettingsModelItem():
@@ -27,9 +26,9 @@ class SettingsModelItem():
 
 
 # settings model
-class SettingsModel(qtcore.QAbstractItemModel):
-    displayCurrenciesChanged = qtcore.pyqtSignal([list])
-    useWalletTaxFreeLimitYearsChanged = qtcore.pyqtSignal()
+class SettingsModel(QAbstractItemModel):
+    displayCurrenciesChanged = pyqtSignal([list])
+    useWalletTaxFreeLimitYearsChanged = pyqtSignal()
 
     def __init__(self, settings, *args, **kwargs):
         super(SettingsModel, self).__init__(*args, **kwargs)
@@ -39,9 +38,9 @@ class SettingsModel(qtcore.QAbstractItemModel):
         self.header = ['setting', 'value', 'description']
 
     def headerData(self, section, orientation, role):
-        if role == qt.DisplayRole:
+        if role == Qt.DisplayRole:
             return self.header[section]
-        return qtcore.QVariant()
+        return QVariant()
 
     def parent(self, index):
         return self.getParentIndexFromIndex(index)
@@ -88,7 +87,7 @@ class SettingsModel(qtcore.QAbstractItemModel):
         return index
 
     def data(self, index, role):
-        if role == qt.DisplayRole:
+        if role == Qt.DisplayRole:
             parentIndex = self.getParentIndexFromIndex(index)
             item = self.getItemFromIndex(index)
             if parentIndex.isValid():
@@ -104,10 +103,10 @@ class SettingsModel(qtcore.QAbstractItemModel):
                         return 'depricated/ unknowen'
             else:
                 return self.sections[index.row()]
-        return qtcore.QVariant()
+        return QVariant()
 
     def setData(self, index, value, role):
-        if role == qt.EditRole:
+        if role == Qt.EditRole:
             try:
                 item = self.getItemFromIndex(index)
                 self.settings[item.parentKey][item.key] = value
@@ -143,9 +142,9 @@ class SettingsModel(qtcore.QAbstractItemModel):
         parent = self.getParentIndexFromIndex(index)
         if parent.isValid():
             if column == 1:
-                return qt.ItemIsSelectable | qt.ItemIsEditable | qt.ItemIsEnabled | qt.ItemNeverHasChildren
-            return qt.ItemIsSelectable | qt.ItemIsEnabled | qt.ItemNeverHasChildren
-        return qt.ItemIsSelectable | qt.ItemIsEnabled
+                return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemNeverHasChildren
+            return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemNeverHasChildren
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled
 
     def getParentIndexFromIndex(self, index):
         return self.items[index.internalId()].parent
@@ -161,13 +160,13 @@ class SettingsModel(qtcore.QAbstractItemModel):
             return None
 
 
-class SettingsDelegate(qtwidgets.QStyledItemDelegate):
+class SettingsDelegate(QStyledItemDelegate):
     def __init__(self, *args, **kwargs):
         super(SettingsDelegate, self).__init__(*args, **kwargs)
 
     def createEditor(self, parent, option, index):
-        if int(index.flags()) & qt.ItemIsEditable:
-            return qtwidgets.QLineEdit(parent)
+        if int(index.flags()) & Qt.ItemIsEditable:
+            return QLineEdit(parent)
         return 0
 
     def setEditorData(self, editor, index):
@@ -177,10 +176,10 @@ class SettingsDelegate(qtwidgets.QStyledItemDelegate):
         editor.setGeometry(option.rect)
 
     def setModelData(self, editor, model, index):
-        model.setData(index, editor.text(), qt.EditRole)
+        model.setData(index, editor.text(), Qt.EditRole)
 
     def sizeHint(self, option, index):
-        return qtcore.QSize()
+        return QSize()
 
 
 class SettingsTreeView(sTable.QScrollableTreeView):

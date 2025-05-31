@@ -6,13 +6,11 @@ Created on Wen Jan 02 14:21:00 2019
 """
 
 import koalafolio.PcpCore.logger as logger
-import PyQt5.QtCore as qtcore
-
-qt = qtcore.Qt
+from PyQt5.QtCore import QObject, Qt, pyqtSignal
 
 
-class QLogger(qtcore.QObject, logger.Logger):
-    newLogMessage = qtcore.pyqtSignal(str, str)
+class QLogger(QObject, logger.Logger):
+    newLogMessage = pyqtSignal(str, str)
 
     def __init__(self):
         super(QLogger, self).__init__()

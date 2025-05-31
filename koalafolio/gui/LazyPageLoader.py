@@ -5,14 +5,14 @@ Lazy Page Loader for optimized startup performance
 Created for koalafolio optimization
 """
 
-import PyQt5.QtCore as qtcore
-import PyQt5.QtWidgets as qtwidgets
+from PyQt5.QtCore import QObject, QTimer, Qt, pyqtSignal
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 
-class LazyPageLoader(qtcore.QObject):
+class LazyPageLoader(QObject):
     """Handles lazy loading of GUI pages to improve startup performance"""
 
-    pageLoaded = qtcore.pyqtSignal(int, qtwidgets.QWidget)
+    pageLoaded = pyqtSignal(int, QWidget)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -31,7 +31,7 @@ class LazyPageLoader(qtcore.QObject):
         self.loading_pages.add(page_index)
 
         # Use QTimer to load page in next event loop iteration
-        qtcore.QTimer.singleShot(0, lambda: self._loadPageAsync(page_index, page_class_name))
+        QTimer.singleShot(0, lambda: self._loadPageAsync(page_index, page_class_name))
 
         return None
 
@@ -80,7 +80,7 @@ class LazyPageLoader(qtcore.QObject):
         return page_index in self.loading_pages
 
 
-class PlaceholderPage(qtwidgets.QWidget):
+class PlaceholderPage(QWidget):
     """Placeholder widget shown while pages are loading"""
 
     def __init__(self, page_name="Page", parent=None):
@@ -89,19 +89,19 @@ class PlaceholderPage(qtwidgets.QWidget):
         self.setupUI()
 
     def setupUI(self):
-        layout = qtwidgets.QVBoxLayout(self)
+        layout = QVBoxLayout(self)
 
         # Add loading indicator with larger font
-        loading_label = qtwidgets.QLabel(f"Loading {self.page_name}...")
-        loading_label.setAlignment(qtcore.Qt.AlignCenter)
+        loading_label = QLabel(f"Loading {self.page_name}...")
+        loading_label.setAlignment(Qt.AlignCenter)
         font = loading_label.font()
         font.setPointSize(14)
         font.setBold(True)
         loading_label.setFont(font)
 
         # Add progress indicator (simple animated dots)
-        self.progress_label = qtwidgets.QLabel("●○○")
-        self.progress_label.setAlignment(qtcore.Qt.AlignCenter)
+        self.progress_label = QLabel("●○○")
+        self.progress_label.setAlignment(Qt.AlignCenter)
         progress_font = self.progress_label.font()
         progress_font.setPointSize(16)
         self.progress_label.setFont(progress_font)
@@ -112,7 +112,7 @@ class PlaceholderPage(qtwidgets.QWidget):
         layout.addStretch()
 
         # Animate the progress indicator
-        self.animation_timer = qtcore.QTimer()
+        self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self.updateProgress)
         self.animation_timer.start(500)  # Update every 500ms
         self.animation_state = 0

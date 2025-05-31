@@ -4,7 +4,7 @@ Created on Tue Nov 27 21:03:59 2018
 
 @author: Martin
 """
-import PyQt5.QtCore as qtcore
+from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap, QIcon
 import koalafolio.gui.QSettings as settings
 import koalafolio.web.cryptocompareApi as ccapi
@@ -17,14 +17,14 @@ import requests
 localLogger = logger.globalLogger
 
 
-class WebApiInterface(qtcore.QObject):
-    coinPricesLoaded = qtcore.pyqtSignal([dict, list])
-    coinIconsLoaded = qtcore.pyqtSignal([dict, list])
-    coinPriceChartsLoaded = qtcore.pyqtSignal([dict])
-    historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
-    changeHistTimerInterval = qtcore.pyqtSignal([int])
-    changeIconTimerInterval = qtcore.pyqtSignal([int])
-    # historicalPriceUpdateFinished = qtcore.pyqtSignal()
+class WebApiInterface(QObject):
+    coinPricesLoaded = pyqtSignal([dict, list])
+    coinIconsLoaded = pyqtSignal([dict, list])
+    coinPriceChartsLoaded = pyqtSignal([dict])
+    historicalPricesLoaded = pyqtSignal([dict, int])
+    changeHistTimerInterval = pyqtSignal([int])
+    changeIconTimerInterval = pyqtSignal([int])
+    # historicalPriceUpdateFinished = pyqtSignal()
 
     def __init__(self):
         super(WebApiInterface, self).__init__()
@@ -212,21 +212,21 @@ class WebApiInterface(qtcore.QObject):
 
 
 # %% threads
-class UpdatePriceThread(qtcore.QThread):
-    coinPricesLoaded = qtcore.pyqtSignal([dict, list])
-    coinIconsLoaded = qtcore.pyqtSignal([dict, list])
-    coinPriceChartsLoaded = qtcore.pyqtSignal([dict])
-    historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
+class UpdatePriceThread(QThread):
+    coinPricesLoaded = pyqtSignal([dict, list])
+    coinIconsLoaded = pyqtSignal([dict, list])
+    coinPriceChartsLoaded = pyqtSignal([dict])
+    historicalPricesLoaded = pyqtSignal([dict, int])
 
     def __init__(self, coinList, tradeList):
         super(UpdatePriceThread, self).__init__()
         self.coinList = coinList
         self.tradeList = tradeList
 
-        self.priceTimer = qtcore.QTimer()
-        self.priceChartTimer = qtcore.QTimer()
-        self.histTimer = qtcore.QTimer()
-        self.iconTimer = qtcore.QTimer()
+        self.priceTimer = QTimer()
+        self.priceChartTimer = QTimer()
+        self.histTimer = QTimer()
+        self.iconTimer = QTimer()
 
         self.webApiInterface = WebApiInterface()
 

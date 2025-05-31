@@ -5,8 +5,8 @@ Created on Sun Sep 16 20:17:51 2018
 @author: Martin
 """
 
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
+from PyQt5.QtWidgets import QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout
+from PyQt5.QtCore import QDate, QStringListModel, Qt
 import koalafolio.gui.Qcontrols as controls
 import koalafolio.PcpCore.core as core
 import koalafolio.gui.Qpages as qpages
@@ -15,7 +15,6 @@ import datetime
 import koalafolio.gui.QLogger as logger
 import koalafolio.exp.profitExport as profex
 
-qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 
@@ -25,8 +24,8 @@ class QExportFrame(controls.StyledFrame):
         super(QExportFrame, self).__init__(*args, **kwargs)
 
         self.setObjectName("QExportFrame")
-        self.setFrameShape(qtwidgets.QFrame.StyledPanel)
-        self.setFrameShadow(qtwidgets.QFrame.Raised)
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setFrameShadow(QFrame.Raised)
         self.setLineWidth(2)
         self.setMidLineWidth(3)
 
@@ -40,29 +39,29 @@ class QExportProfitFrame(QExportFrame):
     def __init__(self, controller, *args, **kwargs):
         super(QExportProfitFrame, self).__init__(controller=controller, *args, **kwargs)
 
-        self.fileDialog = qtwidgets.QFileDialog(self)
+        self.fileDialog = QFileDialog(self)
         # self.fileDialog.setDirectory(self.controller.appPath)
 
         # title
-        self.titleLabel = qtwidgets.QLabel("export profit", self)
+        self.titleLabel = QLabel("export profit", self)
         font = self.titleLabel.font()
         font.setPointSize(14)
         self.titleLabel.setFont(font)
 
-        self.headingLayout = qtwidgets.QHBoxLayout()
+        self.headingLayout = QHBoxLayout()
         self.headingLayout.addStretch()
         self.headingLayout.addWidget(self.titleLabel)
         self.headingLayout.addStretch()
 
         # start and end date
-        self.fromDateLabel = qtwidgets.QLabel("start: ", self)
-        self.toDateLabel = qtwidgets.QLabel("end: ", self)
-        self.fromDateEdit = qtwidgets.QDateEdit(self)
+        self.fromDateLabel = QLabel("start: ", self)
+        self.toDateLabel = QLabel("end: ", self)
+        self.fromDateEdit = QDateEdit(self)
         self.fromDateEdit.setCalendarPopup(True)
-        self.toDateEdit = qtwidgets.QDateEdit(self)
+        self.toDateEdit = QDateEdit(self)
         self.toDateEdit.setCalendarPopup(True)
 
-        self.dateLayout = qtwidgets.QHBoxLayout()
+        self.dateLayout = QHBoxLayout()
         self.dateLayout.addWidget(self.fromDateLabel)
         self.dateLayout.addWidget(self.fromDateEdit)
         self.dateLayout.addStretch()
@@ -71,25 +70,25 @@ class QExportProfitFrame(QExportFrame):
         # self.dateLayout.addStretch()
 
         # year
-        self.yearLabel = qtwidgets.QLabel("year: ", self)
-        self.yearDateEdit = qtwidgets.QSpinBox(self)
+        self.yearLabel = QLabel("year: ", self)
+        self.yearDateEdit = QSpinBox(self)
         self.yearDateEdit.valueChanged.connect(self.yearChanged)
         self.yearDateEdit.setMinimum(0)
         self.yearDateEdit.setMaximum(datetime.datetime.now().year)
         self.yearDateEdit.setValue(datetime.datetime.now().year)
 
-        self.yearLayout = qtwidgets.QHBoxLayout()
+        self.yearLayout = QHBoxLayout()
         self.yearLayout.addStretch()
         self.yearLayout.addWidget(self.yearLabel)
         self.yearLayout.addWidget(self.yearDateEdit)
         self.yearLayout.addStretch()
 
-        self.optionsLayout = qtwidgets.QGridLayout()
+        self.optionsLayout = QGridLayout()
 
         # currency
-        self.currencyLabel = qtwidgets.QLabel("currency", self)
-        self.currencyBox = qtwidgets.QComboBox(self)
-        listModel = qtcore.QStringListModel()
+        self.currencyLabel = QLabel("currency", self)
+        self.currencyBox = QComboBox(self)
+        listModel = QStringListModel()
         currencys = list(core.CoinValue())
         listModel.setStringList(currencys)
         self.currencyBox.setModel(listModel)
@@ -100,9 +99,9 @@ class QExportProfitFrame(QExportFrame):
         self.optionsLayout.addWidget(self.currencyBox, 0, 2)
 
         # language
-        self.languageLabel = qtwidgets.QLabel("language", self)
-        self.languageBox = qtwidgets.QComboBox(self)
-        lanListModel = qtcore.QStringListModel()
+        self.languageLabel = QLabel("language", self)
+        self.languageBox = QComboBox(self)
+        lanListModel = QStringListModel()
         languages = self.controller.exportTranslator.getLanguages()
         lanListModel.setStringList(languages)
         self.languageBox.setModel(lanListModel)
@@ -113,32 +112,32 @@ class QExportProfitFrame(QExportFrame):
         self.optionsLayout.addWidget(self.languageBox, 1, 2)
 
         # tax timelimit
-        self.timeLimitLabel = qtwidgets.QLabel("tax year limit", self)
-        self.timeLimitBox = qtwidgets.QCheckBox(self)
-        self.timeLimitEdit = qtwidgets.QSpinBox(self)
+        self.timeLimitLabel = QLabel("tax year limit", self)
+        self.timeLimitBox = QCheckBox(self)
+        self.timeLimitEdit = QSpinBox(self)
         self.timeLimitEdit.setValue(settings.mySettings.getTaxSetting('taxfreelimityears'))
         self.timeLimitEdit.setMinimum(0)
         if settings.mySettings.getTaxSetting('taxfreelimit'):
-            self.timeLimitBox.setCheckState(qt.Checked)
+            self.timeLimitBox.setCheckState(Qt.Checked)
         else:
-            self.timeLimitBox.setCheckState(qt.Unchecked)
+            self.timeLimitBox.setCheckState(Qt.Unchecked)
 
         self.optionsLayout.addWidget(self.timeLimitBox, 2, 0)
         self.optionsLayout.addWidget(self.timeLimitLabel, 2, 1)
         self.optionsLayout.addWidget(self.timeLimitEdit, 2, 2)
 
         # use wallet tax free limit
-        self.useWalletTaxLimitLabel = qtwidgets.QLabel("use wallet tax year limit", self)
-        self.useWalletTaxLimitBox = qtwidgets.QCheckBox(self)
+        self.useWalletTaxLimitLabel = QLabel("use wallet tax year limit", self)
+        self.useWalletTaxLimitBox = QCheckBox(self)
         self.taxYearWalletChanged()
 
         self.optionsLayout.addWidget(self.useWalletTaxLimitBox, 3, 0)
         self.optionsLayout.addWidget(self.useWalletTaxLimitLabel, 3, 1)
 
         # include tax free trades
-        self.taxFreeTradesLabel = qtwidgets.QLabel("include tax free trades", self)
-        self.taxFreeTradesBox = qtwidgets.QCheckBox(self)
-        self.taxFreeTradesBox.setCheckState(qt.Checked)
+        self.taxFreeTradesLabel = QLabel("include tax free trades", self)
+        self.taxFreeTradesBox = QCheckBox(self)
+        self.taxFreeTradesBox.setCheckState(Qt.Checked)
 
         self.optionsLayout.addWidget(self.taxFreeTradesBox, 4, 0)
         self.optionsLayout.addWidget(self.taxFreeTradesLabel, 4, 1)
@@ -166,19 +165,19 @@ class QExportProfitFrame(QExportFrame):
         self.useWalletTaxLimitChanged()
 
         # export button
-        self.exportProfitButton = qtwidgets.QPushButton("export", self)
+        self.exportProfitButton = QPushButton("export", self)
         self.exportProfitButton.clicked.connect(self.exportProfit)
 
-        self.buttonLayout = qtwidgets.QHBoxLayout()
+        self.buttonLayout = QHBoxLayout()
         self.buttonLayout.addStretch()
         self.buttonLayout.addWidget(self.exportProfitButton)
         self.buttonLayout.addStretch()
 
-        self.optionsHorzLayout = qtwidgets.QHBoxLayout()
+        self.optionsHorzLayout = QHBoxLayout()
         self.optionsHorzLayout.addLayout(self.optionsLayout)
         self.optionsHorzLayout.addStretch()
 
-        self.vertLayout = qtwidgets.QVBoxLayout(self)
+        self.vertLayout = QVBoxLayout(self)
         self.vertLayout.addLayout(self.headingLayout)
         self.vertLayout.addLayout(self.yearLayout)
         self.vertLayout.addLayout(self.dateLayout)
@@ -193,8 +192,8 @@ class QExportProfitFrame(QExportFrame):
 
     def yearChanged(self):
         year = self.yearDateEdit.value()
-        self.fromDateEdit.setDate(qtcore.QDate(year, 1, 1))
-        self.toDateEdit.setDate(qtcore.QDate(year, 12, 31))
+        self.fromDateEdit.setDate(QDate(year, 1, 1))
+        self.toDateEdit.setDate(QDate(year, 12, 31))
 
     def timeLimitCheckBoxChanged(self):
         if self.timeLimitBox.isChecked():
@@ -219,9 +218,9 @@ class QExportProfitFrame(QExportFrame):
 
     def taxYearWalletChanged(self):
         if settings.mySettings.getTaxSetting('usewallettaxfreelimityears'):
-            self.useWalletTaxLimitBox.setCheckState(qt.Checked)
+            self.useWalletTaxLimitBox.setCheckState(Qt.Checked)
         else:
-            self.useWalletTaxLimitBox.setCheckState(qt.Unchecked)
+            self.useWalletTaxLimitBox.setCheckState(Qt.Unchecked)
 
     def exportProfit(self):
         self.fileDialog.setDefaultSuffix("xlsx")
@@ -251,25 +250,25 @@ class QExportProfitFrame(QExportFrame):
 #         super(QDummyFrame, self).__init__(controller=controller, *args, **kwargs)
 #
 #         # title
-#         self.titleLabel = qtwidgets.QLabel("dummy export", self)
+#         self.titleLabel = QLabel("dummy export", self)
 #         font = self.titleLabel.font()
 #         font.setPointSize(14)
 #         self.titleLabel.setFont(font)
 #
-#         self.headingLayout = qtwidgets.QHBoxLayout()
+#         self.headingLayout = QHBoxLayout()
 #         self.headingLayout.addStretch()
 #         self.headingLayout.addWidget(self.titleLabel)
 #         self.headingLayout.addStretch()
 #
 #         # start and end date
-#         self.fromDateLabel = qtwidgets.QLabel("start: ", self)
-#         self.toDateLabel = qtwidgets.QLabel("end: ", self)
-#         self.fromDateEdit = qtwidgets.QDateEdit(self)
+#         self.fromDateLabel = QLabel("start: ", self)
+#         self.toDateLabel = QLabel("end: ", self)
+#         self.fromDateEdit = QDateEdit(self)
 #         self.fromDateEdit.setCalendarPopup(True)
-#         self.toDateEdit = qtwidgets.QDateEdit(self)
+#         self.toDateEdit = QDateEdit(self)
 #         self.toDateEdit.setCalendarPopup(True)
 #
-#         self.dateLayout = qtwidgets.QHBoxLayout()
+#         self.dateLayout = QHBoxLayout()
 #         self.dateLayout.addWidget(self.fromDateLabel)
 #         self.dateLayout.addWidget(self.fromDateEdit)
 #         self.dateLayout.addStretch()
@@ -278,15 +277,15 @@ class QExportProfitFrame(QExportFrame):
 #         # self.dateLayout.addStretch()
 #
 #         # export button
-#         self.exportProfitButton = qtwidgets.QPushButton("export", self)
+#         self.exportProfitButton = QPushButton("export", self)
 #
-#         self.buttonLayout = qtwidgets.QHBoxLayout()
+#         self.buttonLayout = QHBoxLayout()
 #         self.buttonLayout.addStretch()
 #         self.buttonLayout.addWidget(self.exportProfitButton)
 #         self.buttonLayout.addStretch()
 #
 #         # layout
-#         self.vertLayout = qtwidgets.QVBoxLayout(self)
+#         self.vertLayout = QVBoxLayout(self)
 #         self.vertLayout.addLayout(self.headingLayout)
 #         self.vertLayout.addLayout(self.dateLayout)
 #         self.vertLayout.addStretch()
@@ -303,7 +302,7 @@ class ExportPage(qpages.Page):
         self.exportProfitFrame = QExportProfitFrame(parent=self, controller=self.controller)
         # self.dummyFrame = QDummyFrame(parent=self, controller=self.controller)
 
-        self.horzLayout = qtwidgets.QHBoxLayout(self)
+        self.horzLayout = QHBoxLayout(self)
         self.horzLayout.addWidget(self.exportProfitFrame)
         # self.horzLayout.addWidget(self.dummyFrame)
         self.horzLayout.addStretch()

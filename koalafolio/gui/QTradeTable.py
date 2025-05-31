@@ -12,8 +12,8 @@ Created on Sun Dec 16 19:09:51 2018
 @author: Martin
 """
 
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
+from PyQt5.QtWidgets import QHeaderView, QLineEdit, QStyledItemDelegate
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QVariant, Qt, pyqtSignal
 import os
 import koalafolio.PcpCore.core as core
 import koalafolio.Import.Converter as converter
@@ -24,22 +24,21 @@ import koalafolio.gui.QStyle as style
 import koalafolio.gui.FilterableTable as ftable
 
 localLogger = logger.globalLogger
-qt = qtcore.Qt
 
 # %% Trade table view
 class QTradeTableView(ftable.FilterableTableView):
     def __init__(self, parent, *args, **kwargs):
         super(QTradeTableView, self).__init__(parent=parent, *args, **kwargs)
 
-        self.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Stretch)
-        self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Fixed)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
         self.verticalHeader().setDefaultSectionSize(30)
         self.setItemDelegate(QTradeTableDelegate())
 
         self.setSortingEnabled(True)
 
     def keyPressEvent(self, event):
-        if event.key() == qt.Key_Delete:
+        if event.key() == Qt.Key_Delete:
             self.deleteSelectedTrades()
         else:
             super(QTradeTableView, self).keyPressEvent(event)
@@ -84,13 +83,13 @@ class QTradeTableView(ftable.FilterableTableView):
 
 
 # trade list
-class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
-    tradesAdded = qtcore.pyqtSignal('PyQt_PyObject')
-    tradesRemoved = qtcore.pyqtSignal('PyQt_PyObject')
-    triggerHistPriceUpdate = qtcore.pyqtSignal('PyQt_PyObject')
-    #    tradeChanged = qtcore.pyqtSignal('PyQt_PyObject')
-    histPricesUpdated = qtcore.pyqtSignal(list)
-    histPriceUpdateFinished = qtcore.pyqtSignal()
+class QTradeContainer(QAbstractTableModel, core.TradeList):
+    tradesAdded = pyqtSignal('PyQt_PyObject')
+    tradesRemoved = pyqtSignal('PyQt_PyObject')
+    triggerHistPriceUpdate = pyqtSignal('PyQt_PyObject')
+    #    tradeChanged = pyqtSignal('PyQt_PyObject')
+    histPricesUpdated = pyqtSignal(list)
+    histPriceUpdateFinished = pyqtSignal()
 
     def __init__(self, dataPath=None, *args, **kwargs):
         super(QTradeContainer, self).__init__(*args, **kwargs)
@@ -160,13 +159,13 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
             for index in sorted(range(len(rows)), key=rows.__getitem__):
                 row = rows[index]
                 trade = trades[index]
-                self.beginInsertRows(qtcore.QModelIndex(), row, row)
+                self.beginInsertRows(QModelIndex(), row, row)
                 self.trades.insert(row, trade)
                 self.endInsertRows()
         except TypeError:
             row = rows
             trade = trades
-            self.beginInsertRows(qtcore.QModelIndex(), row, row)
+            self.beginInsertRows(QModelIndex(), row, row)
             self.trades.insert(row, trade)
             self.endInsertRows()
             trades = core.TradeList()
@@ -179,7 +178,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
     def removeTrades(self, tradeList):
         for trade in tradeList:
             row = self.trades.index(trade)
-            self.beginRemoveRows(qtcore.QModelIndex(), row, row)
+            self.beginRemoveRows(QModelIndex(), row, row)
             self.trades.pop(row)
             self.endRemoveRows()
         # save new trades
@@ -213,7 +212,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
             self.deletedTradesStack.append(self.trades[row])
             self.deletedIndexesStack.append(row)
         for row in rows:
-            self.beginRemoveRows(qtcore.QModelIndex(), row, row)
+            self.beginRemoveRows(QModelIndex(), row, row)
             self.trades.pop(row)
             self.endRemoveRows()
         # save new trades
@@ -256,7 +255,7 @@ class QTradeContainer(qtcore.QAbstractTableModel, core.TradeList):
 
 
 # %% Trade table model
-# class QTradeTableModel(qtcore.QAbstractTableModel):
+# class QTradeTableModel(QAbstractTableModel):
 class QTradeTableModel(QTradeContainer):
     def __init__(self, *args, **kwargs):
         super(QTradeTableModel, self).__init__(*args, **kwargs)
@@ -287,8 +286,8 @@ class QTradeTableModel(QTradeContainer):
     def columnCount(self, parent):
         return self.headerLen
 
-    def data(self, index, role=qt.DisplayRole):
-        if role == qt.DisplayRole:
+    def data(self, index, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole:
             # ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange'] + ['value' + key for key in self.keys]
             if index.column() == 0:  # return id
                 return self.trades[index.row()].tradeID
@@ -310,15 +309,15 @@ class QTradeTableModel(QTradeContainer):
                 key = self.keys[index.column() - self.firstValueColumn]
                 return str(self.trades[index.row()].value[key])
 
-        return qtcore.QVariant()
+        return QVariant()
 
     def headerData(self, section, orientation, role):
-        if role == qt.DisplayRole:
-            if orientation == qt.Horizontal:
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
                 return self.header[section]
-            elif orientation == qt.Vertical:
+            elif orientation == Qt.Vertical:
                 return section
-        return qtcore.QVariant()
+        return QVariant()
 
     def setData(self, index, value, role):
         def returnAfterChange():
@@ -326,7 +325,7 @@ class QTradeTableModel(QTradeContainer):
             self.saveTrades()
             return True
 
-        if role == qt.EditRole:
+        if role == Qt.EditRole:
             try:
                 # ['id', 'partner id', 'date', 'type', 'coin', 'amount', 'exchange'] + ['value' + key for key in self.keys]
                 if index.column() == 0:  # return id
@@ -367,9 +366,9 @@ class QTradeTableModel(QTradeContainer):
 
     def flags(self, index):
         if index.column() in self.columnNotEditable:  # not editable
-            return qt.ItemIsSelectable | qt.ItemIsEnabled
+            return Qt.ItemIsSelectable | Qt.ItemIsEnabled
         else:  # editable
-            return qt.ItemIsSelectable | qt.ItemIsEditable | qt.ItemIsEnabled
+            return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
 
     def showPrices(self, showPrices=True):
         self.pricesShowen = showPrices
@@ -445,7 +444,7 @@ class QTradeTableModel(QTradeContainer):
         super(QTradeTableModel, self).histPricesUpdatedCallback(updatedCoins, tradesLeft)
         if self.pricesShowen:
             RowStartIndex = self.index(0, self.firstValueColumn)
-            RowEndIndex = self.index(len(self.trades) - 1, len(self.header) - 1, qtcore.QModelIndex())
+            RowEndIndex = self.index(len(self.trades) - 1, len(self.header) - 1, QModelIndex())
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def updateDisplayCurrencies(self, keys):
@@ -478,11 +477,11 @@ class QImportTradeTableModel(QTradeTableModel):
 
         self.baseModel = baseModel
 
-    def data(self, index, role=qt.DisplayRole):
-        if role == qt.ForegroundRole:
+    def data(self, index, role=Qt.DisplayRole):
+        if role == Qt.ForegroundRole:
             if index.row() >= len(self.trades):
                 print('error ' + str(index.row()) + ' ' + str(len(self.trades)))
-                return qtcore.QVariant()
+                return QVariant()
             if self.trades[index.row()] in self.baseModel.trades:
                 return style.myStyle.getQColor('text_highlighted_midlight'.upper())
             if self.baseModel.checkApproximateEquality(self.trades[index.row()]):
@@ -501,14 +500,14 @@ class QImportTradeTableModel(QTradeTableModel):
 
 
 # %% Trade table delegates
-# class QCoinBalanceDelegate(qtwidgets.QStyledItemDelegate):
-class QTradeTableDelegate(qtwidgets.QStyledItemDelegate):
+# class QCoinBalanceDelegate(QStyledItemDelegate):
+class QTradeTableDelegate(QStyledItemDelegate):
     def __init__(self, *args, **kwargs):
         super(QTradeTableDelegate, self).__init__(*args, **kwargs)
 
     def createEditor(self, parent, option, index):
-        if int(index.flags()) & qt.ItemIsEditable:
-            return qtwidgets.QLineEdit(parent)
+        if int(index.flags()) & Qt.ItemIsEditable:
+            return QLineEdit(parent)
         return None
 
     def setEditorData(self, editor, index):
@@ -518,7 +517,7 @@ class QTradeTableDelegate(qtwidgets.QStyledItemDelegate):
         editor.setGeometry(option.rect)
 
     def setModelData(self, editor, model, index):
-        model.setData(index, editor.text(), qt.EditRole)
+        model.setData(index, editor.text(), Qt.EditRole)
 
     def sizeHint(self, option, index):
         return super(QTradeTableDelegate, self).sizeHint(option, index)

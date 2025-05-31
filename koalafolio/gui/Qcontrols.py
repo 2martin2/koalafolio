@@ -17,7 +17,6 @@ from os import path as os_path
 
 localLogger = logger.globalLogger
 
-qt = Qt
 # %% constants
 PATHREGEX = r"^\w:((\\|/)\w+)*(|.\w+)$"
 FLOATREGEX = r"^([\+\-]|)(\d*)(.(\d*)|)((e[\+\-]\d*)|)$"
@@ -181,18 +180,18 @@ class StyledLabelCont(QFrame):
         self.title.setCheckable(True)
         self.title.setObjectName('StyledLabelTitle')
         self.title.setMinimumHeight(25)
-        # self.title.setAlignment(qt.AlignCenterS)
+        # self.title.setAlignment(Qt.AlignCenterS)
         titleFont = QFont("Arial", 11)
         self.title.setFont(titleFont)
 
         self.body = QWidget()
-        # self.body.setAlignment(qt.AlignCenter)
+        # self.body.setAlignment(Qt.AlignCenter)
         self.body.setObjectName('StyledLabelBody')
         self.body.sizePolicy().setRetainSizeWhenHidden(False)
 
         self.bodyLayout = QGridLayout(self.body)
         self.bodyLayout.setContentsMargins(6, 4, 6, 4)
-        self.bodyLayout.setOriginCorner(qt.TopRightCorner)
+        self.bodyLayout.setOriginCorner(Qt.TopRightCorner)
 
         self.vertLayout = QVBoxLayout()
         self.vertLayout.addWidget(self.title)
@@ -227,7 +226,7 @@ class StyledLabelCont(QFrame):
 
     def addWidget(self, widget):
         widget.setParent(self.body)
-        self.bodyLayout.addWidget(widget, len(self.body.children())-2, 0, qt.AlignRight)
+        self.bodyLayout.addWidget(widget, len(self.body.children())-2, 0, Qt.AlignRight)
         self.resize(self.sizeHint())
 
     def setBodyColor(self, color):

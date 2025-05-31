@@ -129,7 +129,7 @@ class ImportSelectPage(SubPage):
         self.treeView.setModel(self.fileSystemModel)
         from PyQt5.QtWidgets import QAbstractItemView, QHeaderView
         self.treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.treeView.header().setSectionResizeMode(QHeaderView.RezizeMode.ResizeToContents)
+        self.treeView.header().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.treeView.selectionModel().selectionChanged.connect(self.selectionChangedCallback)
 
         self.treeView.setRootIndex(self.fileSystemModel.index(QDir.currentPath()))
@@ -195,14 +195,14 @@ class ImportSelectPage(SubPage):
                     self.treeView.selectionModel().select(QModelIndex(), QItemSelectionModel.SelectionFlag.Clear)
                     self.fileSystemModel.setRootPath(str(os_path.dirname(path)))
                     self.treeView.setRootIndex(self.fileSystemModel.index(str(os_path.dirname(path))))
-                    self.treeView.header().setSectionResizeMode(QHeaderView.RezizeMode.ResizeToContents)
+                    self.treeView.header().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
                     self.treeView.selectionModel().select(self.fileSystemModel.index(str(path)),
                                                           QItemSelectionModel.SelectionFlag.Select)
                 elif path.is_dir():
                     self.treeView.selectionModel().select(QModelIndex(), QItemSelectionModel.SelectionFlag.Clear)
                     self.fileSystemModel.setRootPath(str(path))
                     self.treeView.setRootIndex(self.fileSystemModel.index(str(path)))
-                    self.treeView.header().setSectionResizeMode(QHeaderView.RezizeMode.ResizeToContents)
+                    self.treeView.header().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
                     self.treeView.selectionModel().select(self.fileSystemModel.index(str(path)),
                                                           QItemSelectionModel.SelectionFlag.Select)
                 else:

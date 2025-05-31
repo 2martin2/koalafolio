@@ -41,7 +41,6 @@ from koalafolio.gui.widgets.QCompleterComboBox import StyledCompleter
 # from koalafolio.gui.PortfolioPage import PortfolioPage
 
 
-qt = Qt
 # %% constants
 
 

@@ -5,9 +5,9 @@ Created on Sun Dec 16 19:09:51 2018
 @author: Martin
 """
 
-import PyQt5.QtGui as qtgui
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
+from PyQt5.QtGui import QBrush, QColor, QPainterPath
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QHBoxLayout, QHeaderView, QSpinBox, QStyledItemDelegate, QTextEdit, QVBoxLayout, QWidget
+from PyQt5.QtCore import QAbstractItemModel, QEvent, QModelIndex, QRect, QSize, QVariant, Qt, pyqtSignal
 import koalafolio.gui.Qcontrols as controls
 import koalafolio.gui.FilterableTable as fTable
 import koalafolio.gui.ScrollableTable as sTable
@@ -20,7 +20,6 @@ import koalafolio.gui.QLogger as logger
 import os
 import configparser
 
-qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 # %% portfolio table view
@@ -32,8 +31,8 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
         # self.setRootIsDecorated(False)
 
         self.setSortingEnabled(True)
-        # self.setEditTriggers(qtwidgets.QAbstractItemView.NoEditTriggers)
-        # self.setSelectionMode(qtwidgets.QAbstractItemView.NoSelection)
+        # self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # self.setSelectionMode(QAbstractItemView.NoSelection)
 
         self.visibleEditorIndex = []
         self.collapsed.connect(self.collapsedCallback)
@@ -64,13 +63,13 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
                 sourceModel.changeValueColumnWidth(1)
 
     def initView(self):
-        self.horizontalHeader().setSectionResizeMode(qtwidgets.QHeaderView.Stretch)
-        self.horizontalHeader().setSectionResizeMode(0, qtwidgets.QHeaderView.Interactive)
-        self.horizontalHeader().setSectionResizeMode(1, qtwidgets.QHeaderView.Interactive)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)
+        self.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
         self.setColumnWidth(1, 160)
-        self.horizontalHeader().setSectionResizeMode(2, qtwidgets.QHeaderView.Interactive)
+        self.horizontalHeader().setSectionResizeMode(2, QHeaderView.Interactive)
         self.setColumnWidth(2, 100)
-        # self.verticalHeader().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
+        # self.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         # self.verticalHeader().setVisible(False)
         valueSectionSize = self.horizontalHeader().sectionSize(self.model().sourceModel().firstValueColumn)
         self.updateValueColumnCount(valueSectionSize, valueSectionSize, forceUpdate=True)
@@ -103,7 +102,7 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
     def drawRow(self, painter, options, index):
         painter.save()
         myCol = style.myStyle.getQColor('BACKGROUND_BITDARK')
-        myBrush = qtgui.QBrush(myCol)
+        myBrush = QBrush(myCol)
         mypen = painter.pen()
         mypen.setBrush(myBrush)
         painter.setPen(mypen)
@@ -115,7 +114,7 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
         # restore painter
         super(QPortfolioTableView, self).drawRow(painter, options, index)
 
-    def visualRect(self, index: qtcore.QModelIndex) -> qtcore.QRect:
+    def visualRect(self, index: QModelIndex) -> QRect:
         rect = super(QPortfolioTableView, self).visualRect(index)
         if index.parent().isValid():  # child level
             if index.column() == 0:  # properties
@@ -145,11 +144,11 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
 
 
 # %% portfolio coin container
-class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
-    coinAdded = qtcore.pyqtSignal([list])
+class QCoinContainer(QAbstractItemModel, core.CoinList):
+    coinAdded = pyqtSignal([list])
     # use bulk event to load prices for several coins at once (faster)
-    triggerApiUpdateForCoins = qtcore.pyqtSignal([list])
-    triggerPriceUpdateForCoins = qtcore.pyqtSignal([list])
+    triggerApiUpdateForCoins = pyqtSignal([list])
+    triggerPriceUpdateForCoins = pyqtSignal([list])
 
     def __init__(self, dataPath=None, *args, **kwargs):
         super(QCoinContainer, self).__init__(*args, **kwargs)
@@ -217,7 +216,7 @@ class QCoinContainer(qtcore.QAbstractItemModel, core.CoinList):
 
 # %% portfolio table model
 class QPortfolioTableModel(QCoinContainer):
-    triggerViewReset = qtcore.pyqtSignal()
+    triggerViewReset = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(QPortfolioTableModel, self).__init__(*args, **kwargs)
@@ -254,7 +253,7 @@ class QPortfolioTableModel(QCoinContainer):
         try:
             return self.parents[index.internalId()]
         except IndexError:
-            return qtcore.QModelIndex()
+            return QModelIndex()
 
     def index(self, row, column, parent):
         # save parent
@@ -268,11 +267,11 @@ class QPortfolioTableModel(QCoinContainer):
         if parent.isValid() and not parent.parent().isValid():  # first child level
             return self.createIndex(row, column, parentId)
         # only one child level
-        return qtcore.QModelIndex()
+        return QModelIndex()
 
-    def data(self, index, role=qt.DisplayRole):
+    def data(self, index, role=Qt.DisplayRole):
         if index.parent().isValid():  # child level
-            if role == qt.DisplayRole:
+            if role == Qt.DisplayRole:
                 if index.column() == 0:  # wallet properties
                     wallet = self.coins[index.parent().row()].wallets[index.row()]
                     return QWalletPropertiesData(walletname=wallet.getWalletName(),
@@ -282,7 +281,7 @@ class QPortfolioTableModel(QCoinContainer):
                 if index.column() == 3:  # wallet chart
                     return self.coins[index.parent().row()].wallets[index.row()]
         else:  # top level
-            if role == qt.DisplayRole:
+            if role == Qt.DisplayRole:
                 if index.column() == 0:  # coin row
                     return self.coins[index.row()].coinname  # return coinname
                 if index.column() == 1:  # balance row
@@ -292,26 +291,26 @@ class QPortfolioTableModel(QCoinContainer):
                 if index.column() >= self.firstValueColumn:  # return CoinBalance and key
                     keys = [*core.CoinValue().value]
                     return self.coins[index.row()], keys[index.column() - self.firstValueColumn], self.valueCols
-            if role == qt.DecorationRole:
+            if role == Qt.DecorationRole:
                 if index.column() == 0:
                     coinIcon = self.coins[index.row()].coinIcon
                     if coinIcon:
                         return coinIcon
                     else:
-                        return qtcore.QVariant()
-        return qtcore.QVariant()
+                        return QVariant()
+        return QVariant()
 
     def headerData(self, section, orientation, role):
-        if role == qt.DisplayRole:
-            if orientation == qt.Horizontal:
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
                 return self.header[section]
-            elif orientation == qt.Vertical:
+            elif orientation == Qt.Vertical:
                 return section
-        if role == qt.ToolTipRole:
-            if orientation == qt.Horizontal:
+        if role == Qt.ToolTipRole:
+            if orientation == Qt.Horizontal:
                 if section >= 3:  # value Header
                     return self.valueHeaderToolTip
-        return qtcore.QVariant()
+        return QVariant()
 
     def setColumnHeader(self, cols):
         if cols == 3:
@@ -332,19 +331,19 @@ class QPortfolioTableModel(QCoinContainer):
     def changeValueColumnWidth(self, cols):
         self.valueCols = cols
         self.setColumnHeader(cols)
-        self.headerDataChanged.emit(qt.Horizontal, 0, len(self.header) - 1)
-        RowStartIndex = self.index(0, self.firstValueColumn, qtcore.QModelIndex())
-        RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, qtcore.QModelIndex())
+        self.headerDataChanged.emit(Qt.Horizontal, 0, len(self.header) - 1)
+        RowStartIndex = self.index(0, self.firstValueColumn, QModelIndex())
+        RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, QModelIndex())
         self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def flags(self, index):
         if index.parent().isValid():  # child level
-            return qt.ItemIsEditable | qt.ItemIsEnabled
+            return Qt.ItemIsEditable | Qt.ItemIsEnabled
         # top level
-        return qt.ItemIsEnabled
+        return Qt.ItemIsEnabled
 
     def setData(self, index, value, role):
-        if role == qt.EditRole:
+        if role == Qt.EditRole:
             if index.parent().isValid():  # child level
                 if index.column() == 0:  # properties
                     self.setWalletProperties(index.parent().row(), index.row(), value.notes, value.taxLimitEnabled,
@@ -357,7 +356,7 @@ class QPortfolioTableModel(QCoinContainer):
         # update all DelegateItems of the updated coins
         for coinname in coins:
             row = self.getCoinIndexByName(coinname)
-            parent = self.index(row, 0, qtcore.QModelIndex())
+            parent = self.index(row, 0, QModelIndex())
             ChildStartIndex = self.index(0, 3, parent)
             ChildEndIndex = self.index(self.rowCount(parent)-1, 3, parent)
             self.dataChanged.emit(ChildStartIndex, ChildEndIndex)
@@ -368,8 +367,8 @@ class QPortfolioTableModel(QCoinContainer):
 
     def pricesUpdated(self):
         # update all rows
-        RowStartIndex = self.index(0, 2, qtcore.QModelIndex())
-        RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, qtcore.QModelIndex())
+        RowStartIndex = self.index(0, 2, QModelIndex())
+        RowEndIndex = self.index(len(self.coins)-1, len(self.header) - 1, QModelIndex())
         self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def setPrices(self, prices, coins):
@@ -390,7 +389,7 @@ class QPortfolioTableModel(QCoinContainer):
         if coin:
             row = self.coins.index(coin)
             RowStartIndex = self.index(row, 0)
-            RowEndIndex = self.index(row, len(self.header) - 1, qtcore.QModelIndex())
+            RowEndIndex = self.index(row, len(self.header) - 1, QModelIndex())
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     # emit layout changed when coin is added
@@ -422,8 +421,8 @@ class QPortfolioTableModel(QCoinContainer):
                 self.getCoinByName(coin).coinIcon = icons[coin]
             except KeyError:
                 pass
-        RowStartIndex = self.index(0, 0, qtcore.QModelIndex())
-        RowEndIndex = self.index(len(self.coins) - 1, 0, qtcore.QModelIndex())
+        RowStartIndex = self.index(0, 0, QModelIndex())
+        RowEndIndex = self.index(len(self.coins) - 1, 0, QModelIndex())
         self.dataChanged.emit(RowStartIndex, RowEndIndex)
 
     def deleteTrades(self, trades):
@@ -445,8 +444,8 @@ class QPortfolioTableModel(QCoinContainer):
 
     def taxYearWalletChanged(self):
         # update all DelegateItems
-        for row in range(self.rowCount(qtcore.QModelIndex())):
-            parent = self.index(row, 0, qtcore.QModelIndex())
+        for row in range(self.rowCount(QModelIndex())):
+            parent = self.index(row, 0, QModelIndex())
             ChildStartIndex = self.index(0, 0, parent)
             ChildEndIndex = self.index(self.rowCount(parent) - 1, 3, parent)
             self.dataChanged.emit(ChildStartIndex, ChildEndIndex)
@@ -488,7 +487,7 @@ class QTableSortingModel(fTable.SortFilterProxyModel):
         index = self.sourceModel().index(source_row, 3, source_parent)
         if source_parent.isValid():  # child level
             parent_row = source_parent.row()
-            parentIndex = self.sourceModel().index(parent_row, 3, qtcore.QModelIndex())
+            parentIndex = self.sourceModel().index(parent_row, 3, QModelIndex())
         filterAcceptsRow = super(QTableSortingModel, self).filterAcceptsRow(source_row, source_parent)
         if filterAcceptsRow:
             if settings.mySettings.getGuiSetting('hidelowbalancecoins'):
@@ -520,8 +519,8 @@ class QTableSortingModel(fTable.SortFilterProxyModel):
         return filterAcceptsRow
 
 # %% portfolio table delegate
-# class QCoinBalanceDelegate(qtwidgets.QStyledItemDelegate):
-class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
+# class QCoinBalanceDelegate(QStyledItemDelegate):
+class QCoinTableDelegate(QStyledItemDelegate):
     def __init__(self, *args, **kwargs):
         super(QCoinTableDelegate, self).__init__(*args, **kwargs)
 
@@ -544,7 +543,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                                               index.column() == 4)):
             painter.save()
             myCol = style.myStyle.getQColor('BACKGROUND_BITDARK')
-            myBrush = qtgui.QBrush(myCol)
+            myBrush = QBrush(myCol)
             mypen = painter.pen()
             mypen.setBrush(myBrush)
             painter.setPen(mypen)
@@ -555,13 +554,13 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
             painter.drawLine(rect.x() + rect.width(), rect.y(), rect.x() + rect.width(), rect.y() + rect.height())
             painter.restore()
 
-        contentRect = qtcore.QRect(cellStartX, cellStartY, cellWidth, cellHeight)
+        contentRect = QRect(cellStartX, cellStartY, cellWidth, cellHeight)
         painter.save()
         if not index.parent().isValid():  # top level
             if index.column() == 0:  # coin
                 super(QCoinTableDelegate, self).paint(painter, option, index)
             elif index.column() == 1:  # balance
-                coinBalance = index.data(qt.DisplayRole)
+                coinBalance = index.data(Qt.DisplayRole)
                 # settings
                 taxFreeLimitEnabled = False
                 taxFreeLimitYears = 100
@@ -582,11 +581,11 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                 newFont.setPixelSize(15)
                 painter.setFont(newFont)
                 myCol = style.myStyle.getQColor('TEXT_NORMAL')
-                myBrush = qtgui.QBrush(myCol)
+                myBrush = QBrush(myCol)
                 mypen = painter.pen()
                 mypen.setBrush(myBrush)
                 painter.setPen(mypen)
-                painter.drawText(contentRect, qt.AlignHCenter | qt.AlignTop, balance)
+                painter.drawText(contentRect, Qt.AlignHCenter | Qt.AlignTop, balance)
                 painter.setFont(defaultFont)
 
                 if taxFreeLimitEnabled:  # draw tax free buys
@@ -596,54 +595,54 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                     buyAmount = controls.floatToString(buyAmountVal, 4)
                     if buyAmountVal > 0:
                         # paint buy that can be sold tax free
-                        buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
-                        buyBrush = qtgui.QBrush(buyColor)
+                        buyColor = QColor(*settings.mySettings.getColor('POSITIV'))
+                        buyBrush = QBrush(buyColor)
                         buyPen = painter.pen()
                         buyPen.setBrush(buyBrush)
                         painter.setPen(buyPen)
-                        painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
-                        painter.drawText(contentRect, qt.AlignLeft | qt.AlignTop, taxFreeLabel)
+                        painter.drawText(contentRect, Qt.AlignLeft | Qt.AlignBottom, buyAmount)
+                        painter.drawText(contentRect, Qt.AlignLeft | Qt.AlignTop, taxFreeLabel)
                 else:  # draw buy amount and sell amount
                     buyAmount = controls.floatToString(coinBalance.getBuyAmount(), 4)
                     sellAmount = controls.floatToString(coinBalance.getSellAmount(), 4)
 
                     # paint buy
-                    buyColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
-                    buyBrush = qtgui.QBrush(buyColor)
+                    buyColor = QColor(*settings.mySettings.getColor('POSITIV'))
+                    buyBrush = QBrush(buyColor)
                     buyPen = painter.pen()
                     buyPen.setBrush(buyBrush)
                     painter.setPen(buyPen)
-                    painter.drawText(contentRect, qt.AlignLeft | qt.AlignBottom, buyAmount)
+                    painter.drawText(contentRect, Qt.AlignLeft | Qt.AlignBottom, buyAmount)
 
                     # paint sell
-                    sellColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
-                    sellBrush = qtgui.QBrush(sellColor)
+                    sellColor = QColor(*settings.mySettings.getColor('NEGATIV'))
+                    sellBrush = QBrush(sellColor)
                     sellPen = painter.pen()
                     sellPen.setBrush(sellBrush)
                     painter.setPen(sellPen)
-                    painter.drawText(contentRect, qt.AlignRight | qt.AlignBottom, sellAmount)
+                    painter.drawText(contentRect, Qt.AlignRight | Qt.AlignBottom, sellAmount)
 
             elif index.column() == 2:  # realized
-                profit = index.data(qt.DisplayRole)
+                profit = index.data(Qt.DisplayRole)
                 key = settings.mySettings.reportCurrency()
                 # for key in profit:
                 # draw profit
                 if profit[key] >= 0:
-                    drawColor = qtgui.QColor(*settings.mySettings.getColor('POSITIV'))
+                    drawColor = QColor(*settings.mySettings.getColor('POSITIV'))
                 else:
-                    drawColor = qtgui.QColor(*settings.mySettings.getColor('NEGATIV'))
+                    drawColor = QColor(*settings.mySettings.getColor('NEGATIV'))
                 pen = painter.pen()
-                pen.setBrush(qtgui.QBrush(drawColor))
+                pen.setBrush(QBrush(drawColor))
                 painter.setPen(pen)
                 newFont = painter.font()
                 newFont.setPixelSize(14)
                 painter.setFont(newFont)
                 profitString = controls.floatToString(profit[key], 4)
-                painter.drawText(contentRect, qt.AlignHCenter | qt.AlignVCenter, profitString)
+                painter.drawText(contentRect, Qt.AlignHCenter | Qt.AlignVCenter, profitString)
 
             elif index.column() >= index.model().sourceModel().firstValueColumn:  # performance
                 try:  # catch key error if currency is not in database. Could happen during currency switch
-                    coinBalance, key, cols = index.data(qt.DisplayRole)
+                    coinBalance, key, cols = index.data(Qt.DisplayRole)
                     boughtValue = coinBalance.initialValue[key]
                     boughtPrice = coinBalance.getInitialPrice()[key]
                     currentValue = coinBalance.getCurrentValue()[key]
@@ -675,48 +674,48 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
                         painter.drawText(contentRect, alignHorz | alignVert, text)
 
                     if cols == 3:  # draw all
-                        drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, boughtValueStr)
-                        drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, boughtPriceStr)
+                        drawText(Qt.AlignLeft, Qt.AlignTop, 14, neutralColor, boughtValueStr)
+                        drawText(Qt.AlignLeft, Qt.AlignBottom, 12, neutralColor, boughtPriceStr)
                         if gain > 0:
-                            drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentValueStr)
-                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, currentPriceStr)
-                            drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignTop, 14, positivColor, currentValueStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignBottom, 12, positivColor, currentPriceStr)
+                            drawText(Qt.AlignRight, Qt.AlignTop, 14, positivColor, gainStr)
                         elif gain < 0:
-                            drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentValueStr)
-                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, currentPriceStr)
-                            drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignTop, 14, negativColor, currentValueStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignBottom, 12, negativColor, currentPriceStr)
+                            drawText(Qt.AlignRight, Qt.AlignTop, 14, negativColor, gainStr)
                         else:
-                            drawText(qt.AlignHCenter, qt.AlignTop, 14, neutralColor, currentValueStr)
-                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, neutralColor, currentPriceStr)
-                            drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignTop, 14, neutralColor, currentValueStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignBottom, 12, neutralColor, currentPriceStr)
+                            drawText(Qt.AlignRight, Qt.AlignTop, 14, neutralColor, gainStr)
                         if gainDay >= 0:
-                            drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
+                            drawText(Qt.AlignRight, Qt.AlignBottom, 12, positivColor, gainDayStr)
                         else:
-                            drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
+                            drawText(Qt.AlignRight, Qt.AlignBottom, 12, negativColor, gainDayStr)
                     elif cols == 2:  # skip current value and price
                         if gain > 0:
-                            drawText(qt.AlignLeft, qt.AlignTop, 14, positivColor, currentValueStr)
-                            drawText(qt.AlignLeft, qt.AlignBottom, 12, positivColor, currentPriceStr)
-                            drawText(qt.AlignRight, qt.AlignTop, 14, positivColor, gainStr)
+                            drawText(Qt.AlignLeft, Qt.AlignTop, 14, positivColor, currentValueStr)
+                            drawText(Qt.AlignLeft, Qt.AlignBottom, 12, positivColor, currentPriceStr)
+                            drawText(Qt.AlignRight, Qt.AlignTop, 14, positivColor, gainStr)
                         elif gain < 0:
-                            drawText(qt.AlignLeft, qt.AlignTop, 14, negativColor, currentValueStr)
-                            drawText(qt.AlignLeft, qt.AlignBottom, 12, negativColor, currentPriceStr)
-                            drawText(qt.AlignRight, qt.AlignTop, 14, negativColor, gainStr)
+                            drawText(Qt.AlignLeft, Qt.AlignTop, 14, negativColor, currentValueStr)
+                            drawText(Qt.AlignLeft, Qt.AlignBottom, 12, negativColor, currentPriceStr)
+                            drawText(Qt.AlignRight, Qt.AlignTop, 14, negativColor, gainStr)
                         else:
-                            drawText(qt.AlignLeft, qt.AlignTop, 14, neutralColor, currentValueStr)
-                            drawText(qt.AlignLeft, qt.AlignBottom, 12, neutralColor, currentPriceStr)
-                            drawText(qt.AlignRight, qt.AlignTop, 14, neutralColor, gainStr)
+                            drawText(Qt.AlignLeft, Qt.AlignTop, 14, neutralColor, currentValueStr)
+                            drawText(Qt.AlignLeft, Qt.AlignBottom, 12, neutralColor, currentPriceStr)
+                            drawText(Qt.AlignRight, Qt.AlignTop, 14, neutralColor, gainStr)
                         if gainDay >= 0:
-                            drawText(qt.AlignRight, qt.AlignBottom, 12, positivColor, gainDayStr)
+                            drawText(Qt.AlignRight, Qt.AlignBottom, 12, positivColor, gainDayStr)
                         else:
-                            drawText(qt.AlignRight, qt.AlignBottom, 12, negativColor, gainDayStr)
+                            drawText(Qt.AlignRight, Qt.AlignBottom, 12, negativColor, gainDayStr)
                     else:  # draw value and daygain
                         if gainDay >= 0:
-                            drawText(qt.AlignHCenter, qt.AlignTop, 14, positivColor, currentPriceStr)
-                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, positivColor, gainDayStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignTop, 14, positivColor, currentPriceStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignBottom, 12, positivColor, gainDayStr)
                         else:
-                            drawText(qt.AlignHCenter, qt.AlignTop, 14, negativColor, currentPriceStr)
-                            drawText(qt.AlignHCenter, qt.AlignBottom, 12, negativColor, gainDayStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignTop, 14, negativColor, currentPriceStr)
+                            drawText(Qt.AlignHCenter, Qt.AlignBottom, 12, negativColor, gainDayStr)
                 except KeyError as ex:
                     localLogger.warning("currency is missing in coindata: " + str(ex))
         else:  # child level
@@ -726,7 +725,7 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         if index.parent().isValid():  # child level
             if index.column() == 0:  # properties
-                if int(index.flags()) & qt.ItemIsEditable:
+                if int(index.flags()) & Qt.ItemIsEditable:
                     propertiesWidget = QWalletPropertiesWidget(parent)
                     # self.updateEditorGeometry(propertiesWidget, option, index)
                     propertiesWidget.dataChanged.connect(self.commitData)
@@ -850,60 +849,60 @@ class QCoinTableDelegate(qtwidgets.QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         if index.parent().isValid():  # child level
             if index.column() == 0:  # propertiesWidget
-                model.setData(index, editor.getData(), qt.EditRole)
+                model.setData(index, editor.getData(), Qt.EditRole)
 
     def sizeHint(self, option, index):
         if index.parent().isValid():  # child level
             childLevelHight = 200
             if index.column() == 0:  # properties
-                return qtcore.QSize(350, childLevelHight)
+                return QSize(350, childLevelHight)
             if index.column() == 1 or index.column() == 2:  # properties
-                return qtcore.QSize(0, childLevelHight)
+                return QSize(0, childLevelHight)
             elif index.column() == 3:  # chart
                 size = super(QCoinTableDelegate, self).sizeHint(option, index)
-                return qtcore.QSize(size.width(), childLevelHight)
+                return QSize(size.width(), childLevelHight)
         else:  # top level
             topLevelHight = 40
             if index.column() == 0:  # coin
-                return qtcore.QSize(50, topLevelHight)
+                return QSize(50, topLevelHight)
             elif index.column() == 1:  # balance
-                return qtcore.QSize(100, topLevelHight)
+                return QSize(100, topLevelHight)
             elif index.column() >= 2:  # realized
-                return qtcore.QSize(200, topLevelHight)
-        return qtcore.QSize()
+                return QSize(200, topLevelHight)
+        return QSize()
 
 
-class QWalletPropertiesWidget(qtwidgets.QWidget):
-    dataChanged = qtcore.pyqtSignal([qtwidgets.QWidget])
+class QWalletPropertiesWidget(QWidget):
+    dataChanged = pyqtSignal([QWidget])
     def __init__(self, parent):
         super(QWalletPropertiesWidget, self).__init__(parent=parent)
 
         self.walletname = ''
 
-        self.setFocusPolicy(qt.StrongFocus)
+        self.setFocusPolicy(Qt.StrongFocus)
 
         # notes
-        self.notesTextedit = qtwidgets.QTextEdit(self)
+        self.notesTextedit = QTextEdit(self)
         self.notesTextedit.setPlaceholderText('notes')
         self.notesTextedit.installEventFilter(self)
 
-        self.optionsLayout = qtwidgets.QHBoxLayout()
+        self.optionsLayout = QHBoxLayout()
 
         # tax limit
-        self.timeLimitBox = qtwidgets.QCheckBox("tax year limit", self)
+        self.timeLimitBox = QCheckBox("tax year limit", self)
         self.timeLimitBox.installEventFilter(self)
-        self.timeLimitEdit = qtwidgets.QSpinBox(self)
+        self.timeLimitEdit = QSpinBox(self)
         self.timeLimitEdit.installEventFilter(self)
         self.timeLimitEdit.setValue(1)
         self.timeLimitEdit.setMinimum(0)
-        self.timeLimitBox.setCheckState(qt.Checked)
+        self.timeLimitBox.setCheckState(Qt.Checked)
         self.timeLimitBox.setTristate(False)
 
         self.optionsLayout.addWidget(self.timeLimitBox)
         self.optionsLayout.addWidget(self.timeLimitEdit)
         self.optionsLayout.addStretch()
 
-        self.vertLayout = qtwidgets.QVBoxLayout(self)
+        self.vertLayout = QVBoxLayout(self)
         self.vertLayout.addWidget(self.notesTextedit)
         self.vertLayout.addLayout(self.optionsLayout)
 
@@ -942,8 +941,8 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
     def eventFilter(self, object: 'QObject', event: 'QEvent') -> bool:
         if object is None:
             return False
-        if event.type() == qtcore.QEvent.FocusOut:
-            w = qtwidgets.QApplication.focusWidget()
+        if event.type() == QEvent.FocusOut:
+            w = QApplication.focusWidget()
             while w:  # don't worry about focus changes internally in the editor
                 if w == object:
                     return False
@@ -953,7 +952,7 @@ class QWalletPropertiesWidget(qtwidgets.QWidget):
         return False
 
     def sizeHint(self):
-        return qtcore.QSize(0, 0)
+        return QSize(0, 0)
 
 
 class QWalletPropertiesData:
@@ -964,7 +963,7 @@ class QWalletPropertiesData:
         self.taxLimitYears = taxLimitYears
 
 
-class QArrowPainterPath(qtgui.QPainterPath):
+class QArrowPainterPath(QPainterPath):
     def __init__(self, startX, startY, width, height, *args, **kwargs):
         super(QArrowPainterPath, self).__init__(*args, **kwargs)
 

@@ -6,16 +6,14 @@ Created on 11.04.2021
 """
 
 
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
+from PyQt5.QtWidgets import QCheckBox, QHBoxLayout, QPushButton, QVBoxLayout
+from PyQt5.QtCore import Qt
 import koalafolio.gui.QTradeTable as ttable
 import koalafolio.gui.FilterableTable as ftable
 import koalafolio.gui.QSettings as settings
 import koalafolio.gui.QLogger as logger
 from koalafolio.gui.Qpages import Page
 
-
-qt = qtcore.Qt
 localLogger = logger.globalLogger
 
 
@@ -29,7 +27,7 @@ class TradesPage(Page):
     # initial layout of page
     def layoutUI(self):
         # base layout
-        self.horizontalLayout = qtwidgets.QHBoxLayout(self)
+        self.horizontalLayout = QHBoxLayout(self)
 
         # table for tradeList
         self.proxyModel = ftable.SortFilterProxyModel()
@@ -44,29 +42,29 @@ class TradesPage(Page):
         # properties line , contains gui elements to control table behavior (buttons, checkboxes, ...)
 
         # controls
-        self.resetFilterButton = qtwidgets.QPushButton('Reset Filter', self)
+        self.resetFilterButton = QPushButton('Reset Filter', self)
         self.resetFilterButton.clicked.connect(lambda checked: self.tradeTableView.clearFilters(checked))
 
-        self.useRegexCheckbox = qtwidgets.QCheckBox(text='use regex', parent=self)
+        self.useRegexCheckbox = QCheckBox(text='use regex', parent=self)
         if settings.mySettings.getGuiSetting('filteruseregex'):
-            self.useRegexCheckbox.setCheckState(qt.Checked)
+            self.useRegexCheckbox.setCheckState(Qt.Checked)
         else:
-            self.useRegexCheckbox.setCheckState(qt.Unchecked)
+            self.useRegexCheckbox.setCheckState(Qt.Unchecked)
         self.useRegexCheckbox.stateChanged.connect(lambda state: self.switchRegexFilter(state))
 
 
-        self.deleteSelectedTradesButton = qtwidgets.QPushButton('delete selected', self)
+        self.deleteSelectedTradesButton = QPushButton('delete selected', self)
         self.deleteSelectedTradesButton.clicked.connect(self.deleteSelectedTrades)
-        self.deleteTradesButton = qtwidgets.QPushButton('delete all', self)
+        self.deleteTradesButton = QPushButton('delete all', self)
         self.deleteTradesButton.clicked.connect(self.deleteAllTrades)
-        self.undoButton = qtwidgets.QPushButton('undo', self)
+        self.undoButton = QPushButton('undo', self)
         self.undoButton.clicked.connect(self.undoRemoveAddTrades)
-        self.reloadPricesButton = qtwidgets.QPushButton('reload prices', self)
+        self.reloadPricesButton = QPushButton('reload prices', self)
         self.reloadPricesButton.clicked.connect(self.reloadPrices)
-        self.recalculateIdsButton = qtwidgets.QPushButton('recalculate Ids', self)
+        self.recalculateIdsButton = QPushButton('recalculate Ids', self)
         self.recalculateIdsButton.clicked.connect(self.recalcIds)
 
-        self.hButtonLayout = qtwidgets.QHBoxLayout()
+        self.hButtonLayout = QHBoxLayout()
         self.hButtonLayout.addWidget(self.resetFilterButton)
         self.hButtonLayout.addWidget(self.useRegexCheckbox)
         self.hButtonLayout.addStretch()
@@ -79,7 +77,7 @@ class TradesPage(Page):
         self.hButtonLayout.addStretch()
 
         # layout
-        self.verticalLayout = qtwidgets.QVBoxLayout()
+        self.verticalLayout = QVBoxLayout()
         self.verticalLayout.addWidget(self.tradeTableView)
         self.verticalLayout.addLayout(self.hButtonLayout)
         self.verticalLayout.setContentsMargins(5, 2, 5, 5)
@@ -113,7 +111,7 @@ class TradesPage(Page):
         self.controller.tradeList.recalcIds()
 
     def switchRegexFilter(self, state):
-        if state == qt.Checked:
+        if state == Qt.Checked:
             settings.mySettings.setGuiSetting('filteruseregex', True)
             self.proxyModel.useRegex = True
         else:  # not checked
