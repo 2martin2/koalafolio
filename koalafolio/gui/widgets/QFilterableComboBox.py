@@ -109,6 +109,19 @@ class QFilterableComboBoxView(QWidget):
     def currentText(self):
         return self.combobox.currentText()
 
+    def setCurrentText(self, text):
+        self.combobox.setCurrentText(text)
+
+    def setCurrentIndex(self, index):
+        self.combobox.setCurrentIndex(index)
+        self.combobox.lineEdit().setText(self.proxyModel.data(self.proxyModel.index(index, 0), Qt.DisplayRole))
+
+    def findText(self, text):
+        return self.combobox.findText(text)
+
+    def clear(self):
+        self.combobox.clear()
+
     def generateFilterProperties(self, model):
         # Only accept key: list properties
         self.filter_properties.clear()
