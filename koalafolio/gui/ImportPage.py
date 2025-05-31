@@ -5,28 +5,29 @@ Created on 11.04.2021
 @author: Martin
 """
 
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
+from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QFileSystemModel,
+                             QPushButton, QFileDialog, QLabel, QSpacerItem,
+                             QStackedLayout, QHeaderView, QLineEdit)
+from PyQt5.QtCore import Qt, QDir, QModelIndex, QItemSelectionModel
 import koalafolio.gui.Qcontrols as controls
 import koalafolio.Import.TradeImporter as importer
 import koalafolio.Import.Models as models
 import koalafolio.gui.QTradeTable as ttable
 import koalafolio.gui.FilterableTable as ftable
-import os
-import re
-import pandas
+from os import path as os_path
+from re import compile as re_compile, IGNORECASE
+from pandas import DataFrame
 import koalafolio.gui.QSettings as settings
-import datetime
+from datetime import datetime
 from pathlib import Path
-import koalafolio.gui.QLogger as logger
-import koalafolio.Import.apiImport as apiImport
+from koalafolio.gui.QLogger import globalLogger
+from koalafolio.Import.apiImport import ApiImportStatic
 import koalafolio.gui.QApiImport as qApiImport
 import koalafolio.gui.QStyle as style
 from koalafolio.gui.Qpages import Page, SubPage
 import koalafolio.gui.ScrollableTable as sTable
 
-qt = qtcore.Qt
-localLogger = logger.globalLogger
+localLogger = globalLogger
 
 # %% import page for importing csv, txt, xls ...
 class ImportPage(Page):
@@ -48,7 +49,7 @@ class ImportPage(Page):
         self.controller.startRefresh.connect(self.importFinishPage.clearLabelStyle)
         self.controller.endRefresh.connect(self.importFinishPage.setLabelStyle)
         self.pages = [self.importSelectPage, self.importPreviewPage, self.importFinishPage]
-        self.stackedContentLayout = qtwidgets.QStackedLayout(self)
+        self.stackedContentLayout = QStackedLayout(self)
         for page in self.pages:
             # stacked content layout
             self.stackedContentLayout.addWidget(page)
@@ -110,7 +111,7 @@ class ImportSelectPage(SubPage):
 
         # file types
         filetypes = settings.mySettings['import']['importFileTypes']
-        self.filePattern = re.compile(r"^.*\." + filetypes + "$", re.IGNORECASE)
+        self.filePattern = re_compile(r"^.*\." + filetypes + "$", IGNORECASE)
 
         # Left Frame
         self.fileFrame = controls.StyledFrame(self)
@@ -121,29 +122,30 @@ class ImportSelectPage(SubPage):
         self.pathEntry.textChanged.connect(self.pathChanged)
 
         # file system view
-        self.fileSystemModel = qtwidgets.QFileSystemModel()
-        self.fileSystemModel.setRootPath(qtcore.QDir.currentPath())
+        self.fileSystemModel = QFileSystemModel()
+        self.fileSystemModel.setRootPath(QDir.currentPath())
 
         self.treeView = sTable.QScrollableTreeView(self.fileFrame)
         self.treeView.setModel(self.fileSystemModel)
-        self.treeView.setSelectionMode(qtwidgets.QAbstractItemView.ExtendedSelection)
-        self.treeView.header().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
+        from PyQt5.QtWidgets import QAbstractItemView, QHeaderView
+        self.treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.treeView.header().setSectionResizeMode(QHeaderView.RezizeMode.ResizeToContents)
         self.treeView.selectionModel().selectionChanged.connect(self.selectionChangedCallback)
 
-        self.treeView.setRootIndex(self.fileSystemModel.index(qtcore.QDir.currentPath()))
+        self.treeView.setRootIndex(self.fileSystemModel.index(QDir.currentPath()))
 
         # controls
-        self.templateFileDialog = qtwidgets.QFileDialog(self.fileFrame)
-        self.templateButton = qtwidgets.QPushButton("create template", self.fileFrame)
+        self.templateFileDialog = QFileDialog(self.fileFrame)
+        self.templateButton = QPushButton("create template", self.fileFrame)
         self.templateButton.clicked.connect(self.createTemplate)
 
-        self.previewButton = qtwidgets.QPushButton("preview", self.fileFrame)
+        self.previewButton = QPushButton("preview", self.fileFrame)
         self.previewButton.clicked.connect(self.showPreviewFrame)
 
-        self.fastImportButton = qtwidgets.QPushButton("fast import", self.fileFrame)
+        self.fastImportButton = QPushButton("fast import", self.fileFrame)
         self.fastImportButton.clicked.connect(self.showImportFinishedFrame)
 
-        self.horzButtonLayout = qtwidgets.QHBoxLayout()
+        self.horzButtonLayout = QHBoxLayout()
         self.horzButtonLayout.addStretch()
         self.horzButtonLayout.addWidget(self.templateButton)
         self.horzButtonLayout.addWidget(self.previewButton)
@@ -151,7 +153,7 @@ class ImportSelectPage(SubPage):
         self.horzButtonLayout.addStretch()
 
         # file import layout
-        self.fileLayout = qtwidgets.QVBoxLayout(self.fileFrame)
+        self.fileLayout = QVBoxLayout(self.fileFrame)
         self.fileLayout.addWidget(self.fileImportLabel)
         self.fileLayout.addWidget(self.pathEntry)
         self.fileLayout.addWidget(self.treeView)
@@ -165,19 +167,19 @@ class ImportSelectPage(SubPage):
         self.apiView.importFromApi.connect(self.importFromApi)
         self.apiView.saveFromApi.connect(self.saveFromApi)
 
-        self.saveCsvFileDialog = qtwidgets.QFileDialog(self)
+        self.saveCsvFileDialog = QFileDialog(self)
 
         # page layout
-        self.horzLayout = qtwidgets.QHBoxLayout(self)
+        self.horzLayout = QHBoxLayout(self)
         self.horzLayout.addWidget(self.fileFrame)
         self.horzLayout.addWidget(self.apiView)
 
-        self.pathEntry.setPath(qtcore.QDir.currentPath())
+        self.pathEntry.setPath(QDir.currentPath())
 
     def refresh(self):
         # file types
         filetypes = settings.mySettings['import']['importFileTypes']
-        self.filePattern = re.compile(r"^.*\." + filetypes + "$", re.IGNORECASE)
+        self.filePattern = re_compile(r"^.*\." + filetypes + "$", IGNORECASE)
 
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
@@ -189,20 +191,20 @@ class ImportSelectPage(SubPage):
         if (self.pathEntry.pathIsValid()):
             try:
                 path = self.getPath()
-                if (path.is_file()):
-                    self.treeView.selectionModel().select(qtcore.QModelIndex(), qtcore.QItemSelectionModel.Clear)
-                    self.fileSystemModel.setRootPath(str(os.path.dirname(path)))
-                    self.treeView.setRootIndex(self.fileSystemModel.index(str(os.path.dirname(path))))
-                    self.treeView.header().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
+                if path.is_file():
+                    self.treeView.selectionModel().select(QModelIndex(), QItemSelectionModel.SelectionFlag.Clear)
+                    self.fileSystemModel.setRootPath(str(os_path.dirname(path)))
+                    self.treeView.setRootIndex(self.fileSystemModel.index(str(os_path.dirname(path))))
+                    self.treeView.header().setSectionResizeMode(QHeaderView.RezizeMode.ResizeToContents)
                     self.treeView.selectionModel().select(self.fileSystemModel.index(str(path)),
-                                                          qtcore.QItemSelectionModel.Select)
-                elif (path.is_dir()):
-                    self.treeView.selectionModel().select(qtcore.QModelIndex(), qtcore.QItemSelectionModel.Clear)
+                                                          QItemSelectionModel.SelectionFlag.Select)
+                elif path.is_dir():
+                    self.treeView.selectionModel().select(QModelIndex(), QItemSelectionModel.SelectionFlag.Clear)
                     self.fileSystemModel.setRootPath(str(path))
                     self.treeView.setRootIndex(self.fileSystemModel.index(str(path)))
-                    self.treeView.header().setSectionResizeMode(qtwidgets.QHeaderView.ResizeToContents)
+                    self.treeView.header().setSectionResizeMode(QHeaderView.RezizeMode.ResizeToContents)
                     self.treeView.selectionModel().select(self.fileSystemModel.index(str(path)),
-                                                          qtcore.QItemSelectionModel.Select)
+                                                          QItemSelectionModel.SelectionFlag.Select)
                 else:
                     self.controller.setFilesPath([])
             except Exception as ex:
@@ -218,7 +220,7 @@ class ImportSelectPage(SubPage):
                 if path.is_file():
                     self.controller.allFilesPath.append(str(path))
                 if path.is_dir():
-                    files = [os.path.join(str(path), str(f)) for f in path.iterdir() if self.filePattern.match(str(f))]
+                    files = [os_path.join(str(path), str(f)) for f in path.iterdir() if self.filePattern.match(str(f))]
                     self.controller.allFilesPath += files
 
     # show preview frame and refresh data
@@ -273,7 +275,7 @@ class ImportSelectPage(SubPage):
         if apitype == "chaindata":
             content = None
             for address in addressList:
-                newContent = apiImport.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret,
+                newContent = ApiImportStatic.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret,
                                                   address=address)
                 if not newContent.empty:
                     if content is None:
@@ -281,9 +283,9 @@ class ImportSelectPage(SubPage):
                     else:
                         content = content.merge(newContent)
             if content is None:
-                content = pandas.DataFrame()
+                content = DataFrame()
         else:
-            content = apiImport.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret, address="")
+            content = ApiImportStatic.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret, address="")
         return content
 
     # skip preview and show import finished page
@@ -335,13 +337,13 @@ class ImportSelectPage(SubPage):
                 #"date", "type", "buy amount", "buy cur", "sell amount", "sell cur", ("exchange"),
                 # ("fee amount"), ("fee currency"), ("buy_wallet"), ("sell_wallet")
                 rows = []
-                rows.append([datetime.datetime.now(), 'trade', 10, 'ETH', 0.5, 'BTC', 'binance', 0.01, 'ETH', '', ''])
-                rows.append([datetime.datetime.now(), 'trade', 5, 'ETH', 0.25, 'BTC', '', '', '', ''])
-                rows.append([datetime.datetime.now(), 'trade', 20, 'ETH', 1, 'BTC', '', 0.0001, 'BTC', '', ''])
-                rows.append([datetime.datetime.now(), 'fee', '', '', '', '', '', 0.0015, 'ETH', '', ''])
-                rows.append([datetime.datetime.now(), 'trade', 50000, 'ADA', 20000, 'USD', 'kraken', '', '', 'Hodl_1', ''])
-                rows.append([datetime.datetime.now(), 'trade', 100000, 'ADA', 50000, 'USD', 'kraken', '', '', 'Staking_1', ''])
-                rows.append([datetime.datetime.now(), 'reward', 1000, 'ADA', 1000, 'USD', '', '', '', 'Staking_1', ''])
+                rows.append([datetime.now(), 'trade', 10, 'ETH', 0.5, 'BTC', 'binance', 0.01, 'ETH', '', ''])
+                rows.append([datetime.now(), 'trade', 5, 'ETH', 0.25, 'BTC', '', '', '', ''])
+                rows.append([datetime.now(), 'trade', 20, 'ETH', 1, 'BTC', '', 0.0001, 'BTC', '', ''])
+                rows.append([datetime.now(), 'fee', '', '', '', '', '', 0.0015, 'ETH', '', ''])
+                rows.append([datetime.now(), 'trade', 50000, 'ADA', 20000, 'USD', 'kraken', '', '', 'Hodl_1', ''])
+                rows.append([datetime.now(), 'trade', 100000, 'ADA', 50000, 'USD', 'kraken', '', '', 'Staking_1', ''])
+                rows.append([datetime.now(), 'reward', 1000, 'ADA', 1000, 'USD', '', '', '', 'Staking_1', ''])
                 for row in rows:
                     file.write(','.join([str(x) for x in row]) + '\n')
                 file.close()
@@ -357,38 +359,38 @@ class ImportPreviewPage(SubPage):
 
         # create info frame
         self.infoFrame = controls.StyledFrame(self, height=20)
-        self.fileNameLabel = qtwidgets.QLabel("FileName", self.infoFrame)
-        self.infoLabel = qtwidgets.QLabel("", self.infoFrame)
+        self.fileNameLabel = QLabel("FileName", self.infoFrame)
+        self.infoLabel = QLabel("", self.infoFrame)
 
-        self.infoLayout = qtwidgets.QHBoxLayout(self.infoFrame)
+        self.infoLayout = QHBoxLayout(self.infoFrame)
         self.infoLayout.addWidget(self.fileNameLabel)
-        self.infoLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
+        self.infoLayout.addSpacerItem(QSpacerItem(10, 10))
         self.infoLayout.addWidget(self.infoLabel)
-        self.legendWhiteLabel = qtwidgets.QLabel("white: new trades", self)
-        self.legendGrayLabel = qtwidgets.QLabel("gray: trades that are already existent", self)
-        self.legendRedLabel = qtwidgets.QLabel("red: new trades that are very similar to existent trades (make sure you really want to import them!)", self)
+        self.legendWhiteLabel = QLabel("white: new trades", self)
+        self.legendGrayLabel = QLabel("gray: trades that are already existent", self)
+        self.legendRedLabel = QLabel("red: new trades that are very similar to existent trades (make sure you really want to import them!)", self)
         self.setLabelStyle()
 
-        self.legendLayout = qtwidgets.QHBoxLayout()
+        self.legendLayout = QHBoxLayout()
         self.legendLayout.addWidget(self.legendWhiteLabel)
-        self.legendLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
+        self.legendLayout.addSpacerItem(QSpacerItem(10, 10))
         self.legendLayout.addWidget(self.legendGrayLabel)
-        self.legendLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
+        self.legendLayout.addSpacerItem(QSpacerItem(10, 10))
         self.legendLayout.addWidget(self.legendRedLabel)
         self.legendLayout.addStretch()
 
         # create options frame
         self.optionsFrame = controls.StyledFrame(self, height=20)
-        self.exchangeLabel = qtwidgets.QLabel("exchange:", self.optionsFrame)
-        self.exchangeInput = qtwidgets.QLineEdit(self.optionsFrame)
-        self.exchangeInputButton = qtwidgets.QPushButton("set exchange", self.optionsFrame)
+        self.exchangeLabel = QLabel("exchange:", self.optionsFrame)
+        self.exchangeInput = QLineEdit(self.optionsFrame)
+        self.exchangeInputButton = QPushButton("set exchange", self.optionsFrame)
         self.exchangeInputButton.clicked.connect(self.exchangeChanged)
-        self.walletLabel = qtwidgets.QLabel("wallet:", self.optionsFrame)
-        self.walletInput = qtwidgets.QLineEdit(self.optionsFrame)
-        self.walletInputButton = qtwidgets.QPushButton("set wallet", self.optionsFrame)
+        self.walletLabel = QLabel("wallet:", self.optionsFrame)
+        self.walletInput = QLineEdit(self.optionsFrame)
+        self.walletInputButton = QPushButton("set wallet", self.optionsFrame)
         self.walletInputButton.clicked.connect(self.walletChanged)
 
-        self.optionsLayout = qtwidgets.QHBoxLayout(self.optionsFrame)
+        self.optionsLayout = QHBoxLayout(self.optionsFrame)
         self.optionsLayout.addWidget(self.exchangeLabel)
         self.optionsLayout.addWidget(self.exchangeInput)
         self.optionsLayout.addWidget(self.exchangeInputButton)
@@ -397,7 +399,7 @@ class ImportPreviewPage(SubPage):
         self.optionsLayout.addWidget(self.walletInputButton)
 
         # header layout
-        self.headerHorzLayout = qtwidgets.QHBoxLayout()
+        self.headerHorzLayout = QHBoxLayout()
         self.headerHorzLayout.addWidget(self.infoFrame)
         self.headerHorzLayout.addStretch()
         self.headerHorzLayout.addWidget(self.optionsFrame)
@@ -409,21 +411,21 @@ class ImportPreviewPage(SubPage):
         self.tableView.setModel(self.importProxyModel)
         self.tableView.show()
 
-        self.cancelButton = qtwidgets.QPushButton("Cancel", self)
+        self.cancelButton = QPushButton("Cancel", self)
         self.cancelButton.clicked.connect(lambda: self.cancelImport())
-        self.skipButton = qtwidgets.QPushButton("Skip", self)
+        self.skipButton = QPushButton("Skip", self)
         self.skipButton.clicked.connect(lambda: self.skipImport())
-        self.nextButton = qtwidgets.QPushButton("Next", self)
+        self.nextButton = QPushButton("Next", self)
         self.nextButton.clicked.connect(lambda: self.nextImport())
 
-        self.horzButtonLayout = qtwidgets.QHBoxLayout()
+        self.horzButtonLayout = QHBoxLayout()
         self.horzButtonLayout.addStretch()
         self.horzButtonLayout.addWidget(self.cancelButton)
         self.horzButtonLayout.addWidget(self.skipButton)
         self.horzButtonLayout.addWidget(self.nextButton)
         self.horzButtonLayout.addStretch()
 
-        self.verticalLayout = qtwidgets.QVBoxLayout(self)
+        self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.addLayout(self.headerHorzLayout)
         self.verticalLayout.addLayout(self.legendLayout)
         self.verticalLayout.addWidget(self.tableView)
@@ -468,7 +470,7 @@ class ImportPreviewPage(SubPage):
     def showFile(self, index):
         # display filename
         allFilesPath = self.controller.getFilesPath()
-        self.fileNameLabel.setText(os.path.basename(allFilesPath[index]))
+        self.fileNameLabel.setText(os_path.basename(allFilesPath[index]))
         # import file
         content = importer.loadTradesFromFile(allFilesPath[index])
         # convert imported file to tradeList
@@ -519,23 +521,23 @@ class ImportFinishPage(SubPage):
     def __init__(self, parent, controller):
         super(ImportFinishPage, self).__init__(parent=parent, controller=controller)
 
-        self.statusLabel = qtwidgets.QLabel('status', self)
+        self.statusLabel = QLabel('status', self)
 
         # trade table view
         self.tableView = ttable.QTradeTableView(self)
         self.importProxyModel = ftable.SortFilterProxyModel()
         self.tableView.setModel(self.importProxyModel)
 
-        self.cancelButton = qtwidgets.QPushButton("cancel", self)
+        self.cancelButton = QPushButton("cancel", self)
         self.cancelButton.clicked.connect(self.cancelTrades)
-        self.acceptButton = qtwidgets.QPushButton("accept", self)
+        self.acceptButton = QPushButton("accept", self)
         self.acceptButton.clicked.connect(self.acceptTrades)
-        self.removeSelectButton = qtwidgets.QPushButton("remove selected", self)
+        self.removeSelectButton = QPushButton("remove selected", self)
         self.removeSelectButton.clicked.connect(self.deleteSelectedTrades)
-        self.removeSimilarButton = qtwidgets.QPushButton("remove similar", self)
+        self.removeSimilarButton = QPushButton("remove similar", self)
         self.removeSimilarButton.clicked.connect(self.deleteSimilarTrades)
 
-        self.horzButtonLayout = qtwidgets.QHBoxLayout()
+        self.horzButtonLayout = QHBoxLayout()
         self.horzButtonLayout.addStretch()
         self.horzButtonLayout.addWidget(self.cancelButton)
         self.horzButtonLayout.addWidget(self.removeSelectButton)
@@ -543,20 +545,20 @@ class ImportFinishPage(SubPage):
         self.horzButtonLayout.addWidget(self.acceptButton)
         self.horzButtonLayout.addStretch()
 
-        self.legendWhiteLabel = qtwidgets.QLabel("white: new trades", self)
-        self.legendGrayLabel = qtwidgets.QLabel("gray: trades that are already existent (will not be imported)", self)
-        self.legendRedLabel = qtwidgets.QLabel("red: new trades that are very similar to existent trades (make sure you really want to import them!)", self)
+        self.legendWhiteLabel = QLabel("white: new trades", self)
+        self.legendGrayLabel = QLabel("gray: trades that are already existent (will not be imported)", self)
+        self.legendRedLabel = QLabel("red: new trades that are very similar to existent trades (make sure you really want to import them!)", self)
         self.setLabelStyle()
 
-        self.legendLayout = qtwidgets.QHBoxLayout()
+        self.legendLayout = QHBoxLayout()
         self.legendLayout.addWidget(self.legendWhiteLabel)
-        self.legendLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
+        self.legendLayout.addSpacerItem(QSpacerItem(10, 10))
         self.legendLayout.addWidget(self.legendGrayLabel)
-        self.legendLayout.addSpacerItem(qtwidgets.QSpacerItem(10, 10))
+        self.legendLayout.addSpacerItem(QSpacerItem(10, 10))
         self.legendLayout.addWidget(self.legendRedLabel)
         self.legendLayout.addStretch()
 
-        self.verticalLayout = qtwidgets.QVBoxLayout(self)
+        self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.addWidget(self.statusLabel)
         self.verticalLayout.addLayout(self.legendLayout)
         self.verticalLayout.addWidget(self.tableView)

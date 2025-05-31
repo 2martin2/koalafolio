@@ -4,21 +4,23 @@ Created on Fri Aug 24 09:44:38 2018
 
 @author: Martin
 """
-import os, pandas, re
+from os import listdir, path as os_path, path
+from pandas import read_csv, read_excel, DataFrame
+from re import compile as re_compile, IGNORECASE
 import koalafolio.PcpCore.core as core
 import koalafolio.PcpCore.settings as settings
 import koalafolio.Import.Converter as converter
-import json
+from json import load as json_load
 import koalafolio.PcpCore.logger as logger
 
 localLogger = logger.globalLogger
 
 
 def loadTrades(mypath):
-    allfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
+    allfiles = [f for f in listdir(mypath) if os_path.isfile(os_path.join(mypath, f))]
     filetypes = settings.mySettings['import']['importFileTypes']
-    filePattern = re.compile(r"^.*\." + filetypes + "$", re.IGNORECASE)
-    allfilespath = [os.path.join(mypath, f) for f in allfiles if filePattern.match(str(f))]
+    filePattern = re_compile(r"^.*\." + filetypes + "$", IGNORECASE)
+    allfilespath = [os_path.join(mypath, f) for f in allfiles if filePattern.match(str(f))]
 
     return loadTradesFromFiles(allfilespath)
 
@@ -29,7 +31,7 @@ def loadTradesFromFiles(allfilespath):
         testread = loadTradesFromFile(allfilespath[i])
         data.append(testread)
 
-    return [os.path.basename(file) for file in allfilespath], data
+    return [path.basename(file) for file in allfilespath], data
 
 
 def loadTradesFromFile(filepath):
@@ -40,9 +42,9 @@ def loadTradesFromFile(filepath):
         encodingError = True
         for encoding in encodings:
             try:
-                testread = pandas.read_csv(filepath, encoding=encoding)  # try reading with , seperation
+                testread = read_csv(filepath, encoding=encoding)  # try reading with , seperation
                 if len(testread.columns) < 2:  # if less than 2 columns something went wrong
-                    testread = pandas.read_csv(filepath, sep=';',
+                    testread = read_csv(filepath, sep=';',
                                                encoding=encoding)  # try reading with ; seperation
                 if len(testread.columns) < 2:  # if less than 2 columns something went wrong
                     raise SyntaxError('columns of csv could not be detected')
@@ -59,7 +61,7 @@ def loadTradesFromFile(filepath):
     if filepath.endswith('.xls') or filepath.endswith('xlsx'):
         # try reading as excelsheet
         try:
-            testread = pandas.read_excel(filepath)
+            testread = read_excel(filepath)
             if len(testread.columns) < 2:
                 raise SyntaxError('file cannot be imported as excelsheet')
             return testread
@@ -69,7 +71,7 @@ def loadTradesFromFile(filepath):
         # try reading as excelsheet
         try:
             with open(filepath, "r") as read_file:
-                jsonData = json.load(read_file)
+                jsonData = json_load(read_file)
             try:
                 dataFrame = converter.exodusJsonToDataFrame(jsonData)
                 if dataFrame.shape[0] == 0:
@@ -80,7 +82,7 @@ def loadTradesFromFile(filepath):
         except:
             pass
 
-    return pandas.DataFrame()
+    return DataFrame()
 
 
 def convertTrades(modelList, data, files):  # convert all read csv data to tradelist

@@ -5,15 +5,15 @@ Created on 11.04.2021
 @author: Martin
 """
 
-import PyQt5.QtGui as qtgui
-import PyQt5.QtCore as qtcore
+from PyQt5.QtGui import QWheelEvent
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QScrollBar, QTreeView, QTableView
 
 class MinWheelScrollingScrollbar(QScrollBar):
     def __init__(self, orientation, parent):
         super(MinWheelScrollingScrollbar, self).__init__(orientation=orientation, parent=parent)
 
-    def wheelEvent(self, event: qtgui.QWheelEvent):
+    def wheelEvent(self, event: QWheelEvent):
         numPixels = event.pixelDelta()
         numDegrees = event.angleDelta() / 8
 
@@ -36,11 +36,11 @@ class QScrollableTreeView(QTreeView):
     def __init__(self, parent, *args, **kwargs):
         super(QScrollableTreeView, self).__init__(parent=parent, *args, **kwargs)
 
-        self.setVerticalScrollBar(MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
+        self.setVerticalScrollBar(MinWheelScrollingScrollbar(orientation=Qt.Vertical, parent=self))
 
 
 class QScrollableTableView(QTableView):
     def __init__(self, parent, *args, **kwargs):
         super(QScrollableTableView, self).__init__(parent=parent, *args, **kwargs)
 
-        self.setVerticalScrollBar(MinWheelScrollingScrollbar(orientation=qtcore.Qt.Vertical, parent=self))
+        self.setVerticalScrollBar(MinWheelScrollingScrollbar(orientation=Qt.Vertical, parent=self))

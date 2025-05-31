@@ -5,38 +5,39 @@ Created on Sun Sep 16 20:26:21 2018
 @author: Martin
 """
 
-import PyQt5.QtGui as qtgui
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
-import re
+from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtWidgets import (QFrame, QLabel, QLineEdit, QWidget, QHBoxLayout,
+                             QVBoxLayout, QGridLayout, QPushButton, QFileDialog)
+from PyQt5.QtCore import Qt, QSize, QRect, pyqtSignal
+from re import compile as re_compile, match as re_match, IGNORECASE, MULTILINE
 from pathlib import Path
 import koalafolio.gui.QLogger as logger
 import koalafolio.gui.QLoggerWidget as loggerwidget
-import os
+from os import path as os_path
 
 localLogger = logger.globalLogger
 
-qt = qtcore.Qt
+qt = Qt
 # %% constants
 PATHREGEX = r"^\w:((\\|/)\w+)*(|.\w+)$"
 FLOATREGEX = r"^([\+\-]|)(\d*)(.(\d*)|)((e[\+\-]\d*)|)$"
 
 # %% variables
-pathRegexCompiled = re.compile(PATHREGEX, re.IGNORECASE | re.MULTILINE)
-floatRegexCompiled = re.compile(FLOATREGEX, re.MULTILINE)
+pathRegexCompiled = re_compile(PATHREGEX, IGNORECASE | MULTILINE)
+floatRegexCompiled = re_compile(FLOATREGEX, MULTILINE)
 
 
 # %% controls
-class StyledFrame(qtwidgets.QFrame):
+class StyledFrame(QFrame):
     def __init__(self, parent, *args, **kwargs):
         super(StyledFrame, self).__init__(parent=parent, *args, **kwargs)
 
-        self.setFrameShape(qtwidgets.QFrame.StyledPanel)
-        self.setFrameShadow(qtwidgets.QFrame.Raised)
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setFrameShadow(QFrame.Raised)
 
 
 # %% Headings
-class Heading(qtwidgets.QLabel):
+class Heading(QLabel):
     def __init__(self, *args, **kwargs):
         super(Heading, self).__init__(*args, **kwargs)
 
@@ -44,7 +45,7 @@ class Heading(qtwidgets.QLabel):
 
 
 # %% SubHeadings
-class SubHeading(qtwidgets.QLabel):
+class SubHeading(QLabel):
     def __init__(self, *args, **kwargs):
         super(SubHeading, self).__init__(*args, **kwargs)
 
@@ -56,16 +57,17 @@ class StatusBar(StyledFrame):
     def __init__(self, parent, height=80, dataPath=None, *args, **kwargs):
         super(StatusBar, self).__init__(parent=parent, *args, **kwargs)
 
+        import os
         self.logfile = os.path.join(dataPath, 'logfile.txt')
 
         self.setObjectName('statusbar')
-        self.setFrameShadow(qtwidgets.QFrame.Sunken)
+        self.setFrameShadow(QFrame.Sunken)
         self.setFixedHeight(height)
 
         self.statusView = loggerwidget.QLogView(parent=self, logfile=self.logfile)
-        self.statusView.setFrameStyle(qtwidgets.QFrame.StyledPanel)
+        self.statusView.setFrameStyle(QFrame.StyledPanel)
 
-        self.statusLayout = qtwidgets.QVBoxLayout(self)
+        self.statusLayout = QVBoxLayout(self)
         self.statusLayout.addWidget(self.statusView)
 
     def printStatus(self, status):
@@ -76,7 +78,7 @@ class StatusBar(StyledFrame):
 
 
 # lineEdit where files can be dropped
-class LineEditDropable(qtwidgets.QLineEdit):
+class LineEditDropable(QLineEdit):
     def __init__(self, parent, *args, **kwargs):
         super(LineEditDropable, self).__init__(parent=parent, *args, **kwargs)
 
@@ -103,29 +105,29 @@ class LineEditDropable(qtwidgets.QLineEdit):
 
 
 # path input with line edit and qfiledialo
-class PathInput(qtwidgets.QWidget):
-    textChanged = qtcore.pyqtSignal()
+class PathInput(QWidget):
+    textChanged = pyqtSignal()
 
     def __init__(self, parent, *args, **kwargs):
         super(PathInput, self).__init__(parent=parent, *args, **kwargs)
 
         # add Label
-        self.pathLabel = qtwidgets.QLabel("Path:", self)
+        self.pathLabel = QLabel("Path:", self)
         # add FileDialog for path
-        self.fileDialog = qtwidgets.QFileDialog(self)
-        self.fileDialog.setFileMode(qtwidgets.QFileDialog.AnyFile)
+        self.fileDialog = QFileDialog(self)
+        self.fileDialog.setFileMode(QFileDialog.AnyFile)
         self.lineEdit = LineEditDropable(self)
         self.lineEdit.setPlaceholderText("enter path/ drop file or folder")
         self.lineEdit.textChanged.connect(lambda: self.textChanged.emit())
 
         # add path select button
-        self.filePathButton = qtwidgets.QPushButton("File", self)
+        self.filePathButton = QPushButton("File", self)
         self.filePathButton.clicked.connect(lambda: self.selectFilePath())
-        self.folderPathButton = qtwidgets.QPushButton("Folder", self)
+        self.folderPathButton = QPushButton("Folder", self)
         self.folderPathButton.clicked.connect(lambda: self.selectFolderPath())
 
         # layout content
-        self.horizontalLayout = qtwidgets.QHBoxLayout(self)
+        self.horizontalLayout = QHBoxLayout(self)
         self.horizontalLayout.addWidget(self.pathLabel)
         self.horizontalLayout.addWidget(self.lineEdit)
         self.horizontalLayout.addWidget(self.filePathButton)
@@ -170,29 +172,29 @@ class PathInput(qtwidgets.QWidget):
 
 
 # styled label for showing single values in gui
-class StyledLabelCont(qtwidgets.QFrame):
+class StyledLabelCont(QFrame):
     def __init__(self, parent, header='', text='', *args, **kwargs):
         super(StyledLabelCont, self).__init__(parent=parent, *args, **kwargs)
 
         self.setObjectName('StyledLabelCont')
-        self.title = qtwidgets.QPushButton(header, self)
+        self.title = QPushButton(header, self)
         self.title.setCheckable(True)
         self.title.setObjectName('StyledLabelTitle')
         self.title.setMinimumHeight(25)
         # self.title.setAlignment(qt.AlignCenterS)
-        titleFont = qtgui.QFont("Arial", 11)
+        titleFont = QFont("Arial", 11)
         self.title.setFont(titleFont)
 
-        self.body = qtwidgets.QWidget()
+        self.body = QWidget()
         # self.body.setAlignment(qt.AlignCenter)
         self.body.setObjectName('StyledLabelBody')
         self.body.sizePolicy().setRetainSizeWhenHidden(False)
 
-        self.bodyLayout = qtwidgets.QGridLayout(self.body)
+        self.bodyLayout = QGridLayout(self.body)
         self.bodyLayout.setContentsMargins(6, 4, 6, 4)
         self.bodyLayout.setOriginCorner(qt.TopRightCorner)
 
-        self.vertLayout = qtwidgets.QVBoxLayout()
+        self.vertLayout = QVBoxLayout()
         self.vertLayout.addWidget(self.title)
         self.vertLayout.addWidget(self.body)
         self.vertLayout.setContentsMargins(0, 0, 0, 0)
@@ -205,7 +207,7 @@ class StyledLabelCont(qtwidgets.QFrame):
         return self.sizeHint()
 
     def sizeHint(self):
-        s = qtcore.QSize()
+        s = QSize()
         st = self.title.sizeHint()
         sb = self.body.sizeHint()
         if self.title.isChecked():
@@ -236,26 +238,27 @@ class StyledLabelCont(qtwidgets.QFrame):
         self.resize(self.sizeHint())
 
 
-class DragWidget(qtwidgets.QWidget):
+class DragWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super(DragWidget, self).__init__(*args, **kwargs)
         self.setAcceptDrops(True)
         self.setObjectName('DragWidget')
         # self.setStyleSheet('QFrame#DragWidget{background-color: black}')
         self.dragObject = None
-        self.dragPixmap = qtgui.QPixmap()
-        self.dragDelta = qtcore.QPoint(0, 0)
+        self.dragPixmap = QPixmap()
+        from PyQt5.QtCore import QPoint
+        self.dragDelta = QPoint(0, 0)
 
     def setMoveArea(self, ml=10, mu=10, mr=10, mb=10):
         g = self.geometry()
-        self.moveArea = qtcore.QRect(ml, mu, g.width() - 2 * mr, g.height() - 2 * mb)
+        self.moveArea = QRect(ml, mu, g.width() - 2 * mr, g.height() - 2 * mb)
 
     def move(self, *args, **kwargs):
         super(DragWidget, self).move(*args, **kwargs)
         self.setMoveArea(10)
 
     def minimumSizeHint(self):
-        s = qtcore.QSize()
+        s = QSize()
         s.setWidth(max(child.pos().x() + child.width() + 10 for child in self.children()))
         s.setHeight(max(child.pos().y() + child.height() + 10 for child in self.children()))
         return s
@@ -328,7 +331,7 @@ def floatToString(f, n):
             return sMatch[1] + sMatch[2] + sMatch[5]
         if sMatch[2] != '0':  # 12.3456789
             return sMatch[1] + sMatch[2] + sMatch[3][0:n - len(sMatch[2]) + 1] + sMatch[5]
-        zeroMatch = re.match(r"^(0*)(\d*?)$", sMatch[4])
+        zeroMatch = re_match(r"^(0*)(\d*?)$", sMatch[4])
         return sMatch[1] + sMatch[2] + '.' + zeroMatch[1] + zeroMatch[2][0:n].rstrip('0') + sMatch[5]  # 0.000000001234
     except Exception as ex:
         localLogger.warning('error converting float to string: ' + str(ex) + ', string is ' + s)

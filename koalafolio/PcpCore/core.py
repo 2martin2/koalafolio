@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import pandas, hashlib, threading
+from pandas import DataFrame
+from hashlib import sha256
+from threading import Lock
 import koalafolio.web.cryptocompareApi as ccapi
 import koalafolio.PcpCore.settings as settings
 import koalafolio.Import.Converter as converter
 import koalafolio.PcpCore.logger as logger
-import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-import math
+from math import floor, ceil
 
 # constants
 EXACT = 0
@@ -19,9 +21,9 @@ def initTradeList(data=None):
     myCoinValue = CoinValue()
     myColumns = ['id', 'date', 'type', 'coin', 'amount'] + ['value' + key for key in myCoinValue.value]
     if data:
-        return pandas.DataFrame(data, columns=myColumns)
+        return DataFrame(data, columns=myColumns)
     else:
-        return pandas.DataFrame(columns=myColumns)
+        return DataFrame(columns=myColumns)
 
 
 # tradeListComplete: ['id', 'date', 'type', 'coin', 'amount', 'value_*', valueLoaded ]
@@ -30,14 +32,14 @@ def initTradeListComplete(data=None):
     myColumns = ['id', 'date', 'type', 'coin', 'amount'] + ['value' + key for key in myCoinValue.value] \
                 + ['valueLoaded', 'tradePartnerId', 'exchange', 'externId', 'wallet']
     if data:
-        return pandas.DataFrame(data, columns=myColumns)
+        return DataFrame(data, columns=myColumns)
     else:
-        return pandas.DataFrame(columns=myColumns)
+        return DataFrame(columns=myColumns)
 
 
 def initFeeList():
     myCoinValue = CoinValue()
-    return pandas.DataFrame(columns=['id', 'date', 'coin', 'fee'] + ['value' + key for key in myCoinValue.value])
+    return DataFrame(columns=['id', 'date', 'coin', 'fee'] + ['value' + key for key in myCoinValue.value])
 
 
 # coinListComplete: [ 'coin', 'balance', 'currentValue_*']
@@ -45,9 +47,9 @@ def initCoinList(data=None):
     myCoinValue = CoinValue()
     myColumns = ['coin', 'balance'] + ['currentValue' + key for key in myCoinValue.value]
     if data:
-        return pandas.DataFrame(data, columns=myColumns)
+        return DataFrame(data, columns=myColumns)
     else:
-        return pandas.DataFrame(columns=myColumns)
+        return DataFrame(columns=myColumns)
 
 
 # coinListComplete: [ 'coin', 'balance', 'initialValue_*', 'currentValue_*']
@@ -56,9 +58,9 @@ def initCoinListComplete(data=None):
     myColumns = ['coin', 'balance'] + ['initialValue' + key for key in myCoinValue.value] + ['currentValue' + key for
                                                                                              key in myCoinValue.value]
     if data:
-        return pandas.DataFrame(data, columns=myColumns)
+        return DataFrame(data, columns=myColumns)
     else:
-        return pandas.DataFrame(columns=myColumns)
+        return DataFrame(columns=myColumns)
 
 # for testing
 class myDict(dict):
@@ -236,7 +238,8 @@ class Trade:
 
     def generateID(self):
         tradeString = str(self.date) + str(self.tradeType) + str(self.externId) + str(self.coin) + str(self.amount)
-        self.tradeID = hashlib.sha1(tradeString.encode()).hexdigest()[0:16]
+        from hashlib import sha1
+        self.tradeID = sha1(tradeString.encode()).hexdigest()[0:16]
         return self.tradeID
 
     def checkApproximateEquality(self, trade):
@@ -245,7 +248,8 @@ class Trade:
     def generateApproximateIDs(self):
         # round amount
         try:
-            tempAmount = round(self.amount, -int(math.floor(math.log10(abs(self.amount)))) + 5)
+            from math import floor, log10
+            tempAmount = round(self.amount, -int(floor(log10(abs(self.amount)))) + 5)
         except ValueError:
             tempAmount = self.amount
         # get the timezone offset of the date and round it to 2 times this offset
@@ -259,7 +263,8 @@ class Trade:
             tempdate = tempdate.timestamp() // 60
             tradeString = str(str(tempdate) + str(self.tradeType) +
                               str(self.coin) + str(tempAmount))
-            self.approxIDs.append(hashlib.sha1(tradeString.encode()).hexdigest())
+            from hashlib import sha1
+            self.approxIDs.append(sha1(tradeString.encode()).hexdigest())
         return self.approxIDs
 
     def getApproximateIDs(self):
@@ -802,7 +807,7 @@ class TradeMatcher:
                     taxFreeTimeDelta = self.coinBalance.taxYearLimit
             else:  # use global tax limit
                 taxFreeTimeDelta = settings.mySettings.getTaxSetting('taxfreelimityears')
-        return self.getBuyAmountLeftToDate(datetime.datetime.now().date() - relativedelta(years=taxFreeTimeDelta))
+        return self.getBuyAmountLeftToDate(datetime.now().date() - relativedelta(years=taxFreeTimeDelta))
 
 
 # %% Coin_Balance

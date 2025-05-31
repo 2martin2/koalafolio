@@ -5,8 +5,8 @@ Created on 29.11.2020
 @author: Martin
 """
 
-import pandas
-import requests
+from pandas import DataFrame
+from requests import get as requests_get, exceptions as requests_exceptions
 import koalafolio.gui.QLogger as logger
 
 localLogger = logger.globalLogger
@@ -41,7 +41,7 @@ class ChaindataStatic:
 
     @staticmethod
     def getBlockdaemonRewardsForAddress(apiname: str, apikey: str, address: str, start: int,
-                                        end: int) -> pandas.DataFrame:
+                                        end: int) -> DataFrame:
         startTimestamp = int(start) * ChaindataStatic.apiTimeFactors[apiname]
         endTimestamp = int(end) * ChaindataStatic.apiTimeFactors[apiname]
         if ChaindataStatic.apiTimeUnits[apiname]:
@@ -62,17 +62,18 @@ class ChaindataStatic:
             "X-API-Key": apikey
         }
 
-        response = requests.post(ChaindataStatic.apiBaseURLs[apiname] + str(address), json=payload, headers=headers)
+        from requests import post as requests_post
+        response = requests_post(ChaindataStatic.apiBaseURLs[apiname] + str(address), json=payload, headers=headers)
         try:
             content = response.json()
         except Exception as ex:
             localLogger.error("no data returned from Blockdaemon (" + str(apiname) + "): " + str(ex))
-            return pandas.DataFrame()
+            return DataFrame()
         if "rewards" in content:
             rewards = content['rewards']
         else:
             rewards = content
 
-        return pandas.DataFrame.from_dict(rewards)
+        return DataFrame.from_dict(rewards)
 
 

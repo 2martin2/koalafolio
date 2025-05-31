@@ -15,7 +15,7 @@ import koalafolio.gui.Qcontrols as controls
 from koalafolio.gui.widgets.QCompleterComboBox import QCompleterComboBoxView
 from koalafolio.gui.widgets.QFilterableComboBox import QFilterableComboBoxView, QStringPropertyListModel
 from koalafolio.Import.apiImport import ApiImportStatic
-import datetime
+from datetime import datetime
 
 localLogger = logger.globalLogger
 
@@ -34,7 +34,7 @@ class ApiKeyModel(QObject):
 
         self.apiModels = ApiImportStatic.getApiModels()
 
-        self.databaseApiNameModel = QStringListModel()
+        self.databaseApiNameModel = QStringPropertyListModel()
         self.databaseUnlocked.connect(self.loadDatabaseApiNames)
         self.databaseWritten.connect(self.loadDatabaseApiNames)
 
@@ -96,8 +96,9 @@ class ApiKeyModel(QObject):
         self.databaseWritten.emit()
 
     def loadDatabaseApiNames(self):
-        # convert database data to list of dicts with properties
-        apiNamesList = [apiname for apiname in self.database.data]
+        # convert database data to list of dicts with properties and ignore invalid apinames
+        apiNamesList = [apiname for apiname in self.database.data if apiname in self.apiModels]
+        apiNamesList = [{"apiname": apiname, "apitype": self.getApiType(apiname)} for apiname in apiNamesList]
         self.databaseApiNameModel.setDataFromDict(apiNamesList, string_key="apiname", properties_keys=["apitype"])
 
     def deleteDatabase(self):
@@ -205,9 +206,9 @@ class ApiKeyView(QWidget):
         self.directApiSelectDropdown = QFilterableComboBoxView(parent=self)
         self.directApiSelectDropdown.currentTextChanged.connect(self.directApiSelectDropdownChanged)
 
-        today = datetime.datetime.now()
+        today = datetime.now()
         self.startDateLabel = QLabel('start: ', self)
-        self.startDateInput = QDateTimeEdit(datetime.datetime(year=today.year - 1, month=1, day=1), self)
+        self.startDateInput = QDateTimeEdit(datetime(year=today.year - 1, month=1, day=1), self)
         self.endDateLabel = QLabel('end: ', self)
         self.endDateInput = QDateTimeEdit(today, self)
         self.keyLabel = QLabel('key: ', self)
@@ -388,7 +389,7 @@ class ApiKeyView(QWidget):
         self.lockedStateLayout.addStretch()
 
         self.apiSelectLabel = QLabel("API: ", self.apiFrame)
-        self.apiSelectDropdown = QCompleterComboBoxView(parent=self.apiFrame)
+        self.apiSelectDropdown = QFilterableComboBoxView(parent=self.apiFrame)
 
         self.apiGridLayout = QGridLayout()
         self.apiGridLayout.addWidget(self.apiSelectLabel, 0, 0)
@@ -548,7 +549,8 @@ class ApiKeyView(QWidget):
             apikey, secret = self.model.getApiKeyAndSecret(apiname)
         elif apitype == "chaindata":
             apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
-        index = self.directApiSelectDropdown.model().stringList().index(apiname)
+        # get index from directApiSelectDropdown
+        index = self.directApiSelectDropdown.findText(apiname)
         self.directApiSelectDropdown.setCurrentIndex(index)
         if apitype == "exchange":
             self.keyInput.setText(apikey)

@@ -2,10 +2,14 @@
 
 import koalafolio.PcpCore.core as core
 import koalafolio.PcpCore.settings as settings
-import re, numbers, pandas
+from re import match as re_match, compile as re_compile, IGNORECASE
+from numbers import Number
+from pandas import DataFrame, to_datetime
 import koalafolio.Import.RegexPatterns as pat
-import datetime, tzlocal, pytz
-import dateutil.parser
+from datetime import datetime, date
+from tzlocal import get_localzone
+from pytz import timezone, UTC
+from dateutil.parser import parse as dateutil_parse
 # import koalafolio.PcpCore.logger as logger
 import koalafolio.gui.QLogger as logger
 
@@ -559,8 +563,8 @@ def modelCallback_0(headernames, dataFrame, useLocalTime=False):
 def modelCallback_1(headernames, dataFrame, useLocalTime=False):
     headernames.append('')
     for row, rowObject in dataFrame.iterrows():
-        coin_sub = re.match(r'^.*-(.*)$', dataFrame[headernames[2]][row]).group(1).upper()
-        coin_main = re.match(r'^(.*)-.*$', dataFrame[headernames[2]][row]).group(1).upper()
+        coin_sub = re_match(r'^.*-(.*)$', dataFrame[headernames[2]][row]).group(1).upper()
+        coin_main = re_match(r'^(.*)-.*$', dataFrame[headernames[2]][row]).group(1).upper()
         dataFrame.at[row, headernames[2]] = coin_sub + r'/' + coin_main
 
     headernames.append('')  # exchange
@@ -1090,7 +1094,7 @@ def modelCallback_ccxt(headernames, dataFrame):
     return tradeList, feeList, skippedRows
 
 
-dmyDateRegex = re.compile(r'^.*\d{1,2}\.\d{1,2}\.\d{2,4}.*$')
+dmyDateRegex = re_compile(r'^.*\d{1,2}\.\d{1,2}\.\d{2,4}.*$')
 
 
 # %% functions
@@ -1098,18 +1102,18 @@ def convertDate(dateString, useLocalTime=False):
     # check if pandas time pattern fits
     #    match = pat.Pandas_TIME_REGEX.match(dateString)
     timestamp = None
-    if isinstance(dateString, datetime.date):
+    if isinstance(dateString, date):
         timestamp = dateString
     else:
         try:  # try dateutil parser
             if dmyDateRegex.match(dateString):
-                timestamp = dateutil.parser.parse(dateString, dayfirst=True)
+                timestamp = dateutil_parse(dateString, dayfirst=True)
             else:
-                timestamp = dateutil.parser.parse(dateString, dayfirst=False)
+                timestamp = dateutil_parse(dateString, dayfirst=False)
         except ValueError:  # manuel parsing
             localLogger.info('autoparsing date failed. try extended date parsing: ' + str(dateString))
             if pat.Pandas_TIME_REGEX.match(dateString):
-                timestamp = pandas.to_datetime(dateString, utc=True)
+                timestamp = to_datetime(dateString, utc=True)
             for i in range(len(pat.TIME_REGEX)):
                 tempMatch = pat.TIME_REGEX[i].match(dateString)
                 if tempMatch:
@@ -1151,26 +1155,26 @@ def convertDate(dateString, useLocalTime=False):
                         groups = tempMatch.group
                         dateString = groups(1) + ' ' + groups(2) + ' +0000'
                     # convert to datetime
-                    timestamp = datetime.datetime.strptime(dateString, pat.TIME_FORMAT[i])
+                    timestamp = datetime.strptime(dateString, pat.TIME_FORMAT[i])
                     break
     if timestamp:
         # if no info about timezone included
         if not timestamp.tzinfo:
             # use local/UTC timezone (could cause matching error!)
             if useLocalTime:
-                myTimezone = tzlocal.get_localzone()
+                myTimezone = get_localzone()
                 timestamp = timestamp.replace(tzinfo=myTimezone)
             #    timestamp = myTimezone.localize(timestamp)
             #                myTimezone = datetime.timezone.now().astimezone().tzinfo
             #                timestamp = timestamp.replace(tzingo=myTimezone)
             #                timestamp = timestamp.replace(tzingo=myTimezone)
             else:  # use UTC
-                timestamp = timestamp.replace(tzinfo=pytz.UTC)
-                myTimezone = tzlocal.get_localzone()
+                timestamp = timestamp.replace(tzinfo=UTC)
+                myTimezone = get_localzone()
                 timestamp = timestamp.astimezone(myTimezone)
         else:
             # convert to system timezone
-            myTimezone = tzlocal.get_localzone()
+            myTimezone = get_localzone()
             timestamp = timestamp.astimezone(myTimezone)
     else:
         raise SyntaxError("date format not supported: " + str(dateString))
@@ -1181,27 +1185,30 @@ def convertDate(dateString, useLocalTime=False):
 
 def roundTime(dt=None, roundToS=60):
     if dt is None:
-        dt = datetime.datetime.now()
+        dt = datetime.now()
     if roundToS > 1:
         if roundToS < 10:
             dt = roundTime(dt, roundToS=1)
         seconds = (dt.replace(tzinfo=None) - dt.min).seconds
         rounding = (seconds + roundToS / 2) // roundToS * roundToS
-        return dt + datetime.timedelta(0, rounding - seconds, -dt.microsecond)
+        from datetime import timedelta
+        return dt + timedelta(0, rounding - seconds, -dt.microsecond)
     else:
         roundTo = roundToS * 1000000
         if dt is None:
-            dt = datetime.datetime.now()
+            dt = datetime.now()
         microseconds = (dt.replace(tzinfo=None) - dt.min).microseconds
         rounding = (microseconds + roundTo / 2) // roundTo * roundTo
-        return dt + datetime.timedelta(0, 0, rounding - microseconds)
+        from datetime import timedelta
+        return dt + timedelta(0, 0, rounding - microseconds)
 
 
 def roundTimeMin(dt=None):
     if dt is None:
-        dt = datetime.datetime.now()
+        dt = datetime.now()
     dt = dt.replace(microsecond=0)
-    dt = dt + datetime.timedelta(seconds=30)
+    from datetime import timedelta
+    dt = dt + timedelta(seconds=30)
     dt = dt.replace(second=0)
     return dt
 
@@ -1225,7 +1232,7 @@ def createFee(date, amountStr, maincoin, exchange, subcoin=None, wallet='', feeI
     fee.tradeType = 'fee'
     fee.date = date
     fee.coin = maincoin
-    if isinstance(amountStr, numbers.Number):  # if amount is number
+    if isinstance(amountStr, Number):  # if amount is number
         amount = - abs(amountStr)
     else:  # no number so use regex to extract the number
         feeMatch = pat.NUMBER_REGEX.match(amountStr)

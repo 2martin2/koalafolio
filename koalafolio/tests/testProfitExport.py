@@ -8,7 +8,7 @@ import datetime
 import koalafolio.PcpCore.settings as settings
 import koalafolio.PcpCore.core as core
 import koalafolio.Import.TradeImporter as importer
-from export.profitExport import createProfitExcel
+from koalafolio.exp.profitExport import createProfitExcel
 
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font
 

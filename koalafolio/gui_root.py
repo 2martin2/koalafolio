@@ -6,11 +6,14 @@ Created on Sun Sep 16 09:57:14 2018
 """
 
 # Core imports - needed immediately
-import PyQt5.QtGui as qtgui
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
-import sys
-import os
+from PyQt5.QtGui import QIcon, QPixmap, QFont, QPalette, QColor
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
+                             QHBoxLayout, QTabWidget, QSplashScreen, QLabel,
+                             QProgressBar, QMessageBox, QSystemTrayIcon, QMenu,
+                             QAction, QStyle)
+from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QSize, QRect
+from sys import argv, exit
+from os import path
 
 # Essential application imports
 import koalafolio.PcpCore.logger as coreLogger
@@ -38,19 +41,19 @@ from koalafolio.gui.widgets.QCompleterComboBox import StyledCompleter
 # from koalafolio.gui.PortfolioPage import PortfolioPage
 
 
-qt = qtcore.Qt
+qt = Qt
 # %% constants
 
 
 # %% Custom splash screen with better text positioning
-class CustomSplashScreen(qtwidgets.QSplashScreen):
+class CustomSplashScreen(QSplashScreen):
     """Custom splash screen with improved text positioning"""
 
     def __init__(self, pixmap):
         super().__init__(pixmap)
         self.message = ""
-        self.text_color = qtcore.Qt.white
-        self.text_alignment = qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter
+        self.text_color = Qt.white
+        self.text_alignment = Qt.AlignBottom | Qt.AlignCenter
 
         # Set larger font (30% bigger)
         font = self.font()
@@ -87,15 +90,15 @@ class CustomSplashScreen(qtwidgets.QSplashScreen):
         rect = self.rect()
 
         # Move the bottom up by one text height plus some padding
-        adjusted_rect = qtcore.QRect(rect.x(), rect.y(),
+        adjusted_rect = QRect(rect.x(), rect.y(),
                                    rect.width(), rect.height() - text_height - 10)
 
         painter.drawText(adjusted_rect, self.text_alignment, self.message)
 
 
 # %% Background version check thread
-class VersionCheckThread(qtcore.QThread):
-    versionChecked = qtcore.pyqtSignal(str)
+class VersionCheckThread(QThread):
+    versionChecked = pyqtSignal(str)
 
     def __init__(self, package_name='koalafolio'):
         super().__init__()
@@ -134,6 +137,9 @@ def lazy_import_heavy_modules():
 
 
 # %% variables
+import sys
+import os
+
 if getattr(sys, 'frozen', False):  # running as pyinstaller executable
     application_path = os.path.dirname(sys.executable)
     internal_dir = os.path.join(application_path, "_internal")  # Check for _internal
@@ -147,7 +153,7 @@ else:
         application_path = os.getcwd()
         running_mode = 'Interactive'
 
-def getResourcePath(relative_path) -> os.path:
+def getResourcePath(relative_path) -> str:
     """Get absolute path to resource, works for dev and for PyInstaller"""
     base_path = getattr(sys, '_MEIPASS', application_path)
     if running_mode == 'Frozen/executable':
@@ -161,15 +167,15 @@ def getResourcePath(relative_path) -> os.path:
     return os.path.join(base_path, relative_path)
 
 # %% classes
-class PortfolioApp(qtwidgets.QWidget):
+class PortfolioApp(QWidget):
     PORTFOLIOPAGEINDEX = 0
     TRADESPAGEINDEX = 1
     IMPORTPAGEINDEX = 2
     EXPORTPAGEINDEX = 3
     SETTINGSPAGEINDEX = 4
-    startRefresh = qtcore.pyqtSignal()
-    endRefresh = qtcore.pyqtSignal()
-    styleSheetChanged = qtcore.pyqtSignal(str)
+    startRefresh = pyqtSignal()
+    endRefresh = pyqtSignal()
+    styleSheetChanged = pyqtSignal(str)
 
     def __init__(self, parent=None, userDataPath = "", username="", splash=None):
         super(PortfolioApp, self).__init__(parent=parent)
@@ -185,14 +191,14 @@ class PortfolioApp(qtwidgets.QWidget):
 
         # Update splash
         if self.splash:
-            self.splash.showMessage("Initializing environment...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
-            qtwidgets.QApplication.processEvents()
+            self.splash.showMessage("Initializing environment...", Qt.AlignBottom | Qt.AlignCenter)
+            QApplication.processEvents()
 
         self.initEnv()
 
         if self.splash:
-            self.splash.showMessage("Setting up window...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
-            qtwidgets.QApplication.processEvents()
+            self.splash.showMessage("Setting up window...", Qt.AlignBottom | Qt.AlignCenter)
+            QApplication.processEvents()
 
         self.initWindow()
 
@@ -202,23 +208,23 @@ class PortfolioApp(qtwidgets.QWidget):
         self.versionCheckThread.start()
 
         if self.splash:
-            self.splash.showMessage("Loading modules...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
-            qtwidgets.QApplication.processEvents()
+            self.splash.showMessage("Loading modules...", Qt.AlignBottom | Qt.AlignCenter)
+            QApplication.processEvents()
 
         # Load heavy modules
         lazy_import_heavy_modules()
         self.heavy_modules_loaded = True
 
         if self.splash:
-            self.splash.showMessage("Initializing data models...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
-            qtwidgets.QApplication.processEvents()
+            self.splash.showMessage("Initializing data models...", Qt.AlignBottom | Qt.AlignCenter)
+            QApplication.processEvents()
 
         # init data
         self.initData()
 
         if self.splash:
-            self.splash.showMessage("Setting up interface...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
-            qtwidgets.QApplication.processEvents()
+            self.splash.showMessage("Setting up interface...", Qt.AlignBottom | Qt.AlignCenter)
+            QApplication.processEvents()
 
         # init style
         self.initStyle()
@@ -227,8 +233,8 @@ class PortfolioApp(qtwidgets.QWidget):
         self.layoutUI()
 
         if self.splash:
-            self.splash.showMessage("Starting application...", qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter)
-            qtwidgets.QApplication.processEvents()
+            self.splash.showMessage("Starting application...", Qt.AlignBottom | Qt.AlignCenter)
+            QApplication.processEvents()
 
         self.show()
         self.showFrame(self.PORTFOLIOPAGEINDEX)
@@ -247,7 +253,7 @@ class PortfolioApp(qtwidgets.QWidget):
     def startBackgroundInitialization(self):
         """Start background threads and data loading"""
         # Use QTimer to defer heavy operations until after UI is shown
-        qtcore.QTimer.singleShot(100, self.loadDataInBackground)
+        QTimer.singleShot(100, self.loadDataInBackground)
 
     def loadDataInBackground(self):
         """Load data in background after UI is ready"""
@@ -256,8 +262,8 @@ class PortfolioApp(qtwidgets.QWidget):
             self.startThreads()
 
             # Load data asynchronously
-            qtcore.QTimer.singleShot(200, lambda: self.coinList.restoreCoins())
-            qtcore.QTimer.singleShot(300, lambda: self.tradeList.restoreTrades())
+            QTimer.singleShot(200, lambda: self.coinList.restoreCoins())
+            QTimer.singleShot(300, lambda: self.tradeList.restoreTrades())
 
             self.data_loaded = True
             self.logger.info('background data loading completed')
@@ -331,8 +337,9 @@ class PortfolioApp(qtwidgets.QWidget):
                 self.userDataPath = self.appPath
             else:
                 print('user data can not be saved in koala dir: ' + str(self.appPath))
-                self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
-                                                    qtcore.QStandardPaths.AppDataLocation))
+                from PyQt5.QtCore import QStandardPaths
+                self.userDataPath = os.path.abspath(QStandardPaths.writableLocation(
+                                                    QStandardPaths.AppDataLocation))
                 print('user data will be saved in: ' + str(self.userDataPath))
                 if not os.path.isdir(self.userDataPath):
                     try:
@@ -354,8 +361,8 @@ class PortfolioApp(qtwidgets.QWidget):
                 except:  # creation of data folder not possible
                     # create data folder in system appDataPath
                     print('user data can not be saved in dir: ' + str(self.appPath))
-                    self.userDataPath = os.path.abspath(qtcore.QStandardPaths.writableLocation(
-                                                        qtcore.QStandardPaths.AppDataLocation))
+                    self.userDataPath = os.path.abspath(QStandardPaths.writableLocation(
+                                                        QStandardPaths.AppDataLocation))
                     print('user data will be saved in: ' + str(self.userDataPath))
                     self.dataPath = os.path.join(self.userDataPath, dataFolderName)
                     try:
@@ -378,7 +385,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.styleSheetHandler.setPath(self.dataPath)
         self.exportTranslator = translator.ExportTranslator(dataPath=self.dataPath)
         style.myStyle = self.styleSheetHandler
-        qtcore.QTimer.singleShot(500, self.initDBComponents)
+        QTimer.singleShot(500, self.initDBComponents)
 
     def initDBComponents(self):
         """Initialize db components in background"""
@@ -411,17 +418,18 @@ class PortfolioApp(qtwidgets.QWidget):
             windowTitle += ' ' + self.settings['general']['version']
         self.setWindowTitle(windowTitle)
         try:
-            app_icon = qtgui.QIcon()
-            app_icon.addFile(os.path.join(self.appPath, 'KoalaIcon.png'), qtcore.QSize(256, 256))
+            app_icon = QIcon()
+            app_icon.addFile(os.path.join(self.appPath, 'KoalaIcon.png'), QSize(256, 256))
             self.setWindowIcon(app_icon)
         except Exception as ex:
             print(str(ex))
         try:
-            self.setStyle(qtwidgets.QStyleFactory.create(self.settings['window']['windowstyle']))
+            from PyQt5.QtWidgets import QStyleFactory
+            self.setStyle(QStyleFactory.create(self.settings['window']['windowstyle']))
         except Exception as ex:
             self.logger.error('window style is invalid: ' + str(ex))
             self.logger.info('using window style Fusion')
-            self.setStyle(qtwidgets.QStyleFactory.create('Fusion'))
+            self.setStyle(QStyleFactory.create('Fusion'))
         # load stylesheet
         self.styleSheetHandler.loadSheet(self.settings['window']['stylesheetname'])
         self.logger.info('style initialized')
@@ -450,21 +458,22 @@ class PortfolioApp(qtwidgets.QWidget):
     # setup layout
     def layoutUI(self):
         self.logger.info('initializing gui layout ...')
-        self.mainLayout = qtwidgets.QHBoxLayout(self)
+        self.mainLayout = QHBoxLayout(self)
         self.setContentsMargins(0, 0, 0, 0)
 
         # sidebar with buttons for pagecontrol
-        self.sidebarFrame = qtwidgets.QFrame(self)
-        self.sidebarFrame.setFrameShape(qtwidgets.QFrame.StyledPanel)
-        self.sidebarFrame.setFrameShadow(qtwidgets.QFrame.Raised)
+        from PyQt5.QtWidgets import QFrame, QPushButton
+        self.sidebarFrame = QFrame(self)
+        self.sidebarFrame.setFrameShape(QFrame.StyledPanel)
+        self.sidebarFrame.setFrameShadow(QFrame.Raised)
         self.sidebarFrame.setFixedWidth(120)
 
         # buttons sidebar
-        self.buttonPortfolio = qtwidgets.QPushButton("", self.sidebarFrame)
-        self.buttonTrades = qtwidgets.QPushButton("", self.sidebarFrame)
-        self.buttonImport = qtwidgets.QPushButton("", self.sidebarFrame)
-        self.buttonExport = qtwidgets.QPushButton("", self.sidebarFrame)
-        self.buttonSettings = qtwidgets.QPushButton("", self.sidebarFrame)
+        self.buttonPortfolio = QPushButton("", self.sidebarFrame)
+        self.buttonTrades = QPushButton("", self.sidebarFrame)
+        self.buttonImport = QPushButton("", self.sidebarFrame)
+        self.buttonExport = QPushButton("", self.sidebarFrame)
+        self.buttonSettings = QPushButton("", self.sidebarFrame)
 
         self.initGraphics()
 
@@ -481,7 +490,7 @@ class PortfolioApp(qtwidgets.QWidget):
         self.buttonSettings.clicked.connect(lambda: self.showFrame(self.SETTINGSPAGEINDEX))
         buttonHeight = 120
         self.sidebarButtons = [self.buttonPortfolio, self.buttonTrades, self.buttonImport, self.buttonExport, self.buttonSettings]
-        self.sidebarLayout = qtwidgets.QVBoxLayout(self.sidebarFrame)
+        self.sidebarLayout = QVBoxLayout(self.sidebarFrame)
         for button in (self.sidebarButtons):
             button.setFixedHeight(buttonHeight)
             #            button.setCheckable(True)
@@ -501,19 +510,20 @@ class PortfolioApp(qtwidgets.QWidget):
         self.settingsModel.useWalletTaxFreeLimitYearsChanged.connect(self.exportPage.taxYearWalletChanged)
         self.settingsPage = pages.SettingsPage(parent=self, controller=self)
         self.pages = [self.portfolioPage, self.tradesPage, self.importPage, self.exportPage, self.settingsPage]
-        self.stackedContentLayout = qtwidgets.QStackedLayout()
+        from PyQt5.QtWidgets import QStackedLayout
+        self.stackedContentLayout = QStackedLayout()
         for page in self.pages:
             # stacked content layout
             self.stackedContentLayout.addWidget(page)
 
         # put frames in vertical layout
-        self.verticalFrameLayout = qtwidgets.QVBoxLayout()
+        self.verticalFrameLayout = QVBoxLayout()
         self.verticalFrameLayout.setSpacing(0)
         self.verticalFrameLayout.addLayout(self.stackedContentLayout)
         self.verticalFrameLayout.addWidget(self.statusbar)
 
         # put frames in horizontal layout
-        self.horizontalFrameLayout = qtwidgets.QHBoxLayout()
+        self.horizontalFrameLayout = QHBoxLayout()
         self.horizontalFrameLayout.addWidget(self.sidebarFrame)
         self.horizontalFrameLayout.addLayout(self.verticalFrameLayout)
 
@@ -578,32 +588,32 @@ def main():
     args = arguments.parse_arguments()
     coreLogger.globalLogger = logger.globalLogger
     coreSettings.mySettings = settings.mySettings
-    qtwidgets.QApplication.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
-    app = qtwidgets.QApplication(sys.argv)
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    app = QApplication(argv)
 
     # Create and show splash screen with better styling
     try:
-        splash_pixmap = qtgui.QPixmap(getResourcePath('graphics/KoalaIcon.ico'))
+        splash_pixmap = QPixmap(getResourcePath('graphics/KoalaIcon.ico'))
         if splash_pixmap.isNull():
             # Fallback to PNG if ICO is not found
-            splash_pixmap = qtgui.QPixmap(getResourcePath('graphics/KoalaIcon.png'))
+            splash_pixmap = QPixmap(getResourcePath('graphics/KoalaIcon.png'))
     except:
         # Create a simple colored splash if no icon is found
-        splash_pixmap = qtgui.QPixmap(300, 200)
-        splash_pixmap.fill(qtcore.Qt.darkGray)
+        splash_pixmap = QPixmap(300, 200)
+        splash_pixmap.fill(Qt.darkGray)
 
     splash = CustomSplashScreen(splash_pixmap)
-    splash.setWindowFlags(qtcore.Qt.FramelessWindowHint | qtcore.Qt.WindowStaysOnTopHint)
+    splash.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
     splash.showMessage("Loading Koalafolio...",
-                      qtcore.Qt.AlignBottom | qtcore.Qt.AlignCenter,
-                      qtcore.Qt.white)
+                      Qt.AlignBottom | Qt.AlignCenter,
+                      Qt.white)
     splash.show()
     app.processEvents()  # Process events to make sure splash is displayed immediately
 
     try:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-        app_icon = qtgui.QIcon()
-        app_icon.addFile(getResourcePath('graphics/KoalaIcon.png'), qtcore.QSize(256, 256))
+        app_icon = QIcon()
+        app_icon.addFile(getResourcePath('graphics/KoalaIcon.png'), QSize(256, 256))
         app.setWindowIcon(app_icon)
         app.setApplicationName('koalafolio')
     except Exception as ex:
@@ -615,7 +625,7 @@ def main():
     # Close splash when main window is ready
     splash.finish(window)
 
-    sys.exit(app.exec_())
+    exit(app.exec_())
 
 if __name__ == '__main__':
     main()

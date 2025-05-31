@@ -6,11 +6,12 @@ Created on Sun Sep  15 15:15:19 2019
 """
 from koalafolio.web.exchanges import ExchangesStatic
 from koalafolio.web.chaindata import ChaindataStatic
-import pandas
+from pandas import DataFrame
 from Cryptodome.Cipher import AES
-import os
-import hashlib
-import json
+from os import remove as os_remove, path as os_path
+from os.path import exists as os_exists, join as os_join, isfile
+from hashlib import sha256
+from json import dumps as json_dumps, loads as json_loads
 
 from koalafolio.gui.QLogger import globalLogger
 localLogger = globalLogger
@@ -34,7 +35,7 @@ class ApiImportStatic:
                     raise ValueError("invalid type in getApiHistory: " + str(apitype))
             except Exception as ex:
                 localLogger.warning("could not load data from api (" + str(apiname) + "): " + str(ex))
-                return pandas.DataFrame()
+                return DataFrame()
 
     # get dict of ApiModels
     @staticmethod
@@ -99,24 +100,24 @@ class BaseDatabase:
 
     def setPath(self, path: str):
         # check path
-        if os.path.exists(path):
+        if os_exists(path):
             # set path
-            self.filepath = os.path.join(path, self.filename).replace('\\', '/')
-            if os.path.isfile(self.filepath):
+            self.filepath = os_join(path, self.filename).replace('\\', '/')
+            if isfile(self.filepath):
                 self.databaseFound = True
             else:
                 self.databaseFound = False
 
     def encryptData(self, pw: str, data: dict) -> tuple[bytes, bytes, bytes]:
-        dbkey = hashlib.sha256(pw.encode()).hexdigest()
+        dbkey = sha256(pw.encode()).hexdigest()
         cipher = AES.new(dbkey[:32].encode('utf-8'), AES.MODE_EAX)
-        ciphertext, tag = cipher.encrypt_and_digest(json.dumps(data).encode("utf-8"))
+        ciphertext, tag = cipher.encrypt_and_digest(json_dumps(data).encode("utf-8"))
         return cipher, ciphertext, tag
 
     def decryptData(self, pw: str, ciphertext: bytes, tag: bytes, nonce: bytes) -> dict:
-        key = hashlib.sha256(pw.encode()).hexdigest()
+        key = sha256(pw.encode()).hexdigest()
         cipher = AES.new(key[:32].encode('utf-8'), AES.MODE_EAX, nonce)
-        return json.loads(cipher.decrypt_and_verify(ciphertext, tag))
+        return json_loads(cipher.decrypt_and_verify(ciphertext, tag))
 
     def checkPw(self, pw: str) -> bool:
         with open(self.filepath, "rb") as file_in:
@@ -186,7 +187,7 @@ class BaseDatabase:
 
     def deleteDatabase(self):
         self.lockDatabase()
-        os.remove(self.filepath)
+        os_remove(self.filepath)
         self.databaseFound = 0
 
 

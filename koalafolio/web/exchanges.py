@@ -5,10 +5,10 @@ Created on 29.11.2020
 @author: Martin
 """
 
-import pandas
-import datetime
+from pandas import DataFrame
+from datetime import datetime, timedelta
 import ccxt
-import time
+from time import sleep
 from typing import List, Optional, Dict, Any, Set
 import koalafolio.gui.QLogger as logger
 
@@ -25,7 +25,7 @@ class ExchangesStatic:
         trades = []
         for ccxtTrade in ccxtTrades:
             trade = {}
-            trade['timestamp'] = datetime.datetime.fromtimestamp(ccxtTrade.timestamp)
+            trade['timestamp'] = datetime.fromtimestamp(ccxtTrade.timestamp)
             trade['location'] = str(ccxtTrade.location)
             trade['pair'] = str(ccxtTrade.pair)
             trade['trade_type'] = str(ccxtTrade.trade_type)
@@ -35,7 +35,7 @@ class ExchangesStatic:
             trade['fee_currency'] = str(ccxtTrade.fee_currency.symbol)
             trade['link'] = str(ccxtTrade.link)
             trades.append(trade)
-        return pandas.DataFrame(trades)
+        return DataFrame(trades)
 
     # get trade history from exchange
     @staticmethod
@@ -52,7 +52,7 @@ class ExchangesStatic:
             tradesDF = ExchangesStatic.tradesToDataframe(trades)
             return tradesDF
         localLogger.warning("api key is invalid for " + str(api.__class__.__name__) + ": " + checkKeyMsg)
-        return pandas.DataFrame()
+        return DataFrame()
 
 
 class Trade:
@@ -266,7 +266,7 @@ class ccxtExchange:
                         # Binance uses fromId for pagination
                         while len(symbol_trades) == limit:
                             # Add delay between requests to avoid rate limits
-                            time.sleep(0.3)
+                            sleep(0.3)
                             
                             # Get the ID of the last trade
                             last_id = last_trade['id']
@@ -287,9 +287,9 @@ class ccxtExchange:
                         while len(symbol_trades) == limit:
                             # Add delay between requests to avoid rate limits
                             if self.exchange_name in ['coinbase', 'coinbasepro', 'gemini']:
-                                time.sleep(0.5)
+                                sleep(0.5)
                             else:
-                                time.sleep(0.2)
+                                sleep(0.2)
                             
                             # Get the timestamp of the last trade + 1ms
                             next_since = last_trade['timestamp'] + 1
@@ -307,18 +307,18 @@ class ccxtExchange:
             
             # Add delay between requests to avoid rate limits
             if self.exchange_name == 'binance':
-                time.sleep(0.3)  # 300ms delay between requests for Binance
+                sleep(0.3)  # 300ms delay between requests for Binance
             elif self.exchange_name in ['coinbase', 'coinbasepro', 'gemini']:
-                time.sleep(0.5)  # 500ms delay for these exchanges
+                sleep(0.5)  # 500ms delay for these exchanges
             else:
-                time.sleep(0.2)  # 200ms default delay for other exchanges
+                sleep(0.2)  # 200ms default delay for other exchanges
                 
             return all_trades
             
         except Exception as e:
             if 'rate limit' in str(e).lower():
                 localLogger.warning(f"Rate limit hit for {symbol}, waiting 30 seconds before continuing")
-                time.sleep(30)  # Wait 30 seconds if we hit rate limit
+                sleep(30)  # Wait 30 seconds if we hit rate limit
                 try:
                     # Try again after waiting
                     return self._fetch_trades_for_symbol(symbol, since, limit)
@@ -422,7 +422,7 @@ class ccxtExchange:
                         has_more = False
                         
                     # Add delay between requests
-                    time.sleep(0.3)
+                    sleep(0.3)
                 
                  # Kraken fetch_my_trades only returns trades since 2022, if start is before 2022 add warning for kraken
                 if self.exchange_name == 'kraken' and start_ts and start_ts < 1640995200:  # Before 2022

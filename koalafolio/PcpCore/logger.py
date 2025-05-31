@@ -13,8 +13,8 @@ class Logger:
     def __init__(self):
         self.filePath = None
         # self.logFile = None
-        self.debugMode = False
 
+        self.debugMode = False
     def warning(self, message):
         warning = "## Warning: " + message + " !"
         print(warning)
