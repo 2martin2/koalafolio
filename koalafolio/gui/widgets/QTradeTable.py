@@ -17,11 +17,11 @@ from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QVariant, Qt, pyqtSig
 import os
 import koalafolio.PcpCore.core as core
 import koalafolio.Import.Converter as converter
-import koalafolio.gui.QLogger as logger
+import helper.QLogger as logger
 import koalafolio.Import.TradeImporter as importer
 import koalafolio.Import.Models as models
-import koalafolio.gui.QStyle as style
-import koalafolio.gui.FilterableTable as ftable
+import helper.QStyle as style
+import widgets.FilterableTable as ftable
 
 localLogger = logger.globalLogger
 

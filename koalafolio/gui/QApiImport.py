@@ -9,10 +9,9 @@ from PyQt5.QtWidgets import (
     QWidget, QStackedLayout, QLabel, QLineEdit, QPushButton, QGridLayout,
     QDateTimeEdit, QHBoxLayout, QVBoxLayout, QCheckBox, QComboBox
 )
-from PyQt5.QtCore import Qt, QStringListModel, QObject, pyqtSignal
-import koalafolio.gui.QLogger as logger
-import koalafolio.gui.Qcontrols as controls
-from koalafolio.gui.widgets.QCompleterComboBox import QCompleterComboBoxView
+from PyQt5.QtCore import QStringListModel, QObject, pyqtSignal
+import helper.QLogger as logger
+import widgets.Qcontrols as controls
 from koalafolio.gui.widgets.QFilterableComboBox import QFilterableComboBoxView, QStringPropertyListModel
 from koalafolio.Import.apiImport import ApiImportStatic
 from datetime import datetime

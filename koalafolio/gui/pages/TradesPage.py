@@ -8,11 +8,11 @@ Created on 11.04.2021
 
 from PyQt5.QtWidgets import QCheckBox, QHBoxLayout, QPushButton, QVBoxLayout
 from PyQt5.QtCore import Qt
-import koalafolio.gui.QTradeTable as ttable
-import koalafolio.gui.FilterableTable as ftable
-import koalafolio.gui.QSettings as settings
-import koalafolio.gui.QLogger as logger
-from koalafolio.gui.Qpages import Page
+import widgets.QTradeTable as ttable
+import widgets.FilterableTable as ftable
+import helper.QSettings as settings
+import helper.QLogger as logger
+from pages.Qpages import Page
 
 localLogger = logger.globalLogger
 

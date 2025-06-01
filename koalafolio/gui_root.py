@@ -6,22 +6,19 @@ Created on Sun Sep 16 09:57:14 2018
 """
 
 # Core imports - needed immediately
-from PyQt5.QtGui import QIcon, QPixmap, QFont, QPalette, QColor
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                             QHBoxLayout, QTabWidget, QSplashScreen, QLabel,
-                             QProgressBar, QMessageBox, QSystemTrayIcon, QMenu,
-                             QAction, QStyle)
+from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout,
+                             QHBoxLayout, QSplashScreen)
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QSize, QRect
 from sys import argv, exit
-from os import path
 
 # Essential application imports
 import koalafolio.PcpCore.logger as coreLogger
-import koalafolio.gui.QLogger as logger
+import helper.QLogger as logger
 import koalafolio.PcpCore.arguments as arguments
 import koalafolio.PcpCore.settings as coreSettings
-import koalafolio.gui.QSettings as settings
-import koalafolio.gui.QStyle as style
+import helper.QSettings as settings
+import helper.QStyle as style
 import koalafolio.exp.QTranslate as translator
 
 from koalafolio.gui.widgets.QCompleterComboBox import StyledCompleter
@@ -121,18 +118,18 @@ def lazy_import_heavy_modules():
     global settingsPage, apiImport
     global TradesPage, ImportPage, PortfolioPage
 
-    import koalafolio.gui.QLoggerWidget as loggerwidget
-    import koalafolio.gui.Qpages as pages
-    import koalafolio.gui.QExportPage as exportpage
-    import koalafolio.gui.Qcontrols as controls
-    import koalafolio.gui.QPortfolioTable as ptable
-    import koalafolio.gui.QTradeTable as ttable
+    import koalafolio.gui.widgets.QLoggerWidget as loggerwidget
+    import koalafolio.gui.pages.Qpages as pages
+    import koalafolio.gui.pages.ExportPage as exportpage
+    import koalafolio.gui.widgets.Qcontrols as controls
+    import koalafolio.gui.widgets.QPortfolioTable as ptable
+    import koalafolio.gui.widgets.QTradeTable as ttable
     import koalafolio.gui.QThreads as threads
-    import koalafolio.gui.SettingsPage as settingsPage
+    import koalafolio.gui.pages.SettingsPage as settingsPage
     import koalafolio.Import.apiImport as apiImport
-    from koalafolio.gui.TradesPage import TradesPage
-    from koalafolio.gui.ImportPage import ImportPage
-    from koalafolio.gui.PortfolioPage import PortfolioPage
+    from koalafolio.gui.pages.TradesPage import TradesPage
+    from koalafolio.gui.pages.ImportPage import ImportPage
+    from koalafolio.gui.pages.PortfolioPage import PortfolioPage
 
 
 # %% variables

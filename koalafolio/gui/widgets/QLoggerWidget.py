@@ -9,7 +9,7 @@ import os.path
 from PyQt5.QtCore import QAbstractListModel, QModelIndex, QObject, QTimer, QVariant, Qt, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QMouseEvent
 from PyQt5.QtWidgets import QAbstractItemView, QListView
-import koalafolio.gui.ScrollableTable as sTable
+import widgets.ScrollableTable as sTable
 
 class QLogModel(QAbstractListModel):
     def __init__(self, *args, **kwargs):

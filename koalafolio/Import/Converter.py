@@ -2,16 +2,16 @@
 
 import koalafolio.PcpCore.core as core
 import koalafolio.PcpCore.settings as settings
-from re import match as re_match, compile as re_compile, IGNORECASE
+from re import match as re_match, compile as re_compile
 from numbers import Number
-from pandas import DataFrame, to_datetime
+from pandas import to_datetime
 import koalafolio.Import.RegexPatterns as pat
 from datetime import datetime, date
 from tzlocal import get_localzone
-from pytz import timezone, UTC
+from pytz import UTC
 from dateutil.parser import parse as dateutil_parse
 # import koalafolio.PcpCore.logger as logger
-import koalafolio.gui.QLogger as logger
+import helper.QLogger as logger
 
 localLogger = logger.globalLogger
 

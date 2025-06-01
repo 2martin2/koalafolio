@@ -6,8 +6,7 @@ Created on 29.11.2020
 """
 
 from pandas import DataFrame
-from requests import get as requests_get, exceptions as requests_exceptions
-import koalafolio.gui.QLogger as logger
+import helper.QLogger as logger
 
 localLogger = logger.globalLogger
 

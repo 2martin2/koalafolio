@@ -6,10 +6,10 @@ Created on 11.04.2021
 """
 
 from PyQt5.QtCore import QModelIndex, QSortFilterProxyModel, Qt, pyqtSignal
+from widgets.FilterableHeader import FilterableHeaderView
 import re
-import koalafolio.gui.QLogger as logger
-import koalafolio.gui.FilterableHeader as filterableHeader
-import koalafolio.gui.ScrollableTable as sTable
+import helper.QLogger as logger
+import widgets.ScrollableTable as sTable
 
 localLogger = logger.globalLogger
 
@@ -66,7 +66,7 @@ class FilterableTableView(sTable.QScrollableTableView):
         super(FilterableTableView, self).__init__(*args, **kwargs)
 
         # add filterable Header as horizontal Header
-        header = filterableHeader.FilterableHeaderView(self)
+        header = FilterableHeaderView(self)
         self.setHorizontalHeader(header)
         header.filterActivated.connect(self.filterActivated)
 
@@ -101,7 +101,7 @@ class FilterableTreeView(sTable.QScrollableTreeView):
         super(FilterableTreeView, self).__init__(*args, **kwargs)
 
         # add filterable Header as horizontal Header
-        header = filterableHeader.FilterableHeaderView(self)
+        header = FilterableHeaderView(self)
         self.setHeader(header)
         header.filterActivated.connect(self.filterActivated)
 

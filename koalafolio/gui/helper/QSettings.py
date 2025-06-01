@@ -8,7 +8,7 @@ Created on Thu Oct  4 15:15:19 2018
 # todo: check why default section is written to file ?!
 
 
-import koalafolio.gui.QLogger as logger
+import helper.QLogger as logger
 from PyQt5.QtCore import QRect, Qt
 import koalafolio.PcpCore.settings as settings
 

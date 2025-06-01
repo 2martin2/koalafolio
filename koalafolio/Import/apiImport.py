@@ -8,12 +8,12 @@ from koalafolio.web.exchanges import ExchangesStatic
 from koalafolio.web.chaindata import ChaindataStatic
 from pandas import DataFrame
 from Cryptodome.Cipher import AES
-from os import remove as os_remove, path as os_path
+from os import remove as os_remove
 from os.path import exists as os_exists, join as os_join, isfile
 from hashlib import sha256
 from json import dumps as json_dumps, loads as json_loads
 
-from koalafolio.gui.QLogger import globalLogger
+from helper.QLogger import globalLogger
 localLogger = globalLogger
 
 

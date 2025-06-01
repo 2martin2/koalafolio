@@ -7,9 +7,9 @@ Created on Sun Sep 16 20:17:51 2018
 
 from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 from PyQt5.QtCore import Qt
-import koalafolio.gui.QSettings as settings
-import koalafolio.gui.SettingsPage as settingsPage
-import koalafolio.gui.QLogger as logger
+import helper.QSettings as settings
+import helper.QLogger as logger
+from koalafolio.gui.pages.SettingsPage import SettingsTreeView
 import webbrowser
 
 localLogger = logger.globalLogger
@@ -69,7 +69,7 @@ class SettingsPage(Page):
         self.vertLayout.addLayout(self.labelLayout)
 
         # content
-        self.settingsView = settingsPage.SettingsTreeView(self)
+        self.settingsView = SettingsTreeView(self)
         self.settingsView.setModel(self.controller.settingsModel)
         self.settingsView.expandAll()
         self.settingsView.setColumnWidth(0, 350)

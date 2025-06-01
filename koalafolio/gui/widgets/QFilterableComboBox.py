@@ -132,7 +132,6 @@ class QFilterableComboBoxView(QWidget):
                     self.filter_properties[key] = []
                 if value not in self.filter_properties[key]:
                     self.filter_properties[key].append(value)
-        print(f"filter_properties: {self.filter_properties}")
         # At start, all values are enabled
         self.active_filter_values = {k: set(v) for k, v in self.filter_properties.items()}
 

@@ -71,8 +71,6 @@ class PrefixFilterProxyModel(QSortFilterProxyModel):
             return True
         index = self.sourceModel().index(source_row, 0, source_parent)
         data = self.sourceModel().data(index, Qt.DisplayRole)
-        if data.lower().startswith(self._filter_text.lower()):
-            print(f"Filtering row {source_row}: {data} matches filter '{self._filter_text}'")
         return data.lower().startswith(self._filter_text.lower())
 
 
@@ -146,14 +144,12 @@ class QCompleterComboBoxView(QComboBox):
         return ""
 
     def select_first_completion(self):
-        print("select_first_completion called")
         completer = self.completer()
         if not completer:
             return
         completerModel = completer.completionModel()
         if not completerModel or completerModel.rowCount() == 0:
             self.clearEditText()
-            print("No completions available, clearing edit text.")
             return
         index = completer.popup().currentIndex()
         if not index.isValid():
@@ -161,7 +157,6 @@ class QCompleterComboBoxView(QComboBox):
         if index.isValid():
             # Replace with suggestion
             data = completerModel.data(index, Qt.DisplayRole)
-            print(f"Setting current text to: {data}")
             QTimer.singleShot(0, lambda: self.setCurrentText(data))
 
     def showPopup(self):
@@ -174,10 +169,8 @@ class QCompleterComboBoxView(QComboBox):
         super().showPopup()
 
     def focusOutEvent(self, event):
-        print("focusOutEvent called")
         super().focusOutEvent(event)
         # try to set completer text if current text is not in model
-        print("current text: ", self.currentText())
         if self.findText(self.currentText()) == -1:
             self.select_first_completion()
 

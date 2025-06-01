@@ -6,11 +6,11 @@ Created on 29.11.2020
 """
 
 from pandas import DataFrame
-from datetime import datetime, timedelta
+from datetime import datetime
 import ccxt
 from time import sleep
 from typing import List, Optional, Dict, Any, Set
-import koalafolio.gui.QLogger as logger
+import helper.QLogger as logger
 
 localLogger = logger.globalLogger
 

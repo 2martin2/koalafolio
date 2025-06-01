@@ -8,24 +8,24 @@ Created on 11.04.2021
 from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QFileSystemModel,
                              QPushButton, QFileDialog, QLabel, QSpacerItem,
                              QStackedLayout, QHeaderView, QLineEdit)
-from PyQt5.QtCore import Qt, QDir, QModelIndex, QItemSelectionModel
-import koalafolio.gui.Qcontrols as controls
+from PyQt5.QtCore import QDir, QModelIndex, QItemSelectionModel
+import widgets.Qcontrols as controls
 import koalafolio.Import.TradeImporter as importer
 import koalafolio.Import.Models as models
-import koalafolio.gui.QTradeTable as ttable
-import koalafolio.gui.FilterableTable as ftable
+import widgets.QTradeTable as ttable
+import widgets.FilterableTable as ftable
 from os import path as os_path
 from re import compile as re_compile, IGNORECASE
 from pandas import DataFrame
-import koalafolio.gui.QSettings as settings
+import helper.QSettings as settings
 from datetime import datetime
 from pathlib import Path
-from koalafolio.gui.QLogger import globalLogger
+from helper.QLogger import globalLogger
 from koalafolio.Import.apiImport import ApiImportStatic
 import koalafolio.gui.QApiImport as qApiImport
-import koalafolio.gui.QStyle as style
-from koalafolio.gui.Qpages import Page, SubPage
-import koalafolio.gui.ScrollableTable as sTable
+import helper.QStyle as style
+from pages.Qpages import Page, SubPage
+import widgets.ScrollableTable as sTable
 
 localLogger = globalLogger
 

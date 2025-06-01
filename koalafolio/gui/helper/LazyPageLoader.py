@@ -40,19 +40,19 @@ class LazyPageLoader(QObject):
         try:
             # Import and create the page
             if page_class_name == 'PortfolioPage':
-                from koalafolio.gui.PortfolioPage import PortfolioPage
+                from pages.PortfolioPage import PortfolioPage
                 page = PortfolioPage(parent=self.parent, controller=self.parent)
             elif page_class_name == 'TradesPage':
-                from koalafolio.gui.TradesPage import TradesPage
+                from pages.TradesPage import TradesPage
                 page = TradesPage(parent=self.parent, controller=self.parent)
             elif page_class_name == 'ImportPage':
-                from koalafolio.gui.ImportPage import ImportPage
+                from pages.ImportPage import ImportPage
                 page = ImportPage(parent=self.parent, controller=self.parent)
             elif page_class_name == 'ExportPage':
-                import koalafolio.gui.QExportPage as exportpage
+                import pages.ExportPage as exportpage
                 page = exportpage.ExportPage(parent=self.parent, controller=self.parent)
             elif page_class_name == 'SettingsPage':
-                import koalafolio.gui.Qpages as pages
+                import pages.Qpages as pages
                 page = pages.SettingsPage(parent=self.parent, controller=self.parent)
             else:
                 raise ValueError(f"Unknown page class: {page_class_name}")
