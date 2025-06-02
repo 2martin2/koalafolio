@@ -68,6 +68,7 @@ trade import
    - gemini
    - poloniex
    - kraken
+   - 100+ exchanges supported by ccxt_ (untested)
 
  import Rewards from Staking Address
   supported Chains (Blockdaemon Api)
@@ -108,7 +109,7 @@ export
 
 Credits
 *********
-Thanks to CryptoCompare_
+Powered by CryptoCompare_ API
 
 .. _Cryptocompare: https://min-api.cryptocompare.com/
 
@@ -120,6 +121,10 @@ Gui based on Qt_
 
 .. _Qt: https://www.qt.io/
 
-Thanks to Rotki_
+Thanks to ccxt_
+
+.. _ccxt: https://github.com/ccxt/ccxt
+
+Checkout Rotki_
 
 .. _Rotki: https://github.com/rotki
