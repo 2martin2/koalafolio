@@ -1,7 +1,7 @@
 from PyQt5.QtGui import QFont, QPainter
 from PyQt5.QtWidgets import QApplication, QFileDialog, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton, QStackedLayout, QStyleFactory, QTableWidget, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
-import PyQt5.QtChart as qtchart
+from PyQt5.QtChart import QChart, QChartView, QPieSeries
 
 
 
@@ -89,17 +89,17 @@ class MainWindow(QWidget):
         # content items
         self.contentbutton = QPushButton("some button", self.contentFrame)
         self.contentlabel = QLabel("some text", self.contentFrame)
-        mySeries = qtchart.QPieSeries()
+        mySeries = QPieSeries()
         mySeries.append('BTC', 20000)
         mySeries.append('ETH', 60000)
         mySeries.append('LTC', 2000)
 #        mySlice = mySeries.slices().at(1)
 #        mySlice.setExploded()
-        self.myChart = qtchart.QChart()
+        self.myChart = QChart()
         self.myChart.addSeries(mySeries)
 #        self.myChart.setTitle("chart example")
         self.myChart.legend().hide()
-        self.myChartView = qtchart.QChartView(self.myChart)
+        self.myChartView = QChartView(self.myChart)
         self.myChartView.setRenderHint(QPainter.Antialiasing)
 #        self.contentFrame.addWidget(self.myChartView)
         self.myTable = QTableWidget(50,8,self.contentFrame)

@@ -11,7 +11,7 @@ import pathlib
 project_root = pathlib.Path(__file__).parents[1]
 
 # PyQt module names
-pyqt_modules = ["QtCore", "QtGui", "QtWidgets", "QtCharts"]
+pyqt_modules = ["QtCore", "QtGui", "QtWidgets", "QtChart"]
 # Regex patterns
 pyqt_import_pattern = r"import PyQt5\.(?P<module>" + "|".join(pyqt_modules) + r") as (?P<alias>\w+)"
 pyqt_element_pattern = r"(?P<alias>\w+)\.(?P<element>\w+)"

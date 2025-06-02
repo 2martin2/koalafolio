@@ -10,7 +10,7 @@ Created on 11.04.2021
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QCheckBox, QHBoxLayout, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt, pyqtSignal
-import PyQt5.QtChart as qtchart
+from PyQt5.QtChart import QPieSeries, QPieSlice
 import koalafolio.gui.widgets.Qcontrols as controls
 import koalafolio.gui.widgets.QCharts as charts
 import koalafolio.PcpCore.core as core
@@ -328,7 +328,7 @@ class PortfolioOverview(QWidget):
 
 
         # pie chart
-        pieSeries = qtchart.QPieSeries()
+        pieSeries = QPieSeries()
         sortedModelIndex = sorted(range(len(self.model)),
                                   key=lambda x: self.model.coins[x].getCurrentValue()[taxCoinName], reverse=True)
         otherssum = core.CoinValue()
@@ -362,7 +362,7 @@ class PortfolioOverview(QWidget):
             color = style.nextColor(color, 55)
             slice.setBrush(QColor(*tuple(color)))
             slice.setLabelColor(QColor(*tuple(color)))
-            slice.setLabelPosition(qtchart.QPieSlice.LabelOutside)
+            slice.setLabelPosition(QPieSlice.LabelOutside)
 
         pieSeries.setHoleSize(0.6)
         self.portfolioChart.setSeries(pieSeries)
@@ -430,10 +430,9 @@ class PortfolioPage(Page):
         self.controller.coinList.triggerPriceUpdate()
 
     def getGuiProps(self):
-        gui = {}
-        gui['portfolio_sort_row'] = str(self.coinProxyModel.sortedRow)
-        gui['portfolio_sort_dir'] = str(self.coinProxyModel.sortedDir)
-        gui['performancechartindex'] = self.coinDataFrame.perfChartCont.chartIndex
+        gui = {'portfolio_sort_row': str(self.coinProxyModel.sortedColumn),
+               'portfolio_sort_dir': str(self.coinProxyModel.sortedDir),
+               'performancechartindex': self.coinDataFrame.perfChartCont.chartIndex}
         return gui
 
     def filterCoinTable(self):

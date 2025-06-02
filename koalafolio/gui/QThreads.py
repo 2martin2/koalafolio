@@ -31,10 +31,7 @@ class WebApiInterface(QObject):
 
         # self.histPrices = {}
         self.tradeBuffer = core.TradeList()
-        self.coinIconUrls = {}
-        self.coinIconUrls["ccapi"] = {}
-        self.coinIconUrls["coingecko"] = {}
-        self.coinIconUrls["merged"] = {}
+        self.coinIconUrls = {"ccapi": {}, "coingecko": {}, "merged": {}}
 
         self.histApiFailedCounter = 0
 
@@ -64,7 +61,7 @@ class WebApiInterface(QObject):
                         # get url and remove from buffer
                         url = self.coinIconUrls[api].pop(coin)
                         # load Image from url
-                        image = None
+                        imagedata = None
                         try:
                             imagedata = self.getImage(url, coin)
                         except ConnectionRefusedError:

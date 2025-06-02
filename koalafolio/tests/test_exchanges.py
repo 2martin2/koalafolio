@@ -15,6 +15,8 @@ from typing import Dict
 import unittest
 from pathlib import Path
 
+from exchanges import ExchangesStatic
+
 # Add parent directory to path to import koalafolio modules
 project_root = Path(__file__).parents[2]
 sys.path.append(str(project_root))
@@ -93,7 +95,7 @@ class TestExchanges(unittest.TestCase):
             try:
                 # log time needed for getTradeHistoryCall
                 start_time = time.time()
-                result = exchanges.getTradeHistoryCcxt(apiname, key, secret, self.start_ts, self.end_ts)
+                result = ExchangesStatic.getTradeHistoryCcxt(apiname, key, secret, self.start_ts, self.end_ts)
                 end_time = time.time()
                 print(f"TEST test_exchanges: {apiname} API test successful. Got {len(result)} trades.")
                 self.save_trades_to_csv(apiname, result)
@@ -101,6 +103,9 @@ class TestExchanges(unittest.TestCase):
                 self.assertIsInstance(result, pd.DataFrame)
             except Exception as e:
                 print(f"TEST test_exchanges: {apiname} API test failed: {e}")
+                # mark test as failed
+                self.assertTrue(False)
+
 
 
 

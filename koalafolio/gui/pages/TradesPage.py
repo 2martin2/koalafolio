@@ -120,8 +120,7 @@ class TradesPage(Page):
 
     def getGuiProps(self):
         """get current gui properties, is called by closeEvent of main window """
-        gui = {}
-        gui['trade_sort_row'] = str(self.proxyModel.sortedRow)
-        gui['trade_sort_dir'] = str(self.proxyModel.sortedDir)
+        gui = {'trade_sort_row': str(self.proxyModel.sortedColumn),
+               'trade_sort_dir': str(self.proxyModel.sortedDir)}
         return gui
 

@@ -49,7 +49,7 @@ def loadTradesFromFile(filepath):
                 if len(testread.columns) < 2:  # if less than 2 columns something went wrong
                     raise SyntaxError('columns of csv could not be detected')
                 return testread
-            except UnicodeDecodeError as ex:
+            except UnicodeDecodeError:
                 pass
             except Exception as ex:
                 encodingError = False

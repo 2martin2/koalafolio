@@ -36,10 +36,10 @@ class QLogModel(QAbstractListModel):
             self.color.append(QVariant())
         self.endInsertRows()
 
-    def rowCount(self, parent):
+    def rowCount(self, parent : QModelIndex) -> int:
         return len(self.stringList)
 
-    def data(self, index, role):
+    def data(self, index: QModelIndex, role: int):
         if role == Qt.DisplayRole:
             return self.stringList[index.row()]
         if role == Qt.ForegroundRole:

@@ -276,40 +276,34 @@ NUMBER_REGEX_PATTERN = r'^((|-)\d*(\.|,|)\d*)(\D*)$'
 NUMBER_REGEX = re.compile(NUMBER_REGEX_PATTERN)
 
 # %% datetime patterns
-TIME_PATTERN = []
-TIME_PATTERN.append(r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$')  # 2018-08-26 04:22:33
-TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d )(\d:\d\d:\d\d)$')  # 2018-08-26 4:22:33
-TIME_PATTERN.append(r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [-|\+]\d{4}$')  # 2017-05-22 06:30:17 -0700
-TIME_PATTERN.append(r'^(\d{1,2})(/)(\d{1,2})(/\d{4} )(\d{1,2})(:\d\d:\d\d) (\w\w)$')  # 8/8/2018 4:50:42 PM
-TIME_PATTERN.append(r'^\w{3} \w{3} \d{2} \d\d:\d\d:\d\d \d{4}$')  # Wed Jun 27 17:16:39 2018
-TIME_PATTERN.append(r'^(\w{3} \w{3} \d{2} \d\d:\d\d:\d\d)( \w{3})( \d{4})$')  # Wed Jun 27 17:16:39 CST 2018
-TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)(\.\d+)$')  # 2017-05-22 06:30:17 .200
-TIME_PATTERN.append(r'^(\w{3} \w{3} \d{2})( \d{4})( \d\d:\d\d:\d\d)( \w{3})([-|\+]\d{4})( .*)$')  # Fri May 19 2017 12:11:49 GMT+0200 (Mitteleuropäische Sommerzeit)
-TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d).(\d\d:\d\d:\d\d).*Z$')  # 2017-07-28T20:23:16.000Z
-TIME_PATTERN.append(r'^(\d\d-\d\d-\d\d).(\d\d:\d\d:\d\d)$')  # 27-09-17 17:01:01
+TIME_PATTERN = [
+    r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$',  # 2018-08-26 04:22:33
+    r'^(\d{4}-\d\d-\d\d )(\d:\d\d:\d\d)$',  # 2018-08-26 4:22:33
+    r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [-\+]\d{4}$',  # 2017-05-22 06:30:17 -0700
+    r'^(\d{1,2})(/)(\d{1,2})(/\d{4} )(\d{1,2})(:\d\d:\d\d) (\w\w)$',  # 8/8/2018 4:50:42 PM
+    r'^\w{3} \w{3} \d{2} \d\d:\d\d:\d\d \d{4}$',  # Wed Jun 27 17:16:39 2018
+    r'^(\w{3} \w{3} \d{2} \d\d:\d\d:\d\d)( \w{3})( \d{4})$',  # Wed Jun 27 17:16:39 CST 2018
+    r'^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)(\.\d+)$',  # 2017-05-22 06:30:17 .200
+    r'^(\w{3} \w{3} \d{2})( \d{4})( \d\d:\d\d:\d\d)( \w{3})([-\+]\d{4})( .*)$',  # Fri May 19 2017 12:11:49 GMT+0200 (Mitteleuropäische Sommerzeit)
+    r'^(\d{4}-\d\d-\d\d).(\d\d:\d\d:\d\d).*Z$',  # 2017-07-28T20:23:16.000Z
+    r'^(\d\d-\d\d-\d\d).(\d\d:\d\d:\d\d)$',  # 27-09-17 17:01:01
+    ]
 
-PANDAS_TIME_PATTERN = r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d[-|\+]\d\d:\d\d$'
+PANDAS_TIME_PATTERN = r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d[-\+]\d\d:\d\d$'
 
 # some patterns need to be changed before conversion
-TIME_SPECIAL_PATTERN_INDEX = []
-TIME_SPECIAL_PATTERN_INDEX.append(1)
-TIME_SPECIAL_PATTERN_INDEX.append(3)
-TIME_SPECIAL_PATTERN_INDEX.append(5)
-TIME_SPECIAL_PATTERN_INDEX.append(6)
-TIME_SPECIAL_PATTERN_INDEX.append(7)
-TIME_SPECIAL_PATTERN_INDEX.append(8)
+TIME_SPECIAL_PATTERN_INDEX = [1, 3, 5, 6, 7, 8]
 
-TIME_FORMAT = []
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S')
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S')
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S %z')
-TIME_FORMAT.append('%m/%d/%Y %H:%M:%S')
-TIME_FORMAT.append('%c')
-TIME_FORMAT.append('%c')
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S')
-TIME_FORMAT.append('%c %z')
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S %z')
-TIME_FORMAT.append('%d-%m-%y %H:%M:%S')
+TIME_FORMAT = ['%Y-%m-%d %H:%M:%S',
+               '%Y-%m-%d %H:%M:%S',
+               '%Y-%m-%d %H:%M:%S %z',
+               '%m/%d/%Y %H:%M:%S',
+               '%c',
+               '%c',
+               '%Y-%m-%d %H:%M:%S',
+               '%c %z',
+               '%Y-%m-%d %H:%M:%S %z',
+               '%d-%m-%y %H:%M:%S']
 
 # 2018-08-26 04:22:33
 # 8/8/2018 4:50:42 PM

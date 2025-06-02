@@ -241,7 +241,6 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
                 firstProfitRow) + ':' + feeSumColumn + str(profitSumRows[-1] - 2) + '),2)'
 
             # page setup
-            # page setup
             if translator:
                 pageSetup(ws, dateCols=['D'], gapCols=['C', 'H'],
                           lastRow=profitSumRows[-1], lastCol=profitSumColumns[-1]+1,

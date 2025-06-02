@@ -9,7 +9,7 @@ Created on Sun Mar 10 10:39:51 2019
 from PyQt5.QtGui import QBrush, QColor, QFont, QPainter, QPen
 from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QWidget
 from PyQt5.QtCore import QMargins, QPoint, QSize, Qt
-import PyQt5.QtChart as qtchart
+from PyQt5.QtChart import QBarCategoryAxis, QBarSet, QChart, QChartView, QDateTimeAxis, QHorizontalStackedBarSeries, QLineSeries, QPieSeries, QScatterSeries, QValueAxis
 import koalafolio.gui.widgets.Qcontrols as controls
 import koalafolio.gui.helper.QSettings as settings
 import koalafolio.gui.helper.QStyle as style
@@ -115,10 +115,10 @@ class LabeledDonatChart(QFrame):
         self.setFixedHeight(height)
         self.setContentsMargins(0, 0, 0, 0)
         # donut chart
-        self.series = qtchart.QPieSeries()
+        self.series = QPieSeries()
         self.series.setHoleSize(0.6)
 
-        self.chart = qtchart.QChart()
+        self.chart = QChart()
         self.chart.setBackgroundVisible(False)
         self.chart.addSeries(self.series)
         self.chart.legend().hide()
@@ -157,7 +157,7 @@ class LabeledDonatChart(QFrame):
 
 
 # chart view with labels in center
-class LabeledChartView(qtchart.QChartView):
+class LabeledChartView(QChartView):
     def __init__(self, width, height, numberLabels=3, heading='', *args, **kwargs):
         super(LabeledChartView, self).__init__(*args, **kwargs)
 
@@ -307,29 +307,29 @@ class HorizontalStackedBarChart(QWidget):
 
         self.chartColor = QColor(*settings.mySettings.getColor('NEUTRAL'))
 
-        self.chart = qtchart.QChart()
+        self.chart = QChart()
         self.chart.setBackgroundVisible(False)
         self.chart.legend().setVisible(True)
         self.chart.legend().setAlignment(Qt.AlignRight)
         self.chart.legend().setLabelColor(self.chartColor)
-        # self.chart.setTheme(qtchart.QChart.ChartThemeDark)
+        # self.chart.setTheme(QChart.ChartThemeDark)
 
         categories = []
-        self.barAxisCat = qtchart.QBarCategoryAxis()
+        self.barAxisCat = QBarCategoryAxis()
         self.barAxisCat.append(categories)
         self.barAxisCat.setLabelsColor(self.chartColor)
         self.barAxisCat.setLabelsFont(QFont('Arial', 8))
         # self.barAxisCat.setLabelsAngle(-90)
         self.barAxisCat.setGridLinePen(QPen(QBrush(), 0))
         self.chart.addAxis(self.barAxisCat, Qt.AlignLeft)
-        # self.barAxisVal = qtchart.QValueAxis()
+        # self.barAxisVal = QValueAxis()
         # self.barAxisVal.setGridLinePen(QPen(QBrush(), 0))
         # self.barAxisVal.setLabelsColor(self.chartColor)
         # self.barAxisVal.setLabelsFont(QFont('Arial', 8))
         # self.barAxisVal.setLabelsAngle(-45)
         # self.chart.addAxis(self.barAxisVal, Qt.AlignLeft)
 
-        self.chartView = qtchart.QChartView(self.chart)
+        self.chartView = QChartView(self.chart)
         self.chartView.setRenderHint(QPainter.Antialiasing)
         self.chartView.setFixedHeight(height)
         self.chartView.setFixedWidth(width)
@@ -341,10 +341,10 @@ class HorizontalStackedBarChart(QWidget):
     def updateChart(self, dicts, labels):
         self.sets = []
         for dict, label in zip(dicts, labels):
-            self.sets.append(qtchart.QBarSet(label))
+            self.sets.append(QBarSet(label))
             for key in dict:
                 self.sets[-1].append(dict[key])
-        barSeries = qtchart.QHorizontalStackedBarSeries()
+        barSeries = QHorizontalStackedBarSeries()
         barSeries.setLabelsVisible(False)
         barSeries.setBarWidth(0.2)
         for set in self.sets:
@@ -422,14 +422,14 @@ class BuyTimelineChartCont(QWidget):
         super(BuyTimelineChartCont, self).__init__(*args, **kwargs)
 
         # chart
-        self.chart = qtchart.QChart()
+        self.chart = QChart()
         # self.chart.legend().hide()
         self.chart.legend().setAlignment(Qt.AlignRight)
         self.chart.legend().setLabelColor(style.myStyle.getQColor("TEXT_NORMAL"))
         self.chart.setBackgroundVisible(False)
 
         # date axis
-        self.xAxis = qtchart.QDateTimeAxis()
+        self.xAxis = QDateTimeAxis()
         self.xAxis.setTickCount(10)
         self.xAxis.setFormat("dd MM yy")
         self.xAxis.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
@@ -438,21 +438,21 @@ class BuyTimelineChartCont(QWidget):
         self.chart.addAxis(self.xAxis, Qt.AlignBottom)
 
         # balance axis
-        self.yAxisBalance = qtchart.QValueAxis()
+        self.yAxisBalance = QValueAxis()
         self.yAxisBalance.setLabelFormat("%.2f")
         self.yAxisBalance.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.yAxisBalance.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.chart.addAxis(self.yAxisBalance, Qt.AlignLeft)
 
         # price axis
-        self.yAxisPrice = qtchart.QValueAxis()
+        self.yAxisPrice = QValueAxis()
         self.yAxisPrice.setLabelFormat("%.2f")
         self.yAxisPrice.setGridLineColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.yAxisPrice.setLinePenColor(style.myStyle.getQColor("BACKGROUND_BITDARK"))
         self.chart.addAxis(self.yAxisPrice, Qt.AlignRight)
 
         # chartview
-        self.chartView = qtchart.QChartView(self.chart)
+        self.chartView = QChartView(self.chart)
         self.chartView.setRenderHint(QPainter.Antialiasing)
 
         self.layout = QHBoxLayout(self)
@@ -471,9 +471,9 @@ class BuyTimelineChartCont(QWidget):
     def addData(self, dates, vals, qColor, name, lineWidth=1, chartType="line", axis='balance', updateAxis=True):
         # check chart type
         if chartType == "line":
-            series = qtchart.QLineSeries()
+            series = QLineSeries()
         elif chartType == "scatter":
-            series = qtchart.QScatterSeries()
+            series = QScatterSeries()
             series.setMarkerSize(6)
             series.setColor(qColor)
             series.setBorderColor(qColor)

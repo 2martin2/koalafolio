@@ -61,6 +61,7 @@ class ApiKeyModel(QObject):
         for apiname in self.addressSelectModels:
             self.addressSelectModels[apiname].setStringList(["All(0)"])
 
+    # noinspection PyUnresolvedReferences
     def lockDatabase(self):
         self.database.lockDatabase()
         self.databaseLocked.emit()
@@ -77,10 +78,11 @@ class ApiKeyModel(QObject):
         self.database.createDatabase(pw)
         self.databaseUnlocked.emit()
 
-    def addDBEntry(self, pw: str, apiname: str, apikey: str = None, secret: str = None, addressList: list = []):
+    def addDBEntry(self, pw:str, apiname:str, apikey:str = None, secret:str = None, addressList:list = None):
+        if addressList is None:
+            addressList = []
         apitype = self.getApiType(apiname)
-        newData = {}
-        newData["apiname"] = apiname
+        newData = {"apiname": apiname}
         if apitype == "exchange":
             newData["apikey"] = apikey
             newData["secret"] = secret

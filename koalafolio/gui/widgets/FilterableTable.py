@@ -19,15 +19,15 @@ class SortFilterProxyModel(QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
         super(SortFilterProxyModel, self).__init__(*args, **kwargs)
         self.filters = {}
-        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.useRegex = True
 
-        self.sortedRow = 0
+        self.sortedColumn = 0
         self.sortedDir = 0
 
-    def sort(self, row, order):
-        super(SortFilterProxyModel, self).sort(row, order)
-        self.sortedRow = row
+    def sort(self, column: int, order: Qt.SortOrder) -> None:
+        super(SortFilterProxyModel, self).sort(column, order)
+        self.sortedColumn = column
         self.sortedDir = order
 
     def setFilterByColumn(self, column, regex):
@@ -52,7 +52,8 @@ class SortFilterProxyModel(QSortFilterProxyModel):
                     else:  # no regex
                         if not regex.lower() in text.lower():
                             return False
-                except Exception as ex:  # skip column if regex error
+                # skip column if regex error
+                except  re.error:
                     pass
         return True
 

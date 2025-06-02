@@ -24,7 +24,7 @@ class CoinGeckoAPIProxy(pycoingecko.CoinGeckoAPI):
             response.raise_for_status()
             content = json.loads(response.content.decode('utf-8'))
             return content
-        except Exception as e:
+        except Exception:
             # check if json (with error message) is returned
             try:
                 content = json.loads(response.content.decode('utf-8'))
@@ -114,7 +114,7 @@ def getHistoricalPrice(trade):
                                                      date=trade.date.date().strftime('%d-%m-%Y'))
 
                 return response['market_data']['current_price']
-            except KeyError as ex:
+            except KeyError:
                 logger.globalLogger.warning('error loading historical coinGecko price for ' + str(trade.coin))
             except ValueError as ex:
                 logger.globalLogger.error('error loading historical coinGecko price for ' + str(trade.coin) + ': ' + str(ex))

@@ -24,16 +24,15 @@ class ExchangesStatic:
         # timestamp,  location,   pair,   trade_type, amount, rate,   fee,    fee_currency,   link
         trades = []
         for ccxtTrade in ccxtTrades:
-            trade = {}
-            trade['timestamp'] = datetime.fromtimestamp(ccxtTrade.timestamp)
-            trade['location'] = str(ccxtTrade.location)
-            trade['pair'] = str(ccxtTrade.pair)
-            trade['trade_type'] = str(ccxtTrade.trade_type)
-            trade['amount'] = float(ccxtTrade.amount)
-            trade['rate'] = float(ccxtTrade.rate)
-            trade['fee'] = float(ccxtTrade.fee)
-            trade['fee_currency'] = str(ccxtTrade.fee_currency.symbol)
-            trade['link'] = str(ccxtTrade.link)
+            trade = {'timestamp': datetime.fromtimestamp(ccxtTrade.timestamp),
+                     'location': str(ccxtTrade.location),
+                     'pair': str(ccxtTrade.pair),
+                     'trade_type': str(ccxtTrade.trade_type),
+                     'amount': float(ccxtTrade.amount),
+                     'rate': float(ccxtTrade.rate),
+                     'fee': float(ccxtTrade.fee),
+                     'fee_currency': str(ccxtTrade.fee_currency.symbol),
+                     'link': str(ccxtTrade.link)}
             trades.append(trade)
         return DataFrame(trades)
 

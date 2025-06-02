@@ -24,8 +24,8 @@ class QExportFrame(controls.StyledFrame):
         super(QExportFrame, self).__init__(*args, **kwargs)
 
         self.setObjectName("QExportFrame")
-        self.setFrameShape(QFrame.StyledPanel)
-        self.setFrameShadow(QFrame.Raised)
+        self.setFrameShape(QFrame.Shape.StyledPanel)
+        self.setFrameShadow(QFrame.Shadow.Raised)
         self.setLineWidth(2)
         self.setMidLineWidth(3)
 

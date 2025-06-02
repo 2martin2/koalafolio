@@ -14,13 +14,13 @@ import koalafolio.Import.TradeImporter as importer
 import koalafolio.Import.Models as models
 import koalafolio.gui.widgets.QTradeTable as ttable
 import koalafolio.gui.widgets.FilterableTable as ftable
-from os import path as os_path
-from re import compile as re_compile, IGNORECASE
+import os
+from re import compile as re_compile, IGNORECASE as RE_IGNORECASE
 from pandas import DataFrame
 import koalafolio.gui.helper.QSettings as settings
 from datetime import datetime
 from pathlib import Path
-from helper.QLogger import globalLogger
+from koalafolio.gui.helper.QLogger import globalLogger
 from koalafolio.Import.apiImport import ApiImportStatic
 import koalafolio.gui.QApiImport as qApiImport
 import koalafolio.gui.helper.QStyle as style
@@ -111,7 +111,7 @@ class ImportSelectPage(SubPage):
 
         # file types
         filetypes = settings.mySettings['import']['importFileTypes']
-        self.filePattern = re_compile(r"^.*\." + filetypes + "$", IGNORECASE)
+        self.filePattern = re_compile(r"^.*\." + filetypes + "$", RE_IGNORECASE)
 
         # Left Frame
         self.fileFrame = controls.StyledFrame(self)
@@ -179,7 +179,7 @@ class ImportSelectPage(SubPage):
     def refresh(self):
         # file types
         filetypes = settings.mySettings['import']['importFileTypes']
-        self.filePattern = re_compile(r"^.*\." + filetypes + "$", IGNORECASE)
+        self.filePattern = re_compile(r"^.*\." + filetypes + "$", RE_IGNORECASE)
 
         self.controller.skippedRows = 0
         self.controller.importedRows = 0
@@ -193,8 +193,8 @@ class ImportSelectPage(SubPage):
                 path = self.getPath()
                 if path.is_file():
                     self.treeView.selectionModel().select(QModelIndex(), QItemSelectionModel.SelectionFlag.Clear)
-                    self.fileSystemModel.setRootPath(str(os_path.dirname(path)))
-                    self.treeView.setRootIndex(self.fileSystemModel.index(str(os_path.dirname(path))))
+                    self.fileSystemModel.setRootPath(str(os.path.dirname(path)))
+                    self.treeView.setRootIndex(self.fileSystemModel.index(str(os.path.dirname(path))))
                     self.treeView.header().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
                     self.treeView.selectionModel().select(self.fileSystemModel.index(str(path)),
                                                           QItemSelectionModel.SelectionFlag.Select)
@@ -220,7 +220,7 @@ class ImportSelectPage(SubPage):
                 if path.is_file():
                     self.controller.allFilesPath.append(str(path))
                 if path.is_dir():
-                    files = [os_path.join(str(path), str(f)) for f in path.iterdir() if self.filePattern.match(str(f))]
+                    files = [os.path.join(str(path), str(f)) for f in path.iterdir() if self.filePattern.match(str(f))]
                     self.controller.allFilesPath += files
 
     # show preview frame and refresh data
@@ -336,14 +336,13 @@ class ImportSelectPage(SubPage):
                         break
                 #"date", "type", "buy amount", "buy cur", "sell amount", "sell cur", ("exchange"),
                 # ("fee amount"), ("fee currency"), ("buy_wallet"), ("sell_wallet")
-                rows = []
-                rows.append([datetime.now(), 'trade', 10, 'ETH', 0.5, 'BTC', 'binance', 0.01, 'ETH', '', ''])
-                rows.append([datetime.now(), 'trade', 5, 'ETH', 0.25, 'BTC', '', '', '', ''])
-                rows.append([datetime.now(), 'trade', 20, 'ETH', 1, 'BTC', '', 0.0001, 'BTC', '', ''])
-                rows.append([datetime.now(), 'fee', '', '', '', '', '', 0.0015, 'ETH', '', ''])
-                rows.append([datetime.now(), 'trade', 50000, 'ADA', 20000, 'USD', 'kraken', '', '', 'Hodl_1', ''])
-                rows.append([datetime.now(), 'trade', 100000, 'ADA', 50000, 'USD', 'kraken', '', '', 'Staking_1', ''])
-                rows.append([datetime.now(), 'reward', 1000, 'ADA', 1000, 'USD', '', '', '', 'Staking_1', ''])
+                rows = [[datetime.now(), 'trade', 10, 'ETH', 0.5, 'BTC', 'binance', 0.01, 'ETH', '', ''],
+                        [datetime.now(), 'trade', 5, 'ETH', 0.25, 'BTC', '', '', '', ''],
+                        [datetime.now(), 'trade', 20, 'ETH', 1, 'BTC', '', 0.0001, 'BTC', '', ''],
+                        [datetime.now(), 'fee', '', '', '', '', '', 0.0015, 'ETH', '', ''],
+                        [datetime.now(), 'trade', 50000, 'ADA', 20000, 'USD', 'kraken', '', '', 'Hodl_1', ''],
+                        [datetime.now(), 'trade', 100000, 'ADA', 50000, 'USD', 'kraken', '', '', 'Staking_1', ''],
+                        [datetime.now(), 'reward', 1000, 'ADA', 1000, 'USD', '', '', '', 'Staking_1', '']]
                 for row in rows:
                     file.write(','.join([str(x) for x in row]) + '\n')
                 file.close()
@@ -470,7 +469,7 @@ class ImportPreviewPage(SubPage):
     def showFile(self, index):
         # display filename
         allFilesPath = self.controller.getFilesPath()
-        self.fileNameLabel.setText(os_path.basename(allFilesPath[index]))
+        self.fileNameLabel.setText(os.path.basename(allFilesPath[index]))
         # import file
         content = importer.loadTradesFromFile(allFilesPath[index])
         # convert imported file to tradeList

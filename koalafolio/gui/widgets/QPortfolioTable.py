@@ -231,7 +231,7 @@ class QPortfolioTableModel(QCoinContainer):
         self.keys = [*core.CoinValue().value]
         self.setColumnHeader(self.valueCols)
 
-    def rowCount(self, parent):
+    def rowCount(self, parent : QModelIndex):
         if parent.isValid():
             if not parent.parent().isValid():  # first child level
                 return len(self.coins[parent.row()].wallets)
@@ -240,7 +240,7 @@ class QPortfolioTableModel(QCoinContainer):
         else:  # top level
             return len(self.coins)
 
-    def columnCount(self, parent):
+    def columnCount(self, parent : QModelIndex):
         if parent.isValid():
             if not parent.parent().isValid():  # first child level
                 return 4
@@ -255,7 +255,7 @@ class QPortfolioTableModel(QCoinContainer):
         except IndexError:
             return QModelIndex()
 
-    def index(self, row, column, parent):
+    def index(self, row : int, column : int, parent : QModelIndex):
         # save parent
         if parent in self.parents:
             parentId = self.parents.index(parent)
@@ -300,7 +300,7 @@ class QPortfolioTableModel(QCoinContainer):
                         return QVariant()
         return QVariant()
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 return self.header[section]
@@ -342,7 +342,7 @@ class QPortfolioTableModel(QCoinContainer):
         # top level
         return Qt.ItemIsEnabled
 
-    def setData(self, index, value, role):
+    def setData(self, index: QModelIndex, value, role: int):
         if role == Qt.EditRole:
             if index.parent().isValid():  # child level
                 if index.column() == 0:  # properties
@@ -388,7 +388,7 @@ class QPortfolioTableModel(QCoinContainer):
         coin = super(QPortfolioTableModel, self).tradeChanged(trade)
         if coin:
             row = self.coins.index(coin)
-            RowStartIndex = self.index(row, 0)
+            RowStartIndex = self.index(row, 0, QModelIndex())
             RowEndIndex = self.index(row, len(self.header) - 1, QModelIndex())
             self.dataChanged.emit(RowStartIndex, RowEndIndex)
 

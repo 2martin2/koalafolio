@@ -6,18 +6,19 @@ Created on Sun Sep  15 15:15:19 2019
 """
 from koalafolio.web.exchanges import ExchangesStatic
 from koalafolio.web.chaindata import ChaindataStatic
+from koalafolio.gui.helper.QLogger import globalLogger
 from pandas import DataFrame
 from Cryptodome.Cipher import AES
 from os import remove as os_remove
 from os.path import exists as os_exists, join as os_join, isfile
 from hashlib import sha256
 from json import dumps as json_dumps, loads as json_loads
+from Cryptodome.Cipher._mode_eax import EaxMode
 
-from helper.QLogger import globalLogger
 localLogger = globalLogger
 
 
-# staic class for static data
+# static class for static data
 class ApiImportStatic:
     SUPPORTED_APIS = ExchangesStatic.SUPPORTED_EXCHANGES + ChaindataStatic.SUPPORTED_CHAINS
     @staticmethod
@@ -61,7 +62,7 @@ class ApiImportStatic:
 
 # %% Trade
 class ApiModel:
-    def __init__(self, name='', apitype='', handle=None, note=''):
+    def __init__(self, name='', apitype='', note=''):
         self.apiName = name
         self.apiType = apitype
         self.apiNote = note
@@ -108,7 +109,7 @@ class BaseDatabase:
             else:
                 self.databaseFound = False
 
-    def encryptData(self, pw: str, data: dict) -> tuple[bytes, bytes, bytes]:
+    def encryptData(self, pw: str, data: dict) -> tuple[EaxMode, bytes, bytes]:
         dbkey = sha256(pw.encode()).hexdigest()
         cipher = AES.new(dbkey[:32].encode('utf-8'), AES.MODE_EAX)
         ciphertext, tag = cipher.encrypt_and_digest(json_dumps(data).encode("utf-8"))
@@ -148,7 +149,7 @@ class BaseDatabase:
         else:
             self.logWarning("invalid password")
 
-    def addDBEntry(self, pw: str, apiname: str, newData: str):
+    def addDBEntry(self, pw: str, apiname: str, newData: dict):
         if not self.checkPw(pw):
             self.logWarning("invalid password")
             return
