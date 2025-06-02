@@ -6,7 +6,6 @@ Tests all getTradeHistory functions with API keys from a text file
 """
 
 import os
-import sys
 import time
 import datetime
 import pandas as pd
@@ -14,16 +13,12 @@ import ast
 from typing import Dict
 import unittest
 from pathlib import Path
-
-from exchanges import ExchangesStatic
+from koalafolio.web.exchanges import ExchangesStatic
 
 # Add parent directory to path to import koalafolio modules
-project_root = Path(__file__).parents[2]
-sys.path.append(str(project_root))
-test_root = Path(__file__).parents[3] / "koalafolio_testdata"
+project_root = Path(__file__).parents[1]
+test_root = Path(__file__).parents[2] / "koalafolio_testdata"
 testdata_path = test_root / Path(__file__).stem
-
-from koalafolio.web import exchanges
 
 
 class TestExchanges(unittest.TestCase):

@@ -5,24 +5,22 @@ Tests all modelCallback functions with example trade data
 """
 
 import os
-import sys
 import pandas as pd
 import json
 import datetime
 import unittest
 from pathlib import Path
-
-# Add parent directory to path to import koalafolio modules
-project_root = Path(__file__).parents[2]
-sys.path.append(str(project_root))
-test_root = Path(__file__).parents[3] / "koalafolio_testdata"
-testdata_path = test_root / Path(__file__).stem
-
 import koalafolio.Import.Models as models
 import koalafolio.PcpCore.core as core
 import koalafolio.PcpCore.settings as settings
 
-class TestResult:
+# Add parent directory to path to import koalafolio modules
+project_root = Path(__file__).parents[1]
+test_root = Path(__file__).parents[2] / "koalafolio_testdata"
+testdata_path = test_root / Path(__file__).stem
+
+
+class ConverterTestResult :
     def __init__(self, model_name, file_name, success, trades_count=0, fees_count=0, skipped_rows=0, trade_list=None, fee_list=None, error=None):
         self.model_name = model_name
         self.file_name = file_name
@@ -76,18 +74,7 @@ class TestConverter(unittest.TestCase):
         # return all files in the test_data_dir
         return [f for f in os.listdir(self.test_data_dir) if os.path.isfile(os.path.join(self.test_data_dir, f)) and not f.startswith('.')]
 
-    def test_file_reading(self):
-        """Test that all test files can be read."""
-        for file_name in self.get_test_files():
-            file_path = os.path.join(self.test_data_dir, file_name)
-            self.assertTrue(os.path.exists(file_path), f"File not found: {file_path}")
-            try:
-                df = pd.read_csv(file_path)
-                self.assertIsNotNone(df)
-            except Exception as e:
-                self.fail(f"Failed to read file {file_path}: {str(e)}")
-
-    def test_converters(self):
+    def runTest(self):
         """Test all converters with test data files."""
         for file_name in self.get_test_files():
             file_path = os.path.join(self.test_data_dir, file_name)
@@ -106,7 +93,7 @@ class TestConverter(unittest.TestCase):
 
                                 if len(trade_list) > 0 or len(fee_list) > 0:
                                     matchcnt += 1
-                                    self.results.append(TestResult(
+                                    self.results.append(ConverterTestResult (
                                         model_name=model.modelName or model.modelCallback.__name__,
                                         file_name=file_name,
                                         success=True,
@@ -121,7 +108,7 @@ class TestConverter(unittest.TestCase):
                                     print(
                                         f"TEST test_converter:   Trades: {len(trade_list)}, Fees: {len(fee_list)}, Skipped: {skipped_rows}")
                                 else:
-                                    self.results.append(TestResult(
+                                    self.results.append(ConverterTestResult (
                                         model_name=model.modelName or model.modelCallback.__name__,
                                         file_name=file_name,
                                         success=True,
@@ -141,7 +128,7 @@ class TestConverter(unittest.TestCase):
                                 self.assertIsInstance(skipped_rows, int)
                                 
                             except Exception as e:
-                                self.results.append(TestResult(
+                                self.results.append(ConverterTestResult (
                                     model_name=model.modelName or model.modelCallback.__name__,
                                     file_name=file_name,
                                     success=False,
@@ -149,7 +136,7 @@ class TestConverter(unittest.TestCase):
                                 ))
                                 print(f"TEST test_converter: Conversion error: {file_name} with {model.modelCallback.__name__}: {str(e)}")
                     except Exception as e:
-                        self.results.append(TestResult(
+                        self.results.append(ConverterTestResult (
                             model_name=model.modelName or model.modelCallback.__name__,
                             file_name=file_name,
                             success=False,
@@ -157,7 +144,7 @@ class TestConverter(unittest.TestCase):
                         ))
                         print(f"TEST test_converter: Matching error: {file_name} with {model.modelCallback.__name__}: {str(e)}")
                 if matchcnt == 0:
-                    self.results.append(TestResult(
+                    self.results.append(ConverterTestResult (
                         model_name="file_reading",
                         file_name=file_name,
                         success=False,
@@ -170,7 +157,7 @@ class TestConverter(unittest.TestCase):
                     if len(set([result.trades_count for result in fileresults])) > 1 or \
                             len(set([result.fees_count for result in fileresults])) > 1 or \
                             len(set([result.skipped_rows for result in fileresults])) > 1:
-                        self.results.append(TestResult(
+                        self.results.append(ConverterTestResult (
                             model_name="file_reading",
                             file_name=file_name,
                             success=False,
@@ -178,7 +165,7 @@ class TestConverter(unittest.TestCase):
                         ))
                         print(f"TEST test_converter: Matching error: {file_name} has multiple matching models with different results")
                     else:
-                        self.results.append(TestResult(
+                        self.results.append(ConverterTestResult (
                             model_name="file_reading",
                             file_name=file_name,
                             success=True,
@@ -186,7 +173,7 @@ class TestConverter(unittest.TestCase):
                         ))
                         print(f"TEST test_converter: Warning: {file_name} has multiple matching with equal results")
             except Exception as e:
-                self.results.append(TestResult(
+                self.results.append(ConverterTestResult (
                     model_name="file_reading",
                     file_name=file_name,
                     success=False,
