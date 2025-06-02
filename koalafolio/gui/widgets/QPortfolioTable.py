@@ -8,15 +8,15 @@ Created on Sun Dec 16 19:09:51 2018
 from PyQt5.QtGui import QBrush, QColor, QPainterPath
 from PyQt5.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QHeaderView, QSpinBox, QStyledItemDelegate, QTextEdit, QVBoxLayout, QWidget
 from PyQt5.QtCore import QAbstractItemModel, QEvent, QModelIndex, QRect, QSize, QVariant, Qt, pyqtSignal
-import widgets.Qcontrols as controls
-import widgets.FilterableTable as fTable
-import widgets.ScrollableTable as sTable
-import widgets.QCharts as charts
+import koalafolio.gui.widgets.Qcontrols as controls
+import koalafolio.gui.widgets.FilterableTable as fTable
+import koalafolio.gui.widgets.ScrollableTable as sTable
+import koalafolio.gui.widgets.QCharts as charts
 import koalafolio.PcpCore.core as core
-import helper.QSettings as settings
-import helper.QStyle as style
+import koalafolio.gui.helper.QSettings as settings
+import koalafolio.gui.helper.QStyle as style
 import datetime
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 import os
 import configparser
 

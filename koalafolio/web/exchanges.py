@@ -10,7 +10,7 @@ from datetime import datetime
 import ccxt
 from time import sleep
 from typing import List, Optional, Dict, Any, Set
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 
 localLogger = logger.globalLogger
 

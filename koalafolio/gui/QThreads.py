@@ -6,11 +6,11 @@ Created on Tue Nov 27 21:03:59 2018
 """
 from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap, QIcon
-import helper.QSettings as settings
+import koalafolio.gui.helper.QSettings as settings
 import koalafolio.web.cryptocompareApi as ccapi
 import koalafolio.web.coingeckoApi as coinGecko
 import koalafolio.PcpCore.core as core
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 import datetime
 import requests
 

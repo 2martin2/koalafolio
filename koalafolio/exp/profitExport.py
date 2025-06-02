@@ -10,7 +10,7 @@ import pytz
 from dateutil.relativedelta import relativedelta
 import koalafolio.PcpCore.core as core
 import re
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 
 localLogger = logger.globalLogger
 

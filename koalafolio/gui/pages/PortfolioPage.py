@@ -11,14 +11,14 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QCheckBox, QHBoxLayout, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt, pyqtSignal
 import PyQt5.QtChart as qtchart
-import widgets.Qcontrols as controls
-import widgets.QCharts as charts
+import koalafolio.gui.widgets.Qcontrols as controls
+import koalafolio.gui.widgets.QCharts as charts
 import koalafolio.PcpCore.core as core
-import helper.QSettings as settings
-import helper.QStyle as style
+import koalafolio.gui.helper.QSettings as settings
+import koalafolio.gui.helper.QStyle as style
 import datetime
-import helper.QLogger as logger
-import widgets.QPortfolioTable as ptable
+import koalafolio.gui.helper.QLogger as logger
+import koalafolio.gui.widgets.QPortfolioTable as ptable
 from pages.Qpages import Page
 
 localLogger = logger.globalLogger

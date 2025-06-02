@@ -7,12 +7,12 @@ Created on Sun Sep 16 20:17:51 2018
 
 from PyQt5.QtWidgets import QCheckBox, QComboBox, QDateEdit, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout
 from PyQt5.QtCore import QDate, QStringListModel, Qt
-import widgets.Qcontrols as controls
+import koalafolio.gui.widgets.Qcontrols as controls
 import koalafolio.PcpCore.core as core
-import pages.Qpages as qpages
-import helper.QSettings as settings
+import koalafolio.gui.pages.Qpages as qpages
+import koalafolio.gui.helper.QSettings as settings
 import datetime
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 import koalafolio.exp.profitExport as profex
 
 localLogger = logger.globalLogger

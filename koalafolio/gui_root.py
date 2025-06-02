@@ -14,11 +14,11 @@ from sys import argv, exit
 
 # Essential application imports
 import koalafolio.PcpCore.logger as coreLogger
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 import koalafolio.PcpCore.arguments as arguments
 import koalafolio.PcpCore.settings as coreSettings
-import helper.QSettings as settings
-import helper.QStyle as style
+import koalafolio.gui.helper.QSettings as settings
+import koalafolio.gui.helper.QStyle as style
 import koalafolio.exp.QTranslate as translator
 
 from koalafolio.gui.widgets.QCompleterComboBox import StyledCompleter
@@ -111,7 +111,7 @@ class VersionCheckThread(QThread):
             self.versionChecked.emit('')
 
 
-# %% Lazy import helper functions
+# %% Lazy import koalafolio.gui.helper functions
 def lazy_import_heavy_modules():
     """Import heavy modules when actually needed"""
     global loggerwidget, pages, exportpage, controls, ptable, ttable, threads

@@ -11,7 +11,7 @@ from tzlocal import get_localzone
 from pytz import UTC
 from dateutil.parser import parse as dateutil_parse
 # import koalafolio.PcpCore.logger as logger
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 
 localLogger = logger.globalLogger
 

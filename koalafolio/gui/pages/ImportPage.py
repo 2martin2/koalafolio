@@ -9,23 +9,23 @@ from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QFileSystemModel,
                              QPushButton, QFileDialog, QLabel, QSpacerItem,
                              QStackedLayout, QHeaderView, QLineEdit)
 from PyQt5.QtCore import QDir, QModelIndex, QItemSelectionModel
-import widgets.Qcontrols as controls
+import koalafolio.gui.widgets.Qcontrols as controls
 import koalafolio.Import.TradeImporter as importer
 import koalafolio.Import.Models as models
-import widgets.QTradeTable as ttable
-import widgets.FilterableTable as ftable
+import koalafolio.gui.widgets.QTradeTable as ttable
+import koalafolio.gui.widgets.FilterableTable as ftable
 from os import path as os_path
 from re import compile as re_compile, IGNORECASE
 from pandas import DataFrame
-import helper.QSettings as settings
+import koalafolio.gui.helper.QSettings as settings
 from datetime import datetime
 from pathlib import Path
 from helper.QLogger import globalLogger
 from koalafolio.Import.apiImport import ApiImportStatic
 import koalafolio.gui.QApiImport as qApiImport
-import helper.QStyle as style
+import koalafolio.gui.helper.QStyle as style
 from pages.Qpages import Page, SubPage
-import widgets.ScrollableTable as sTable
+import koalafolio.gui.widgets.ScrollableTable as sTable
 
 localLogger = globalLogger
 
@@ -40,7 +40,7 @@ class ImportPage(Page):
 
         self.initData()
 
-        # %%  stacked Layout for import pages
+        # %%  stacked Layout for import koalafolio.gui.pages
         self.importSelectPage = ImportSelectPage(parent=self, controller=self)
         self.importPreviewPage = ImportPreviewPage(parent=self, controller=self)
         self.controller.startRefresh.connect(self.importPreviewPage.clearLabelStyle)

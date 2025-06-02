@@ -11,8 +11,8 @@ from PyQt5.QtWidgets import (QFrame, QLabel, QLineEdit, QWidget, QHBoxLayout,
 from PyQt5.QtCore import Qt, QSize, QRect, pyqtSignal
 from re import compile as re_compile, match as re_match, IGNORECASE, MULTILINE
 from pathlib import Path
-import helper.QLogger as logger
-import widgets.QLoggerWidget as loggerwidget
+import koalafolio.gui.helper.QLogger as logger
+import koalafolio.gui.widgets.QLoggerWidget as loggerwidget
 
 localLogger = logger.globalLogger
 

@@ -8,10 +8,10 @@ Created on Thu Oct  4 15:15:19 2018
 # todo: check why default section is written to file ?!
 
 
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 from PyQt5.QtWidgets import QLineEdit, QStyledItemDelegate
 from PyQt5.QtCore import QAbstractItemModel, QSize, QVariant, Qt, pyqtSignal
-import widgets.ScrollableTable as sTable
+import koalafolio.gui.widgets.ScrollableTable as sTable
 
 localLogger = logger.globalLogger
 

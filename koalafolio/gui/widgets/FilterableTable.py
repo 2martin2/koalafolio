@@ -8,8 +8,8 @@ Created on 11.04.2021
 from PyQt5.QtCore import QModelIndex, QSortFilterProxyModel, Qt, pyqtSignal
 from widgets.FilterableHeader import FilterableHeaderView
 import re
-import helper.QLogger as logger
-import widgets.ScrollableTable as sTable
+import koalafolio.gui.helper.QLogger as logger
+import koalafolio.gui.widgets.ScrollableTable as sTable
 
 localLogger = logger.globalLogger
 

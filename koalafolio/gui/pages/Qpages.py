@@ -7,8 +7,8 @@ Created on Sun Sep 16 20:17:51 2018
 
 from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 from PyQt5.QtCore import Qt
-import helper.QSettings as settings
-import helper.QLogger as logger
+import koalafolio.gui.helper.QSettings as settings
+import koalafolio.gui.helper.QLogger as logger
 from koalafolio.gui.pages.SettingsPage import SettingsTreeView
 import webbrowser
 

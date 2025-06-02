@@ -10,11 +10,11 @@ from PyQt5.QtGui import QBrush, QColor, QFont, QPainter, QPen
 from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QWidget
 from PyQt5.QtCore import QMargins, QPoint, QSize, Qt
 import PyQt5.QtChart as qtchart
-import widgets.Qcontrols as controls
-import helper.QSettings as settings
-import helper.QStyle as style
+import koalafolio.gui.widgets.Qcontrols as controls
+import koalafolio.gui.helper.QSettings as settings
+import koalafolio.gui.helper.QStyle as style
 import datetime
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 import os
 
 localLogger = logger.globalLogger

@@ -6,7 +6,7 @@ Created on 29.11.2020
 """
 
 from pandas import DataFrame
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 
 localLogger = logger.globalLogger
 

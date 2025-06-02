@@ -6,10 +6,10 @@ Created on Sun Sep 16 09:57:14 2018
 """
 
 from PyQt5.QtGui import QColor
-import helper.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 import os
 import re
-import helper.QSettings as settings
+import koalafolio.gui.helper.QSettings as settings
 import colorsys
 
 localLogger = logger.globalLogger

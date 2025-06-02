@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import (
     QDateTimeEdit, QHBoxLayout, QVBoxLayout, QCheckBox, QComboBox
 )
 from PyQt5.QtCore import QStringListModel, QObject, pyqtSignal
-import helper.QLogger as logger
-import widgets.Qcontrols as controls
+import koalafolio.gui.helper.QLogger as logger
+import koalafolio.gui.widgets.Qcontrols as controls
 from koalafolio.gui.widgets.QFilterableComboBox import QFilterableComboBoxView, QStringPropertyListModel
 from koalafolio.Import.apiImport import ApiImportStatic
 from datetime import datetime
