@@ -12,7 +12,7 @@ import koalafolio.gui.widgets.QTradeTable as ttable
 import koalafolio.gui.widgets.FilterableTable as ftable
 import koalafolio.gui.helper.QSettings as settings
 import koalafolio.gui.helper.QLogger as logger
-from pages.Qpages import Page
+from koalafolio.gui.pages.Qpages import Page
 
 localLogger = logger.globalLogger
 

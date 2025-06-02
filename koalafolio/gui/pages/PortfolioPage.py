@@ -19,7 +19,7 @@ import koalafolio.gui.helper.QStyle as style
 import datetime
 import koalafolio.gui.helper.QLogger as logger
 import koalafolio.gui.widgets.QPortfolioTable as ptable
-from pages.Qpages import Page
+from koalafolio.gui.pages.Qpages import Page
 
 localLogger = logger.globalLogger
 

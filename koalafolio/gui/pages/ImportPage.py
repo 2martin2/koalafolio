@@ -24,7 +24,7 @@ from koalafolio.gui.helper.QLogger import globalLogger
 from koalafolio.Import.apiImport import ApiImportStatic
 import koalafolio.gui.QApiImport as qApiImport
 import koalafolio.gui.helper.QStyle as style
-from pages.Qpages import Page, SubPage
+from koalafolio.gui.pages.Qpages import Page, SubPage
 import koalafolio.gui.widgets.ScrollableTable as sTable
 
 localLogger = globalLogger
