@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 koalafolio = {editable = true, path = "."}
+pytest = "*"
 
 [dev-packages]
 pipenv = "*"
@@ -13,3 +14,4 @@ setuptools = "*"
 twine = "*"
 pyinstaller = "*"
 psutil = "*"
+pytest = "*"
