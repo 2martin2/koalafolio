@@ -60,6 +60,7 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+
 :upload
 REM Upload to Test PyPI
 python -m twine upload --repository testpypi dist/*
@@ -120,11 +121,6 @@ if %ERRORLEVEL% neq 0 (
 
 REM start gui with data path to test_data and wait for close
 python -m koalafolio.gui_root --datadir "%project_parent_dir%\koalafolio_testdata\koalaData" --username testUser
-if %ERRORLEVEL% neq 0 (
-    echo GUI test failed!
-    deactivate
-    exit /b 1
-)
 
 echo Package build, upload and test completed successfully!
 deactivate

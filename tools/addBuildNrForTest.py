@@ -12,7 +12,7 @@ import time
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SETUP_FILE = PROJECT_ROOT / "setup.py"
 
-LOCAL_VERSION_PATTERN = re.compile(r"version\s*=\s*['\"](\d+\.\d+\.\d+)(\.\d{2})?['\"]")
+LOCAL_VERSION_PATTERN = re.compile(r"version\s*=\s*['\"](\d+\.\d+\.\d+)(\.\d+)?['\"]")
 # REMOTE VERSION: \d+\.\d+\.\d+(\.\d+)? - matches version with optional build number
 REMOTE_VERSION_PATTERN = re.compile(r"(\d+\.\d+\.\d+)(\.\d+)?")
 
