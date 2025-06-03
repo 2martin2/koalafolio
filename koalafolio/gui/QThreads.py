@@ -4,40 +4,34 @@ Created on Tue Nov 27 21:03:59 2018
 
 @author: Martin
 """
-import PyQt5.QtGui as qtgui
-import PyQt5.QtCore as qtcore
-import koalafolio.gui.QSettings as settings
+from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal
+from PyQt5.QtGui import QImage, QPixmap, QIcon
+import koalafolio.gui.helper.QSettings as settings
 import koalafolio.web.cryptocompareApi as ccapi
 import koalafolio.web.coingeckoApi as coinGecko
 import koalafolio.PcpCore.core as core
-import koalafolio.gui.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 import datetime
 import requests
-from PIL.ImageQt import ImageQt
-from PIL import Image
-from io import BytesIO
 
 localLogger = logger.globalLogger
 
 
-class WebApiInterface(qtcore.QObject):
-    coinPricesLoaded = qtcore.pyqtSignal([dict, list])
-    coinIconsLoaded = qtcore.pyqtSignal([dict, list])
-    coinPriceChartsLoaded = qtcore.pyqtSignal([dict])
-    historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
-    changeHistTimerInterval = qtcore.pyqtSignal([int])
-    changeIconTimerInterval = qtcore.pyqtSignal([int])
-    # historicalPriceUpdateFinished = qtcore.pyqtSignal()
+class WebApiInterface(QObject):
+    coinPricesLoaded = pyqtSignal([dict, list])
+    coinIconsLoaded = pyqtSignal([dict, list])
+    coinPriceChartsLoaded = pyqtSignal([dict])
+    historicalPricesLoaded = pyqtSignal([dict, int])
+    changeHistTimerInterval = pyqtSignal([int])
+    changeIconTimerInterval = pyqtSignal([int])
+    # historicalPriceUpdateFinished = pyqtSignal()
 
     def __init__(self):
         super(WebApiInterface, self).__init__()
 
         # self.histPrices = {}
         self.tradeBuffer = core.TradeList()
-        self.coinIconUrls = {}
-        self.coinIconUrls["ccapi"] = {}
-        self.coinIconUrls["coingecko"] = {}
-        self.coinIconUrls["merged"] = {}
+        self.coinIconUrls = {"ccapi": {}, "coingecko": {}, "merged": {}}
 
         self.histApiFailedCounter = 0
 
@@ -67,9 +61,9 @@ class WebApiInterface(qtcore.QObject):
                         # get url and remove from buffer
                         url = self.coinIconUrls[api].pop(coin)
                         # load Image from url
-                        image = None
+                        imagedata = None
                         try:
-                            image = self.getImage(url, coin)
+                            imagedata = self.getImage(url, coin)
                         except ConnectionRefusedError:
                             localLogger.info("ratelimit reached loading coin Icons, continue in 20s")
                             # rate limit, readd coin to buffer and try again next time
@@ -85,8 +79,8 @@ class WebApiInterface(qtcore.QObject):
                         # save coin
                         coins.append(coin)
                         # convert image
-                        if image:
-                            qicons[coin] = self.imageToQIcon(image)
+                        if imagedata:
+                            qicons[coin] = self.imageToQIcon(imagedata)
         # if new qicons return them to main thread
         if qicons:
             self.coinIconsLoaded.emit(qicons, coins)
@@ -122,18 +116,20 @@ class WebApiInterface(qtcore.QObject):
             return None
         if imageResponse.status_code == 200:
             # request successful
-            return Image.open(BytesIO(imageResponse.content))
+            return imageResponse.content
         if imageResponse.status_code == 429:
             raise ConnectionRefusedError(
                 "response code: " + str(imageResponse.status_code) + ", reason: " + str(imageResponse.reason))
         raise ConnectionError(
             "response code: " + str(imageResponse.status_code) + ", reason: " + str(imageResponse.reason))
 
-    def imageToQIcon(self, image):
-        im = image.convert("RGBA")
-        qim = ImageQt(im)
-        qpix = qtgui.QPixmap.fromImage(qim)
-        return qtgui.QIcon(qpix)
+    def imageToQIcon(self, imagedata):
+        # Convert to QImage
+        q_image = QImage()
+        q_image.loadFromData(imagedata)
+        # Convert to QPixmap
+        qpix = QPixmap.fromImage(q_image)
+        return QIcon(qpix)
 
     def loadHistoricalPricesEvent(self, tradeList):
         #print("histPrices event trigger next call")
@@ -213,21 +209,21 @@ class WebApiInterface(qtcore.QObject):
 
 
 # %% threads
-class UpdatePriceThread(qtcore.QThread):
-    coinPricesLoaded = qtcore.pyqtSignal([dict, list])
-    coinIconsLoaded = qtcore.pyqtSignal([dict, list])
-    coinPriceChartsLoaded = qtcore.pyqtSignal([dict])
-    historicalPricesLoaded = qtcore.pyqtSignal([dict, int])
+class UpdatePriceThread(QThread):
+    coinPricesLoaded = pyqtSignal([dict, list])
+    coinIconsLoaded = pyqtSignal([dict, list])
+    coinPriceChartsLoaded = pyqtSignal([dict])
+    historicalPricesLoaded = pyqtSignal([dict, int])
 
     def __init__(self, coinList, tradeList):
         super(UpdatePriceThread, self).__init__()
         self.coinList = coinList
         self.tradeList = tradeList
 
-        self.priceTimer = qtcore.QTimer()
-        self.priceChartTimer = qtcore.QTimer()
-        self.histTimer = qtcore.QTimer()
-        self.iconTimer = qtcore.QTimer()
+        self.priceTimer = QTimer()
+        self.priceChartTimer = QTimer()
+        self.histTimer = QTimer()
+        self.iconTimer = QTimer()
 
         self.webApiInterface = WebApiInterface()
 

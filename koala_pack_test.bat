@@ -1,1 +1,0 @@
-pipenv run pyinstaller koalafolio/gui_root.py --icon=koalafolio/KoalaIcon.ico --name=koalafolio --distpath koalafolio/dist --add-binary %LocalAppData%\Programs\Python\Python39\Lib\site-packages\coincurve\libsecp256k1.dll;coincurve

@@ -5,24 +5,25 @@ Created on Wen Oct 01 15:36:21 2019
 @author: Martin
 """
 
-import PyQt5.QtWidgets as qtwidgets
-import PyQt5.QtCore as qtcore
-import koalafolio.gui.QLogger as logger
-import koalafolio.gui.QSettings as settings
-import koalafolio.gui.Qcontrols as controls
-import koalafolio.Import.apiImport as apiImport
-import datetime
+from PyQt5.QtWidgets import (
+    QWidget, QStackedLayout, QLabel, QLineEdit, QPushButton, QGridLayout,
+    QDateTimeEdit, QHBoxLayout, QVBoxLayout, QCheckBox, QComboBox
+)
+from PyQt5.QtCore import QStringListModel, QObject, pyqtSignal
+import koalafolio.gui.helper.QLogger as logger
+import koalafolio.gui.widgets.Qcontrols as controls
+from koalafolio.gui.widgets.QFilterableComboBox import QFilterableComboBoxView, QStringPropertyListModel
+from koalafolio.Import.apiImport import ApiImportStatic
+from datetime import datetime
 
 localLogger = logger.globalLogger
 
-qt = qtcore.Qt
 
-
-class ApiKeyModel(qtcore.QObject):
-    databaseUnlocked = qtcore.pyqtSignal()
-    databaseLocked = qtcore.pyqtSignal()
-    databaseWritten = qtcore.pyqtSignal()
-    databaseRemoved = qtcore.pyqtSignal()
+class ApiKeyModel(QObject):
+    databaseUnlocked = pyqtSignal()
+    databaseLocked = pyqtSignal()
+    databaseWritten = pyqtSignal()
+    databaseRemoved = pyqtSignal()
 
     def __init__(self, database, defaultdata, *args, **kwargs):
         super(ApiKeyModel, self).__init__(*args, **kwargs)
@@ -30,32 +31,37 @@ class ApiKeyModel(qtcore.QObject):
         self.database = database
         self.defaultApiKeys = defaultdata
 
-        self.apiModels = apiImport.apiModels
+        self.apiModels = ApiImportStatic.getApiModels()
 
-        self.databaseApiNameModel = qtcore.QStringListModel()
+        self.databaseApiNameModel = QStringPropertyListModel()
         self.databaseUnlocked.connect(self.loadDatabaseApiNames)
         self.databaseWritten.connect(self.loadDatabaseApiNames)
 
-        self.apiSelectModel = qtcore.QStringListModel()
+
+        self.apiSelectModel = QStringPropertyListModel()  # model for ComboBox
         self.refreshApiNames()
         self.addressSelectModels = {}
         self.initAddressSelectModels()
         self.refreshAddressSelectModels()
 
     def refreshApiNames(self):
-        self.apiSelectModel.setStringList(apiImport.apiNames)
+        print("refreshing api names")
+        # convert dict of apiModels to list of dicts
+        apiModelsList = [self.apiModels[apiname].toDict() for apiname in self.apiModels]
+        self.apiSelectModel.setDataFromDict(apiModelsList, string_key="apiName", properties_keys=["apiType"])
 
     def initAddressSelectModels(self):
         # add QStringListModel in addressSelectModels for each exchange api
         for apiname in self.apiModels:
             if self.apiModels[apiname].apiType == "chaindata":
-                self.addressSelectModels[apiname] = qtcore.QStringListModel()
+                self.addressSelectModels[apiname] = QStringListModel()
 
     def refreshAddressSelectModels(self):
         # set default String List for addressSelectModels
         for apiname in self.addressSelectModels:
             self.addressSelectModels[apiname].setStringList(["All(0)"])
 
+    # noinspection PyUnresolvedReferences
     def lockDatabase(self):
         self.database.lockDatabase()
         self.databaseLocked.emit()
@@ -72,10 +78,11 @@ class ApiKeyModel(qtcore.QObject):
         self.database.createDatabase(pw)
         self.databaseUnlocked.emit()
 
-    def addDBEntry(self, pw: str, apiname: str, apikey: str = None, secret: str = None, addressList: list = []):
+    def addDBEntry(self, pw:str, apiname:str, apikey:str = None, secret:str = None, addressList:list = None):
+        if addressList is None:
+            addressList = []
         apitype = self.getApiType(apiname)
-        newData = {}
-        newData["apiname"] = apiname
+        newData = {"apiname": apiname}
         if apitype == "exchange":
             newData["apikey"] = apikey
             newData["secret"] = secret
@@ -90,7 +97,10 @@ class ApiKeyModel(qtcore.QObject):
         self.databaseWritten.emit()
 
     def loadDatabaseApiNames(self):
-        self.databaseApiNameModel.setStringList(list(self.database.data))
+        # convert database data to list of dicts with properties and ignore invalid apinames
+        apiNamesList = [apiname for apiname in self.database.data if apiname in self.apiModels]
+        apiNamesList = [{"apiname": apiname, "apitype": self.getApiType(apiname)} for apiname in apiNamesList]
+        self.databaseApiNameModel.setDataFromDict(apiNamesList, string_key="apiname", properties_keys=["apitype"])
 
     def deleteDatabase(self):
         self.database.deleteDatabase()
@@ -139,7 +149,7 @@ class ApiKeyModel(qtcore.QObject):
 
     # append new Address to existing StringListModel for currently selected Api
     def addAddress(self, apiname: str, address: str):
-        model: qtcore.QStringListModel
+        model: QStringListModel
         model = self.addressSelectModels[apiname]
         addressList = model.stringList()
         if not address:
@@ -158,7 +168,7 @@ class ApiKeyModel(qtcore.QObject):
     def removeAddress(self, apiname: str, index: int):
         # don't remove default All Item
         if index > 0:
-            model: qtcore.QStringListModel
+            model: QStringListModel
             model = self.addressSelectModels[apiname]
             model.removeRow(index)
             # update All Item
@@ -167,9 +177,9 @@ class ApiKeyModel(qtcore.QObject):
             model.setStringList(addressList)
 
 
-class ApiKeyView(qtwidgets.QWidget):
-    importFromApi = qtcore.pyqtSignal([str, str, int, int, str, str, list])
-    saveFromApi = qtcore.pyqtSignal([str, str, int, int, str, str, list])
+class ApiKeyView(QWidget):
+    importFromApi = pyqtSignal([str, str, int, int, str, str, list])
+    saveFromApi = pyqtSignal([str, str, int, int, str, str, list])
 
     def __init__(self, *args, **kwargs):
         super(ApiKeyView, self).__init__(*args, **kwargs)
@@ -177,12 +187,12 @@ class ApiKeyView(qtwidgets.QWidget):
         self.apiLabel = controls.Heading('API import', self)
 
         # stacked Layout for database UI (create new or open existing DB)
-        self.stackedContentLayoutDB = qtwidgets.QStackedLayout()
+        self.stackedContentLayoutDB = QStackedLayout()
         self.stackedContentLayoutDB.addWidget(self.initNewDbUI())
         self.stackedContentLayoutDB.addWidget(self.initReadDbUI())
 
         # stacked Layout for api layout (switch exchange and chaindata UI)
-        self.stackedContentLayoutApi = qtwidgets.QStackedLayout()
+        self.stackedContentLayoutApi = QStackedLayout()
         self.stackedContentLayoutApi.addWidget(self.initApiExchangeUI())
         self.stackedContentLayoutApi.addWidget(self.initApiChaindataUISelectAddress())
         self.stackedContentLayoutApi.addWidget(self.initApiChaindataUIAddAddress())
@@ -193,20 +203,20 @@ class ApiKeyView(qtwidgets.QWidget):
         self.directApiLabel = controls.SubHeading("enter api keys, always use read only keys for this application!!",
                                                   self.newDbFrame)
 
-        self.directApiSelectLabel = qtwidgets.QLabel("API: ", self)
-        self.directApiSelectDropdown = qtwidgets.QComboBox(self)
+        self.directApiSelectLabel = QLabel("API: ", self)
+        self.directApiSelectDropdown = QFilterableComboBoxView(parent=self)
         self.directApiSelectDropdown.currentTextChanged.connect(self.directApiSelectDropdownChanged)
 
-        today = datetime.datetime.now()
-        self.startDateLabel = qtwidgets.QLabel('start: ', self)
-        self.startDateInput = qtwidgets.QDateTimeEdit(datetime.datetime(year=today.year - 1, month=1, day=1), self)
-        self.endDateLabel = qtwidgets.QLabel('end: ', self)
-        self.endDateInput = qtwidgets.QDateTimeEdit(today, self)
-        self.keyLabel = qtwidgets.QLabel('key: ', self)
-        self.keyInput = qtwidgets.QLineEdit(self)
-        self.keyInput.setEchoMode(qtwidgets.QLineEdit.Password)
+        today = datetime.now()
+        self.startDateLabel = QLabel('start: ', self)
+        self.startDateInput = QDateTimeEdit(datetime(year=today.year - 1, month=1, day=1), self)
+        self.endDateLabel = QLabel('end: ', self)
+        self.endDateInput = QDateTimeEdit(today, self)
+        self.keyLabel = QLabel('key: ', self)
+        self.keyInput = QLineEdit(self)
+        self.keyInput.setEchoMode(QLineEdit.Password)
 
-        self.directApiGridLayout = qtwidgets.QGridLayout()
+        self.directApiGridLayout = QGridLayout()
         self.directApiGridLayout.addWidget(self.directApiSelectLabel, 0, 0)
         self.directApiGridLayout.addWidget(self.directApiSelectDropdown, 0, 1)
         self.directApiGridLayout.addWidget(self.startDateLabel, 1, 0)
@@ -217,39 +227,41 @@ class ApiKeyView(qtwidgets.QWidget):
         self.directApiGridLayout.addWidget(self.keyInput, 3, 1)
         self.directApiGridLayout.setColumnStretch(1, 100)
 
-        self.directApiNote = qtwidgets.QLabel('select api from dropdown', self)
-        self.directApiImportButton = qtwidgets.QPushButton('import', self)
+        self.directApiNote = QLabel('select api from dropdown', self)
+        self.directApiImportButton = QPushButton('import', self)
         self.directApiImportButton.clicked.connect(self.directImportFromApi)
-        self.directApiSaveButton = qtwidgets.QPushButton('save as csv', self)
+        self.directApiSaveButton = QPushButton('save as csv', self)
         self.directApiSaveButton.clicked.connect(self.directSaveFromApi)
 
-        self.directApiHorzButtonLayout = qtwidgets.QHBoxLayout()
+        self.directApiHorzButtonLayout = QHBoxLayout()
         self.directApiHorzButtonLayout.addStretch()
         self.directApiHorzButtonLayout.addWidget(self.directApiSaveButton)
         self.directApiHorzButtonLayout.addWidget(self.directApiImportButton)
         self.directApiHorzButtonLayout.addStretch()
 
-        self.vLayout = qtwidgets.QVBoxLayout(self)
+        self.vLayout = QVBoxLayout(self)
         self.vLayout.addWidget(self.apiLabel)
-        self.vLayout.addStretch()
+        # add Stretch with fixed hight
+        self.vLayout.addSpacing(10)
         self.vLayout.addLayout(self.stackedContentLayoutDB)
-        self.vLayout.addStretch()
+        self.vLayout.addSpacing(30)
         self.vLayout.addWidget(self.directApiLabel)
         self.vLayout.addLayout(self.directApiGridLayout)
         self.vLayout.addLayout(self.stackedContentLayoutApi)
         self.vLayout.addWidget(self.directApiNote)
-        self.vLayout.addStretch()
+        # add Stretch with high priority
+        self.vLayout.addStretch(100)
         self.vLayout.addLayout(self.directApiHorzButtonLayout)
 
     # init UI for exchange api with key secret pair
     def initApiExchangeUI(self):
         self.apiExchangeFrame = controls.StyledFrame(self)
 
-        self.secretLabel = qtwidgets.QLabel('secret: ', self.apiExchangeFrame)
-        self.secretInput = qtwidgets.QLineEdit(self.apiExchangeFrame)
-        self.secretInput.setEchoMode(qtwidgets.QLineEdit.Password)
+        self.secretLabel = QLabel('secret: ', self.apiExchangeFrame)
+        self.secretInput = QLineEdit(self.apiExchangeFrame)
+        self.secretInput.setEchoMode(QLineEdit.Password)
 
-        self.apiExchangeGridLayout = qtwidgets.QGridLayout(self.apiExchangeFrame)
+        self.apiExchangeGridLayout = QGridLayout(self.apiExchangeFrame)
         self.apiExchangeGridLayout.addWidget(self.secretLabel, 0, 0)
         self.apiExchangeGridLayout.addWidget(self.secretInput, 0, 1)
 
@@ -259,15 +271,15 @@ class ApiKeyView(qtwidgets.QWidget):
     def initApiChaindataUISelectAddress(self):
         self.apiChaindataFrameSelectAddress = controls.StyledFrame(self)
 
-        self.addressLabel = qtwidgets.QLabel('address: ', self.apiChaindataFrameSelectAddress)
-        self.addressSelectDropdown = qtwidgets.QComboBox(self.apiChaindataFrameSelectAddress)
+        self.addressLabel = QLabel('address: ', self.apiChaindataFrameSelectAddress)
+        self.addressSelectDropdown = QComboBox(self.apiChaindataFrameSelectAddress)
 
-        self.addressInputAddButton = qtwidgets.QPushButton('+', self.apiChaindataFrameSelectAddress)
+        self.addressInputAddButton = QPushButton('+', self.apiChaindataFrameSelectAddress)
         self.addressInputAddButton.clicked.connect(self.addChainAddress)
-        self.addressInputRemoveButton = qtwidgets.QPushButton('-', self.apiChaindataFrameSelectAddress)
+        self.addressInputRemoveButton = QPushButton('-', self.apiChaindataFrameSelectAddress)
         self.addressInputRemoveButton.clicked.connect(self.removeChainAddress)
 
-        self.apiChaindataGridLayoutSelectAddress = qtwidgets.QGridLayout(self.apiChaindataFrameSelectAddress)
+        self.apiChaindataGridLayoutSelectAddress = QGridLayout(self.apiChaindataFrameSelectAddress)
         self.apiChaindataGridLayoutSelectAddress.addWidget(self.addressLabel, 0, 0)
         self.apiChaindataGridLayoutSelectAddress.addWidget(self.addressSelectDropdown, 0, 1)
         self.apiChaindataGridLayoutSelectAddress.addWidget(self.addressInputAddButton, 0, 2)
@@ -279,15 +291,15 @@ class ApiKeyView(qtwidgets.QWidget):
     def initApiChaindataUIAddAddress(self):
         self.apiChaindataFrameAddAddress = controls.StyledFrame(self)
 
-        self.addressLabelNewAddress = qtwidgets.QLabel('address: ', self.apiChaindataFrameAddAddress)
-        self.addressInputNewAddress = qtwidgets.QLineEdit(self.apiChaindataFrameAddAddress)
+        self.addressLabelNewAddress = QLabel('address: ', self.apiChaindataFrameAddAddress)
+        self.addressInputNewAddress = QLineEdit(self.apiChaindataFrameAddAddress)
 
-        self.addressInputFinishButton = qtwidgets.QPushButton(chr(10003), self.apiChaindataFrameAddAddress)
+        self.addressInputFinishButton = QPushButton(chr(10003), self.apiChaindataFrameAddAddress)
         self.addressInputFinishButton.clicked.connect(self.saveNewChainAddress)
-        self.addressInputCancelButton = qtwidgets.QPushButton('x', self.apiChaindataFrameAddAddress)
+        self.addressInputCancelButton = QPushButton('x', self.apiChaindataFrameAddAddress)
         self.addressInputCancelButton.clicked.connect(self.cancelNewChainAddress)
 
-        self.apiChaindataGridLayoutAddAddress = qtwidgets.QGridLayout(self.apiChaindataFrameAddAddress)
+        self.apiChaindataGridLayoutAddAddress = QGridLayout(self.apiChaindataFrameAddAddress)
         self.apiChaindataGridLayoutAddAddress.addWidget(self.addressLabelNewAddress, 0, 0)
         self.apiChaindataGridLayoutAddAddress.addWidget(self.addressInputNewAddress, 0, 1)
         self.apiChaindataGridLayoutAddAddress.addWidget(self.addressInputFinishButton, 0, 2)
@@ -302,34 +314,34 @@ class ApiKeyView(qtwidgets.QWidget):
         # create new db
         self.newDbLabel = controls.SubHeading("create a new password to store the api keys encrypted on disk")
 
-        self.newKeyLabel = qtwidgets.QLabel("new password: ", self.newDbFrame)
-        self.newKeyLabel2 = qtwidgets.QLabel("repeat password: ", self.newDbFrame)
+        self.newKeyLabel = QLabel("new password: ", self.newDbFrame)
+        self.newKeyLabel2 = QLabel("repeat password: ", self.newDbFrame)
 
-        self.newKeyEdit = qtwidgets.QLineEdit(self.newDbFrame)
-        self.newKeyEdit.setEchoMode(qtwidgets.QLineEdit.Password)
+        self.newKeyEdit = QLineEdit(self.newDbFrame)
+        self.newKeyEdit.setEchoMode(QLineEdit.Password)
         self.newKeyEdit.returnPressed.connect(self.createNewDb)
-        self.newKeyEdit2 = qtwidgets.QLineEdit(self.newDbFrame)
-        self.newKeyEdit2.setEchoMode(qtwidgets.QLineEdit.Password)
+        self.newKeyEdit2 = QLineEdit(self.newDbFrame)
+        self.newKeyEdit2.setEchoMode(QLineEdit.Password)
         self.newKeyEdit2.returnPressed.connect(self.createNewDb)
 
-        self.createButton = qtwidgets.QPushButton("create", self.newDbFrame)
-        self.clearButton = qtwidgets.QPushButton("clear", self.newDbFrame)
+        self.createButton = QPushButton("create", self.newDbFrame)
+        self.clearButton = QPushButton("clear", self.newDbFrame)
         self.createButton.clicked.connect(self.createNewDb)
         self.clearButton.clicked.connect(self.clearNewKeys)
 
-        self.newDbGridLayout = qtwidgets.QGridLayout()
+        self.newDbGridLayout = QGridLayout()
         self.newDbGridLayout.addWidget(self.newKeyLabel, 0, 0)
         self.newDbGridLayout.addWidget(self.newKeyEdit, 0, 1)
         self.newDbGridLayout.addWidget(self.newKeyLabel2, 1, 0)
         self.newDbGridLayout.addWidget(self.newKeyEdit2, 1, 1)
 
-        self.newDbButtonLayout = qtwidgets.QHBoxLayout()
+        self.newDbButtonLayout = QHBoxLayout()
         self.newDbButtonLayout.addStretch()
         self.newDbButtonLayout.addWidget(self.createButton)
         self.newDbButtonLayout.addWidget(self.clearButton)
         self.newDbButtonLayout.addStretch()
 
-        self.newDbVLayout = qtwidgets.QVBoxLayout(self.newDbFrame)
+        self.newDbVLayout = QVBoxLayout(self.newDbFrame)
         self.newDbVLayout.addWidget(self.newDbLabel)
         self.newDbVLayout.addLayout(self.newDbGridLayout)
         self.newDbVLayout.addLayout(self.newDbButtonLayout)
@@ -342,27 +354,27 @@ class ApiKeyView(qtwidgets.QWidget):
         # api import
         self.apiFrame = controls.StyledFrame(self)
 
-        self.pwLabel = qtwidgets.QLabel('password: ', self.apiFrame)
-        self.pwInput = qtwidgets.QLineEdit(self.apiFrame)
-        self.pwInput.setEchoMode(qtwidgets.QLineEdit.Password)
+        self.pwLabel = QLabel('password: ', self.apiFrame)
+        self.pwInput = QLineEdit(self.apiFrame)
+        self.pwInput.setEchoMode(QLineEdit.Password)
         self.pwInput.returnPressed.connect(self.unlockDb)
 
-        self.pwLayout = qtwidgets.QGridLayout()
+        self.pwLayout = QGridLayout()
         self.pwLayout.addWidget(self.pwLabel, 0, 0)
         self.pwLayout.addWidget(self.pwInput, 0, 1)
 
-        self.unlockDbButton = qtwidgets.QPushButton("unlock db", self.apiFrame)
+        self.unlockDbButton = QPushButton("unlock db", self.apiFrame)
         self.unlockDbButton.clicked.connect(self.unlockDb)
-        self.lockDbButton = qtwidgets.QPushButton("lock db", self.apiFrame)
+        self.lockDbButton = QPushButton("lock db", self.apiFrame)
         self.lockDbButton.clicked.connect(self.lockDb)
-        self.deleteDbButton = qtwidgets.QPushButton("delete db", self.apiFrame)
+        self.deleteDbButton = QPushButton("delete db", self.apiFrame)
         self.deleteDbButton.clicked.connect(self.deleteDatabase)
         self.deleteDbButton.setDisabled(True)
-        self.deleteDbButtonEnableBox = qtwidgets.QCheckBox(self.apiFrame)
+        self.deleteDbButtonEnableBox = QCheckBox(self.apiFrame)
         self.deleteDbButtonEnableBox.stateChanged.connect(self.deleteDbButtonEnableBoxChanged)
         self.deleteDbButtonEnableBox.setChecked(False)
 
-        self.dbButtonLayout = qtwidgets.QHBoxLayout()
+        self.dbButtonLayout = QHBoxLayout()
         self.dbButtonLayout.addStretch()
         self.dbButtonLayout.addWidget(self.unlockDbButton)
         self.dbButtonLayout.addWidget(self.lockDbButton)
@@ -370,29 +382,29 @@ class ApiKeyView(qtwidgets.QWidget):
         self.dbButtonLayout.addWidget(self.deleteDbButtonEnableBox)
         self.dbButtonLayout.addStretch()
 
-        self.lockedStateLabel = qtwidgets.QLabel("database is locked", self.apiFrame)
+        self.lockedStateLabel = QLabel("database is locked", self.apiFrame)
 
-        self.lockedStateLayout = qtwidgets.QHBoxLayout()
+        self.lockedStateLayout = QHBoxLayout()
         self.lockedStateLayout.addStretch()
         self.lockedStateLayout.addWidget(self.lockedStateLabel)
         self.lockedStateLayout.addStretch()
 
-        self.apiSelectLabel = qtwidgets.QLabel("API: ", self.apiFrame)
-        self.apiSelectDropdown = qtwidgets.QComboBox(self.apiFrame)
+        self.apiSelectLabel = QLabel("API: ", self.apiFrame)
+        self.apiSelectDropdown = QFilterableComboBoxView(parent=self.apiFrame)
 
-        self.apiGridLayout = qtwidgets.QGridLayout()
+        self.apiGridLayout = QGridLayout()
         self.apiGridLayout.addWidget(self.apiSelectLabel, 0, 0)
         self.apiGridLayout.addWidget(self.apiSelectDropdown, 0, 1)
         self.apiGridLayout.setColumnStretch(1, 1)
 
-        self.loadApiEntryButton = qtwidgets.QPushButton("load api", self.apiFrame)
+        self.loadApiEntryButton = QPushButton("load api", self.apiFrame)
         self.loadApiEntryButton.clicked.connect(self.loadApiEntry)
-        self.saveApiEntryButton = qtwidgets.QPushButton("save api", self.apiFrame)
+        self.saveApiEntryButton = QPushButton("save api", self.apiFrame)
         self.saveApiEntryButton.clicked.connect(self.saveApiEntry)
-        self.deleteDBEntryButton = qtwidgets.QPushButton("delete api", self.apiFrame)
+        self.deleteDBEntryButton = QPushButton("delete api", self.apiFrame)
         self.deleteDBEntryButton.clicked.connect(self.deleteDBEntry)
 
-        self.dbButtonLayout2 = qtwidgets.QHBoxLayout()
+        self.dbButtonLayout2 = QHBoxLayout()
         self.dbButtonLayout2.addStretch()
         self.dbButtonLayout2.addWidget(self.loadApiEntryButton)
         self.dbButtonLayout2.addWidget(self.saveApiEntryButton)
@@ -400,7 +412,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.dbButtonLayout2.addStretch()
 
         # layout
-        self.apiLayout = qtwidgets.QVBoxLayout(self.apiFrame)
+        self.apiLayout = QVBoxLayout(self.apiFrame)
         self.apiLayout.addStretch()
         self.apiLayout.addLayout(self.pwLayout)
         self.apiLayout.addLayout(self.dbButtonLayout)
@@ -419,9 +431,8 @@ class ApiKeyView(qtwidgets.QWidget):
         model.databaseWritten.connect(self.databaseWritten)
         model.databaseRemoved.connect(self.databaseRemoved)
         # set dropdown models
-        self.apiSelectDropdown.setModel(model.databaseApiNameModel)
-        self.directApiSelectDropdown.setModel(model.apiSelectModel)
-        self.directApiSelectDropdown.setCurrentIndex(0)
+        self.apiSelectDropdown.setModel(model=model.databaseApiNameModel)
+        self.directApiSelectDropdown.setModel(model=model.apiSelectModel)
 
         # set model
         if self.model.database.databaseFound:
@@ -439,6 +450,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.loadApiEntryButton.setEnabled(True)
         self.deleteDBEntryButton.setEnabled(True)
         self.apiSelectDropdown.setCurrentIndex(0)
+        self.apiSelectDropdown.setEnabled(True)
         self.lockedStateLabel.setText("database is unlocked")
 
     def databaseLocked(self):
@@ -448,6 +460,7 @@ class ApiKeyView(qtwidgets.QWidget):
         self.deleteDBEntryButton.setDisabled(True)
         self.pwInput.setEnabled(True)
         self.unlockDbButton.setEnabled(True)
+        self.apiSelectDropdown.setDisabled(True)
         self.lockedStateLabel.setText("database is locked")
 
     def databaseWritten(self):
@@ -537,14 +550,15 @@ class ApiKeyView(qtwidgets.QWidget):
             apikey, secret = self.model.getApiKeyAndSecret(apiname)
         elif apitype == "chaindata":
             apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
-        index = self.directApiSelectDropdown.model().stringList().index(apiname)
+        # get index from directApiSelectDropdown
+        index = self.directApiSelectDropdown.findText(apiname)
         self.directApiSelectDropdown.setCurrentIndex(index)
         if apitype == "exchange":
             self.keyInput.setText(apikey)
             self.secretInput.setText(secret)
         elif apitype == "chaindata":
             self.keyInput.setText(apikey)
-            addressModel: qtcore.QStringListModel
+            addressModel: QStringListModel
             addressModel = self.model.getAddressModel(apiname)
             addressList = ["All(" + str(len(addressList)) + ")"] + addressList
             addressModel.setStringList(addressList)
@@ -559,7 +573,7 @@ class ApiKeyView(qtwidgets.QWidget):
                 self.model.addDBEntry(self.pwInput.text(), apiname, apikey=apikey, secret=secret)
         elif apitype == "chaindata":
             apikey = self.keyInput.text()
-            addressModel: qtcore.QStringListModel
+            addressModel: QStringListModel
             addressModel = self.model.getAddressModel(apiname)
             addressList = addressModel.stringList()
             # remove All Item
@@ -578,31 +592,33 @@ class ApiKeyView(qtwidgets.QWidget):
 
     # callback if selected Api is changed
     def directApiSelectDropdownChanged(self):
-        # remove previous Input from InputBoxes
-        self.addressInputNewAddress.clear()
-        self.keyInput.clear()
-        self.secretInput.clear()
+        # check if api from dropdown exists in model, else ignore
         apiname = self.directApiSelectDropdown.currentText()
-        # update note
-        self.directApiNote.setText(self.model.getApiNote(apiname))
-        # update Api UI depending on selected Api Type
-        apitype = self.model.getApiType(apiname)
-        if apitype == "exchange":
-            self.stackedContentLayoutApi.setCurrentIndex(0)
-            if not self.model.isDataBaseLocked():
-                apikey, secret = self.model.getApiKeyAndSecret(apiname)
-                self.keyInput.setText(apikey)
-                self.secretInput.setText(secret)
-        elif apitype == "chaindata":
-            self.stackedContentLayoutApi.setCurrentIndex(1)
-            self.addressSelectDropdown.setModel(self.model.getAddressModel(apiname))
-            self.addressSelectDropdown.setCurrentIndex(0)
-            if not self.model.isDataBaseLocked():
-                apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
-                if apikey:
+        if apiname in self.model.apiModels:
+            # remove previous Input from InputBoxes
+            self.addressInputNewAddress.clear()
+            self.keyInput.clear()
+            self.secretInput.clear()
+            # update note
+            self.directApiNote.setText(self.model.getApiNote(apiname))
+            # update Api UI depending on selected Api Type
+            apitype = self.model.getApiType(apiname)
+            if apitype == "exchange":
+                self.stackedContentLayoutApi.setCurrentIndex(0)
+                if not self.model.isDataBaseLocked():
+                    apikey, secret = self.model.getApiKeyAndSecret(apiname)
                     self.keyInput.setText(apikey)
-                for address in addressList:
-                    self.model.addAddress(apiname, address)
+                    self.secretInput.setText(secret)
+            elif apitype == "chaindata":
+                self.stackedContentLayoutApi.setCurrentIndex(1)
+                self.addressSelectDropdown.setModel(self.model.getAddressModel(apiname))
+                self.addressSelectDropdown.setCurrentIndex(0)
+                if not self.model.isDataBaseLocked():
+                    apikey, addressList = self.model.getApiKeyAndAddressList(apiname)
+                    if apikey:
+                        self.keyInput.setText(apikey)
+                    for address in addressList:
+                        self.model.addAddress(apiname, address)
 
     def addChainAddress(self):
         # switch to AddressAddUI

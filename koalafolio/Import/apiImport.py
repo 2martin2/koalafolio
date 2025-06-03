@@ -4,89 +4,78 @@ Created on Sun Sep  15 15:15:19 2019
 
 @author: Martin
 """
-import koalafolio.gui.QLogger as logger
-import koalafolio.web.exchanges as exchanges
-import koalafolio.web.chaindata as chaindata
-import pandas
+from koalafolio.web.exchanges import ExchangesStatic
+from koalafolio.web.chaindata import ChaindataStatic
+from koalafolio.gui.helper.QLogger import globalLogger
+from pandas import DataFrame
 from Cryptodome.Cipher import AES
-import os
-import hashlib
-import json
+from os import remove as os_remove
+from os.path import exists as os_exists, join as os_join, isfile
+from hashlib import sha256
+from json import dumps as json_dumps, loads as json_loads
+from Cryptodome.Cipher._mode_eax import EaxMode
 
-localLogger = logger.globalLogger
+localLogger = globalLogger
+
+
+# static class for static data
+class ApiImportStatic:
+    SUPPORTED_APIS = ExchangesStatic.SUPPORTED_EXCHANGES + ChaindataStatic.SUPPORTED_CHAINS
+    @staticmethod
+    def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, address=None):
+        if apiname not in ApiImportStatic.SUPPORTED_APIS:
+            raise KeyError("invalid api name")
+        else:
+            localLogger.info("requesting data from " + str(apiname))
+            try:
+                if apitype == "exchange":
+                    return ExchangesStatic.getTradeHistoryCcxt(apiname, apikey, secret, start, end)
+                elif apitype == "chaindata":
+                    return ChaindataStatic.getBlockdaemonRewardsForAddress(apiname, apikey, address, start, end)
+                else:
+                    raise ValueError("invalid type in getApiHistory: " + str(apitype))
+            except Exception as ex:
+                localLogger.warning("could not load data from api (" + str(apiname) + "): " + str(ex))
+                return DataFrame()
+
+    # get dict of ApiModels
+    @staticmethod
+    def getApiModels():
+        apiModels = {}
+        for apiname in ExchangesStatic.SUPPORTED_EXCHANGES:
+            apiModels[apiname] = ApiModel(
+                name=str(apiname),
+                apitype="exchange",
+                note="get data from " + str(apiname) + ". "
+            )
+        for apiname in ChaindataStatic.SUPPORTED_CHAINS:  # apitype is blockdaemon chaindata
+            apiModels[apiname] = ApiModel(
+                name=str(apiname),
+                apitype="chaindata",
+                note="Koala provides default api key for blockdaemon api.\n" \
+                     "However it is recommended to create your own key.\n" \
+                     "Key can be created at https://app.blockdaemon.com (Login->workspace->API Suite->Connect.\n" \
+                     "More Infos can be found in their documentation: https://docs.blockdaemon.com/"
+            )
+        return apiModels
+
 
 # %% Trade
 class ApiModel:
-    def __init__(self, name='', apitype='', handle=None, note=''):
+    def __init__(self, name='', apitype='', note=''):
         self.apiName = name
         self.apiType = apitype
-        self.apiHandle = handle
         self.apiNote = note
 
-apiNamesBlockdaemon = chaindata.apinames
-
-apiNames = ["binance",
-            "bittrex",
-            "bitmex",
-            "coinbase",
-            "coinbasepro",
-            "gemini",
-            "poloniex",
-            "kraken"] \
-           + apiNamesBlockdaemon
-
-# create apiModels
-apiModels = {}
-for apiname in apiNames:
-    apiModels[apiname] = ApiModel(
-        name=str(apiname),
-        apitype="exchange",
-        handle=None,
-        note="get data from " + str(apiname) + ". "
-    )
-    if apiname in apiNamesBlockdaemon:  # apitype is blockdaemon chaindata
-        apiModels[apiname].apiType = "chaindata"
-        apiModels[apiname].apiNote += "Koala provides default api key for blockdaemon api.\n" \
-                                  "However it is recommended to create your own key for privacy reasons.\n" \
-                                  "Key can be created at https://app.blockdaemon.com (Login->workspace->API Suite->Connect.\n" \
-                                  "More Infos can be found in their documentation: https://docs.blockdaemon.com/"
-
-# add special api note for binance api
-apiModels["binance"].apiNote = "get trades from binance. Can take very long due to stupid api implementation of binance"
+    def toDict(self):
+        return {
+            "apiName": self.apiName,
+            "apiType": self.apiType,
+            "apiNote": self.apiNote
+        }
 
 
-
-apiModels["binance"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryBinance(apikey, secret, start, end)
-apiModels["bittrex"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryBittrex(apikey, secret, start, end)
-apiModels["bitmex"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryBitmex(apikey, secret, start, end)
-apiModels["coinbase"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryCoinbase(apikey, secret, start, end)
-apiModels["coinbasepro"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryCoinbasepro(apikey, secret, start, end)
-apiModels["gemini"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryGemini(apikey, secret, start, end)
-apiModels["poloniex"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryPoloniex(apikey, secret, start, end)
-apiModels["kraken"].apiHandle = lambda apikey, secret, start, end: exchanges.getTradeHistoryKraken(apikey, secret, start, end)
-for apiname in apiModels:
-    if apiModels[apiname].apiType == "chaindata":
-        apiModels[apiname].apiHandle = lambda apiname, apikey, address, start, end: chaindata.getBlockdaemonRewardsForAddress(apiname, apikey, address, start, end)
-
-
-def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, address=None):
-    if apiname not in apiModels:
-        raise KeyError("invalid api name")
-    else:
-        localLogger.info("requesting data from " + str(apiname))
-        try:
-            if apitype == "exchange":
-                return apiModels[apiname].apiHandle(apikey, secret, start, end)
-            elif apitype == "chaindata":
-                return apiModels[apiname].apiHandle(apiname, apikey, address, int(start), int(end))
-            else:
-                raise ValueError("invalid type in getApiHistory: " + str(apitype))
-        except Exception as ex:
-            localLogger.warning("could not load data from api (" + str(apiname) + "): " + str(ex))
-            return pandas.DataFrame()
-
-
-class BaseDatabase():
+class BaseDatabase:
     def __init__(self, dbname: str, path: str=None, loggingenabled: bool=False):
 
         self.databaseFound = False
@@ -112,24 +101,24 @@ class BaseDatabase():
 
     def setPath(self, path: str):
         # check path
-        if os.path.exists(path):
+        if os_exists(path):
             # set path
-            self.filepath = os.path.join(path, self.filename).replace('\\', '/')
-            if os.path.isfile(self.filepath):
+            self.filepath = os_join(path, self.filename).replace('\\', '/')
+            if isfile(self.filepath):
                 self.databaseFound = True
             else:
                 self.databaseFound = False
 
-    def encryptData(self, pw: str, data: dict) -> tuple[bytes, bytes, bytes]:
-        dbkey = hashlib.sha256(pw.encode()).hexdigest()
+    def encryptData(self, pw: str, data: dict) -> tuple[EaxMode, bytes, bytes]:
+        dbkey = sha256(pw.encode()).hexdigest()
         cipher = AES.new(dbkey[:32].encode('utf-8'), AES.MODE_EAX)
-        ciphertext, tag = cipher.encrypt_and_digest(json.dumps(data).encode("utf-8"))
+        ciphertext, tag = cipher.encrypt_and_digest(json_dumps(data).encode("utf-8"))
         return cipher, ciphertext, tag
 
     def decryptData(self, pw: str, ciphertext: bytes, tag: bytes, nonce: bytes) -> dict:
-        key = hashlib.sha256(pw.encode()).hexdigest()
+        key = sha256(pw.encode()).hexdigest()
         cipher = AES.new(key[:32].encode('utf-8'), AES.MODE_EAX, nonce)
-        return json.loads(cipher.decrypt_and_verify(ciphertext, tag))
+        return json_loads(cipher.decrypt_and_verify(ciphertext, tag))
 
     def checkPw(self, pw: str) -> bool:
         with open(self.filepath, "rb") as file_in:
@@ -160,7 +149,7 @@ class BaseDatabase():
         else:
             self.logWarning("invalid password")
 
-    def addDBEntry(self, pw: str, apiname: str, newData: str):
+    def addDBEntry(self, pw: str, apiname: str, newData: dict):
         if not self.checkPw(pw):
             self.logWarning("invalid password")
             return
@@ -199,7 +188,7 @@ class BaseDatabase():
 
     def deleteDatabase(self):
         self.lockDatabase()
-        os.remove(self.filepath)
+        os_remove(self.filepath)
         self.databaseFound = 0
 
 
@@ -216,7 +205,6 @@ class ApiUserDatabase(BaseDatabase):
 class ApiDefaultDatabase(BaseDatabase):
     def __init__(self, path: str=None):
         if path:
-            path = os.path.join(path, 'Import').replace('\\', '/')
             super(ApiDefaultDatabase, self).__init__(dbname='defaultApiData.db', path=path, loggingenabled=False)
             self.pw = "koala"
 

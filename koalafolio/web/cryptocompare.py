@@ -86,11 +86,13 @@ def get_avg(coin, curr=CURR, exchange='CCCAGG', *args, **kwargs):
     response = query_cryptocompare(URL_AVG.format(coin, curr, format_parameter(exchange)), *args, **kwargs)
     if response:
         return response['RAW']
+    return None
 
 def get_exchanges(*args, **kwargs):
     response = query_cryptocompare(URL_EXCHANGES, *args, **kwargs)
     if response:
         return response['Data']
+    return None
 
 def get_coin_general_info(coins, curr=CURR, *args, **kwargs):
     return query_cryptocompare(URL_COIN_GENERAL, params={'fsyms': coins, 'tsym': str(curr)}, *args, **kwargs)

@@ -6,7 +6,7 @@ Created on Fri May 31 08:17:21 2019
 """
 
 import configparser
-import koalafolio.gui.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 import os
 
 localLogger = logger.globalLogger

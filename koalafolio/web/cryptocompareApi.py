@@ -2,13 +2,11 @@
 
 
 import koalafolio.web.cryptocompare as cryptcomp
-# import datetime
 import koalafolio.PcpCore.core as core
+from PyQt5.QtGui import QImage, QPixmap, QIcon
 import koalafolio.PcpCore.settings as settings
 import koalafolio.PcpCore.logger as logger
-from PIL import Image
-from io import BytesIO
-import requests
+from requests import get as requests_get
 
 
 # coinList = cryptcomp.get_coin_list(format=True)
@@ -100,11 +98,15 @@ def getIcon(coin, *args, **kwargs):
         proxies = {}
     coinInfo = cryptcomp.get_coin_general_info(coinSwapToCryptocompare(coin), *args, **kwargs)
     try:
-        imageResponse = requests.get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'], proxies=proxies, timeout=100)
+        imageResponse = requests_get(cryptcomp.URL_CRYPTOCOMPARE + coinInfo['Data'][0]['CoinInfo']['ImageUrl'], proxies=proxies, timeout=100)
     except Exception as ex:
         logger.globalLogger.warning('error in getIcon: ' + str(ex))
         return None
-    return Image.open(BytesIO(imageResponse.content))
+    q_image = QImage()
+    q_image.loadFromData(imageResponse.content)
+    # Convert to QPixmap
+    qpix = QPixmap.fromImage(q_image)
+    return QIcon(qpix)
 
 def getIcons(coins, *args, **kwargs):
     if settings.mySettings.proxies():
@@ -115,8 +117,13 @@ def getIcons(coins, *args, **kwargs):
     icons = {}
     try:
         for coin in iconUrls:
-                imageResponse = requests.get(iconUrls[coin], proxies=proxies, timeout=100)
-                icons[coin] = Image.open(BytesIO(imageResponse.content))
+                imageResponse = requests_get(iconUrls[coin], proxies=proxies, timeout=100)
+                q_image = QImage()
+                q_image.loadFromData(imageResponse.content)
+                # convert to QPixmap
+                qpix = QPixmap.fromImage(q_image)
+                # convert to QIcon
+                icons[coin] = QIcon(qpix)
     except Exception as ex:
         logger.globalLogger.warning('error in getIcons: ' + str(ex))
     return icons

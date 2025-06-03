@@ -10,6 +10,7 @@ TYPE_REGEX_PATTERN = r'^(((transaction)|(trade)|(order)|())( *|_)((typ(|e))|(sid
 FEE_REGEX_PATTERN = r'^((fee(|s))|(commission)(|paid))$'  # fee
 FEECOIN_REGEX_PATTERN = r'^(((fee)|(commission))(| *)((coin)|(currency)))|(coin\.3)$'  # feecoin
 STATUS_REGEX_PATTERN = r'^(status)$'
+EXCHANGE_REGEX_PATTERN = r'^exchange$'
 
 # model 0
 PAIR_REGEX_PATTERN_0 = r'^(((trading)|)(| *)(pair)|(symbol)|(currency(|s))|(market)|(coins)|(instrument))$'  # coinpair
@@ -83,6 +84,17 @@ ROTKI_FEE_REGEX = re.compile(r'^fee$', re.IGNORECASE)
 ROTKI_FEE_CURRENCY_REGEX = re.compile(r'^fee_currency$', re.IGNORECASE)
 ROTKI_LINK_REGEX = re.compile(r'^link$', re.IGNORECASE)
 ROTKI_NOTES_REGEX = re.compile(r'^notes$', re.IGNORECASE)
+
+# %% model CCXT: timestamp, location, pair, trade_type, amount, rate, fee, fee_currency, link
+CCXT_TIMESTAMP_REGEX = re.compile(r'^timestamp$', re.IGNORECASE)
+CCXT_LOCATION_REGEX = re.compile(r'^location$', re.IGNORECASE)
+CCXT_PAIR_REGEX = re.compile(r'^pair$', re.IGNORECASE)
+CCXT_TRADE_TYPE_REGEX = re.compile(r'^trade_type$', re.IGNORECASE)
+CCXT_AMOUNT_REGEX = re.compile(r'^amount$', re.IGNORECASE)
+CCXT_RATE_REGEX = re.compile(r'^rate$', re.IGNORECASE)
+CCXT_FEE_REGEX = re.compile(r'^fee$', re.IGNORECASE)
+CCXT_FEE_CURRENCY_REGEX = re.compile(r'^fee_currency$', re.IGNORECASE)
+CCXT_LINK_REGEX = re.compile(r'^link$', re.IGNORECASE)
 
 # %% regex # XXX_$1_REGEX = re.compile\(r\'\^$1\$\'\)
 
@@ -221,6 +233,7 @@ TYPE_REGEX = re.compile(TYPE_REGEX_PATTERN, re.IGNORECASE)
 FEE_REGEX = re.compile(FEE_REGEX_PATTERN, re.IGNORECASE)
 FEECOIN_REGEX = re.compile(FEECOIN_REGEX_PATTERN, re.IGNORECASE)
 STATUS_REGEX = re.compile(STATUS_REGEX_PATTERN, re.IGNORECASE)
+EXCHANGE_REGEX = re.compile(EXCHANGE_REGEX_PATTERN, re.IGNORECASE)
 
 # model 0
 PAIR_REGEX_0 = re.compile(PAIR_REGEX_PATTERN_0, re.IGNORECASE)
@@ -263,40 +276,34 @@ NUMBER_REGEX_PATTERN = r'^((|-)\d*(\.|,|)\d*)(\D*)$'
 NUMBER_REGEX = re.compile(NUMBER_REGEX_PATTERN)
 
 # %% datetime patterns
-TIME_PATTERN = []
-TIME_PATTERN.append(r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$')  # 2018-08-26 04:22:33
-TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d )(\d:\d\d:\d\d)$')  # 2018-08-26 4:22:33
-TIME_PATTERN.append(r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [-|\+]\d{4}$')  # 2017-05-22 06:30:17 -0700
-TIME_PATTERN.append(r'^(\d{1,2})(/)(\d{1,2})(/\d{4} )(\d{1,2})(:\d\d:\d\d) (\w\w)$')  # 8/8/2018 4:50:42 PM
-TIME_PATTERN.append(r'^\w{3} \w{3} \d{2} \d\d:\d\d:\d\d \d{4}$')  # Wed Jun 27 17:16:39 2018
-TIME_PATTERN.append(r'^(\w{3} \w{3} \d{2} \d\d:\d\d:\d\d)( \w{3})( \d{4})$')  # Wed Jun 27 17:16:39 CST 2018
-TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)(\.\d+)$')  # 2017-05-22 06:30:17 .200
-TIME_PATTERN.append(r'^(\w{3} \w{3} \d{2})( \d{4})( \d\d:\d\d:\d\d)( \w{3})([-|\+]\d{4})( .*)$')  # Fri May 19 2017 12:11:49 GMT+0200 (Mitteleuropäische Sommerzeit)
-TIME_PATTERN.append(r'^(\d{4}-\d\d-\d\d).(\d\d:\d\d:\d\d).*Z$')  # 2017-07-28T20:23:16.000Z
-TIME_PATTERN.append(r'^(\d\d-\d\d-\d\d).(\d\d:\d\d:\d\d)$')  # 27-09-17 17:01:01
+TIME_PATTERN = [
+    r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$',  # 2018-08-26 04:22:33
+    r'^(\d{4}-\d\d-\d\d )(\d:\d\d:\d\d)$',  # 2018-08-26 4:22:33
+    r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [-\+]\d{4}$',  # 2017-05-22 06:30:17 -0700
+    r'^(\d{1,2})(/)(\d{1,2})(/\d{4} )(\d{1,2})(:\d\d:\d\d) (\w\w)$',  # 8/8/2018 4:50:42 PM
+    r'^\w{3} \w{3} \d{2} \d\d:\d\d:\d\d \d{4}$',  # Wed Jun 27 17:16:39 2018
+    r'^(\w{3} \w{3} \d{2} \d\d:\d\d:\d\d)( \w{3})( \d{4})$',  # Wed Jun 27 17:16:39 CST 2018
+    r'^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)(\.\d+)$',  # 2017-05-22 06:30:17 .200
+    r'^(\w{3} \w{3} \d{2})( \d{4})( \d\d:\d\d:\d\d)( \w{3})([-\+]\d{4})( .*)$',  # Fri May 19 2017 12:11:49 GMT+0200 (Mitteleuropäische Sommerzeit)
+    r'^(\d{4}-\d\d-\d\d).(\d\d:\d\d:\d\d).*Z$',  # 2017-07-28T20:23:16.000Z
+    r'^(\d\d-\d\d-\d\d).(\d\d:\d\d:\d\d)$',  # 27-09-17 17:01:01
+    ]
 
-PANDAS_TIME_PATTERN = r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d[-|\+]\d\d:\d\d$'
+PANDAS_TIME_PATTERN = r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d[-\+]\d\d:\d\d$'
 
 # some patterns need to be changed before conversion
-TIME_SPECIAL_PATTERN_INDEX = []
-TIME_SPECIAL_PATTERN_INDEX.append(1)
-TIME_SPECIAL_PATTERN_INDEX.append(3)
-TIME_SPECIAL_PATTERN_INDEX.append(5)
-TIME_SPECIAL_PATTERN_INDEX.append(6)
-TIME_SPECIAL_PATTERN_INDEX.append(7)
-TIME_SPECIAL_PATTERN_INDEX.append(8)
+TIME_SPECIAL_PATTERN_INDEX = [1, 3, 5, 6, 7, 8]
 
-TIME_FORMAT = []
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S')
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S')
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S %z')
-TIME_FORMAT.append('%m/%d/%Y %H:%M:%S')
-TIME_FORMAT.append('%c')
-TIME_FORMAT.append('%c')
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S')
-TIME_FORMAT.append('%c %z')
-TIME_FORMAT.append('%Y-%m-%d %H:%M:%S %z')
-TIME_FORMAT.append('%d-%m-%y %H:%M:%S')
+TIME_FORMAT = ['%Y-%m-%d %H:%M:%S',
+               '%Y-%m-%d %H:%M:%S',
+               '%Y-%m-%d %H:%M:%S %z',
+               '%m/%d/%Y %H:%M:%S',
+               '%c',
+               '%c',
+               '%Y-%m-%d %H:%M:%S',
+               '%c %z',
+               '%Y-%m-%d %H:%M:%S %z',
+               '%d-%m-%y %H:%M:%S']
 
 # 2018-08-26 04:22:33
 # 8/8/2018 4:50:42 PM

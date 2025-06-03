@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import pandas, hashlib, threading
-import koalafolio.web.cryptocompareApi as ccapi
+from pandas import DataFrame
 import koalafolio.PcpCore.settings as settings
-import koalafolio.Import.Converter as converter
 import koalafolio.PcpCore.logger as logger
-import datetime
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import math
 
 # constants
 EXACT = 0
@@ -19,9 +16,9 @@ def initTradeList(data=None):
     myCoinValue = CoinValue()
     myColumns = ['id', 'date', 'type', 'coin', 'amount'] + ['value' + key for key in myCoinValue.value]
     if data:
-        return pandas.DataFrame(data, columns=myColumns)
+        return DataFrame(data, columns=myColumns)
     else:
-        return pandas.DataFrame(columns=myColumns)
+        return DataFrame(columns=myColumns)
 
 
 # tradeListComplete: ['id', 'date', 'type', 'coin', 'amount', 'value_*', valueLoaded ]
@@ -30,14 +27,14 @@ def initTradeListComplete(data=None):
     myColumns = ['id', 'date', 'type', 'coin', 'amount'] + ['value' + key for key in myCoinValue.value] \
                 + ['valueLoaded', 'tradePartnerId', 'exchange', 'externId', 'wallet']
     if data:
-        return pandas.DataFrame(data, columns=myColumns)
+        return DataFrame(data, columns=myColumns)
     else:
-        return pandas.DataFrame(columns=myColumns)
+        return DataFrame(columns=myColumns)
 
 
 def initFeeList():
     myCoinValue = CoinValue()
-    return pandas.DataFrame(columns=['id', 'date', 'coin', 'fee'] + ['value' + key for key in myCoinValue.value])
+    return DataFrame(columns=['id', 'date', 'coin', 'fee'] + ['value' + key for key in myCoinValue.value])
 
 
 # coinListComplete: [ 'coin', 'balance', 'currentValue_*']
@@ -45,9 +42,9 @@ def initCoinList(data=None):
     myCoinValue = CoinValue()
     myColumns = ['coin', 'balance'] + ['currentValue' + key for key in myCoinValue.value]
     if data:
-        return pandas.DataFrame(data, columns=myColumns)
+        return DataFrame(data, columns=myColumns)
     else:
-        return pandas.DataFrame(columns=myColumns)
+        return DataFrame(columns=myColumns)
 
 
 # coinListComplete: [ 'coin', 'balance', 'initialValue_*', 'currentValue_*']
@@ -56,9 +53,9 @@ def initCoinListComplete(data=None):
     myColumns = ['coin', 'balance'] + ['initialValue' + key for key in myCoinValue.value] + ['currentValue' + key for
                                                                                              key in myCoinValue.value]
     if data:
-        return pandas.DataFrame(data, columns=myColumns)
+        return DataFrame(data, columns=myColumns)
     else:
-        return pandas.DataFrame(columns=myColumns)
+        return DataFrame(columns=myColumns)
 
 # for testing
 class myDict(dict):
@@ -221,7 +218,7 @@ class CoinValue():
 class Trade:
     def __init__(self):
         self.tradeID = ''
-        self.approxID = ''
+        self.approxIDs = []
         self.externId = ''
         self.date = None
         self.tradeType = ''
@@ -236,27 +233,45 @@ class Trade:
 
     def generateID(self):
         tradeString = str(self.date) + str(self.tradeType) + str(self.externId) + str(self.coin) + str(self.amount)
-        self.tradeID = hashlib.sha1(tradeString.encode()).hexdigest()[0:16]
+        from hashlib import sha1
+        self.tradeID = sha1(tradeString.encode()).hexdigest()[0:16]
         return self.tradeID
 
     def checkApproximateEquality(self, trade):
-        return self.generateApproximateID() == trade.generateApproximateID()
+        for id in self.getApproximateIDs():
+            if id in trade.getApproximateIDs():
+                return True
+        return False
 
-    def generateApproximateID(self):
-        myDate = converter.roundTimeMin(self.date)
+    def generateApproximateIDs(self):
+        # round amount
         try:
-            myAmount = round(self.amount, -int( math.floor(math.log10(abs(self.amount)))) + 5)
+            from math import floor, log10
+            tempAmount = round(self.amount, -int(floor(log10(abs(self.amount)))) + 5)
         except ValueError:
-            myAmount = self.amount
-        tradeString = str(str(myDate) + str(self.tradeType) + str(self.coin) + str(myAmount))
-        self.approxID = hashlib.sha1(tradeString.encode()).hexdigest()
-        return self.approxID
+            tempAmount = self.amount
+        # get the timezone offset of the date and round it to 2 times this offset
+        # to make sure trades with wrong timezone interpretation are detected as possible duplicate
+        tempDates = [self.date]
+        offset = self.date.utcoffset()
+        tempDates.append(self.date + offset)
+        tempDates.append(self.date - offset)
+        # convert all dates to timestamps in minutes, ignore seconds/ms etc.
+        for tempdate in tempDates:
+            tempdate = tempdate.timestamp() // 60
+            tradeString = str(str(tempdate) + str(self.tradeType) +
+                              str(self.coin) + str(tempAmount))
+            from hashlib import sha1
+            self.approxIDs.append(sha1(tradeString.encode()).hexdigest())
+        return self.approxIDs
 
-    def getApproximateID(self):
-        if self.approxID:
-            return self.approxID
-        else:
-            return self.generateApproximateID()
+    def getApproximateIDs(self):
+        # check if approxIds is empty
+        if not self.approxIDs:
+            # calculate approxIDs
+            return self.generateApproximateIDs()
+        # return existing IDs
+        return self.approxIDs
 
     def __eq__(self, other):
         return self.tradeID == other.tradeID
@@ -304,9 +319,6 @@ class Trade:
 
     def toDataFrame(self):
         return initTradeList([self.toList()])
-
-    def updateValue(self):
-        return ccapi.updateTradeValue(self)
 
     def getPrice(self):
         return self.value.div(self.amount)
@@ -425,10 +437,6 @@ class TradeList:
             if not trade.tradeID:
                 trade.generateID()
 
-    def reloadValues(self):
-        for trade in self.trades:
-            trade.updateValue()
-
     def setHistPrices(self, prices) -> list:
         updatedCoins = []
         def saveCoin(trade):
@@ -495,44 +503,16 @@ class TradeList:
                         return True
         return False
 
-    def updateValues(self):
-        # load values of all trades
-        for trade in self.trades:
-            if not trade.valueLoaded:
-                trade.updateValue()
-
-        for trade in self.trades:
-            # get partner trade
-            partner = self.getTradeById(trade.tradePartnerId)
-            # check valid partner
-            if partner:
-                # check value of partner
-                if partner.valueLoaded:
-                    # use partner value if value update was not possible or if trade has a fiat partner
-                    if (not trade.valueLoaded) or partner.isFiat():
-                        trade.setValueAll(partner.getValue().mult(-1))
-                        trade.valueLoaded = True
-                    # if both values loaded and both trades are crypto use the same value
-                    elif not trade.isFiat():
-                        if trade.getValue() < partner.getValue():  # use smaller value (tax will be paid later)
-                            partner.setValueAll(trade.getValue().mult(-1))
-                        else:
-                            trade.setValueAll(partner.getValue().mult(-1))
-
-
     def getTradeById(self, tradeId):
         for trade in self.trades:
             if trade.tradeID == tradeId:
                 return trade
         return None
 
-    def updateValuesAsync(self):
-        t = threading.Thread(target=self.updateValues())
-        t.start()
-        return t
-
     def toCsv(self, path):
         # self.toDataFrameComplete().to_csv(path)
+        # write header and trades to csv file, sorted by the date
+        self.trades.sort(key=lambda x: x.date, reverse=False)
         with open(path, 'w') as file:
             file.write(','.join(Trade().getHeaderComplete()) + '\n')
             for trade in self:
@@ -544,8 +524,11 @@ class TradeList:
 
     def checkApproximateEquality(self, trade):
         for t in self.trades:
-            if trade.getApproximateID() == t.getApproximateID():
-                return True
+            # compare each approxId with each other
+            for approxId1 in trade.getApproximateIDs():
+                for approxId2 in t.getApproximateIDs():
+                    if approxId1 == approxId2:
+                        return True
         return False
 
     def recalcIds(self):
@@ -560,7 +543,9 @@ class TradeList:
 
 # %% TradeMatcher
 class TradeMatcher:
-    def __init__(self, coinBalance, trades=[]):
+    def __init__(self, coinBalance, trades=None):
+        if trades is None:
+            trades = []
         self.coinBalance = coinBalance
         self.trades = trades
         self.sellsBuffer = []
@@ -734,12 +719,24 @@ class TradeMatcher:
             buy = self.buysMatched[i]
             sell = self.sellsMatched[i]
             profit = self.profitMatched[i]
-            rows.append([buy.date, buy.amount, buy.getPrice()[currency], buy.value[currency], \
-                         sell.date, sell.amount, sell.getPrice()[currency], sell.value[currency], \
+            rows.append([buy.date,
+                         buy.amount,
+                         buy.getPrice()[currency],
+                         buy.value[currency],
+                         sell.date,
+                         sell.amount,
+                         sell.getPrice()[currency],
+                         sell.value[currency],
                          profit[currency]])
-        return pandas.DataFrame(rows, columns=['buyDate', 'buyAmount', 'buyPrice', 'buyValue', \
-                                               'sellDate', 'sellAmount', 'sellPrice', 'sellValue', \
-                                               'profit'])
+        return DataFrame(rows, columns=['buyDate',
+                                        'buyAmount',
+                                        'buyPrice',
+                                        'buyValue',
+                                        'sellDate',
+                                        'sellAmount',
+                                        'sellPrice',
+                                        'sellValue',
+                                        'profit'])
 
     def getBuyAmount(self):
         amount = 0
@@ -785,7 +782,7 @@ class TradeMatcher:
                     taxFreeTimeDelta = self.coinBalance.taxYearLimit
             else:  # use global tax limit
                 taxFreeTimeDelta = settings.mySettings.getTaxSetting('taxfreelimityears')
-        return self.getBuyAmountLeftToDate(datetime.datetime.now().date() - relativedelta(years=taxFreeTimeDelta))
+        return self.getBuyAmountLeftToDate(datetime.now().date() - relativedelta(years=taxFreeTimeDelta))
 
 
 # %% Coin_Balance
@@ -1178,6 +1175,7 @@ class CoinList:
             if coin.coinname == trade.coin:
                 coin.removeTrade(trade)
                 return coin
+        return None
 
     def addTrades(self, trades):
         coins = []
@@ -1209,12 +1207,7 @@ class CoinList:
         self.addTrades(trades)
 
     def tradeChanged(self, trade):
-        try:
-            coin = self.getCoinByName(trade.coin)
-        except KeyError as ex:
-            # unknowen coin; ignore trade
-            # print(str(ex) + ' for coin ' + str(trade.coin))
-            return None
+        coin = self.getCoinByName(trade.coin)
         coin.matchTrades()
         return coin
 
@@ -1257,7 +1250,6 @@ class CoinList:
         # coin not found
         raise KeyError
 
-
     # get List of coinnames
     def getCoinNames(self):
         return [coin.coinname for coin in self.coins]
@@ -1283,7 +1275,6 @@ class CoinList:
             except KeyError:
                 pass
 
-
     def histPricesChanged(self, coins):
         # match changed coins
         for coin in coins:
@@ -1294,16 +1285,3 @@ class CoinList:
         pass
         #self.matchTrades()
 
-    # update current value of all coins
-    def updateCurrentValues(self):
-        return ccapi.updateCurrentCoinValues(self)
-
-    def update24hChange(self):
-        return ccapi.get24hChange(self)
-
-    # update current value of all coins async
-    def updateCurrentValuesAsync(self):
-        t = threading.Thread(target=self.updateCurrentValues)
-        t.daemon = True
-        t.start()
-        return t

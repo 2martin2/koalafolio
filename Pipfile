@@ -5,9 +5,13 @@ name = "pypi"
 
 [packages]
 koalafolio = {editable = true, path = "."}
+pytest = "*"
 
 [dev-packages]
+pipenv = "*"
 wheel = "*"
 setuptools = "*"
 twine = "*"
 pyinstaller = "*"
+psutil = "*"
+pytest = "*"

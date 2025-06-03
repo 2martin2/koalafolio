@@ -1,1 +1,1 @@
-pipenv install --dev --python 3.10
+pipenv install --dev --python 3.12

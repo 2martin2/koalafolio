@@ -10,7 +10,7 @@ import pytz
 from dateutil.relativedelta import relativedelta
 import koalafolio.PcpCore.core as core
 import re
-import koalafolio.gui.QLogger as logger
+import koalafolio.gui.helper.QLogger as logger
 
 localLogger = logger.globalLogger
 
@@ -240,7 +240,6 @@ def createProfitExcel(coinList, path, minDate, maxDate, currency='EUR', taxyearl
             ws[feeSumColumn + str(profitSumRows[-1])] = '=ROUNDDOWN(SUM(' + feeSumColumn + str(
                 firstProfitRow) + ':' + feeSumColumn + str(profitSumRows[-1] - 2) + '),2)'
 
-            # page setup
             # page setup
             if translator:
                 pageSetup(ws, dateCols=['D'], gapCols=['C', 'H'],
