@@ -176,6 +176,27 @@ def modelCallback_blockdaemon(headernames, dataFrame):
 
     return modelCallback_Template1(headernames_t1, dataFrame)
 
+# %% rewards ['datetime', 'amount', 'currency', 'stake_address', 'epoch_no', 'chain' ]
+def modelCallback_Rewards(headernames, dataFrame):
+
+    dataFrame['type'] = 'reward'
+
+    headernames_t1 = [
+        headernames[0],  # date
+        'type',  # type
+        headernames[1],  # buy_amount
+        headernames[2],  # buy_cur
+        '',  # sell_amount
+        '',  # sell_cur
+        '',  # exchange
+        '',  # fee_amount
+        '',  # fee_currency
+        '',  # buy_wallet
+        ''  # sell_wallet
+    ]
+
+    return modelCallback_Template1(headernames_t1, dataFrame)
+
 
 # %% kucoin model: [orderCreatedAt,id,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,orderStatus]
 def modelCallback_kucoin(headernames, dataFrame):

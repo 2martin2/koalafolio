@@ -124,6 +124,14 @@ BLOCKDAEMON_TIMEEND_REGEX = re.compile(r'^TIMEEND$', re.IGNORECASE)
 BLOCKDAEMON_TIMESTART_REGEX = re.compile(r'^TIMESTART$', re.IGNORECASE)
 BLOCKDAEMON_EPOCH_REGEX = re.compile(r'^EPOCH$', re.IGNORECASE)
 
+# model rewards [date,amount,currency,stakeAddress,epoch,chain]
+REWARDS_DATETIME_REGEX  = re.compile(r'^.*DATE.*$', re.IGNORECASE)
+REWARDS_AMOUNT_REGEX = re.compile(r'^.*AMOUNT.*$', re.IGNORECASE)
+REWARDS_CURRENCY_REGEX = re.compile(r'^.*CURRENCY.*$', re.IGNORECASE)
+REWARDS_STAKE_ADDRESS_REGEX = re.compile(r'^.*ADDRESS.*$', re.IGNORECASE)
+REWARDS_EPOCH_NO_REGEX = re.compile(r'^.*EPOCH.*$', re.IGNORECASE)
+REWARDS_CHAIN_REGEX = re.compile(r'^.*CHAIN.*$', re.IGNORECASE)
+
 # model kucoin [orderCreatedAt,id,clientOid,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,remark,tags,orderStatus]
 KUCOIN_ORDERCREATEDAT_REGEX = re.compile(r'^orderCreatedAt$', re.IGNORECASE)
 KUCOIN_ID_REGEX = re.compile(r'^id$', re.IGNORECASE)
