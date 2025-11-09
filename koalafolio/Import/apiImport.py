@@ -5,7 +5,7 @@ Created on Sun Sep  15 15:15:19 2019
 @author: Martin
 """
 from koalafolio.web.exchanges import ExchangesStatic
-from koalafolio.web.chaindata import ChaindataStatic
+from koalafolio.web.chaindata import ChaindataApis
 from koalafolio.gui.helper.QLogger import globalLogger
 from pandas import DataFrame
 from Cryptodome.Cipher import AES
@@ -20,9 +20,9 @@ localLogger = globalLogger
 
 # static class for static data
 class ApiImportStatic:
-    SUPPORTED_APIS = ExchangesStatic.SUPPORTED_EXCHANGES + ChaindataStatic.SUPPORTED_CHAINS
+    SUPPORTED_APIS = ExchangesStatic.SUPPORTED_EXCHANGES + ChaindataApis.SUPPORTED_CHAINS
     @staticmethod
-    def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, address=None):
+    def getApiHistory(apiname, apitype, start, end, apikey=None, secret=None, addresses=None):
         if apiname not in ApiImportStatic.SUPPORTED_APIS:
             raise KeyError("invalid api name")
         else:
@@ -31,7 +31,7 @@ class ApiImportStatic:
                 if apitype == "exchange":
                     return ExchangesStatic.getTradeHistoryCcxt(apiname, apikey, secret, start, end)
                 elif apitype == "chaindata":
-                    return ChaindataStatic.getBlockdaemonRewardsForAddress(apiname, apikey, address, start, end)
+                    return ChaindataApis.getRewardHistory(apiname=apiname, addresses=addresses, start=start, end=end, apikey=apikey)
                 else:
                     raise ValueError("invalid type in getApiHistory: " + str(apitype))
             except Exception as ex:
@@ -48,14 +48,11 @@ class ApiImportStatic:
                 apitype="exchange",
                 note="get data from " + str(apiname) + ". "
             )
-        for apiname in ChaindataStatic.SUPPORTED_CHAINS:  # apitype is blockdaemon chaindata
+        for apiname in ChaindataApis.SUPPORTED_CHAINS:  # apitype is chaindata
             apiModels[apiname] = ApiModel(
                 name=str(apiname),
                 apitype="chaindata",
-                note="Koala provides default api key for blockdaemon api.\n" \
-                     "However it is recommended to create your own key.\n" \
-                     "Key can be created at https://app.blockdaemon.com (Login->workspace->API Suite->Connect.\n" \
-                     "More Infos can be found in their documentation: https://docs.blockdaemon.com/"
+                note=f"Api provider: {ChaindataApis.chainRewardApis[apiname].getApiName()}"
             )
         return apiModels
 

@@ -515,8 +515,11 @@ class ApiKeyView(QWidget):
         apikey = self.keyInput.text()
         apisecret = self.secretInput.text()
         if apitype == "chaindata":
-            if not apikey:
-                apikey = self.model.getDefaultApikey("blockdaemon")
+            # if not apikey:
+                # Koios does not need any apikey
+                # if more apis with keys are added, read the keys from defaultdb
+                # example:
+                # apikey = self.model.getDefaultApikey("blockdaemon")
             if addressIndex == 0:
                 addressList = self.addressSelectDropdown.model().stringList()[1:]
             else:

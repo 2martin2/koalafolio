@@ -93,6 +93,17 @@ IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNe
 ]
 IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_blockdaemon
 
+# rewards ['datetime', 'amount', 'currency', 'stake_address', 'epoch_no', 'chain' ]
+index = index + 1
+IMPORT_MODEL_LIST.append(Importmodel())
+IMPORT_MODEL_LIST[index].modelName="rewards"
+IMPORT_MODEL_LIST[index].modelHeaders = ['datetime', 'amount', 'currency', 'stake_address', 'epoch_no', 'chain' ]
+IMPORT_MODEL_LIST[index].headerRegexNeeded = [pat.REWARDS_DATETIME_REGEX, pat.REWARDS_AMOUNT_REGEX, pat.REWARDS_CURRENCY_REGEX]
+IMPORT_MODEL_LIST[index].headerRegexAll = IMPORT_MODEL_LIST[index].headerRegexNeeded + [
+    pat.REWARDS_STAKE_ADDRESS_REGEX, pat.REWARDS_EPOCH_NO_REGEX, pat.REWARDS_CHAIN_REGEX
+]
+IMPORT_MODEL_LIST[index].modelCallback = converter.modelCallback_Rewards
+
 # kucoin [orderCreatedAt,id,clientOid,symbol,side,type,stopPrice,price,size,dealSize,dealFunds,averagePrice,fee,feeCurrency,remark,tags,orderStatus]
 index = index + 1
 IMPORT_MODEL_LIST.append(Importmodel())

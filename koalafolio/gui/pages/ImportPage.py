@@ -273,15 +273,8 @@ class ImportSelectPage(SubPage):
 
     def getApiContent(self, api, apitype, start, end, apikey, secret, addressList):
         if apitype == "chaindata":
-            content = None
-            for address in addressList:
-                newContent = ApiImportStatic.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret,
-                                                  address=address)
-                if not newContent.empty:
-                    if content is None:
-                        content = newContent
-                    else:
-                        content = content.merge(newContent)
+            content = ApiImportStatic.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret,
+                                                addresses=addressList)
             if content is None:
                 content = DataFrame()
         else:

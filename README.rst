@@ -71,14 +71,9 @@ trade import
    - 100+ exchanges supported by ccxt_ (untested)
 
  import Rewards from Staking Address
-  supported Chains (Blockdaemon Api)
-   - Cardano
-   - Ethereum
-   - Solana
-   - Polkadot
-   - Polygon
-   - Near
-   - Avalanche
+  supported Chains
+   - Cardano (Koios Api)
+
 
 optional arguments
 _____________________
