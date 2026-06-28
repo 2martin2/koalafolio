@@ -278,7 +278,7 @@ class ImportSelectPage(SubPage):
             if content is None:
                 content = DataFrame()
         else:
-            content = ApiImportStatic.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret, address="")
+            content = ApiImportStatic.getApiHistory(api, apitype, start, end, apikey=apikey, secret=secret, addresses="")
         return content
 
     # skip preview and show import finished page
