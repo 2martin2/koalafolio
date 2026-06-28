@@ -6,7 +6,7 @@ Created on Sun Sep 16 09:57:14 2018
 """
 
 # Core imports - needed immediately
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap, QGuiApplication
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout,
                              QHBoxLayout, QSplashScreen)
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QSize, QRect
@@ -585,11 +585,12 @@ def main():
     coreLogger.globalLogger = logger.globalLogger
     coreSettings.mySettings = settings.mySettings
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    QGuiApplication.setDesktopFileName("koalafolio")
     app = QApplication(argv)
 
     # Create and show splash screen with better styling
     try:
-        splash_pixmap = QPixmap(getResourcePath('graphics/KoalaIcon.ico'))
+        splash_pixmap = QPixmap(getResourcePath('graphics/koalaicon.ico'))
         if splash_pixmap.isNull():
             # Fallback to PNG if ICO is not found
             splash_pixmap = QPixmap(getResourcePath('graphics/KoalaIcon.png'))
@@ -612,11 +613,14 @@ def main():
         app_icon.addFile(getResourcePath('graphics/KoalaIcon.png'), QSize(256, 256))
         app.setWindowIcon(app_icon)
         app.setApplicationName('koalafolio')
+        app.setDesktopFileName('koalafolio')
+        app.setApplicationDisplayName('koalafolio')
     except Exception as ex:
         print(str(ex))
 
     # Initialize main window with splash reference
     window = PortfolioApp(userDataPath=args.datadir, username=args.username, splash=splash)
+    window.setObjectName("koalafolio")
 
     # Close splash when main window is ready
     splash.finish(window)
