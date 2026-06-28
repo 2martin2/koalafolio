@@ -24,6 +24,7 @@ setuptools.setup(
                       'pycryptodomex',
                       'pyqt5',
                       'pyqtchart',
+                      'pytz',
                       'requests',
                       'tzlocal>=5.0.1',
                       'xlrd'
