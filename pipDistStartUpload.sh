@@ -1,1 +1,2 @@
+#!/bin/bash
 pipenv run python -m twine upload dist/*
