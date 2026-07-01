@@ -120,8 +120,8 @@ def modelCallback_exodus(headernames, dataFrame):
             swapCoinName(tempTrade_out)
             swapCoinName(tempTrade_in)
             # get amount
-            tempTrade_out.amount = dataFrame[headernames[2]][row]
-            tempTrade_in.amount = dataFrame[headernames[8]][row]
+            tempTrade_out.amount = float(dataFrame[headernames[2]][row])
+            tempTrade_in.amount = float(dataFrame[headernames[8]][row])
             # set exchange and wallet
             exchange = 'shapeshift'
             tempTrade_out.exchange = tempTrade_in.exchange = 'shapeshift'
@@ -431,13 +431,13 @@ def modelCallback_poloniex(headernames, dataFrame):
         # get sign
         if re_match(r'^.*?(SELL).*?$', dataFrame[headernames[3]][row], RE_IGNORECASE):
             feecoin = coinMain
-            feeamount = dataFrame[headernames[6]][row] * (feeProz / 100)
+            feeamount = float(dataFrame[headernames[6]][row] * (feeProz / 100))
         elif re_match(r'^.*?(BUY).*?$', dataFrame[headernames[3]][row], RE_IGNORECASE):
             feecoin = coinSub
-            feeamount = dataFrame[headernames[5]][row] * (feeProz / 100)
+            feeamount = float(dataFrame[headernames[5]][row] * (feeProz / 100))
         else:  # invalid type
             feecoin = ''
-            feeamount = 0
+            feeamount = float(0)
 
         feecoins.append(feecoin)
         dataFrame.at[row, headernames[7]] = feeamount
@@ -532,20 +532,20 @@ def modelCallback_0(headernames, dataFrame, useLocalTime=False):
         swapCoinName(tempTrade_main)
         # get amount
         if isinstance(dataFrame[headernames[4]][row], Number):  # if amount is number
-            amount = abs(dataFrame[headernames[4]][row])
+            amount = float(abs(dataFrame[headernames[4]][row]))
         else:  # now number so use regex to extract the number
-            amount = abs(stringToFloat(dataFrame[headernames[4]][row]))
+            amount = float(abs(stringToFloat(dataFrame[headernames[4]][row])))
         if isinstance(dataFrame[headernames[3]][row], Number):  # if price is number
             price = abs(dataFrame[headernames[3]][row] * amount)
         else:  # no number so use regex
             price = abs(stringToFloat(dataFrame[headernames[3]][row]) * amount)
         # get sign
         if re_match(r'^.*?(SELL).*?$', dataFrame[headernames[1]][row], RE_IGNORECASE):
-            tempTrade_sub.amount = -amount
-            tempTrade_main.amount = price
+            tempTrade_sub.amount = float(-amount)
+            tempTrade_main.amount = float(price)
         elif re_match(r'^.*?(BUY).*?$', dataFrame[headernames[1]][row], RE_IGNORECASE):
-            tempTrade_sub.amount = amount
-            tempTrade_main.amount = -price
+            tempTrade_sub.amount = float(amount)
+            tempTrade_main.amount = float(-price)
         else:  # invalid type
             skippedRows += 1
             continue  # skip row
@@ -619,9 +619,9 @@ def modelCallback_2(headernames, dataFrame, useLocalTime=False):
         swapCoinName(tempTrade_main)
         # get amount sub
         if isinstance(dataFrame[headernames[3]][row], Number):  # if amount is number
-            amount = abs(dataFrame[headernames[3]][row])
+            amount = float(abs(dataFrame[headernames[3]][row]))
         else:  # now number so use regex to extract the number
-            amount = abs(stringToFloat(dataFrame[headernames[3]][row]))
+            amount = float(abs(stringToFloat(dataFrame[headernames[3]][row])))
         # get amount main
         if isinstance(dataFrame[headernames[4]][row], Number):  # if price is number
             price = abs(dataFrame[headernames[4]][row])
@@ -629,11 +629,11 @@ def modelCallback_2(headernames, dataFrame, useLocalTime=False):
             price = abs(stringToFloat(dataFrame[headernames[4]][row]))
         # get sign
         if re_match(r'^.*?(SELL).*?$', dataFrame[headernames[1]][row], RE_IGNORECASE):
-            tempTrade_sub.amount = -amount
-            tempTrade_main.amount = price
+            tempTrade_sub.amount = float(-amount)
+            tempTrade_main.amount = float(price)
         elif re_match(r'^.*?(BUY).*?$', dataFrame[headernames[1]][row], RE_IGNORECASE):
-            tempTrade_sub.amount = amount
-            tempTrade_main.amount = -price
+            tempTrade_sub.amount = float(amount)
+            tempTrade_main.amount = float(-price)
         else:  # invalid type
             skippedRows += 1
             continue  # skip row
@@ -687,7 +687,7 @@ def modelCallback_3(headernames, dataFrame, useLocalTime=False):
         swapCoinName(tempTrade_sub)
         # get amount sub
         if isinstance(dataFrame[headernames[3]][row], Number):  # if amount is number
-            amount = dataFrame[headernames[3]][row]
+            amount = float(dataFrame[headernames[3]][row])
         else:  # now number so use regex to extract the number
             amount = stringToFloat(dataFrame[headernames[3]][row])
         if amount:
@@ -791,13 +791,13 @@ def modelCallback_4(headernames, dataFrame):
                 price_w_fees = abs(stringToFloat(dataFrame[headernames[mainFeeIndex]][row]))
             # get sign
             if isBuy == True:
-                tempTrade_sub.amount = amount_wo_fees
-                tempTrade_main.amount = -price_w_fees
+                tempTrade_sub.amount = float(amount_wo_fees)
+                tempTrade_main.amount = float(-price_w_fees)
                 fees_sub = amount_wo_fees - amount_w_fees
                 fees_main = price_wo_fees - price_w_fees
             else:
-                tempTrade_sub.amount = amount_w_fees
-                tempTrade_main.amount = -price_wo_fees
+                tempTrade_sub.amount = float(amount_w_fees)
+                tempTrade_main.amount = float(-price_wo_fees)
                 fees_sub = -(amount_wo_fees - amount_w_fees)
                 fees_main = -(price_wo_fees - price_w_fees)
             # set exchange
@@ -859,15 +859,15 @@ def modelCallback_5(headernames, dataFrame):
         swapCoinName(tempTrade_main)
         # get amount
         if isinstance(dataFrame[headernames[3]][row], Number):  # if amount is number
-            amount = dataFrame[headernames[3]][row]
+            amount = float(dataFrame[headernames[3]][row])
         else:  # no number so use regex to extract the number
             amount = stringToFloat(dataFrame[headernames[3]][row])
         if isinstance(dataFrame[headernames[2]][row], Number):  # if price is number
             price = dataFrame[headernames[2]][row] * amount * -1
         else:  # no number so use regex
             price = stringToFloat(dataFrame[headernames[2]][row]) * amount * -1
-        tempTrade_sub.amount = amount
-        tempTrade_main.amount = price
+        tempTrade_sub.amount = float(amount)
+        tempTrade_main.amount = float(price)
         # set id
         if not tempTrade_sub.tradeID:
             tempTrade_sub.generateID()
@@ -942,8 +942,8 @@ def modelCallback_Template1(headernames, dataFrame):
                 swapCoinName(tempTrade_sell)
                 swapCoinName(tempTrade_buy)
                 # get amount
-                tempTrade_sell.amount = - abs(dataFrame[headernames[4]][row])
-                tempTrade_buy.amount = abs(dataFrame[headernames[2]][row])
+                tempTrade_sell.amount = float(- abs(dataFrame[headernames[4]][row]))
+                tempTrade_buy.amount = float(abs(dataFrame[headernames[2]][row]))
                 # set exchange
                 tempTrade_sell.exchange = exchange
                 tempTrade_buy.exchange = exchange
@@ -971,7 +971,7 @@ def modelCallback_Template1(headernames, dataFrame):
                 # swap Coin Name
                 swapCoinName(tempTrade_buy)
                 # get amount
-                tempTrade_buy.amount = abs(dataFrame[headernames[2]][row])
+                tempTrade_buy.amount = float(abs(dataFrame[headernames[2]][row]))
                 # set exchange
                 tempTrade_buy.exchange = exchange
                 # set wallet
@@ -1251,7 +1251,7 @@ def createFee(date, amountStr, maincoin, exchange, subcoin=None, wallet='', feeI
     fee.date = date
     fee.coin = maincoin
     if isinstance(amountStr, Number):  # if amount is number
-        amount = - abs(amountStr)
+        amount = float(- abs(amountStr))
     else:  # no number so use regex to extract the number
         feeMatch = pat.NUMBER_REGEX.match(amountStr)
         # check standard coins in fee value

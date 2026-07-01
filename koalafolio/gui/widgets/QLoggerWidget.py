@@ -83,7 +83,6 @@ class QLogView(QListView):
             self.scrollTo(index, QAbstractItemView.PositionAtBottom)
 
     def isAtCurrentLastRow(self):
-        #print("currentLastRow: " + str(self.currentLastRow) + ", scrollBarValue: " + str(self.verticalScrollBar().value() + self.scrollBarRowOffset))
         return -1 <= (self.verticalScrollBar().value() + self.scrollBarRowOffset) - self.currentLastRow <= 1
 
     def mouseDoubleClickEvent(self, a0: QMouseEvent) -> None:

@@ -2,6 +2,9 @@ import requests
 import time
 import datetime
 
+from koalafolio.PcpCore import settings
+import koalafolio.PcpCore.logger as logger
+
 # API
 URL_CRYPTOCOMPARE = 'https://www.cryptocompare.com'
 URL_COIN_LIST = 'https://www.cryptocompare.com/api/data/coinlist/'
@@ -29,15 +32,21 @@ MARKETCAP = 'MKTCAP'
 CURR = 'EUR'
 LIMIT = 1440
 ###############################################################################
+    
+# get api key from settings
+API_KEY = settings.mySettings.cryptocompareApiKey()
 
 def query_cryptocompare(url,errorCheck=True, *args, **kwargs):
     try:
+        if API_KEY:
+            headers = {'authorization': 'Apikey ' + API_KEY}
+            kwargs['headers'] = headers
         response = requests.get(url, *args, **kwargs).json()
     except Exception as e:
-        print('Error getting coin information. %s' % str(e))
+        logger.globalLogger.warning('Error getting coin information. %s' % str(e))
         return None
     if errorCheck and (response.get('Response') == 'Error'):
-        print('[ERROR] %s' % response.get('Message'))
+        logger.globalLogger.warning('[ERROR] %s' % response.get('Message'))
         return None
     return response
 

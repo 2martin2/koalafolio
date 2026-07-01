@@ -112,6 +112,7 @@ class QPortfolioTableView(sTable.QScrollableTreeView):
         # draw lower horz line
         painter.drawLine(rect.x(), rect.y() + rect.height(), rect.x() + rect.width(), rect.y() + rect.height())
         # restore painter
+        painter.restore()
         super(QPortfolioTableView, self).drawRow(painter, options, index)
 
     def visualRect(self, index: QModelIndex) -> QRect:
@@ -463,25 +464,25 @@ class QTableSortingModel(fTable.SortFilterProxyModel):
             if column == 2:
                 profit1 = index1.data()[settings.mySettings.reportCurrency()]
                 profit2 = index2.data()[settings.mySettings.reportCurrency()]
-                return profit1 < profit2
+                return bool(profit1 < profit2)
             if column >= self.sourceModel().firstValueColumn:
                 coinBalance1, key1, cols1 = index1.data()
                 coinBalance2, key2, cols2 = index2.data()
                 if cols1 >= 2:
-                    return coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2]
+                    return bool(coinBalance1.getCurrentValue()[key1] < coinBalance2.getCurrentValue()[key2])
                 else:
-                    return coinBalance1.getChange24h(key1) < coinBalance2.getChange24h(key2)
-            return index1.data() < index2.data()
+                    return bool(coinBalance1.getChange24h(key1) < coinBalance2.getChange24h(key2))
+            return bool(index1.data() < index2.data())
         else:  # child level
             if column == 0:  # properties
                 # sort by walletname
-                return str(index1.data().walletname) < str(index2.data().walletname)
+                return bool(str(index1.data().walletname) < str(index2.data().walletname))
             if column == 3:  # chart
                 # sort by walletname inverted
-                return str(index1.data().getWalletName()) >= str(index2.data().getWalletName())
+                return bool(str(index1.data().getWalletName()) >= str(index2.data().getWalletName()))
             else:
-                return str(index1.data()) < str(index2.data())
-
+                return bool(str(index1.data()) < str(index2.data()))
+        
     def filterAcceptsRow(self, source_row, source_parent):
         # get coinbalance from column 3 to filter rows
         index = self.sourceModel().index(source_row, 3, source_parent)

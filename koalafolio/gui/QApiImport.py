@@ -45,7 +45,6 @@ class ApiKeyModel(QObject):
         self.refreshAddressSelectModels()
 
     def refreshApiNames(self):
-        print("refreshing api names")
         # convert dict of apiModels to list of dicts
         apiModelsList = [self.apiModels[apiname].toDict() for apiname in self.apiModels]
         self.apiSelectModel.setDataFromDict(apiModelsList, string_key="apiName", properties_keys=["apiType"])
