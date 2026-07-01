@@ -525,8 +525,14 @@ def modelCallback_0(headernames, dataFrame, useLocalTime=False):
         tempTrade_sub.tradeType = 'trade'
         tempTrade_main.tradeType = 'trade'
         # get coin
-        tempTrade_sub.coin = re_match(r'^(.*)([/\-_]).*$', dataFrame[headernames[2]][row]).group(1).upper()
-        tempTrade_main.coin = re_match(r'^.*([/\-_])(.*)$', dataFrame[headernames[2]][row]).group(2).upper()
+        generalSymbolPattern = r'^(.*)([/\-_])(.*)$'
+        match = re_match(generalSymbolPattern, dataFrame[headernames[2]][row])
+        if not match:
+            logger.globalLogger.warning(f'Coin pair does not match expected pattern {generalSymbolPattern}: ' + str(dataFrame[headernames[2]][row]))
+            skippedRows += 1
+            continue  # skip row
+        tempTrade_sub.coin = match.group(1).upper()
+        tempTrade_main.coin = match.group(3).upper()
         # swap Coin Name
         swapCoinName(tempTrade_sub)
         swapCoinName(tempTrade_main)

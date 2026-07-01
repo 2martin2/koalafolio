@@ -86,7 +86,7 @@ class WebApiInterface(QObject):
                         except Exception as ex:
                             # unknown error, ignore this url
                             logger.globalLogger.warning(
-                                'error loading Icon for : ' + str(coin) + ", exception: " + str(ex))
+                                f'error loading Icon for : {coin}, exception: {ex}')
                         # save coin
                         coins.append(coin)
                         # convert image
@@ -122,16 +122,16 @@ class WebApiInterface(QObject):
         try:
             imageResponse = requests.get(url, proxies=settings.mySettings.proxies(), timeout=100)
         except Exception as ex:
-            logger.globalLogger.warning('error in getImage for ' + str(coin) + ': ' + str(ex))
+            logger.globalLogger.warning(f'error in getImage for {coin}: {ex}')
             return None
         if imageResponse.status_code == 200:
             # request successful
             return imageResponse.content
         if imageResponse.status_code == 429:
             raise ConnectionRefusedError(
-                "response code: " + str(imageResponse.status_code) + ", reason: " + str(imageResponse.reason))
+                f"response code: {imageResponse.status_code}, reason: {imageResponse.reason}")
         raise ConnectionError(
-            "response code: " + str(imageResponse.status_code) + ", reason: " + str(imageResponse.reason))
+            f"response code: {imageResponse.status_code}, reason: {imageResponse.reason}")
 
     def imageToQIcon(self, imagedata):
         # Convert to QImage
@@ -213,9 +213,9 @@ class WebApiInterface(QObject):
                                 minDate = datetime.datetime.combine(min([trade.date for trade in trades]), datetime.datetime.min.time())
                                 coinPriceCharts[coin] = coinGecko.getPriceChartData(coin, startTime=minDate)
                         except KeyError:
-                            localLogger.warning('no priceChartData available for ' + coin)  # ignore invalid key
+                            localLogger.warning(f'no priceChartData available for {coin}')  # ignore invalid key
                         except Exception as ex:
-                            localLogger.error('error converting priceChartData: ' + str(ex))
+                            localLogger.error(f'error converting priceChartData: {ex}')
 
                     self.coinPriceChartsLoaded.emit(coinPriceCharts)
 
@@ -419,5 +419,4 @@ class HistoricalPriceWorker(QObject):
 
     def setHistTimerInterval(self, interval):
         self.histTimer.setInterval(interval)
-
 
