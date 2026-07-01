@@ -15,7 +15,7 @@ import koalafolio.PcpCore.logger as logger
 
 dictRegex = re.compile(r'^\{ *(\'.+\' *\: *\'.+\' *\, *)* *\'.+\' *\: *\'.+\'\ *}$')
 
-VERSION = '0.12.9'
+VERSION = '0.13.0'
 
 class Settings(configparser.ConfigParser):
     def __init__(self, *args, **kwargs):
@@ -42,7 +42,10 @@ class Settings(configparser.ConfigParser):
         self['general']['initversion'] = VERSION
         self['general']['timemodedaywise'] = 'True'
         self['general']['priceupdateinterval(s)'] = '100'
-        self['general']['priceapiswitch(cryptocompare/coingecko/mixed)'] = 'mixed'
+        self['general']['priceapiswitch(ccxt/coingecko/mixed)'] = 'coingecko'
+        self['general']['histpriceapiswitch(ccxt/cryptocompare/mixed)'] = 'ccxt'
+        self['general']['iconapiswitch(cryptocompare/coingecko/mixed)'] = 'mixed'
+        self['general']['ccxt_exchanges'] = 'binance,mexc,gate'
         # proxy settings
         self['proxies'] = {}
         self['proxies']['http'] = ''
@@ -56,16 +59,20 @@ class Settings(configparser.ConfigParser):
         self['currency']['defaultreportcurrency'] = 'EUR'
         self['currency']['defaultdisplaycurrencies'] = 'EUR,USD,BTC'
         self['currency']['isfiat'] = 'EUR,USD,GBP,JPY,CNY,RUB,AUD,CAD,SGD,PLN,HKD,CHF,INR,BRL,KRW,NZD,ZAR'
-        self['currency']['coinswapdict'] = "{'HOT':'HOLO','HOT*':'HOLO','XBT':'BTC','IOT':'MIOTA','IOTA':'MIOTA'}"
+        self['currency']['coinswapdict'] = "{'XBT':'BTC'}"
         self['currency']['coinswapdictcryptocompareapi'] = "{'dummy':'dummy'}"
         self['currency']['coinswapdictcoingeckoapi'] = "{'dummy':'dummy'}"
-        self['currency']['coinswapdictcoingeckosymboltoid'] = "{'HOLO':'holotoken'}"
+        self['currency']['coinswapdict_ccxt_api'] = "{'dummy':'dummy'}"
+        self['currency']['coinswapdictcoingeckosymboltoid'] = "{'ETH':'ethereum'}"
         # tax settings
         self['tax'] = {}
         self['tax']['taxfreelimit'] = 'True'
         self['tax']['taxfreelimityears'] = '1'
         self['tax']['exportlanguage'] = 'en'
         self['tax']['usewallettaxfreelimityears'] = 'False'
+        # auth settings
+        self['auth'] = {}
+        self['auth']['cryptocompareapikey'] = ''
 
     def initDescriptions(self):
         self.descriptions = {}
@@ -75,7 +82,10 @@ class Settings(configparser.ConfigParser):
         self.descriptions['general']['initversion'] = 'first version which created this settings'
         self.descriptions['general']['timemodedaywise'] = 'True: use avarage day prices for tax'
         self.descriptions['general']['priceupdateinterval(s)'] = 'interval of price update in seconds'
-        self.descriptions['general']['priceapiswitch(cryptocompare/coingecko/mixed)'] = 'which api should be used for prices, mixed is recommended'
+        self.descriptions['general']['priceapiswitch(ccxt/coingecko/mixed)'] = 'which api should be used for prices'
+        self.descriptions['general']['histpriceapiswitch(ccxt/cryptocompare/mixed)'] = 'which api should be used for historical prices'
+        self.descriptions['general']['iconapiswitch(cryptocompare/coingecko/mixed)'] = 'which api should be used for icons, mixed is recommended'
+        self.descriptions['general']['ccxt_exchanges'] = 'which exchanges to use for CCXT prices, comma separated list. Only exchanges that are supported by CCXT and have a public API can be used. Examples: binance, mexc, bingx, gate, htx, kucoin, kraken'
         # proxy settings
         self.descriptions['proxies'] = {}
         self.descriptions['proxies']['http'] = ''
@@ -92,6 +102,7 @@ class Settings(configparser.ConfigParser):
         self.descriptions['currency']['coinswapdict'] = "coin symbols that should be switched during import (e.g. XBT to BTC)"
         self.descriptions['currency']['coinswapdictcryptocompareapi'] = "swap coin symbol when loading prices from cryptocompare"
         self.descriptions['currency']['coinswapdictcoingeckoapi'] = "swap coin symbol when loading prices from coingecko"
+        self.descriptions['currency']['coinswapdict_ccxt_api'] = "swap coin symbol when loading prices from ccxt"
         self.descriptions['currency']['coinswapdictcoingeckosymboltoid'] = "manual mapping of coin symbol to coingecko id. some coin symbols are not exclusive on coingecko"
         # tax settings
         self.descriptions['tax'] = {}
@@ -99,6 +110,9 @@ class Settings(configparser.ConfigParser):
         self.descriptions['tax']['taxfreelimityears'] = 'number of years until trades are tax free. (e.g. 1 year in Germany). Only used if usewallettaxfreelimityears is False'
         self.descriptions['tax']['exportlanguage'] = 'default language of tax report'
         self.descriptions['tax']['usewallettaxfreelimityears'] = 'True: use seperate taxfreelimityears for every wallet. False: use global setting taxfreelimityears.'
+        # auth settings
+        self.descriptions['auth'] = {}
+        self.descriptions['auth']['cryptocompareapikey'] = 'api key for cryptocompare api. can be generated on https://min-api.cryptocompare.com/pricing. without api key cryptocompare api is not working anymore'
 
     def saveSettings(self):
         try:
@@ -137,7 +151,16 @@ class Settings(configparser.ConfigParser):
         return 2 if priceUpdateInterval <= 2 else priceUpdateInterval
 
     def priceApiSwitch(self):
-        return self['general']['priceapiswitch(cryptocompare/coingecko/mixed)']
+        return self['general']['priceapiswitch(ccxt/coingecko/mixed)']
+
+    def iconApiSwitch(self):
+        return self['general']['iconapiswitch(cryptocompare/coingecko/mixed)']
+    
+    def ccxtExchanges(self):
+        return self['general']['ccxt_exchanges'].split(',')
+
+    def histPriceApiSwitch(self):
+        return self['general']['histpriceapiswitch(ccxt/cryptocompare/mixed)']
 
     def proxies(self):
         if self['proxies']['http'] and self['proxies']['https']:
@@ -199,6 +222,16 @@ class Settings(configparser.ConfigParser):
         except Exception as ex:
             logger.globalLogger.warning('error while parsing coinswapdictcoingeckoapi from settings: ' + str(ex))
         return dict()
+    
+    def coinSwapDictCcxt(self):
+        try:
+            if dictRegex.match(self['currency']['coinswapdict_ccxt_api']):
+                return ast.literal_eval(self['currency']['coinswapdict_ccxt_api'])
+            else:
+                raise SyntaxError('coinswapdict_ccxt_api in settings.txt has invalid Syntax')
+        except Exception as ex:
+            logger.globalLogger.warning('error while parsing coinswapdict_ccxt_api from settings: ' + str(ex))
+        return dict()
 
     def coinSwapDictCoinGeckoSymbolToId(self):
         try:
@@ -234,5 +267,8 @@ class Settings(configparser.ConfigParser):
     def setTaxSettings(self, tax):
         for key in tax:
             self['tax'][key] = str(tax[key])
+
+    def cryptocompareApiKey(self):
+        return self['auth']['cryptocompareapikey']
 
 mySettings = Settings()

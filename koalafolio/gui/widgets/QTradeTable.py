@@ -480,7 +480,6 @@ class QImportTradeTableModel(QTradeTableModel):
     def data(self, index, role=Qt.DisplayRole):
         if role == Qt.ForegroundRole:
             if index.row() >= len(self.trades):
-                print('error ' + str(index.row()) + ' ' + str(len(self.trades)))
                 return QVariant()
             if self.trades[index.row()] in self.baseModel.trades:
                 return style.myStyle.getQColor('text_highlighted_midlight'.upper())
@@ -522,9 +521,3 @@ class QTradeTableDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
         return super(QTradeTableDelegate, self).sizeHint(option, index)
 
-
-def seperatePrint(elements, seperator):
-    printString = ''
-    for element in elements:
-        printString += element + seperator
-    print(printString)

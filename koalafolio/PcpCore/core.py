@@ -299,6 +299,7 @@ class Trade:
         return trade
 
     def setAmount(self, amount):
+        amount = float(amount)
         self.value = self.value.div(self.amount).mult(amount)
         self.amount = amount
 

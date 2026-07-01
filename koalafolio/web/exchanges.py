@@ -5,6 +5,8 @@ Created on 29.11.2020
 @author: Martin
 """
 
+import re
+
 from pandas import DataFrame
 from datetime import datetime
 import ccxt
@@ -96,6 +98,7 @@ class ccxtExchange:
             'secret': self.api_secret,
             'enableRateLimit': False,  # Respect exchange rate limits
         })
+        self.exchange.load_markets()  # Load markets to ensure the exchange is reachable
     
     def validate_api_credentials(self):
         """
@@ -342,7 +345,23 @@ class ccxtExchange:
             # Extract trade information
             timestamp = raw_trade['timestamp'] / 1000  # Convert from ms to seconds
             location = self.exchange_name
+
             pair = raw_trade['symbol']
+            # check symbol for Kraken exchange. ccxt converts symbols if they are part of markets. Delisted symbols might not be converted correctly
+            if self.exchange_name == 'kraken':
+                ccxtSymbolPattern = r'^(.*)(/)(.*)$'
+                symbol_match = re.match(ccxtSymbolPattern, pair)
+                if not symbol_match:
+                    # best guess is to split the symbol n:3 since quote is usually fiat with 3 letters. This is not perfect but better than nothing
+                    base_id = pair[:-3]   # "ETHW"
+                    quote_id = pair[-3:]  # "EUR"
+                    base = self.exchange.safe_currency_code(base_id)
+                    quote = self.exchange.safe_currency_code(quote_id)
+                    if base and quote:
+                        pair = f"{base}/{quote}"
+                    else:
+                        pair = f"{base_id}/{quote_id}"
+                    localLogger.warning(f"Kraken trade symbol {raw_trade['symbol']} is not found in latest Kraken markets. Manually converted to {pair}. Please verify correctness.")
             
             # Determine trade type (buy/sell)
             trade_type = raw_trade['side']
@@ -358,7 +377,13 @@ class ccxtExchange:
             if raw_trade['fee'] is not None:
                 fee = raw_trade['fee'].get('cost', 0)
                 fee_currency = raw_trade['fee'].get('currency', '')
-            
+                if not fee_currency:
+                    # use recieved currency as fallback if fee currency is not provided
+                    if trade_type == "buy":
+                        fee_currency = pair.split('/')[0]  # base currency
+                    else:
+                        fee_currency = pair.split('/')[1]  # quote currency
+                    logger.globalLogger.warning(f"Fee currency not provided in trade data, using recieved currency {fee_currency} as fallback.")
             # Create link (trade ID or empty string)
             link = raw_trade.get('id', "")
             
@@ -394,7 +419,8 @@ class ccxtExchange:
                 return []
             
             # Get all markets first
-            self.exchange.load_markets()
+            if not self.exchange.markets:
+                self.exchange.load_markets()
             
             # Check if symbol is required for fetching trades
             symbol_required = self._is_symbol_required_for_trades()

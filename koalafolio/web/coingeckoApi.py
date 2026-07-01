@@ -136,8 +136,10 @@ def getCoinPrices(coins):
             prices[coinSymbol] = {}
             for key in core.CoinValue():
                 prices[coinSymbol][key] = {}
-                prices[coinSymbol][key]['PRICE'] = response[coinId][key.lower()]
-                prices[coinSymbol][key]['CHANGEPCT24HOUR'] = response[coinId][key.lower() + '_24h_change']
+                # get price and change from response if available, otherwise leave empty dict
+                if key.lower() in response[coinId]:
+                    prices[coinSymbol][key]['PRICE'] = response[coinId][key.lower()]
+                    prices[coinSymbol][key]['CHANGEPCT24HOUR'] = response[coinId][key.lower() + '_24h_change']
 
         return prices
     except Exception as ex:

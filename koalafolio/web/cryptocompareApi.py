@@ -56,7 +56,7 @@ def getHistoricalPrice(trade):
                         rateString += str(key) + " " + str(dif[key]) + ', '
                     logger.globalLogger.warning('cryptocompare rate limit exceeded. calls left: ' + rateString)
                     raise ConnectionRefusedError
-                logger.globalLogger.warning('error loading historical price for ' + str(coin))
+                logger.globalLogger.warning(f'error loading historical price for {str(coin)}: {str(response['Err']['message'])}')
     return {}
 
 def getCoinPrices(coins: list):
@@ -69,7 +69,7 @@ def getCoinPrices(coins: list):
         proxies = {}
 
     if len(ccCoins) >= 200:
-        print("to many coins for cryptocompare api, using first 200")
+        logger.globalLogger.warning("too many coins for cryptocompare api, using first 200")
         ccCoins = ccCoins[:200]
     # try to load price from cryptocompare
     prices = {}
@@ -134,7 +134,7 @@ def getIconUrls(coins, *args, **kwargs):
         ccCoins.append(coinSwapToCryptocompare(coin))
     iconUrls = {}
     if len(ccCoins) >= 200:
-        print("to many coins for cryptocompare api, using first 200")
+        logger.globalLogger.warning("too many coins for cryptocompare api, using first 200")
         ccCoins = ccCoins[:200]
     # get icons from cryptocompare
     coinInfo = cryptcomp.get_coin_general_info(ccCoins, *args, **kwargs)

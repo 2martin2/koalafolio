@@ -530,13 +530,21 @@ class PortfolioApp(QWidget):
 
     def startThreads(self):
         self.logger.info('starting threads ...')
-        self.priceThread = threads.UpdatePriceThread(self.coinList, self.tradeList)
+
+        self.priceThread = threads.PriceUpdateThreadController(self.coinList)
+        self.iconThread = threads.IconUpdateThreadController(self.coinList)
+        self.histThread = threads.HistoricalPriceUpdateThreadController(self.tradeList)
+
         self.priceThread.coinPricesLoaded.connect(lambda prices, coins: self.coinList.setPrices(prices, coins))
-        self.priceThread.coinIconsLoaded.connect(lambda icons, coins: self.coinList.setIcons(icons, coins))
         self.priceThread.coinPriceChartsLoaded.connect(lambda priceChartData: self.coinList.setPriceChartData(priceChartData))
-        self.priceThread.historicalPricesLoaded.connect(lambda prices, tradesLeft:
-                                                        self.tradeList.setHistPrices(prices, tradesLeft))
+        self.iconThread.coinIconsLoaded.connect(lambda icons, coins: self.coinList.setIcons(icons, coins))
+        self.histThread.historicalPricesLoaded.connect(lambda prices, tradesLeft:
+                                                       self.tradeList.setHistPrices(prices, tradesLeft))
+
         self.priceThread.start()
+        self.iconThread.start()
+        self.histThread.start()
+
         self.logger.info('threads started')
 
     def showFrame(self, pageIndex):
@@ -558,6 +566,7 @@ class PortfolioApp(QWidget):
         #         pass
 
     def closeEvent(self, event):
+        self.logger.info("saving window props and settings...")
         # save window props
         geometry = self.geometry()
         state = self.windowState()
@@ -566,6 +575,14 @@ class PortfolioApp(QWidget):
         self.settings.setGuiSettings(self.tradesPage.getGuiProps())
         self.settings.setGuiSettings(self.portfolioPage.getGuiProps())
         self.settings.saveSettings()
+
+        self.logger.info("stopping threads...")
+        # stop threads
+        self.priceThread.stop()
+        self.iconThread.stop()
+        self.histThread.stop()
+
+        self.logger.info("closing app.")
         event.accept()
 
     def printStatus(self, status, statusType='i'):
